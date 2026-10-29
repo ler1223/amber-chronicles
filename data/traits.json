@@ -1,0 +1,32 @@
+{
+  "_note": "Особенности юнитов (теги). defs — что значит особенность: move — цена хода по клеткам (рельеф или клетка-опасность), name — для подсказки. units — у кого какие особенности (дописываются к proto).",
+  "defs": {
+    "swim": {"name": "Плавает", "desc": "вода не замедляет", "move": {"water": 1.0}},
+    "heat": {"name": "Любит жар", "desc": "лава не замедляет", "move": {"lava": 1.0}},
+    "nimble": {"name": "Ловкий", "desc": "терновник, масло и лёд не замедляют", "move": {"briar": 1.0, "oil": 1.0, "ice": 1.0}},
+    "fly": {"name": "Летает", "desc": "клетки не замедляют, над пропастью"},
+    "heavy": {"name": "Тяжёлый", "desc": "толчок сдвигает на клетку меньше"},
+    "unmovable": {"name": "Недвижим", "desc": "не сдвинуть"},
+    "ice_walk": {"name": "Не скользит", "desc": "по скользкому льду — как по земле"}
+  },
+  "units": {
+    "slime": ["swim"],
+    "toxic_slime": ["swim"],
+    "slime_king": ["swim", "heavy"],
+    "frog_shaman": ["swim"],
+    "bog_horror": ["swim", "heavy"],
+    "drowned": ["swim"],
+    "eel": ["swim"],
+    "siren": ["swim"],
+    "crab_knight": ["swim", "heavy"],
+    "deep_priest": ["swim"],
+    "kraken_arm": ["swim", "unmovable"],
+    "drowned_captain": ["swim"],
+    "deep_lord": ["swim"],
+    "trapper": ["nimble"],
+    "druid": ["nimble"],
+    "assassin": ["nimble"],
+    "ram": ["heavy"],
+    "geomancer": ["nimble"]
+  }
+}

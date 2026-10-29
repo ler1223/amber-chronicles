@@ -1,0 +1,102 @@
+{
+  "tick_rate": 20,
+  "hp_mult": 1.5,
+  "waves": {"intermission": 6.0, "timeout": 40.0},
+  "collision": {"base": 8, "per_cell": 5},
+  "enrage": {"after": 120.0, "every": 10.0, "mult": 0.25},
+  "corpse_time": 14.0,
+  "control_tags": {"stun": ["physical"], "root": ["nature", "movement"], "net": ["physical", "movement"], "trap": ["physical", "movement"], "freeze": ["ice"], "shock": ["storm"], "blind": ["light", "mind"], "sleep": ["mind"], "stasis": ["time", "unremovable"], "levitate": ["gravity"]},
+  "control_looks": {"entangle": "root", "e_entangle": "root", "e_drag": "root", "net": "net", "spike_trap": "trap", "hook": "net", "ice_bolt": "freeze", "blizzard": "freeze", "thunderstorm": "shock", "e_thunderstorm": "shock", "chain_lightning": "shock", "leap_back": "blind", "holy_water": "blind", "lullaby": "sleep"},
+  "status_duration": 5.0,
+  "reaction_cooldown": 4.0,
+  "skills_only_in_pause": false,
+  "slowmo_factor": 0.25,
+  "deploy_max_x": 2,
+  "run": {
+    "start_gold": 30,
+    "xp_per_level": 100,
+    "max_level": 5,
+    "downed_hp": 1,
+    "post_battle_heal": 0.3,
+    "rewards": {
+      "normal": {"gold": 25, "xp": 60},
+      "elite": {"gold": 50, "xp": 100},
+      "boss": {"gold": 0, "xp": 0}
+    },
+    "reward_heal": 0.4,
+    "reward_gold": 40,
+    "rest_heal": 0.5,
+    "shop_items": 4,
+    "shop_heal": {"pct": 0.3, "price": 30},
+    "map_layers": [1, 2, 3, 2, 3, 2, 1],
+    "node_weights": {"battle": 50, "elite": 18, "shop": 16, "rest": 16},
+    "tier_by_layer": [1, 1, 1, 2, 2],
+    "level_stats": {"hp": 0.08, "power": 0.08, "atk": 0.08},
+    "rarity_weights": {
+      "normal": {"common": 75, "rare": 25, "epic": 0},
+      "elite": {"common": 0, "rare": 70, "epic": 30},
+      "shop": {"common": 60, "rare": 32, "epic": 8}
+    },
+    "rune_price": 45,
+    "relic_price": 90,
+    "max_runes_per_skill": 2
+  },
+  "meta": {
+    "biome": "swamp",
+    "amber_per_battle": 4,
+    "amber_capture": 15,
+    "amber_per_threat": 10,
+    "amber_boss": 80,
+    "defeat_keep": 0.5,
+    "replay_mult": 0.5,
+    "threat_scale": {"hp": 0.1, "damage": 0.06},
+    "arsenal_slots_base": 1, "squad_size": 4,
+    "trophy_choices": 3
+  },
+  "mastery": {
+    "xp_levels": [0, 40, 100, 180, 280, 400, 540, 700, 880, 1080],
+    "xp_per_battle": 10,
+    "xp_win": 30,
+    "points_base": 1,
+    "stat_per_level": 0.02,
+    "path_unlock": 3
+  },
+  "speeds": [0.5, 1.0, 2.0],
+  "cover": {"half": 0.75, "full": 0.5},
+  "terrain": {
+    "chasm": {"name": "Пропасть", "color": [14, 12, 28]},
+    "ice_floor": {"name": "Скользкий лёд", "color": [168, 204, 228]},
+    "lava": {"name": "Лава", "color": [190, 70, 24], "status": "fire", "dps": 6, "move": 1.5},
+    "grass": {"name": "Трава", "color": [52, 74, 50]},
+    "stone": {"name": "Камень", "color": [74, 72, 70]},
+    "water": {"name": "Вода", "color": [38, 70, 112], "status": "water", "move": 1.7}
+  },
+  "hazards": {
+    "fire": {"name": "Пламя", "color": [235, 110, 40], "status": "fire", "dps": 4},
+    "ice": {"name": "Лёд", "color": [170, 225, 245], "status": "ice", "dps": 0, "move": 1.2, "covers": true},
+    "oil": {"name": "Масляная лужа", "color": [120, 92, 46], "status": "oil", "dps": 0, "foes_only": true, "move": 1.3},
+    "poison": {"name": "Ядовитое облако", "color": [110, 190, 70], "status": "poison", "dps": 0, "foes_only": true},
+    "briar": {"name": "Терновник", "color": [80, 120, 50], "dps": 3, "foes_only": true, "move": 1.6},
+    "mine": {"name": "Мина", "color": [200, 80, 60], "trigger": {"damage": 30, "tag": "fire", "stun": 1.0}},
+    "snare": {"name": "Капкан", "color": [190, 180, 150], "hidden": true, "look": "trap",
+              "trigger": {"damage": 12, "stun": 2.5, "look": "trap", "expose": 5, "expose_mult": 1.2}},
+    "bear_trap": {"name": "Медвежий капкан", "color": [170, 150, 120], "hidden": true, "look": "trap",
+                  "trigger": {"damage": 30, "stun": 3.5, "look": "trap", "expose": 6, "expose_mult": 1.25}}
+  },
+  "legend": {
+    "T": {"terrain": "grass", "passable": false, "cover": "full", "deco": "tree"},
+    "O": {"terrain": "stone", "portal": true},
+    "_": {"terrain": "chasm", "passable": false},
+    "I": {"terrain": "ice_floor"},
+    "L": {"terrain": "lava"},
+    ".": {"terrain": "grass"},
+    ":": {"terrain": "stone"},
+    "~": {"terrain": "water"},
+    "#": {"terrain": "stone", "passable": false, "cover": "full"},
+    "=": {"terrain": "grass", "passable": false, "cover": "half"},
+    "^": {"terrain": "grass", "hazard": "fire"}
+  },
+  "difficulties": {"normal": {"name": "Обычная", "hp": 1.0, "damage": 1.0, "adds": 0, "affixes": 0, "event_rate": 1.0, "event_dmg": 1.0, "amber": 1.0, "xp": 1.0, "epic": 0.0}, "heroic": {"name": "Героическая", "hp": 1.2, "damage": 1.1, "adds": 1, "affixes": 0, "event_rate": 0.85, "event_dmg": 1.15, "amber": 1.6, "xp": 1.3, "epic": 0.3}, "nightmare": {"name": "Кошмар", "hp": 1.45, "damage": 1.2, "adds": 2, "affixes": 1, "event_rate": 0.7, "event_dmg": 1.3, "amber": 2.3, "xp": 1.6, "epic": 0.6}},
+  "difficulty_order": ["normal", "heroic", "nightmare"],
+  "affixes": {"fierce": {"name": "Свирепый", "atk_mult": 1.4}, "stone": {"name": "Каменный", "armor_add": 4, "hp_mult": 1.3}, "vampiric": {"name": "Вампирский", "lifesteal": 0.4}, "swift": {"name": "Стремительный", "move_mult": 0.6, "atk_cd_mult": 0.75}, "burning": {"name": "Пылающий", "atk_tag": "fire", "atk_mult": 1.15}}
+}

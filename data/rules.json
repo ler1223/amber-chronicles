@@ -1,0 +1,8 @@
+[
+  {"_comment": "Формат — sim/rules.py. Правило: событие + теги → действия. Сюда добавляются новые взаимодействия."},
+  {"id": "burning_ram", "name": "Горящий таран", "on": "collision", "unit_has": ["fire"], "do": [{"type": "status", "tag": "fire", "to": "other"}], "desc": "Горящий, врезавшись во врага или бочку, поджигает его"},
+  {"id": "brittle_ice", "name": "Хрупкий лёд", "on": "collision", "unit_has": ["cold"], "do": [{"type": "damage", "amount": 8, "kind": "reaction", "to": "unit"}], "desc": "Замёрзший (тег Лёд) от удара о преграду трескается: +8 урона"},
+  {"id": "wet_spark", "name": "Искра по воде", "on": "collision", "unit_has": ["charged"], "other_has": ["wet"], "do": [{"type": "status", "tag": "storm", "to": "other"}], "desc": "Наэлектризованный передаёт Грозу мокрому, в кого врезался"},
+  {"id": "steam_cloud", "name": "Облако пара", "on": "reaction", "tags": ["steam"], "not": ["friendly"], "do": [{"type": "buff", "stat": "atk_mult", "value": 0.8, "duration": 3, "to": "unit"}], "desc": "После Пара цель 3 сек плохо видит: урон её атак ×0.8"},
+  {"id": "extinguish_on_push", "name": "Сбит в воду", "on": "moved", "tags": ["forced"], "unit_has": ["fire"], "where": "water", "do": [{"type": "cleanse", "tags": ["fire"], "to": "unit"}], "desc": "Горящего сбросили в воду — гаснет сразу"}
+]

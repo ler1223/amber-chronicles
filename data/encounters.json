@@ -1,0 +1,300 @@
+[
+  {
+    "id": "bog",
+    "name": "Трясина",
+    "kind": "normal",
+    "tier": 1,
+    "map": [
+      "..........",
+      "....~~....",
+      ".=.~~~~...",
+      "...~~~~.#.",
+      "....~~....",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "slime", "pos": [7, 2]},
+      {"type": "slime", "pos": [8, 1]},
+      {"type": "slime", "pos": [8, 4]},
+      {"type": "bog_archer", "pos": [9, 3]}
+    ]
+  },
+  {
+    "id": "reeds",
+    "name": "Камыши",
+    "kind": "normal",
+    "tier": 1,
+    "map": [
+      "..........",
+      "...=......",
+      "......~~..",
+      "..~~..~~..",
+      "......=...",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "slime", "pos": [7, 1]},
+      {"type": "slime", "pos": [7, 4]},
+      {"type": "bog_archer", "pos": [9, 0]},
+      {"type": "bog_archer", "pos": [9, 5]}
+    ]
+  },
+  {
+    "id": "nest",
+    "name": "Огненное гнездо",
+    "kind": "normal",
+    "tier": 2,
+    "map": [
+      "..........",
+      "..#....^..",
+      ".....~~...",
+      ".....~~...",
+      "..=....^..",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "beetle", "pos": [7, 0]},
+      {"type": "beetle", "pos": [8, 2]},
+      {"type": "beetle", "pos": [7, 5]},
+      {"type": "bog_archer", "pos": [9, 1]},
+      {"type": "frog_shaman", "pos": [9, 3]}
+    ]
+  },
+  {
+    "id": "camp",
+    "name": "Лагерь жаб",
+    "kind": "normal",
+    "tier": 2,
+    "map": [
+      "..........",
+      "....#.....",
+      "..~~...^..",
+      "..~~......",
+      ".....#....",
+      ".........."
+    ],
+    "player_spawn": [[1, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "slime", "pos": [7, 1]},
+      {"type": "slime", "pos": [8, 4]},
+      {"type": "beetle", "pos": [8, 3]},
+      {"type": "beetle", "pos": [7, 5]},
+      {"type": "frog_shaman", "pos": [9, 2]}
+    ]
+  },
+  {
+    "id": "slime_court",
+    "name": "Двор короля слизней",
+    "kind": "elite",
+    "tier": 2,
+    "map": [
+      "..........",
+      "..=...~~..",
+      "....~~~~..",
+      "....~~~~..",
+      "..=...~~..",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "slime_king", "pos": [8, 2]},
+      {"type": "beetle", "pos": [7, 0]},
+      {"type": "beetle", "pos": [7, 5]},
+      {"type": "bog_archer", "pos": [9, 4]}
+    ]
+  },
+  {
+    "id": "witch",
+    "name": "Логово ледяной ведьмы",
+    "kind": "boss",
+    "tier": 3,
+    "map": [
+      "..........",
+      "..=...~~..",
+      "......~~..",
+      ".#........",
+      "......#...",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "ice_witch", "pos": [9, 3]},
+      {"type": "slime", "pos": [7, 2]},
+      {"type": "slime", "pos": [7, 4]},
+      {"type": "frog_shaman", "pos": [9, 1]}
+    ]
+  },
+  {
+    "id": "reeds_guard",
+    "name": "Засада в камышах",
+    "kind": "guard",
+    "tier": 1,
+    "map": [
+      "..........",
+      "...=......",
+      "......~~..",
+      "..~~..~~..",
+      "......=...",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "slime", "pos": [7, 1]},
+      {"type": "slime", "pos": [7, 4]},
+      {"type": "frog_shaman", "pos": [9, 2]},
+      {"type": "bog_archer", "pos": [9, 0]},
+      {"type": "bog_archer", "pos": [9, 5]}
+    ]
+  },
+  {
+    "id": "mill_guard",
+    "name": "Мельничный пруд",
+    "kind": "guard",
+    "tier": 1,
+    "map": [
+      "..........",
+      "....#.....",
+      "...~~~~...",
+      "...~~~~...",
+      ".....#....",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "slime", "pos": [7, 1]},
+      {"type": "slime", "pos": [7, 3]},
+      {"type": "slime", "pos": [7, 5]},
+      {"type": "bog_archer", "pos": [9, 4]},
+      {"type": "frog_shaman", "pos": [9, 2]}
+    ]
+  },
+  {
+    "id": "nest_guard",
+    "name": "Сердце гнезда",
+    "kind": "guard",
+    "tier": 2,
+    "map": [
+      "..........",
+      "..=..^....",
+      "....~~.^..",
+      "....~~....",
+      "..=..^.^..",
+      ".........."
+    ],
+    "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "beetle", "pos": [6, 0]},
+      {"type": "beetle", "pos": [7, 3]},
+      {"type": "beetle", "pos": [6, 5]},
+      {"type": "beetle", "pos": [8, 1]},
+      {"type": "bog_archer", "pos": [9, 2]},
+      {"type": "frog_shaman", "pos": [9, 4]}
+    ]
+  },
+  {
+    "id": "camp_guard",
+    "name": "Совет шаманов",
+    "kind": "guard",
+    "tier": 2,
+    "map": [
+      "..........",
+      "...#......",
+      "..~~..~~..",
+      "..~~..~~..",
+      "...#......",
+      ".........."
+    ],
+    "player_spawn": [[1, 2], [0, 1], [0, 3], [1, 4]],
+    "enemies": [
+      {"type": "slime", "pos": [6, 1]},
+      {"type": "slime", "pos": [6, 4]},
+      {"type": "beetle", "pos": [7, 0]},
+      {"type": "beetle", "pos": [7, 5]},
+      {"type": "frog_shaman", "pos": [9, 2]},
+      {"type": "frog_shaman", "pos": [9, 3]}
+    ]
+  },
+  {"id": "forge_0", "name": "Шлаковые отвалы", "kind": "normal", "tier": 1, "chapter": "forge", "map": ["..........", "....LL..#.", "...#LL....", "....LL....", "...#..LL..", "......LL.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "fire_imp", "pos": [7, 2]}, {"type": "fire_imp", "pos": [7, 3]}, {"type": "salamander", "pos": [6, 2]}]},
+  {"id": "forge_1", "name": "Литейный цех", "kind": "normal", "tier": 1, "chapter": "forge", "map": ["...L......", "...L..#...", "......LLL.", "..........", "...##..LL.", "........L."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "magma_golem", "pos": [7, 3]}, {"type": "fire_imp", "pos": [6, 3]}]},
+  {"id": "forge_2", "name": "Плавильня", "kind": "normal", "tier": 2, "chapter": "forge", "map": ["......LL..", "...=..LL..", "...=......", "....L...#.", "...LLL....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "magma_golem", "pos": [7, 2]}, {"type": "salamander", "pos": [7, 3]}, {"type": "fire_imp", "pos": [6, 2]}]},
+  {"id": "forge_3", "name": "Огненный мост", "kind": "normal", "tier": 2, "chapter": "forge", "map": ["..........", "....L..L..", "...LL.#LL.", "....L..L..", "...#......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "salamander", "pos": [6, 3]}, {"type": "salamander", "pos": [7, 4]}, {"type": "fire_imp", "pos": [6, 1]}]},
+  {"id": "forge_4", "name": "Зал надсмотрщика", "kind": "elite", "tier": 2, "chapter": "forge", "map": ["......LL..", "...=..LL..", "...=......", "....L...#.", "...LLL....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "forge_overseer", "pos": [7, 2]}, {"type": "fire_imp", "pos": [7, 3]}]},
+  {"id": "forge_5", "name": "Ворота кузни", "kind": "guard", "tier": 1, "chapter": "forge", "map": ["..........", "....LL..#.", "...#LL....", "....LL....", "...#..LL..", "......LL.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "magma_golem", "pos": [7, 2]}, {"type": "fire_imp", "pos": [7, 3]}, {"type": "fire_imp", "pos": [6, 2]}]},
+  {"id": "forge_6", "name": "Угольные шахты", "kind": "guard", "tier": 1, "chapter": "forge", "map": ["...L......", "...L..#...", "......LLL.", "..........", "...##..LL.", "........L."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "hammer_thrower", "pos": [9, 3]}, {"type": "flame_priest", "pos": [8, 1]}, {"type": "salamander", "pos": [7, 3]}, {"type": "fire_imp", "pos": [6, 3]}]},
+  {"id": "forge_7", "name": "Кипящий канал", "kind": "guard", "tier": 2, "chapter": "forge", "map": ["..........", "....L..L..", "...LL.#LL.", "....L..L..", "...#......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "magma_golem", "pos": [6, 3]}, {"type": "salamander", "pos": [7, 4]}, {"type": "fire_imp", "pos": [6, 1]}]},
+  {"id": "forge_8", "name": "Арсенал", "kind": "guard", "tier": 2, "chapter": "forge", "map": ["......LL..", "...=..LL..", "...=......", "....L...#.", "...LLL....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "magma_golem", "pos": [7, 2]}, {"type": "magma_golem", "pos": [7, 3]}, {"type": "fire_imp", "pos": [6, 2]}]},
+  {"id": "forge_9", "name": "Сердце горна", "kind": "boss", "tier": 3, "chapter": "forge", "map": ["..........", "....L..L..", "...LL.#LL.", "....L..L..", "...#......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "forge_lord", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "fire_imp", "pos": [6, 3]}, {"type": "salamander", "pos": [7, 4]}]},
+  {"id": "crypt_0", "name": "Оссуарий", "kind": "normal", "tier": 1, "chapter": "crypt", "map": ["..........", "...=...#..", "....#.....", "...=..=...", ".....#..=.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "skeleton_archer", "pos": [9, 2]}, {"type": "skeleton", "pos": [7, 2]}, {"type": "skeleton", "pos": [7, 3]}, {"type": "ghoul", "pos": [6, 2]}], "fog": 1},
+  {"id": "crypt_1", "name": "Галерея гробов", "kind": "normal", "tier": 1, "chapter": "crypt", "map": ["...#......", "...#..=...", "......##..", "...=......", "...#..=...", "...#......"], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "skeleton_archer", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton", "pos": [7, 3]}, {"type": "ghoul", "pos": [6, 3]}], "fog": 1},
+  {"id": "crypt_2", "name": "Зал плача", "kind": "normal", "tier": 2, "chapter": "crypt", "map": ["..........", "....##....", "...=..=...", "...=..=...", "....##....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "banshee", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton", "pos": [7, 2]}, {"type": "skeleton", "pos": [7, 3]}, {"type": "ghoul", "pos": [7, 1]}], "fog": 1},
+  {"id": "crypt_3", "name": "Нижние катакомбы", "kind": "normal", "tier": 2, "chapter": "crypt", "map": ["..........", "...#....#.", "..........", ".....=....", "...#....#.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "skeleton_archer", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton", "pos": [7, 2]}, {"type": "ghoul", "pos": [7, 3]}, {"type": "ghoul", "pos": [6, 2]}], "fog": 2},
+  {"id": "crypt_4", "name": "Чертог рыцаря", "kind": "elite", "tier": 2, "chapter": "crypt", "map": ["..........", "....##....", "...=..=...", "...=..=...", "....##....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "skeleton_archer", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "death_knight", "pos": [7, 2]}, {"type": "skeleton", "pos": [7, 3]}], "fog": 1},
+  {"id": "crypt_5", "name": "Ограда кладбища", "kind": "guard", "tier": 1, "chapter": "crypt", "map": ["..........", "...=...#..", "....#.....", "...=..=...", ".....#..=.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "skeleton_archer", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton", "pos": [7, 2]}, {"type": "skeleton", "pos": [7, 3]}, {"type": "ghoul", "pos": [6, 2]}], "fog": 2},
+  {"id": "crypt_6", "name": "Часовня", "kind": "guard", "tier": 1, "chapter": "crypt", "map": ["...#......", "...#..=...", "......##..", "...=......", "...#..=...", "...#......"], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "banshee", "pos": [9, 2]}, {"type": "skeleton_archer", "pos": [9, 3]}, {"type": "skeleton_archer", "pos": [8, 1]}, {"type": "skeleton", "pos": [7, 3]}, {"type": "ghoul", "pos": [6, 3]}], "fog": 2},
+  {"id": "crypt_7", "name": "Склеп аббата", "kind": "guard", "tier": 2, "chapter": "crypt", "map": ["..........", "...#....#.", "..........", ".....=....", "...#....#.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "banshee", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton", "pos": [7, 2]}, {"type": "skeleton", "pos": [7, 3]}, {"type": "ghoul", "pos": [6, 2]}], "fog": 2},
+  {"id": "crypt_8", "name": "Колодец душ", "kind": "guard", "tier": 2, "chapter": "crypt", "map": ["..........", "....##....", "...=..=...", "...=..=...", "....##....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "banshee", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton_archer", "pos": [8, 1]}, {"type": "ghoul", "pos": [7, 2]}, {"type": "ghoul", "pos": [7, 3]}], "fog": 2},
+  {"id": "crypt_9", "name": "Трон лича", "kind": "boss", "tier": 3, "chapter": "crypt", "map": ["..........", "...#....#.", "..........", ".....=....", "...#....#.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "lich", "pos": [9, 2]}, {"type": "banshee", "pos": [9, 3]}, {"type": "skeleton", "pos": [7, 2]}, {"type": "skeleton", "pos": [7, 3]}]},
+  {"id": "pass_0", "name": "Снежная тропа", "kind": "normal", "tier": 1, "chapter": "pass", "map": ["..........", "...IIII...", "...IIII.#.", "....II....", "...#..II..", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "frost_wolf", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}, {"type": "yeti", "pos": [6, 2]}]},
+  {"id": "pass_1", "name": "Обледенелый мост", "kind": "normal", "tier": 1, "chapter": "pass", "map": ["...#....#.", "....III...", "...IIIII..", "....III...", "...#......", ".......#.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "frost_shaman", "pos": [9, 3]}, {"type": "frost_wolf", "pos": [7, 2]}, {"type": "yeti", "pos": [7, 3]}]},
+  {"id": "pass_2", "name": "Ледник", "kind": "normal", "tier": 2, "chapter": "pass", "map": ["..........", "...##..I..", "....IIII..", "...IIII...", "...#......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "frost_shaman", "pos": [9, 3]}, {"type": "yeti", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}, {"type": "frost_wolf", "pos": [6, 2]}]},
+  {"id": "pass_3", "name": "Пещера инея", "kind": "normal", "tier": 2, "chapter": "pass", "map": ["..........", "...IIIIII.", "...I#..I..", "...I..#I..", "...IIIIII.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "ice_archer", "pos": [9, 3]}, {"type": "frost_shaman", "pos": [8, 1]}, {"type": "yeti", "pos": [7, 2]}, {"type": "yeti", "pos": [7, 3]}]},
+  {"id": "pass_4", "name": "Логово вожака", "kind": "elite", "tier": 2, "chapter": "pass", "map": ["..........", "...##..I..", "....IIII..", "...IIII...", "...#......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "frost_shaman", "pos": [9, 2]}, {"type": "yeti_alpha", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}, {"type": "frost_wolf", "pos": [6, 2]}]},
+  {"id": "pass_5", "name": "Застава", "kind": "guard", "tier": 1, "chapter": "pass", "map": ["..........", "...IIII...", "...IIII.#.", "....II....", "...#..II..", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "frost_shaman", "pos": [9, 3]}, {"type": "yeti", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}, {"type": "frost_wolf", "pos": [6, 2]}]},
+  {"id": "pass_6", "name": "Тропа волков", "kind": "guard", "tier": 1, "chapter": "pass", "map": ["...#....#.", "....III...", "...IIIII..", "....III...", "...#......", ".......#.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "frost_shaman", "pos": [9, 3]}, {"type": "frost_wolf", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}, {"type": "frost_wolf", "pos": [6, 2]}]},
+  {"id": "pass_7", "name": "Перевал бурь", "kind": "guard", "tier": 2, "chapter": "pass", "map": ["..........", "...IIIIII.", "...I#..I..", "...I..#I..", "...IIIIII.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "frost_shaman", "pos": [9, 3]}, {"type": "yeti", "pos": [7, 2]}, {"type": "yeti", "pos": [7, 3]}, {"type": "frost_wolf", "pos": [6, 2]}]},
+  {"id": "pass_8", "name": "Ледяной водопад", "kind": "guard", "tier": 2, "chapter": "pass", "map": ["..........", "...##..I..", "....IIII..", "...IIII...", "...#......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "ice_archer", "pos": [9, 3]}, {"type": "frost_shaman", "pos": [8, 1]}, {"type": "yeti", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}]},
+  {"id": "pass_9", "name": "Вершина великана", "kind": "boss", "tier": 3, "chapter": "pass", "map": ["..........", "...IIIIII.", "...I#..I..", "...I..#I..", "...IIIIII.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "frost_shaman", "pos": [9, 2]}, {"type": "frost_giant", "pos": [9, 3]}, {"type": "frost_wolf", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}]},
+  {"id": "steppe_0", "name": "Высокие травы", "kind": "normal", "tier": 1, "chapter": "steppe", "map": ["..........", "...~~..=..", "...~~.....", ".......~~.", "...=...~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "storm_hawk", "pos": [9, 2]}, {"type": "stormcaller", "pos": [9, 3]}, {"type": "raider", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}]},
+  {"id": "steppe_1", "name": "Курганы", "kind": "normal", "tier": 1, "chapter": "steppe", "map": ["..........", "....=.....", "...~~~....", "....~~~...", "......=...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "storm_hawk", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "steppe_ogre", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}]},
+  {"id": "steppe_2", "name": "Солёное озеро", "kind": "normal", "tier": 2, "chapter": "steppe", "map": [".....~....", "...=.~....", "......~~..", "...~......", "...~..=...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "stormcaller", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "raider", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}, {"type": "steppe_ogre", "pos": [6, 2]}]},
+  {"id": "steppe_3", "name": "Грозовой холм", "kind": "normal", "tier": 2, "chapter": "steppe", "map": ["..........", "...~~..~~.", "....#.....", ".....#....", "...~~..~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "stormcaller", "pos": [9, 2]}, {"type": "stormcaller", "pos": [9, 3]}, {"type": "storm_hawk", "pos": [8, 1]}, {"type": "steppe_ogre", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}]},
+  {"id": "steppe_4", "name": "Шатёр вождя", "kind": "elite", "tier": 2, "chapter": "steppe", "map": [".....~....", "...=.~....", "......~~..", "...~......", "...~..=...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "storm_hawk", "pos": [9, 2]}, {"type": "stormcaller", "pos": [9, 3]}, {"type": "warchief", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}]},
+  {"id": "steppe_5", "name": "Кочевье", "kind": "guard", "tier": 1, "chapter": "steppe", "map": ["..........", "...~~..=..", "...~~.....", ".......~~.", "...=...~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "storm_hawk", "pos": [9, 2]}, {"type": "stormcaller", "pos": [9, 3]}, {"type": "raider", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}, {"type": "steppe_ogre", "pos": [6, 2]}]},
+  {"id": "steppe_6", "name": "Каменные бабы", "kind": "guard", "tier": 1, "chapter": "steppe", "map": ["..........", "....=.....", "...~~~....", "....~~~...", "......=...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "storm_hawk", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "stormcaller", "pos": [8, 1]}, {"type": "steppe_ogre", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}]},
+  {"id": "steppe_7", "name": "Брод", "kind": "guard", "tier": 2, "chapter": "steppe", "map": [".....~....", "...=.~....", "......~~..", "...~......", "...~..=...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "stormcaller", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "steppe_ogre", "pos": [7, 2]}, {"type": "steppe_ogre", "pos": [7, 3]}, {"type": "raider", "pos": [6, 2]}]},
+  {"id": "steppe_8", "name": "Становище орды", "kind": "guard", "tier": 2, "chapter": "steppe", "map": ["..........", "...~~..~~.", "....#.....", ".....#....", "...~~..~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "stormcaller", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "raider", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}, {"type": "raider", "pos": [6, 2]}]},
+  {"id": "steppe_9", "name": "Ставка хана", "kind": "boss", "tier": 3, "chapter": "steppe", "map": ["..........", "...~~..~~.", "....#.....", ".....#....", "...~~..~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "storm_khan", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "stormcaller", "pos": [8, 1]}, {"type": "raider", "pos": [7, 2]}]},
+  {"id": "tomb_0", "name": "Дюны", "kind": "normal", "tier": 1, "chapter": "tomb", "map": ["..........", "...#...#..", "..........", "...=...=..", "..........", "...#...#.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "mummy", "pos": [7, 2]}, {"type": "scarab", "pos": [6, 2]}, {"type": "scarab", "pos": [6, 3]}, {"type": "scarab", "pos": [7, 4]}]},
+  {"id": "tomb_1", "name": "Аллея сфинксов", "kind": "normal", "tier": 1, "chapter": "tomb", "map": ["...=......", "....#..#..", "..........", "....#..#..", "...=......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "sand_priest", "pos": [9, 3]}, {"type": "mummy", "pos": [7, 2]}, {"type": "mummy", "pos": [6, 2]}]},
+  {"id": "tomb_2", "name": "Погребальный зал", "kind": "normal", "tier": 2, "chapter": "tomb", "map": ["..........", "...##.....", "......=...", "...=......", ".....##...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "sarcophagus", "pos": [7, 2]}, {"type": "mummy", "pos": [7, 3]}, {"type": "scarab", "pos": [6, 3]}, {"type": "scarab", "pos": [7, 1]}]},
+  {"id": "tomb_3", "name": "Сокровищница", "kind": "normal", "tier": 2, "chapter": "tomb", "map": ["...#....#.", "..........", "...#....#.", "..........", "...#....#.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "sand_priest", "pos": [9, 3]}, {"type": "mummy", "pos": [7, 2]}, {"type": "scarab", "pos": [7, 3]}, {"type": "scarab", "pos": [6, 2]}]},
+  {"id": "tomb_4", "name": "Зал хранителя", "kind": "elite", "tier": 2, "chapter": "tomb", "map": ["..........", "...##.....", "......=...", "...=......", ".....##...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sand_priest", "pos": [9, 2]}, {"type": "tomb_guardian", "pos": [7, 2]}, {"type": "scarab", "pos": [7, 3]}, {"type": "scarab", "pos": [6, 3]}]},
+  {"id": "tomb_5", "name": "Оазис", "kind": "guard", "tier": 1, "chapter": "tomb", "map": ["..........", "...#...#..", "..........", "...=...=..", "..........", "...#...#.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "mummy", "pos": [7, 2]}, {"type": "mummy", "pos": [6, 2]}, {"type": "scarab", "pos": [6, 3]}, {"type": "scarab", "pos": [7, 4]}]},
+  {"id": "tomb_6", "name": "Некрополь", "kind": "guard", "tier": 1, "chapter": "tomb", "map": ["...=......", "....#..#..", "..........", "....#..#..", "...=......", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "sand_priest", "pos": [9, 3]}, {"type": "sarcophagus", "pos": [7, 2]}, {"type": "mummy", "pos": [6, 2]}]},
+  {"id": "tomb_7", "name": "Лабиринт", "kind": "guard", "tier": 2, "chapter": "tomb", "map": ["...#....#.", "..........", "...#....#.", "..........", "...#....#.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "sarcophagus", "pos": [7, 2]}, {"type": "sarcophagus", "pos": [7, 3]}, {"type": "mummy", "pos": [6, 2]}, {"type": "scarab", "pos": [6, 3]}]},
+  {"id": "tomb_8", "name": "Храм солнца", "kind": "guard", "tier": 2, "chapter": "tomb", "map": ["..........", "...##.....", "......=...", "...=......", ".....##...", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sand_priest", "pos": [9, 2]}, {"type": "tomb_archer", "pos": [9, 3]}, {"type": "tomb_archer", "pos": [8, 1]}, {"type": "mummy", "pos": [7, 2]}, {"type": "mummy", "pos": [7, 3]}, {"type": "scarab", "pos": [6, 3]}]},
+  {"id": "tomb_9", "name": "Усыпальница фараона", "kind": "boss", "tier": 3, "chapter": "tomb", "map": ["...#....#.", "..........", "...#....#.", "..........", "...#....#.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "pharaoh", "pos": [9, 2]}, {"type": "tomb_archer", "pos": [9, 3]}, {"type": "sarcophagus", "pos": [7, 2]}, {"type": "scarab", "pos": [7, 3]}, {"type": "scarab", "pos": [6, 2]}]},
+  {"id": "fae_0", "name": "Светящиеся грибы", "kind": "normal", "tier": 1, "chapter": "fae", "map": ["....T.....", "...T...T..", "......~~..", "...T..~~..", ".....T....", "......T..."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sprite", "pos": [9, 2]}, {"type": "dryad", "pos": [9, 3]}, {"type": "thorn_beast", "pos": [7, 2]}, {"type": "thorn_beast", "pos": [7, 3]}]},
+  {"id": "fae_1", "name": "Кольцо фей", "kind": "normal", "tier": 1, "chapter": "fae", "map": ["..........", "...TT.....", "......T...", "...~~...T.", "...~~.....", "......TT.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sprite", "pos": [9, 2]}, {"type": "illusionist", "pos": [9, 3]}, {"type": "thorn_beast", "pos": [7, 2]}, {"type": "maneater", "pos": [7, 3]}]},
+  {"id": "fae_2", "name": "Шепчущая роща", "kind": "normal", "tier": 2, "chapter": "fae", "map": ["...T...T..", "..........", "....TT....", "..........", "...T...T..", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sprite", "pos": [9, 2]}, {"type": "dryad", "pos": [9, 3]}, {"type": "thorn_beast", "pos": [7, 2]}, {"type": "thorn_beast", "pos": [7, 3]}, {"type": "maneater", "pos": [6, 2]}]},
+  {"id": "fae_3", "name": "Зеркальное озеро", "kind": "normal", "tier": 2, "chapter": "fae", "map": ["..........", "...T....T.", ".....~~...", ".....~~...", "...T....T.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "illusionist", "pos": [9, 2]}, {"type": "illusionist", "pos": [9, 3]}, {"type": "sprite", "pos": [9, 1]}, {"type": "dryad", "pos": [9, 4]}, {"type": "thorn_beast", "pos": [7, 2]}]},
+  {"id": "fae_4", "name": "Шипастый двор", "kind": "elite", "tier": 2, "chapter": "fae", "map": ["...T...T..", "..........", "....TT....", "..........", "...T...T..", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sprite", "pos": [9, 2]}, {"type": "dryad", "pos": [9, 3]}, {"type": "fae_knight", "pos": [7, 2]}, {"type": "maneater", "pos": [7, 3]}]},
+  {"id": "fae_5", "name": "Опушка", "kind": "guard", "tier": 1, "chapter": "fae", "map": ["....T.....", "...T...T..", "......~~..", "...T..~~..", ".....T....", "......T..."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sprite", "pos": [9, 2]}, {"type": "dryad", "pos": [9, 3]}, {"type": "thorn_beast", "pos": [7, 2]}, {"type": "thorn_beast", "pos": [7, 3]}, {"type": "maneater", "pos": [6, 2]}]},
+  {"id": "fae_6", "name": "Туманная лощина", "kind": "guard", "tier": 1, "chapter": "fae", "map": ["..........", "...TT.....", "......T...", "...~~...T.", "...~~.....", "......TT.."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "illusionist", "pos": [9, 2]}, {"type": "sprite", "pos": [9, 3]}, {"type": "sprite", "pos": [8, 1]}, {"type": "dryad", "pos": [8, 4]}, {"type": "thorn_beast", "pos": [7, 2]}]},
+  {"id": "fae_7", "name": "Сад росянок", "kind": "guard", "tier": 2, "chapter": "fae", "map": ["...T...T..", "..........", "....TT....", "..........", "...T...T..", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sprite", "pos": [9, 2]}, {"type": "dryad", "pos": [9, 3]}, {"type": "maneater", "pos": [7, 2]}, {"type": "maneater", "pos": [7, 3]}, {"type": "thorn_beast", "pos": [6, 2]}]},
+  {"id": "fae_8", "name": "Лунная поляна", "kind": "guard", "tier": 2, "chapter": "fae", "map": ["..........", "...T....T.", ".....~~...", ".....~~...", "...T....T.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "illusionist", "pos": [9, 2]}, {"type": "sprite", "pos": [9, 3]}, {"type": "dryad", "pos": [9, 1]}, {"type": "thorn_beast", "pos": [7, 2]}, {"type": "thorn_beast", "pos": [7, 3]}]},
+  {"id": "fae_9", "name": "Чертог королевы", "kind": "boss", "tier": 3, "chapter": "fae", "map": ["..........", "...T....T.", ".....~~...", ".....~~...", "...T....T.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "fae_queen", "pos": [9, 2]}, {"type": "dryad", "pos": [9, 3]}, {"type": "thorn_beast", "pos": [7, 2]}, {"type": "maneater", "pos": [7, 3]}]},
+  {"id": "sunken_0", "name": "Пристань", "kind": "normal", "tier": 1, "chapter": "sunken", "map": ["..........", "...~~~~...", "...~#~~...", "...~~~~.#.", "....~~....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "siren", "pos": [9, 3]}, {"type": "drowned", "pos": [7, 2]}, {"type": "drowned", "pos": [7, 3]}]},
+  {"id": "sunken_1", "name": "Площадь фонтанов", "kind": "normal", "tier": 1, "chapter": "sunken", "map": ["...~~.....", "...~~..#..", "......~~~.", "...#..~~~.", "...~~.....", "...~~....."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "crab_knight", "pos": [7, 2]}, {"type": "drowned", "pos": [7, 3]}]},
+  {"id": "sunken_2", "name": "Затопленный рынок", "kind": "normal", "tier": 2, "chapter": "sunken", "map": ["..........", "....~~~~..", "...#~~~~#.", "....~~~~..", "..........", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "siren", "pos": [8, 1]}, {"type": "drowned", "pos": [7, 2]}, {"type": "crab_knight", "pos": [7, 3]}]},
+  {"id": "sunken_3", "name": "Подводный храм", "kind": "normal", "tier": 2, "chapter": "sunken", "map": ["..........", "...~~..~~.", "...~~##~~.", "...~~..~~.", "...~~..~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "siren", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "crab_knight", "pos": [7, 2]}, {"type": "drowned", "pos": [7, 3]}, {"type": "drowned", "pos": [6, 3]}]},
+  {"id": "sunken_4", "name": "Палуба капитана", "kind": "elite", "tier": 2, "chapter": "sunken", "map": ["..........", "....~~~~..", "...#~~~~#.", "....~~~~..", "..........", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "siren", "pos": [9, 3]}, {"type": "drowned_captain", "pos": [7, 2]}, {"type": "drowned", "pos": [7, 3]}]},
+  {"id": "sunken_5", "name": "Маяк", "kind": "guard", "tier": 1, "chapter": "sunken", "map": ["..........", "...~~~~...", "...~#~~...", "...~~~~.#.", "....~~....", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "siren", "pos": [9, 3]}, {"type": "drowned", "pos": [7, 2]}, {"type": "drowned", "pos": [7, 3]}, {"type": "crab_knight", "pos": [6, 2]}]},
+  {"id": "sunken_6", "name": "Каналы", "kind": "guard", "tier": 1, "chapter": "sunken", "map": ["...~~.....", "...~~..#..", "......~~~.", "...#..~~~.", "...~~.....", "...~~....."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "siren", "pos": [8, 1]}, {"type": "drowned", "pos": [7, 2]}, {"type": "crab_knight", "pos": [7, 3]}]},
+  {"id": "sunken_7", "name": "Затопленный дворец", "kind": "guard", "tier": 2, "chapter": "sunken", "map": ["..........", "...~~..~~.", "...~~##~~.", "...~~..~~.", "...~~..~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "siren", "pos": [9, 3]}, {"type": "crab_knight", "pos": [7, 2]}, {"type": "crab_knight", "pos": [7, 3]}, {"type": "drowned", "pos": [6, 3]}]},
+  {"id": "sunken_8", "name": "Кладбище кораблей", "kind": "guard", "tier": 2, "chapter": "sunken", "map": ["..........", "....~~~~..", "...#~~~~#.", "....~~~~..", "..........", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "siren", "pos": [8, 1]}, {"type": "drowned", "pos": [7, 2]}, {"type": "drowned", "pos": [7, 3]}, {"type": "crab_knight", "pos": [6, 2]}]},
+  {"id": "sunken_9", "name": "Бездна", "kind": "boss", "tier": 3, "chapter": "sunken", "map": ["..........", "...~~..~~.", "...~~##~~.", "...~~..~~.", "...~~..~~.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "deep_lord", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "siren", "pos": [8, 1]}, {"type": "drowned", "pos": [7, 2]}]},
+  {"id": "citadel_0", "name": "Облачный причал", "kind": "normal", "tier": 1, "chapter": "citadel", "map": ["..........", "...__.....", "...__..O..", "...O...__.", ".......__.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "sky_knight", "pos": [6, 2]}, {"type": "harpy", "pos": [6, 3]}, {"type": "harpy", "pos": [7, 1]}]},
+  {"id": "citadel_1", "name": "Звёздная лестница", "kind": "normal", "tier": 1, "chapter": "citadel", "map": ["....___...", "..........", "...O..#...", ".......O..", "..........", "....___..."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "arcanist", "pos": [9, 2]}, {"type": "seraph", "pos": [9, 3]}, {"type": "sky_knight", "pos": [7, 2]}, {"type": "harpy", "pos": [6, 3]}]},
+  {"id": "citadel_2", "name": "Висячие сады", "kind": "normal", "tier": 2, "chapter": "citadel", "map": ["..........", "...__..__.", "....O..O..", "...__..__.", "..........", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "arcanist", "pos": [9, 3]}, {"type": "sky_knight", "pos": [6, 2]}, {"type": "sky_knight", "pos": [6, 3]}, {"type": "harpy", "pos": [7, 4]}]},
+  {"id": "citadel_3", "name": "Обсерватория", "kind": "normal", "tier": 2, "chapter": "citadel", "map": ["..........", "..._....._", "...O....O.", "...#....#.", "..._....._", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "arcanist", "pos": [9, 3]}, {"type": "seraph", "pos": [8, 1]}, {"type": "harpy", "pos": [7, 2]}, {"type": "harpy", "pos": [7, 3]}]},
+  {"id": "citadel_4", "name": "Зал паладина", "kind": "elite", "tier": 2, "chapter": "citadel", "map": ["..........", "...__..__.", "....O..O..", "...__..__.", "..........", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "seraph", "pos": [9, 3]}, {"type": "storm_paladin", "pos": [6, 2]}, {"type": "harpy", "pos": [6, 3]}]},
+  {"id": "citadel_5", "name": "Внешняя стена", "kind": "guard", "tier": 1, "chapter": "citadel", "map": ["..........", "...__.....", "...__..O..", "...O...__.", ".......__.", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "arcanist", "pos": [9, 3]}, {"type": "sky_knight", "pos": [6, 2]}, {"type": "sky_knight", "pos": [6, 3]}, {"type": "harpy", "pos": [7, 1]}]},
+  {"id": "citadel_6", "name": "Гнёзда гарпий", "kind": "guard", "tier": 1, "chapter": "citadel", "map": ["....___...", "..........", "...O..#...", ".......O..", "..........", "....___..."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "seraph", "pos": [9, 3]}, {"type": "harpy", "pos": [7, 2]}, {"type": "harpy", "pos": [6, 3]}, {"type": "harpy", "pos": [7, 1]}]},
+  {"id": "citadel_7", "name": "Мост ветров", "kind": "guard", "tier": 2, "chapter": "citadel", "map": ["..........", "..._....._", "...O....O.", "...#....#.", "..._....._", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "arcanist", "pos": [9, 3]}, {"type": "seraph", "pos": [8, 1]}, {"type": "sky_knight", "pos": [7, 2]}, {"type": "sky_knight", "pos": [7, 3]}]},
+  {"id": "citadel_8", "name": "Шпиль часовых", "kind": "guard", "tier": 2, "chapter": "citadel", "map": ["..........", "...__..__.", "....O..O..", "...__..__.", "..........", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "sentinel", "pos": [9, 3]}, {"type": "arcanist", "pos": [8, 4]}, {"type": "sky_knight", "pos": [6, 2]}, {"type": "harpy", "pos": [6, 3]}]},
+  {"id": "citadel_9", "name": "Тронный зал небес", "kind": "boss", "tier": 3, "chapter": "citadel", "map": ["..........", "..._....._", "...O....O.", "...#....#.", "..._....._", ".........."], "player_spawn": [[2, 2], [0, 1], [0, 3], [1, 4]], "enemies": [{"type": "archon", "pos": [9, 2]}, {"type": "seraph", "pos": [9, 3]}, {"type": "sky_knight", "pos": [7, 2]}, {"type": "harpy", "pos": [7, 3]}]}
+]

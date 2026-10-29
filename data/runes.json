@@ -1,0 +1,7 @@
+{
+  "r_power": {"name": "Руна мощи", "desc": "Урон, лечение и щиты навыка +25%", "mod": {"amount_mult": 1.25}, "req": {"has_amount": true}},
+  "r_thrift": {"name": "Руна бережливости", "desc": "Навык стоит на 1 AP меньше", "mod": {"add": {"ap": -1}}, "req": {"ap_min": 3}},
+  "r_haste": {"name": "Руна спешки", "desc": "Каст ×0.5, перезарядка ×0.6", "mod": {"cast_mult": 0.5, "cooldown_mult": 0.6}, "req": {"cast_or_cooldown": true}},
+  "r_reach": {"name": "Руна дальности", "desc": "+1 к дальности навыка", "mod": {"add": {"range": 1}}, "req": {"range_min": 2}},
+  "r_breadth": {"name": "Руна охвата", "desc": "+1 к радиусу навыка", "mod": {"radius_add": 1}, "req": {"radius_min": 1}}
+}

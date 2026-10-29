@@ -1,0 +1,33 @@
+{
+  "unit": [
+    {
+      "id": "steam", "soft": "Потушен", "name": "Пар", "tags": ["fire", "water"],
+      "desc": "Урон по площади, снимает щиты",
+      "effects": [
+        {"type": "aoe_damage", "amount": 12, "radius": 1, "affects": "target_side"},
+        {"type": "strip_shields", "radius": 1, "affects": "target_side"}
+      ]
+    },
+    {
+      "id": "melt", "soft": "Растаял", "name": "Таяние", "tags": ["fire", "ice"],
+      "desc": "Двойной урон",
+      "effects": [{"type": "bonus_damage", "mult": 1.0, "min": 10}]
+    },
+    {
+      "id": "freeze", "soft": "Остыл", "name": "Заморозка", "tags": ["water", "ice"],
+      "desc": "Оглушение 2 сек",
+      "effects": [{"type": "stun", "duration": 2.0}]
+    },
+    {"id": "shock", "soft": "Разряд ушёл", "name": "Электрошок", "tags": ["storm", "water"], "desc": "Урон рядом и оглушение", "effects": [{"type": "aoe_damage", "amount": 12, "radius": 1, "affects": "target_side"}, {"type": "stun", "duration": 1.2}]},
+    {"id": "shatter", "soft": "Разряд во льду", "name": "Раскол", "tags": ["storm", "ice"], "desc": "Двойной урон", "effects": [{"type": "bonus_damage", "mult": 1.0, "min": 12}]},
+    {"id": "overload", "soft": "Искры погасли", "name": "Перегрузка", "tags": ["storm", "fire"], "desc": "Взрыв по площади", "effects": [{"type": "aoe_damage", "amount": 18, "radius": 1, "affects": "target_side"}]},
+    {"id": "toxic", "soft": "Яд выгорел", "name": "Ядовитый дым", "tags": ["poison", "fire"], "desc": "Урон и Яд всем рядом", "effects": [{"type": "aoe_damage", "amount": 8, "radius": 1, "affects": "target_side"}, {"type": "spread_status", "tag": "poison", "radius": 1}]},
+    {"id": "blaze", "soft": "Масло сгорело", "name": "Пожар", "tags": ["oil", "fire"], "desc": "Двойной урон, земля горит", "effects": [{"type": "bonus_damage", "mult": 1.0, "min": 15}, {"type": "hazard", "hazard": "fire", "duration": 5, "radius": 0}]}
+  ],
+  "cell": [
+    {"tag": "fire", "hazard": "oil", "name": "Масло вспыхнуло", "set_hazard": "fire", "duration": 6},
+    {"tag": "ice", "terrain": "water", "name": "Вода замёрзла", "set_hazard": "ice", "duration": 6},
+    {"tag": "water", "hazard": "fire", "name": "Тушение", "clear_hazard": true},
+    {"tag": "fire", "hazard": "ice", "name": "Лёд растаял", "clear_hazard": true}
+  ]
+}

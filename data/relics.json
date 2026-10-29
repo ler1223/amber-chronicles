@@ -1,0 +1,11 @@
+{
+  "amber_charm": {"name": "Янтарный оберег", "desc": "+1 AP всем героям", "mods": [{"stat": "ap_max", "add": 1}]},
+  "whetstone": {"name": "Точильный камень", "desc": "+15% урона атак всем героям", "mods": [{"stat": "atk_damage", "mult": 1.15}]},
+  "war_drum": {"name": "Боевой барабан", "desc": "+12% сила навыков всем героям", "mods": [{"stat": "power", "mult": 1.12}]},
+  "wanderer_cloak": {"name": "Плащ странника", "desc": "Отряд двигается на 20% быстрее", "mods": [{"stat": "move_time", "mult": 0.8}]},
+  "bog_moss": {"name": "Болотный мох", "desc": "После победы отряд лечится ещё на 10%", "run": {"post_battle_heal": 0.1}},
+  "miser_purse": {"name": "Кошель скряги", "desc": "+12 золота за каждый выигранный бой", "run": {"gold_per_battle": 12}},
+  "boiling_pot": {"name": "Кипящий котёл", "desc": "Реакции, вызванные отрядом, наносят +50% урона", "combat": {"reaction_mult": 1.5}},
+  "iron_vow": {"name": "Железный обет", "desc": "В начале боя у всех героев щит 20", "combat": {"start_shield": 20}},
+  "soul_catcher": {"name": "Ловец душ", "desc": "Добивание врага возвращает убийце 1 AP", "combat": {"kill_ap": 1}}
+}

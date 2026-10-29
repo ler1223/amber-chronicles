@@ -1,0 +1,8 @@
+{
+  "fire": {"name": "Огонь", "short": "О", "color": [240, 96, 40], "status": "Горение: 3 урона/сек", "dps": 3, "groups": ["harmful", "dot", "burning"]},
+  "water": {"name": "Вода", "short": "В", "color": [70, 140, 240], "status": "Мокрый", "groups": ["wet"]},
+  "ice": {"name": "Лёд", "short": "Л", "color": [160, 225, 250], "status": "Замедление ×1.5", "slow": 1.5, "groups": ["harmful", "slow", "cold"]},
+  "storm": {"name": "Гроза", "short": "Г", "color": [150, 165, 255], "status": "Наэлектризован", "groups": ["harmful", "charged"]},
+  "poison": {"name": "Яд", "short": "Я", "color": [130, 210, 80], "status": "Яд: 2 урона/сек, лечение ×0.5", "dps": 2, "heal_mult": 0.5, "groups": ["harmful", "dot"]},
+  "oil": {"name": "Масло", "short": "М", "color": [170, 130, 60], "status": "Вязкий: замедление ×1.3", "slow": 1.3, "groups": ["harmful", "slow", "flammable"]}
+}

@@ -1,0 +1,1117 @@
+{
+  "power_strike": {
+    "A": {"name": "Сокрушение", "tiers": [
+      {"name": "Сокрушение", "desc": "40 урона, отталкивание на 2 клетки, оглушение 1.5 сек.",
+       "mods": [{"set": {"name": "Сокрушение", "desc": "40 урона, отталкивание на 2 клетки, оглушение 1.5 сек."},
+                 "effects": [{"type": "damage", "amount": 40, "kind": "melee"},
+                             {"type": "knockback", "cells": 2},
+                             {"type": "stun", "duration": 1.5}]}]},
+      {"name": "Ударная волна", "desc": "Враги вокруг цели тоже получают 20 урона и оглушение 1 сек.",
+       "mods": [{"set": {"desc": "40 урона, отталкивание на 2, оглушение 1.5 сек. Враги вокруг цели: 20 урона, оглушение 1 сек."}},
+                {"add_effect": {"type": "damage", "amount": 20, "radius": 1, "kind": "melee"}},
+                {"add_effect": {"type": "stun", "radius": 1, "duration": 1.0}}]}
+    ]},
+    "B": {"name": "Казнь", "tiers": [
+      {"name": "Казнь", "desc": "55 урона, ×2 если у цели меньше 35% HP. Без отталкивания.",
+       "mods": [{"set": {"name": "Казнь", "desc": "55 урона; ×2, если у цели меньше 35% HP."},
+                 "effects": [{"type": "damage", "amount": 55, "kind": "melee", "execute": {"below": 0.35, "mult": 2}}]}]},
+      {"name": "Жажда крови", "desc": "Воин лечится на 50% нанесённого урона.",
+       "mods": [{"set": {"desc": "55 урона; ×2, если у цели меньше 35% HP. Лечит воина на 50% урона."}},
+                {"effect": {"type": "damage", "set": {"lifesteal": 0.5}}}]}
+    ]}
+  },
+  "taunt": {
+    "A": {"name": "Бастион", "tiers": [
+      {"name": "Бастион", "desc": "Провокация 6 сек + воин получает +5 брони на 6 сек (вместо щита).",
+       "mods": [{"set": {"name": "Бастион", "desc": "Враги в радиусе 2 атакуют воина 6 сек. Воин: +5 брони на 6 сек."},
+                 "effects": [{"type": "taunt", "radius": 2, "duration": 6},
+                             {"type": "buff", "stat": "armor", "value": 5, "duration": 6}]}]},
+      {"name": "Шипы", "desc": "Пока действует, воин отражает 50% ближнего урона атакующим.",
+       "mods": [{"set": {"desc": "Провокация 6 сек, +5 брони, отражает 50% ближнего урона."}},
+                {"add_effect": {"type": "buff", "stat": "thorns", "value": 0.5, "duration": 6}}]}
+    ]},
+    "B": {"name": "Боевой клич", "tiers": [
+      {"name": "Боевой клич", "desc": "Больше не провоцирует. Союзники в радиусе 2: +40% урона атак на 8 сек.",
+       "mods": [{"set": {"name": "Боевой клич", "cooldown": 10, "radius": 2,
+                         "desc": "Союзники в радиусе 2: +40% урона атак на 8 сек.",
+                         "auto": {"on": false, "conds": [{"type": "enemies_adjacent", "value": 1}]}},
+                 "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.4, "duration": 8, "radius": 2}]}]},
+      {"name": "Знамя", "desc": "Радиус 3 и ещё +30% скорости атак.",
+       "mods": [{"set": {"desc": "Союзники в радиусе 3: +40% урона и +30% скорости атак на 8 сек."}},
+                {"effect": {"type": "buff", "set": {"radius": 3}}},
+                {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 8, "radius": 3}}]}
+    ]}
+  },
+  "charge": {
+    "A": {"name": "Таран", "tiers": [
+      {"name": "Таран", "desc": "Прыжок к врагу (до 4 клеток): 30 урона, отталкивание на 2, оглушение 1.5 сек.",
+       "mods": [{"set": {"name": "Таран", "target": "enemy", "free_cell": false, "range": 4,
+                         "desc": "Прыжок к врагу до 4 клеток: 30 урона, отталкивание на 2, оглушение 1.5 сек.",
+                         "auto": {"on": false, "conds": [{"type": "target_casting"}]}},
+                 "effects": [{"type": "leap_to"},
+                             {"type": "damage", "amount": 30, "kind": "melee"},
+                             {"type": "knockback", "cells": 2},
+                             {"type": "stun", "duration": 1.5}]}]},
+      {"name": "Неудержимый", "desc": "45 урона, стоит 3 AP, без перезарядки.",
+       "mods": [{"set": {"cooldown": 0, "desc": "Прыжок к врагу до 4 клеток: 45 урона, отталкивание на 2, оглушение 1.5 сек."},
+                 "add": {"ap": -1}},
+                {"effect": {"type": "damage", "add": {"amount": 15}}}]}
+    ]},
+    "B": {"name": "Перехват", "tiers": [
+      {"name": "Перехват", "desc": "Прыжок к союзнику (до 4): он и все рядом получают щит 40 на 6 сек.",
+       "mods": [{"set": {"name": "Перехват", "target": "ally", "free_cell": false, "range": 4, "radius": 1,
+                         "desc": "Прыжок к союзнику до 4 клеток: он и все союзники рядом получают щит 40 на 6 сек.",
+                         "auto": {"on": false, "conds": [{"type": "target_hp_below", "value": 40}]}},
+                 "effects": [{"type": "leap_to"},
+                             {"type": "shield", "amount": 40, "duration": 6, "radius": 1}]}]},
+      {"name": "Стена щитов", "desc": "После прыжка враги в радиусе 2 атакуют воина 4 сек.",
+       "mods": [{"set": {"desc": "Прыжок к союзнику: щит 40 ему и соседям, враги в радиусе 2 атакуют воина 4 сек."}},
+                {"add_effect": {"type": "taunt", "radius": 2, "duration": 4}}]}
+    ]}
+  },
+
+  "aimed_shot": {
+    "A": {"name": "Пронзающий выстрел", "tiers": [
+      {"name": "Пронзающий выстрел", "desc": "Стрела летит по линии до 6 клеток: 40 урона каждому врагу.",
+       "mods": [{"set": {"name": "Пронзающий выстрел", "desc": "Стрела пробивает всех врагов на линии до 6 клеток: 40 урона каждому."},
+                 "effects": [{"type": "line", "amount": 40, "length": 6, "kind": "ranged"}]}]},
+      {"name": "Бронебой", "desc": "55 урона каждому; пробитые получают +25% урона 6 сек.",
+       "mods": [{"set": {"desc": "Пробивает линию до 6 клеток: 55 урона каждому, пробитые получают +25% урона 6 сек."}},
+                {"effect": {"type": "line", "add": {"amount": 15},
+                            "set": {"on_hit_buff": {"stat": "dmg_taken", "value": 1.25, "duration": 6}}}}]}
+    ]},
+    "B": {"name": "Смертельный выстрел", "tiers": [
+      {"name": "Смертельный выстрел", "desc": "Каст 1.5 сек: 90 урона, ×2 если у цели меньше 30% HP.",
+       "mods": [{"set": {"name": "Смертельный выстрел", "cast": 1.5, "desc": "Каст 1.5 сек. 90 урона; ×2, если у цели меньше 30% HP."},
+                 "effects": [{"type": "damage", "amount": 90, "kind": "ranged", "execute": {"below": 0.3, "mult": 2}}]}]},
+      {"name": "Метка охотника", "desc": "Дальность 8; цель получает +30% урона от всех 8 сек.",
+       "mods": [{"set": {"desc": "Каст 1.5 сек, дальность 8. 90 урона (×2 ниже 30% HP), цель получает +30% урона 8 сек."},
+                 "add": {"range": 2}},
+                {"effect": {"type": "damage", "set": {"on_hit_buff": {"stat": "dmg_taken", "value": 1.3, "duration": 8}}}}]}
+    ]}
+  },
+  "volley": {
+    "A": {"name": "Ловчие колья", "tiers": [
+      {"name": "Ловчие колья", "desc": "Радиус 2: 14 урона и замедление движения на 4 сек.",
+       "mods": [{"set": {"name": "Ловчие колья", "radius": 2, "desc": "14 урона всем врагам в радиусе 2, замедляет движение на 4 сек."},
+                 "effects": [{"type": "damage", "amount": 14, "radius": 2, "kind": "ranged",
+                              "on_hit_buff": {"stat": "slow", "value": 1.8, "duration": 4}}]}]},
+      {"name": "Частокол", "desc": "22 урона, стоит 3 AP.",
+       "mods": [{"set": {"desc": "22 урона всем врагам в радиусе 2, замедление на 4 сек."}, "add": {"ap": -1}},
+                {"effect": {"type": "damage", "add": {"amount": 8}}}]}
+    ]},
+    "B": {"name": "Огненный залп", "tiers": [
+      {"name": "Огненный залп", "desc": "16 урона + Огонь в радиусе 1, клетки горят 4 сек.",
+       "mods": [{"set": {"name": "Огненный залп", "desc": "16 урона + Огонь в радиусе 1, клетки горят 4 сек."},
+                 "effects": [{"type": "damage", "amount": 16, "radius": 1, "tag": "fire", "kind": "ranged"},
+                             {"type": "cell_tag", "tag": "fire", "radius": 1},
+                             {"type": "hazard", "hazard": "fire", "radius": 1, "duration": 4}]}]},
+      {"name": "Напалм", "desc": "24 урона, клетки горят 8 сек.",
+       "mods": [{"set": {"desc": "24 урона + Огонь в радиусе 1, клетки горят 8 сек."}},
+                {"effect": {"type": "damage", "add": {"amount": 8}}},
+                {"effect": {"type": "hazard", "set": {"duration": 8}}}]}
+    ]}
+  },
+  "leap_back": {
+    "A": {"name": "Сальто", "tiers": [
+      {"name": "Сальто", "desc": "Прыжок до 3 клеток, затем 4 сек атаки вдвое быстрее.",
+       "mods": [{"set": {"name": "Сальто", "range": 3, "desc": "Прыжок до 3 клеток, затем 4 сек атаки вдвое быстрее."},
+                 "effects": [{"type": "teleport"},
+                             {"type": "buff", "stat": "atk_speed", "value": 0.5, "duration": 4}]}]},
+      {"name": "Акробат", "desc": "Ускорение 6 сек, стоит 1 AP, перезарядка 1 сек.",
+       "mods": [{"set": {"cooldown": 1, "desc": "Прыжок до 3 клеток, затем 6 сек атаки вдвое быстрее. 1 AP."},
+                 "add": {"ap": -1}},
+                {"effect": {"type": "buff", "set": {"duration": 6}}}]}
+    ]},
+    "B": {"name": "Дымовая шашка", "tiers": [
+      {"name": "Дымовая шашка", "desc": "Враги рядом оглушены 1.5 сек, затем прыжок до 2 клеток.",
+       "mods": [{"set": {"name": "Дымовая шашка", "desc": "Враги рядом с лучником оглушены 1.5 сек, затем прыжок до 2 клеток."},
+                 "effects": [{"type": "stun", "radius": 1, "duration": 1.5, "at": "caster"},
+                             {"type": "teleport"}]}]},
+      {"name": "Едкий дым", "desc": "Враги рядом: 20 урона и оглушение 2.5 сек.",
+       "mods": [{"set": {"desc": "Враги рядом с лучником: 20 урона и оглушение 2.5 сек, затем прыжок до 2 клеток."},
+                 "effects": [{"type": "damage", "amount": 20, "radius": 1, "kind": "spell", "at": "caster"},
+                             {"type": "stun", "radius": 1, "duration": 2.5, "at": "caster"},
+                             {"type": "teleport"}]}]}
+    ]}
+  },
+
+  "fireball": {
+    "A": {"name": "Метеор", "tiers": [
+      {"name": "Метеор", "desc": "Каст 3 сек: 60 урона + Огонь в радиусе 2, горящая земля 3×3.",
+       "mods": [{"set": {"name": "Метеор", "cast": 3.0, "radius": 2, "desc": "Каст 3 сек. 60 урона + Огонь в радиусе 2, горящая земля 3×3."},
+                 "effects": [{"type": "damage", "amount": 60, "radius": 2, "tag": "fire", "kind": "spell"},
+                             {"type": "cell_tag", "tag": "fire", "radius": 2},
+                             {"type": "hazard", "hazard": "fire", "radius": 1, "duration": 5}]}]},
+      {"name": "Катаклизм", "desc": "Все задетые оглушены на 1.5 сек.",
+       "mods": [{"set": {"desc": "Каст 3 сек. 60 урона + Огонь в радиусе 2, оглушение 1.5 сек, горящая земля 3×3."}},
+                {"add_effect": {"type": "stun", "radius": 2, "duration": 1.5}}]}
+    ]},
+    "B": {"name": "Огненные стрелы", "tiers": [
+      {"name": "Огненные стрелы", "desc": "Мгновенно, 3 AP: 30 урона + Огонь, отскок на соседнего врага (20 + Огонь).",
+       "mods": [{"set": {"name": "Огненные стрелы", "target": "enemy", "cast": 0, "ap": 3,
+                         "desc": "Мгновенно. 30 урона + Огонь цели, отскок на ближайшего врага: 20 + Огонь.",
+                         "auto": {"on": true, "conds": []}},
+                 "effects": [{"type": "damage", "amount": 30, "tag": "fire", "kind": "spell"},
+                             {"type": "chain", "amount": 20, "jumps": 1, "range": 2, "tag": "fire", "kind": "spell"}]}]},
+      {"name": "Рикошет", "desc": "Отскакивает 3 раза.",
+       "mods": [{"set": {"desc": "Мгновенно. 30 урона + Огонь цели, 3 отскока по 20 + Огонь."}},
+                {"effect": {"type": "chain", "set": {"jumps": 3}}}]}
+    ]}
+  },
+  "ice_bolt": {
+    "A": {"name": "Ледяная тюрьма", "tiers": [
+      {"name": "Ледяная тюрьма", "desc": "4 AP: 10 урона + Лёд, цель вморожена (оглушение) 2.5 сек.",
+       "mods": [{"set": {"name": "Ледяная тюрьма", "ap": 4, "desc": "10 урона + Лёд, цель вморожена на 2.5 сек."},
+                 "effects": [{"type": "damage", "amount": 10, "tag": "ice", "kind": "ranged"},
+                             {"type": "stun", "duration": 2.5}]}]},
+      {"name": "Ледяное поле", "desc": "Вокруг цели ледяное поле 3×3 на 6 сек.",
+       "mods": [{"set": {"radius": 1, "desc": "10 урона + Лёд, вморожена на 2.5 сек, вокруг — ледяное поле 3×3 на 6 сек."}},
+                {"add_effect": {"type": "cell_tag", "tag": "ice", "radius": 1}},
+                {"add_effect": {"type": "hazard", "hazard": "ice", "radius": 1, "duration": 6}}]}
+    ]},
+    "B": {"name": "Ледяные осколки", "tiers": [
+      {"name": "Ледяные осколки", "desc": "Пробивают всех врагов на линии до 5 клеток: 25 урона + Лёд.",
+       "mods": [{"set": {"name": "Ледяные осколки", "desc": "Осколки пробивают всех врагов на линии до 5 клеток: 25 урона + Лёд."},
+                 "effects": [{"type": "line", "amount": 25, "length": 5, "tag": "ice", "kind": "ranged"}]}]},
+      {"name": "Шквал", "desc": "Мгновенно, 40 урона.",
+       "mods": [{"set": {"cast": 0, "desc": "Мгновенно. 40 урона + Лёд всем врагам на линии до 5 клеток."}},
+                {"effect": {"type": "line", "add": {"amount": 15}}}]}
+    ]}
+  },
+  "mana_shield": {
+    "A": {"name": "Барьер", "tiers": [
+      {"name": "Барьер", "desc": "4 AP: щит 30 всем союзникам в радиусе 2 от цели.",
+       "mods": [{"set": {"name": "Барьер", "ap": 4, "radius": 2, "desc": "Щит 30 всем союзникам в радиусе 2 от цели на 8 сек."},
+                 "effects": [{"type": "shield", "amount": 30, "duration": 8, "radius": 2}]}]},
+      {"name": "Святилище", "desc": "Ещё и снимает с них все теги.",
+       "mods": [{"set": {"desc": "Щит 30 всем союзникам в радиусе 2 на 8 сек, снимает с них теги."}},
+                {"add_effect": {"type": "cleanse", "radius": 2}}]}
+    ]},
+    "B": {"name": "Зеркальный щит", "tiers": [
+      {"name": "Зеркальный щит", "desc": "Щит 40 и отражение 60% ближнего урона на 8 сек.",
+       "mods": [{"set": {"name": "Зеркальный щит", "desc": "Щит 40 и отражение 60% ближнего урона на 8 сек."},
+                 "effects": [{"type": "shield", "amount": 40, "duration": 8},
+                             {"type": "buff", "stat": "thorns", "value": 0.6, "duration": 8}]}]},
+      {"name": "Неуязвимость", "desc": "Ещё −30% получаемого урона.",
+       "mods": [{"set": {"desc": "Щит 40, отражение 60% ближнего урона и −30% получаемого урона на 8 сек."}},
+                {"add_effect": {"type": "buff", "stat": "dmg_taken", "value": 0.7, "duration": 8}}]}
+    ]}
+  },
+
+  "heal": {
+    "A": {"name": "Обновление", "tiers": [
+      {"name": "Обновление", "desc": "Мгновенно: +10 HP/сек 6 сек (60 всего).",
+       "mods": [{"set": {"name": "Обновление", "cast": 0, "desc": "Мгновенно. Союзник восстанавливает 10 HP/сек 6 сек."},
+                 "effects": [{"type": "buff", "stat": "regen", "value": 10, "duration": 6}]}]},
+      {"name": "Роща", "desc": "Действует и на союзников рядом с целью.",
+       "mods": [{"set": {"radius": 1, "desc": "Мгновенно. Союзник и все рядом восстанавливают 10 HP/сек 6 сек."}},
+                {"effect": {"type": "buff", "set": {"radius": 1}}}]}
+    ]},
+    "B": {"name": "Великое исцеление", "tiers": [
+      {"name": "Великое исцеление", "desc": "Каст 1.5 сек, 4 AP: лечит на 90 и снимает теги.",
+       "mods": [{"set": {"name": "Великое исцеление", "cast": 1.5, "ap": 4, "desc": "Каст 1.5 сек. Лечит на 90 и снимает теги."},
+                 "effects": [{"type": "heal", "amount": 90}, {"type": "cleanse"}]}]},
+      {"name": "Божественный дар", "desc": "Лечит на 110, излишек становится щитом.",
+       "mods": [{"set": {"desc": "Каст 1.5 сек. Лечит на 110 и снимает теги; излишек лечения — щит."}},
+                {"effect": {"type": "heal", "add": {"amount": 20}, "set": {"overheal_shield": true}}}]}
+    ]}
+  },
+  "holy_water": {
+    "A": {"name": "Потоп", "tiers": [
+      {"name": "Потоп", "desc": "Радиус 2: 8 урона + Вода, замедление 4 сек. Тушит огонь.",
+       "mods": [{"set": {"name": "Потоп", "radius": 2, "desc": "Радиус 2: 8 урона + Вода, замедление 4 сек. Тушит огонь."},
+                 "effects": [{"type": "damage", "amount": 8, "radius": 2, "tag": "water", "kind": "spell",
+                              "on_hit_buff": {"stat": "slow", "value": 1.6, "duration": 4}},
+                             {"type": "cleanse", "tags": ["fire"], "radius": 2, "affects": "allies"},
+                             {"type": "cell_tag", "tag": "water", "radius": 2}]}]},
+      {"name": "Цунами", "desc": "Волна отбрасывает задетых врагов от жреца.",
+       "mods": [{"set": {"desc": "Радиус 2: 8 урона + Вода, замедление, волна отбрасывает врагов от жреца."}},
+                {"add_effect": {"type": "knockback", "radius": 2, "cells": 1}}]}
+    ]},
+    "B": {"name": "Кара", "tiers": [
+      {"name": "Кара", "desc": "Свет по врагу: 45 урона; союзники рядом с ним +25 HP.",
+       "mods": [{"set": {"name": "Кара", "target": "enemy", "desc": "Свет по врагу: 45 урона; союзники рядом с ним +25 HP.",
+                         "auto": {"on": false, "conds": []}},
+                 "effects": [{"type": "damage", "amount": 45, "kind": "spell"},
+                             {"type": "heal", "amount": 25, "radius": 1, "affects": "allies"}]}]},
+      {"name": "Ослепление", "desc": "Цель оглушена на 1.5 сек.",
+       "mods": [{"set": {"desc": "Свет по врагу: 45 урона и оглушение 1.5 сек; союзники рядом +25 HP."}},
+                {"add_effect": {"type": "stun", "duration": 1.5}}]}
+    ]}
+  },
+  "purify": {
+    "A": {"name": "Иммунитет", "tiers": [
+      {"name": "Иммунитет", "desc": "Снимает теги, +15 HP и иммунитет к новым тегам на 5 сек.",
+       "mods": [{"set": {"name": "Иммунитет", "desc": "Снимает теги, +15 HP и иммунитет к тегам на 5 сек."},
+                 "effects": [{"type": "cleanse"}, {"type": "heal", "amount": 15},
+                             {"type": "buff", "stat": "immune", "value": 1, "duration": 5}]}]},
+      {"name": "Купол", "desc": "Действует на всех союзников в радиусе 2 от цели.",
+       "mods": [{"set": {"radius": 2, "desc": "Всем союзникам в радиусе 2: снимает теги, +15 HP, иммунитет к тегам 5 сек."}},
+                {"effect": {"type": "cleanse", "set": {"radius": 2}}},
+                {"effect": {"type": "heal", "set": {"radius": 2}}},
+                {"effect": {"type": "buff", "set": {"radius": 2}}}]}
+    ]},
+    "B": {"name": "Перенос", "tiers": [
+      {"name": "Перенос", "desc": "Переносит теги союзника на ближайшего врага (до 4 клеток) — можно вызвать реакцию.",
+       "mods": [{"set": {"name": "Перенос", "desc": "Переносит все теги с союзника на ближайшего к нему врага (до 4 клеток), +15 HP."},
+                 "effects": [{"type": "transfer_statuses", "range": 4}, {"type": "heal", "amount": 15}]}]},
+      {"name": "Возмездие", "desc": "Враг ещё и получает 25 урона; дальность +2.",
+       "mods": [{"set": {"desc": "Переносит теги союзника на ближайшего врага (до 4 клеток), тот получает 25 урона. +15 HP."},
+                 "add": {"range": 2}},
+                {"effect": {"type": "transfer_statuses", "set": {"damage": 25}}}]}
+    ]}
+  },
+  "whirlwind": {
+    "A": {"name": "Смерч", "tiers": [
+      {"name": "Смерч", "desc": "Радиус 2: 22 урона всем врагам вокруг.",
+       "mods": [{"set": {"name": "Смерч", "radius": 2, "desc": "22 урона всем врагам в радиусе 2."},
+                 "effects": [{"type": "damage", "amount": 22, "radius": 2, "kind": "melee"}]}]},
+      {"name": "Ураган", "desc": "+8 урона, соседей отбрасывает.",
+       "mods": [{"set": {"desc": "30 урона всем врагам в радиусе 2, соседей отбрасывает."}},
+                {"effect": {"type": "damage", "add": {"amount": 8}}},
+                {"add_effect": {"type": "knockback", "radius": 1, "cells": 1}}]}
+    ]},
+    "B": {"name": "Кровавый вихрь", "tiers": [
+      {"name": "Кровавый вихрь", "desc": "30 урона соседям, берсерк лечится на 40% урона.",
+       "mods": [{"set": {"name": "Кровавый вихрь", "desc": "30 урона соседям, лечит на 40% нанесённого."},
+                 "effects": [{"type": "damage", "amount": 30, "radius": 1, "kind": "melee", "lifesteal": 0.4}]}]},
+      {"name": "Неистовство", "desc": "После вихря атаки на 30% быстрее 5 сек.",
+       "mods": [{"set": {"desc": "30 урона соседям, лечит на 40% нанесённого; атаки быстрее на 5 сек."}},
+                {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 5, "at": "caster"}}]}
+    ]}
+  },
+  "spike_trap": {
+    "A": {"name": "Волчья яма", "tiers": [
+      {"name": "Волчья яма", "desc": "Оглушение 2.5 сек всем врагам в радиусе 1, без урона.",
+       "mods": [{"set": {"name": "Волчья яма", "desc": "Оглушает всех врагов в радиусе 1 на 2.5 сек."},
+                 "effects": [{"type": "stun", "radius": 1, "duration": 2.5}]}]},
+      {"name": "Колья на дне", "desc": "+20 урона попавшим в яму.",
+       "mods": [{"set": {"desc": "Оглушает всех врагов в радиусе 1 на 2.5 сек и наносит 20 урона."}},
+                {"add_effect": {"type": "damage", "amount": 20, "radius": 1, "kind": "ranged"}}]}
+    ]},
+    "B": {"name": "Ядовитые шипы", "tiers": [
+      {"name": "Ядовитые шипы", "desc": "Раненые шипами получают +30% урона 5 сек.",
+       "mods": [{"set": {"name": "Ядовитые шипы", "desc": "Центр: оглушение 1.5 сек. Радиус 1: 12 урона, +30% получаемого урона на 5 сек."},
+                 "effects": [
+                   {"type": "damage", "amount": 12, "radius": 1, "kind": "ranged", "on_hit_buff": {"stat": "dmg_taken", "value": 1.3, "duration": 5}},
+                   {"type": "stun", "duration": 1.5}]}]},
+      {"name": "Трупный яд", "desc": "+10 урона шипами.",
+       "mods": [{"set": {"desc": "Центр: оглушение 1.5 сек. Радиус 1: 22 урона, +30% получаемого урона на 5 сек."}},
+                {"effect": {"type": "damage", "add": {"amount": 10}}}]}
+    ]}
+  },
+  "curse": {
+    "A": {"name": "Мор", "tiers": [
+      {"name": "Мор", "desc": "Проклятие ложится на всех врагов в радиусе 1 от цели.",
+       "mods": [{"set": {"name": "Мор", "desc": "10 урона врагам в радиусе 1; они получают +30% урона 6 сек."},
+                 "effects": [{"type": "damage", "amount": 10, "radius": 1, "kind": "spell", "on_hit_buff": {"stat": "dmg_taken", "value": 1.3, "duration": 6}}]}]},
+      {"name": "Чума", "desc": "Проклятие держится 10 сек, +6 урона.",
+       "mods": [{"set": {"desc": "16 урона врагам в радиусе 1; они получают +30% урона 10 сек."}},
+                {"effect": {"type": "damage", "add": {"amount": 6}, "set": {"on_hit_buff": {"stat": "dmg_taken", "value": 1.3, "duration": 10}}}}]}
+    ]},
+    "B": {"name": "Иссушение", "tiers": [
+      {"name": "Иссушение", "desc": "28 урона, маг лечится на 60%, цель слабеет (атаки ×0.7) на 5 сек.",
+       "mods": [{"set": {"name": "Иссушение", "desc": "28 урона, лечит мага на 60%, атаки цели ×0.7 на 5 сек."},
+                 "effects": [{"type": "damage", "amount": 28, "kind": "spell", "lifesteal": 0.6, "on_hit_buff": {"stat": "atk_mult", "value": 0.7, "duration": 5}}]}]},
+      {"name": "Жатва", "desc": "×2 урона по целям с HP меньше 30%.",
+       "mods": [{"set": {"desc": "28 урона (×2 при HP цели < 30%), лечит мага на 60%, атаки цели ×0.7 на 5 сек."}},
+                {"effect": {"type": "damage", "set": {"execute": {"below": 0.3, "mult": 2}}}}]}
+    ]}
+  },
+  "judgment": {
+    "A": {"name": "Очищающее пламя", "tiers": [
+      {"name": "Очищающее пламя", "desc": "26 урона + Огонь всем врагам в радиусе 1 от цели.",
+       "mods": [{"set": {"name": "Очищающее пламя", "desc": "26 урона + Огонь врагам в радиусе 1 от цели."},
+                 "effects": [{"type": "damage", "amount": 26, "radius": 1, "tag": "fire", "kind": "spell"}]}]},
+      {"name": "Костёр", "desc": "+8 урона, под целью горит земля 5 сек.",
+       "mods": [{"set": {"desc": "34 урона + Огонь врагам в радиусе 1 от цели, земля горит 5 сек."}},
+                {"effect": {"type": "damage", "add": {"amount": 8}}},
+                {"add_effect": {"type": "hazard", "hazard": "fire", "radius": 0, "duration": 5}}]}
+    ]},
+    "B": {"name": "Свет возмездия", "tiers": [
+      {"name": "Свет возмездия", "desc": "Союзники рядом с целью (радиус 2) лечатся на 18.",
+       "mods": [{"set": {"name": "Свет возмездия", "desc": "30 урона (×1.6 при HP < 40%); союзники в радиусе 2 от цели +18 HP."}},
+                {"add_effect": {"type": "heal", "amount": 18, "radius": 2, "affects": "allies"}}]},
+      {"name": "Благодать", "desc": "Лечение +12, излишек становится щитом.",
+       "mods": [{"set": {"desc": "30 урона (×1.6 при HP < 40%); союзники в радиусе 2 от цели +30 HP, излишек — щит."}},
+                {"effect": {"type": "heal", "add": {"amount": 12}, "set": {"overheal_shield": true}}}]}
+    ]}
+  },
+  "shadow_step": {
+    "A": {"name": "Танец клинков", "tiers": [
+      {"name": "Танец клинков", "desc": "26 урона, перезарядка 3 сек, затем атаки быстрее.", "mods": [{"set": {"name": "Танец клинков", "desc": "Прыжок к врагу: 26 урона (×1.6 в спину), 4 сек атаки на 40% быстрее.", "cooldown": 3}, "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 26, "kind": "melee", "backstab": 1.6}, {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 4, "at": "caster"}]}]},
+      {"name": "Вихрь теней", "desc": "Ещё 12 урона врагам рядом с целью.", "mods": [{"set": {"desc": "Прыжок к врагу: 26 урона (×1.6 в спину), 12 урона врагам рядом, атаки быстрее 4 сек."}}, {"add_effect": {"type": "damage", "amount": 12, "kind": "melee", "radius": 1}}]}]},
+    "B": {"name": "Убийца магов", "tiers": [
+      {"name": "Перехват", "desc": "Оглушает цель на 1.5 сек — срывает каст.", "mods": [{"set": {"name": "Перехват", "desc": "Прыжок к врагу: 18 урона и оглушение 1.5 сек.", "auto": {"on": true, "conds": [{"type": "target_casting"}]}}, "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 18, "kind": "melee", "backstab": 1.5}, {"type": "stun", "duration": 1.5}]}]},
+      {"name": "Немота", "desc": "Цель получает +30% урона 6 сек.", "mods": [{"set": {"desc": "Прыжок к врагу: 18 урона, оглушение 1.5 сек, цель получает +30% урона 6 сек."}}, {"add_effect": {"type": "buff", "stat": "dmg_taken", "value": 1.3, "duration": 6, "affects": "enemies"}}]}]}
+  },
+  "venom_blade": {
+    "A": {"name": "Смертельный яд", "tiers": [
+      {"name": "Смертельный яд", "desc": "Атаки ещё и ×1.25.", "mods": [{"set": {"desc": "8 сек атаки накладывают Яд и бьют ×1.25."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 8}}]},
+      {"name": "Некроз", "desc": "Действует 12 сек, перезарядка 8.", "mods": [{"set": {"desc": "12 сек атаки накладывают Яд и бьют ×1.25.", "cooldown": 8}}, {"effect": {"type": "buff", "set": {"duration": 12}}}]}]},
+    "B": {"name": "Отравленный дротик", "tiers": [
+      {"name": "Отравленный дротик", "desc": "Дротик на 4 клетки: 10 урона + Яд, замедление.", "mods": [{"set": {"name": "Отравленный дротик", "desc": "Дротик (дальность 4): 10 урона + Яд, замедление 4 сек.", "target": "enemy", "range": 4, "cooldown": 3, "auto": {"on": true, "conds": []}}, "effects": [{"type": "damage", "amount": 10, "kind": "ranged", "tag": "poison", "on_hit_buff": {"stat": "slow", "value": 1.5, "duration": 4}}]}]},
+      {"name": "Ядовитые брызги", "desc": "Яд перескакивает ещё на 2 врагов.", "mods": [{"set": {"desc": "Дротик: 10 урона + Яд, замедление; яд перескакивает на 2 врагов рядом (8 урона)."}}, {"add_effect": {"type": "chain", "jumps": 2, "range": 2, "amount": 8, "tag": "poison", "kind": "ranged"}}]}]}
+  },
+  "vanish": {
+    "A": {"name": "Засада", "tiers": [
+      {"name": "Засада", "desc": "Удар из тени ×2.2, тень 6 сек.", "mods": [{"set": {"desc": "Тень на 6 сек: враги теряют цель, удар из тени ×2.2."}}, {"effect": {"type": "stealth", "set": {"duration": 6, "mult": 2.2}}}]},
+      {"name": "Призрак", "desc": "В тени двигается на 40% быстрее.", "mods": [{"set": {"desc": "Тень на 6 сек, удар из тени ×2.2, движение на 40% быстрее."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 0.6, "duration": 6}}]}]},
+    "B": {"name": "Отход", "tiers": [
+      {"name": "Отход", "desc": "Прыжок на клетку до 3 и тень на 3 сек.", "mods": [{"set": {"name": "Отход", "desc": "Прыжок на клетку до 3, затем тень 3 сек (удар из тени ×1.8).", "target": "cell", "range": 3, "free_cell": true, "cooldown": 10}, "effects": [{"type": "teleport"}, {"type": "stealth", "duration": 3, "mult": 1.8, "at": "caster"}]}]},
+      {"name": "Дымная завеса", "desc": "На месте прыжка — ядовитое облако.", "mods": [{"set": {"desc": "Ядовитое облако на старой клетке, прыжок до 3, тень 3 сек."}}, {"effects": [{"type": "hazard", "hazard": "poison", "duration": 5, "at": "caster"}, {"type": "teleport"}, {"type": "stealth", "duration": 3, "mult": 1.8, "at": "caster"}]}]}]}
+  },
+  "shadow_mark": {
+    "A": {"name": "Охота", "tiers": [
+      {"name": "Охота", "desc": "Ещё и Яд на цель.", "mods": [{"set": {"desc": "Цель: +35% урона 6 сек и Яд."}}, {"add_effect": {"type": "status", "tag": "poison"}}]},
+      {"name": "Приговор тени", "desc": "+50% урона вместо +35%.", "mods": [{"set": {"desc": "Цель: +50% урона 6 сек и Яд."}}, {"effect": {"type": "buff", "set": {"value": 1.5}}}]}]},
+    "B": {"name": "Слабое место", "tiers": [
+      {"name": "Слабое место", "desc": "Цель теряет 4 брони на 6 сек.", "mods": [{"set": {"name": "Слабое место", "desc": "Цель: −4 брони и +20% урона 6 сек."}, "effects": [{"type": "buff", "stat": "armor", "value": -4, "duration": 6, "affects": "enemies"}, {"type": "buff", "stat": "dmg_taken", "value": 1.2, "duration": 6, "affects": "enemies"}]}]},
+      {"name": "Разоблачение", "desc": "Ещё и оглушение 1 сек.", "mods": [{"set": {"desc": "Цель: −4 брони, +20% урона 6 сек, оглушение 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]}]}
+  },
+  "riposte": {
+    "A": {"name": "Дуэль", "tiers": [
+      {"name": "Дуэль", "desc": "Ещё и атаки на 40% быстрее.", "mods": [{"set": {"desc": "4 сек: +4 брони, отражение 80%, атаки быстрее."}}, {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 4}}]},
+      {"name": "Мастер клинка", "desc": "Длится 6 сек.", "mods": [{"set": {"desc": "6 сек: +4 брони, отражение 80%, атаки быстрее."}}, {"effect": {"type": "buff", "set": {"duration": 6}}}]}]},
+    "B": {"name": "Уход в сторону", "tiers": [
+      {"name": "Уход в сторону", "desc": "Вместо брони — уклонение: урон по ассасину ×0.4.", "mods": [{"set": {"name": "Уход в сторону", "desc": "4 сек урон по ассасину ×0.4 и отражение 50%."}, "effects": [{"type": "buff", "stat": "dmg_taken", "value": 0.4, "duration": 4}, {"type": "buff", "stat": "thorns", "value": 0.5, "duration": 4}]}]},
+      {"name": "Тень клинка", "desc": "Затем 2 сек тени.", "mods": [{"set": {"desc": "4 сек урон ×0.4, отражение 50%, затем тень (удар ×1.6)."}}, {"add_effect": {"type": "stealth", "duration": 2, "mult": 1.6}}]}]}
+  },
+  "bear_form": {
+    "A": {"name": "Медведь-страж", "tiers": [
+      {"name": "Медведь-страж", "desc": "Превращение провоцирует врагов рядом на 4 сек.", "mods": [{"set": {"desc": "Медведь (+4 брони, +40 HP, атака ×1.8); враги рядом атакуют его 4 сек."}}, {"add_effect": {"type": "taunt", "radius": 1, "duration": 4}}]},
+      {"name": "Шкура", "desc": "И щит 30.", "mods": [{"set": {"desc": "Медведь, провокация рядом 4 сек и щит 30."}}, {"add_effect": {"type": "shield", "amount": 30, "duration": 6}}]}]},
+    "B": {"name": "Ярость зверя", "tiers": [
+      {"name": "Ярость зверя", "desc": "Превращение даёт атаки на 30% быстрее 5 сек.", "mods": [{"set": {"desc": "Медведь (+4 брони, +40 HP, атака ×1.8); 5 сек атаки быстрее."}}, {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 5}}]},
+      {"name": "Вкус крови", "desc": "И лечит на 25.", "mods": [{"set": {"desc": "Медведь, атаки быстрее 5 сек, лечение 25."}}, {"add_effect": {"type": "heal", "amount": 25}}]}]}
+  },
+  "entangle": {
+    "A": {"name": "Терновник", "tiers": [
+      {"name": "Терновник", "desc": "14 урона, терновник 6 сек.", "mods": [{"set": {"desc": "Радиус 1: 14 урона, оглушение 1.2 сек, терновник 6 сек."}}, {"effect": {"type": "damage", "set": {"amount": 14}}}, {"effect": {"type": "hazard", "set": {"duration": 6}}}]},
+      {"name": "Дикие заросли", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: 14 урона, оглушение 1.2 сек, терновник 6 сек.", "radius": 2}}, {"radius_add": 1}]}]},
+    "B": {"name": "Удушение", "tiers": [
+      {"name": "Удушение", "desc": "Одна цель: оглушение 2.5 сек и Яд.", "mods": [{"set": {"name": "Удушение", "desc": "Враг (дальность 4): оглушение 2.5 сек и Яд.", "target": "enemy", "radius": 0, "auto": {"on": true, "conds": [{"type": "target_casting"}]}}, "effects": [{"type": "stun", "duration": 2.5}, {"type": "status", "tag": "poison"}]}]},
+      {"name": "Хватка земли", "desc": "И 20 урона.", "mods": [{"set": {"desc": "Враг: 20 урона, оглушение 2.5 сек и Яд."}}, {"add_effect": {"type": "damage", "amount": 20, "kind": "spell"}}]}]}
+  },
+  "rejuvenate": {
+    "A": {"name": "Цветение", "tiers": [
+      {"name": "Цветение", "desc": "И союзникам рядом.", "mods": [{"set": {"desc": "Союзник и все рядом: 8 HP/сек 5 сек.", "radius": 1}}, {"effect": {"type": "buff", "set": {"radius": 1}}}]},
+      {"name": "Очищение росой", "desc": "Ещё и снимает теги.", "mods": [{"set": {"desc": "Союзник и все рядом: 8 HP/сек 5 сек, теги сняты."}}, {"add_effect": {"type": "cleanse", "radius": 1}}]}]},
+    "B": {"name": "Живая кора", "tiers": [
+      {"name": "Живая кора", "desc": "Ещё +3 брони на 6 сек.", "mods": [{"set": {"desc": "Союзник: 8 HP/сек 5 сек и +3 брони 6 сек."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 3, "duration": 6}}]},
+      {"name": "Шипы коры", "desc": "И отражает 40% ближнего урона.", "mods": [{"set": {"desc": "Союзник: регенерация, +3 брони, отражение 40%."}}, {"add_effect": {"type": "buff", "stat": "thorns", "value": 0.4, "duration": 6}}]}]}
+  },
+  "wolf_form": {
+    "A": {"name": "Вожак", "tiers": [
+      {"name": "Вожак", "desc": "Превращение даёт атаки ×1.2 на 6 сек.", "mods": [{"set": {"desc": "Волк; 6 сек атаки ещё ×1.2."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 6}}]},
+      {"name": "Загонщик", "desc": "Враги рядом замедлены.", "mods": [{"set": {"desc": "Волк, атаки ×1.2 6 сек, враги рядом замедлены 4 сек."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.6, "duration": 4, "radius": 1, "affects": "enemies"}}]}]},
+    "B": {"name": "Вой", "tiers": [
+      {"name": "Вой", "desc": "Союзники в радиусе 2: атаки ×1.2 на 6 сек.", "mods": [{"set": {"desc": "Волк; союзники в радиусе 2 бьют ×1.2 6 сек."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 6, "radius": 2}}]},
+      {"name": "Леденящий вой", "desc": "Враги в радиусе 2 получают +20% урона.", "mods": [{"set": {"desc": "Волк, союзники бьют ×1.2, враги в радиусе 2 получают +20% урона 6 сек."}}, {"add_effect": {"type": "buff", "stat": "dmg_taken", "value": 1.2, "duration": 6, "radius": 2, "affects": "enemies"}}]}]}
+  },
+  "spirit_tree": {
+    "A": {"name": "Роща", "tiers": [
+      {"name": "Роща", "desc": "Древо живёт 20 сек.", "mods": [{"set": {"desc": "Древо 20 сек: лечит в радиусе 2 на 7/сек."}}, {"effect": {"type": "summon", "set": {"duration": 20}}}]},
+      {"name": "Могучее древо", "desc": "Лечит на 40% сильнее.", "mods": [{"set": {"desc": "Древо 20 сек: лечит в радиусе 2, сила ×1.4."}}, {"effect": {"type": "summon", "set": {"power": 1.4}}}]}]},
+    "B": {"name": "Страж-энт", "tiers": [
+      {"name": "Страж-энт", "desc": "Вместо древа — энт: бьёт врагов и провоцирует их.", "mods": [{"set": {"name": "Страж-энт", "desc": "Энт 14 сек: провоцирует врагов в радиусе 2, бьёт рядом.", "place": "foes", "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]}}, "effects": [{"type": "summon", "unit": "ent", "duration": 14}]}]},
+      {"name": "Древний энт", "desc": "Энт крепче и сильнее на 50%.", "mods": [{"set": {"desc": "Энт 14 сек, сила ×1.5."}}, {"effect": {"type": "summon", "set": {"power": 1.5}}}]}]}
+  },
+  "lunge": {
+    "A": {"name": "Пронзатель", "tiers": [
+      {"name": "Пронзатель", "desc": "4 клетки, 30 урона.", "mods": [{"set": {"desc": "Копьё пробивает 4 клетки: 30 урона каждому."}}, {"effect": {"type": "line", "set": {"length": 4, "amount": 30}}}]},
+      {"name": "Бронебой", "desc": "Пробитые теряют 3 брони на 6 сек.", "mods": [{"set": {"desc": "4 клетки: 30 урона, −3 брони 6 сек."}}, {"effect": {"type": "line", "set": {"on_hit_buff": {"stat": "armor", "value": -3, "duration": 6}}}}]}]},
+    "B": {"name": "Сокрушитель строя", "tiers": [
+      {"name": "Сокрушитель строя", "desc": "Одна цель: 28 урона и отталкивание на 1.", "mods": [{"set": {"name": "Сокрушитель строя", "desc": "Враг (дальность 2): 28 урона и отталкивание на 1."}, "effects": [{"type": "damage", "amount": 28, "kind": "melee"}, {"type": "knockback", "cells": 1}]}]},
+      {"name": "Опрокинуть", "desc": "И оглушение 1 сек.", "mods": [{"set": {"desc": "Враг: 28 урона, отталкивание и оглушение 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]}]}
+  },
+  "hook": {
+    "A": {"name": "Цепь", "tiers": [
+      {"name": "Цепь", "desc": "Притянутый оглушён на 1.2 сек.", "mods": [{"set": {"desc": "Притягивает врага на 3 клетки: 10 урона и оглушение 1.2 сек."}}, {"add_effect": {"type": "stun", "duration": 1.2}}]},
+      {"name": "Длинная цепь", "desc": "Дальность 5.", "mods": [{"set": {"desc": "Дальность 5: притягивает, 10 урона, оглушение 1.2 сек.", "range": 5}}]}]},
+    "B": {"name": "Подсечка", "tiers": [
+      {"name": "Подсечка", "desc": "Без притягивания: 16 урона и оглушение 1.5 сек (дальность 2).", "mods": [{"set": {"name": "Подсечка", "desc": "Враг (дальность 2): 16 урона и оглушение 1.5 сек.", "range": 2}, "effects": [{"type": "damage", "amount": 16, "kind": "melee"}, {"type": "stun", "duration": 1.5}]}]},
+      {"name": "Круговая подсечка", "desc": "По всем врагам рядом с целью.", "mods": [{"set": {"desc": "Враг и все рядом: 16 урона и оглушение 1.5 сек.", "radius": 1}}, {"effect": {"type": "damage", "set": {"radius": 1}}}, {"effect": {"type": "stun", "set": {"radius": 1}}}]}]}
+  },
+  "shield_wall": {
+    "A": {"name": "Фаланга", "tiers": [
+      {"name": "Фаланга", "desc": "Щит 25 союзникам в радиусе 2.", "mods": [{"set": {"desc": "+5 брони себе, щит 25 союзникам в радиусе 2.", "radius": 2}}, {"effect": {"type": "shield", "set": {"radius": 2, "amount": 25}}}]},
+      {"name": "Строй", "desc": "Союзникам рядом ещё +3 брони.", "mods": [{"set": {"desc": "+5 брони себе, щит 25 и +3 брони союзникам в радиусе 2."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 3, "duration": 6, "radius": 2}}]}]},
+    "B": {"name": "Ёж", "tiers": [
+      {"name": "Ёж", "desc": "Отражает 60% ближнего урона 6 сек.", "mods": [{"set": {"desc": "+5 брони и отражение 60% ближнего урона 6 сек."}}, {"add_effect": {"type": "buff", "stat": "thorns", "value": 0.6, "duration": 6}}]},
+      {"name": "Вызов", "desc": "Враги в радиусе 2 атакуют стража 4 сек.", "mods": [{"set": {"desc": "+5 брони, отражение 60%, провокация в радиусе 2."}}, {"add_effect": {"type": "taunt", "radius": 2, "duration": 4}}]}]}
+  },
+  "brace": {
+    "A": {"name": "Несокрушимый", "tiers": [
+      {"name": "Несокрушимый", "desc": "+6 брони вместо +3.", "mods": [{"set": {"desc": "5 сек: +6 брони и атаки быстрее."}}, {"effects": [{"type": "buff", "stat": "armor", "value": 6, "duration": 5}, {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 5}]}]},
+      {"name": "Скала", "desc": "Иммунитет к тегам.", "mods": [{"set": {"desc": "5 сек: +6 брони, атаки быстрее, иммунитет к тегам."}}, {"add_effect": {"type": "buff", "stat": "immune", "value": 1, "duration": 5}}]}]},
+    "B": {"name": "Шквал копий", "tiers": [
+      {"name": "Шквал копий", "desc": "Атаки ×1.3.", "mods": [{"set": {"desc": "5 сек: +3 брони, атаки быстрее и ×1.3."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.3, "duration": 5}}]},
+      {"name": "Буря стали", "desc": "Длится 8 сек.", "mods": [{"set": {"desc": "8 сек: +3 брони, атаки быстрее и ×1.3."}}, {"effect": {"type": "buff", "set": {"duration": 8}}}]}]}
+  },
+  "jump_strike": {
+    "A": {"name": "Пикирование", "tiers": [
+      {"name": "Пикирование", "desc": "36 урона.", "mods": [{"set": {"desc": "Прыжок до 4: 36 урона рядом, оглушение 0.8 сек."}}, {"effect": {"type": "damage", "set": {"amount": 36}}}]},
+      {"name": "Падение с небес", "desc": "Дальность 6.", "mods": [{"set": {"desc": "Прыжок до 6: 36 урона рядом, оглушение 0.8 сек.", "range": 6}}]}]},
+    "B": {"name": "Удар хвостом", "tiers": [
+      {"name": "Удар хвостом", "desc": "Отбрасывает врагов на 2.", "mods": [{"set": {"desc": "Прыжок до 4: 28 урона, отбрасывание на 2."}}, {"effects": [{"type": "teleport"}, {"type": "damage", "amount": 28, "kind": "melee", "radius": 1}, {"type": "knockback", "cells": 2, "radius": 1}]}]},
+      {"name": "Боевой порыв", "desc": "Затем атаки быстрее 4 сек.", "mods": [{"set": {"desc": "Прыжок, 28 урона, отбрасывание, атаки быстрее 4 сек."}}, {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 4, "at": "caster"}}]}]}
+  },
+  "chain_lightning": {
+    "A": {"name": "Буря", "tiers": [
+      {"name": "Буря", "desc": "Перескакивает на 4.", "mods": [{"set": {"desc": "22 урона + Гроза, перескакивает на 4 врагов (14)."}}, {"effect": {"type": "chain", "set": {"jumps": 4}}}]},
+      {"name": "Сверхпроводник", "desc": "Прыжки на 4 клетки, 18 урона.", "mods": [{"set": {"desc": "22 урона + Гроза, 4 прыжка по 18 до 4 клеток."}}, {"effect": {"type": "chain", "set": {"range": 4, "amount": 18}}}]}]},
+    "B": {"name": "Удар грома", "tiers": [
+      {"name": "Удар грома", "desc": "По клетке: 30 урона + Гроза в радиусе 1, оглушение 1 сек.", "mods": [{"set": {"name": "Удар грома", "desc": "Радиус 1: 30 урона + Гроза, оглушение 1 сек.", "target": "cell", "radius": 1, "cast": 1.0, "cooldown": 5, "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]}}, "effects": [{"type": "damage", "amount": 30, "kind": "spell", "radius": 1, "tag": "storm"}, {"type": "stun", "duration": 1.0, "radius": 1}]}]},
+      {"name": "Раскат", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: 30 урона + Гроза, оглушение 1 сек.", "radius": 2}}, {"radius_add": 1}]}]}
+  },
+  "storm_totem": {
+    "A": {"name": "Громовой тотем", "tiers": [
+      {"name": "Громовой тотем", "desc": "Живёт 16 сек.", "mods": [{"set": {"desc": "Тотем 16 сек бьёт молнией в радиусе 3."}}, {"effect": {"type": "summon", "set": {"duration": 16}}}]},
+      {"name": "Пара тотемов", "desc": "Можно держать два тотема, сила ×1.3.", "mods": [{"set": {"desc": "До двух тотемов по 16 сек, сила ×1.3."}}, {"effect": {"type": "summon", "set": {"limit": 2, "power": 1.3}}}]}]},
+    "B": {"name": "Тотем бури", "tiers": [
+      {"name": "Тотем бури", "desc": "Тотем раз в 2 сек бьёт всех врагов в радиусе 2 (10 + Гроза).", "mods": [{"set": {"name": "Тотем бури", "desc": "Тотем 12 сек: раз в 2 сек 10 урона + Гроза всем врагам в радиусе 2."}, "effects": [{"type": "summon", "unit": "totem_thunder", "duration": 12}]}]},
+      {"name": "Око бури", "desc": "Живёт 16 сек, сила ×1.3.", "mods": [{"set": {"desc": "Тотем бури 16 сек, сила ×1.3."}}, {"effect": {"type": "summon", "set": {"duration": 16, "power": 1.3}}}]}]}
+  },
+  "healing_totem": {
+    "A": {"name": "Родник", "tiers": [
+      {"name": "Родник", "desc": "Лечит на 40% сильнее.", "mods": [{"set": {"desc": "Тотем 12 сек лечит в радиусе 2, сила ×1.4."}}, {"effect": {"type": "summon", "set": {"power": 1.4}}}]},
+      {"name": "Источник жизни", "desc": "Живёт 18 сек.", "mods": [{"set": {"desc": "Тотем 18 сек лечит в радиусе 2, сила ×1.4."}}, {"effect": {"type": "summon", "set": {"duration": 18}}}]}]},
+    "B": {"name": "Тотем-страж", "tiers": [
+      {"name": "Тотем-страж", "desc": "Тотем провоцирует врагов в радиусе 2.", "mods": [{"set": {"name": "Тотем-страж", "desc": "Тотем 12 сек: крепкий, раз в 3 сек провоцирует врагов в радиусе 2.", "place": "foes", "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 60}]}}, "effects": [{"type": "summon", "unit": "totem_ward", "duration": 12}]}]},
+      {"name": "Каменный идол", "desc": "Сила ×1.5.", "mods": [{"set": {"desc": "Тотем-страж 12 сек, сила ×1.5."}}, {"effect": {"type": "summon", "set": {"power": 1.5}}}]}]}
+  },
+  "thunderstorm": {
+    "A": {"name": "Ураган", "tiers": [
+      {"name": "Ураган", "desc": "34 урона.", "mods": [{"set": {"desc": "Радиус 2: 34 урона + Гроза, оглушение 0.6 сек."}}, {"effect": {"type": "damage", "set": {"amount": 34}}}]},
+      {"name": "Небесный гнев", "desc": "Каст 1 сек.", "mods": [{"set": {"desc": "Каст 1 сек, радиус 2: 34 урона + Гроза, оглушение.", "cast": 1.0}}]}]},
+    "B": {"name": "Ливень", "tiers": [
+      {"name": "Ливень", "desc": "Ещё и Вода: сразу готовит электрошок.", "mods": [{"set": {"desc": "Радиус 2: Вода, затем 26 урона + Гроза (электрошок!), оглушение 0.6 сек."}}, {"effects": [{"type": "status", "tag": "water", "radius": 2}, {"type": "damage", "amount": 26, "kind": "spell", "radius": 2, "tag": "storm"}, {"type": "stun", "duration": 0.6, "radius": 2}]}]},
+      {"name": "Потоп", "desc": "Клетки становятся лужами (Вода 6 сек).", "mods": [{"set": {"desc": "Ливень по радиусу 2, клетки мокрые."}}, {"add_effect": {"type": "cell_tag", "tag": "water", "radius": 2}}]}]}
+  },
+  "spirit_link": {
+    "A": {"name": "Предки", "tiers": [
+      {"name": "Предки", "desc": "Щит 45.", "mods": [{"set": {"desc": "Союзнику: щит 45 и 5 HP/сек."}}, {"effect": {"type": "shield", "set": {"amount": 45}}}]},
+      {"name": "Хор духов", "desc": "И всем рядом с ним.", "mods": [{"set": {"desc": "Союзнику и всем рядом: щит 45 и 5 HP/сек.", "radius": 1}}, {"effect": {"type": "shield", "set": {"radius": 1}}}, {"effect": {"type": "buff", "set": {"radius": 1}}}]}]},
+    "B": {"name": "Дух-проводник", "tiers": [
+      {"name": "Дух-проводник", "desc": "Союзник получает +2 AP.", "mods": [{"set": {"desc": "Союзнику: щит 30, регенерация и +2 AP."}}, {"add_effect": {"type": "refresh", "ap": 2}}]},
+      {"name": "Одержимость", "desc": "И атаки ×1.25 на 6 сек.", "mods": [{"set": {"desc": "Союзнику: щит 30, регенерация, +2 AP, атаки ×1.25."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 6}}]}]}
+  },
+  "war_song": {
+    "A": {"name": "Марш", "tiers": [
+      {"name": "Марш", "desc": "И движение на 25% быстрее, 10 сек.", "mods": [{"set": {"desc": "Союзники в радиусе 3: атаки ×1.25, AP быстрее, бег быстрее 10 сек."}}, {"effect": {"type": "buff", "set": {"duration": 10}}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 0.75, "duration": 10, "radius": 3}}]},
+      {"name": "Барабаны войны", "desc": "И атаки на 20% чаще.", "mods": [{"set": {"desc": "Марш: ещё и атаки на 20% чаще."}}, {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.8, "duration": 10, "radius": 3}}]}]},
+    "B": {"name": "Гимн стойкости", "tiers": [
+      {"name": "Гимн стойкости", "desc": "Вместо урона: +3 брони и 4 HP/сек.", "mods": [{"set": {"name": "Гимн стойкости", "desc": "Союзники в радиусе 3: +3 брони, 4 HP/сек, AP на 25% быстрее 8 сек."}, "effects": [{"type": "buff", "stat": "armor", "value": 3, "duration": 8, "radius": 3}, {"type": "buff", "stat": "regen", "value": 4, "duration": 8, "radius": 3}, {"type": "buff", "stat": "ap_rate", "value": 0.75, "duration": 8, "radius": 3}]}]},
+      {"name": "Щит песни", "desc": "И щит 20.", "mods": [{"set": {"desc": "Гимн стойкости и щит 20 всем в радиусе 3."}}, {"add_effect": {"type": "shield", "amount": 20, "duration": 8, "radius": 3}}]}]}
+  },
+  "lullaby": {
+    "A": {"name": "Глубокий сон", "tiers": [
+      {"name": "Глубокий сон", "desc": "Сон 6 сек.", "mods": [{"set": {"desc": "Радиус 1: сон 6 сек."}}, {"effect": {"type": "sleep", "set": {"duration": 6}}}]},
+      {"name": "Сонное царство", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: сон 6 сек.", "radius": 2}}, {"radius_add": 1}]}]},
+    "B": {"name": "Диссонанс", "tiers": [
+      {"name": "Диссонанс", "desc": "Не усыпляет: 14 урона и +25% урона по целям 6 сек.", "mods": [{"set": {"name": "Диссонанс", "desc": "Радиус 1: 14 урона, враги получают +25% урона 6 сек."}, "effects": [{"type": "damage", "amount": 14, "kind": "spell", "radius": 1}, {"type": "buff", "stat": "dmg_taken", "value": 1.25, "duration": 6, "radius": 1, "affects": "enemies"}]}]},
+      {"name": "Какофония", "desc": "И оглушение 0.8 сек.", "mods": [{"set": {"desc": "Радиус 1: 14 урона, +25% урона по ним, оглушение 0.8 сек."}}, {"add_effect": {"type": "stun", "duration": 0.8, "radius": 1}}]}]}
+  },
+  "inspire": {
+    "A": {"name": "Вдохновение", "tiers": [
+      {"name": "Вдохновение", "desc": "4 AP и атаки ×1.2 на 5 сек.", "mods": [{"set": {"desc": "Союзник: +4 AP, перезарядки сброшены, атаки ×1.2 5 сек."}}, {"effect": {"type": "refresh", "set": {"ap": 4}}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 5}}]},
+      {"name": "Овация", "desc": "Перезарядка 5 сек.", "mods": [{"set": {"desc": "Союзник: +4 AP, перезарядки сброшены, атаки ×1.2.", "cooldown": 5}}]}]},
+    "B": {"name": "Баллада о подвигах", "tiers": [
+      {"name": "Баллада о подвигах", "desc": "Всем рядом с целью: +2 AP.", "mods": [{"set": {"desc": "Союзник и все рядом: +2 AP, перезарядки сброшены.", "radius": 1}}, {"effect": {"type": "refresh", "set": {"ap": 2, "radius": 1}}}]},
+      {"name": "Песнь исцеления", "desc": "И лечит на 20.", "mods": [{"set": {"desc": "Союзник и все рядом: +2 AP, сброс перезарядок, лечение 20."}}, {"add_effect": {"type": "heal", "amount": 20, "radius": 1}}]}]}
+  },
+  "sonic_blast": {
+    "A": {"name": "Рёв скальда", "tiers": [
+      {"name": "Рёв скальда", "desc": "26 урона.", "mods": [{"set": {"desc": "Радиус 2: 26 урона и отбрасывание."}}, {"effect": {"type": "damage", "set": {"amount": 26}}}]},
+      {"name": "Оглушительный рёв", "desc": "И оглушение 1 сек.", "mods": [{"set": {"desc": "Радиус 2: 26 урона, отбрасывание, оглушение 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0, "radius": 2}}]}]},
+    "B": {"name": "Боевой клич", "tiers": [
+      {"name": "Боевой клич", "desc": "Союзники в радиусе 2: атаки ×1.3 на 5 сек.", "mods": [{"set": {"desc": "Радиус 2: 18 урона врагам, отбрасывание; союзники бьют ×1.3 5 сек."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.3, "duration": 5, "radius": 2}}]},
+      {"name": "Песнь берсерков", "desc": "И атаки на 30% чаще.", "mods": [{"set": {"desc": "Клич: ещё и атаки союзников на 30% чаще."}}, {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 5, "radius": 2}}]}]}
+  },
+  "serenade": {
+    "A": {"name": "Колыбель жизни", "tiers": [
+      {"name": "Колыбель жизни", "desc": "9 HP/сек.", "mods": [{"set": {"desc": "Радиус 3: 9 HP/сек 6 сек, теги сняты."}}, {"effect": {"type": "buff", "set": {"value": 9}}}]},
+      {"name": "Иммунитет", "desc": "Иммунитет к тегам на 5 сек.", "mods": [{"set": {"desc": "Радиус 3: 9 HP/сек, теги сняты, иммунитет 5 сек."}}, {"add_effect": {"type": "buff", "stat": "immune", "value": 1, "duration": 5, "radius": 3}}]}]},
+    "B": {"name": "Мелодия ветра", "tiers": [
+      {"name": "Мелодия ветра", "desc": "И AP на 30% быстрее 6 сек.", "mods": [{"set": {"desc": "Радиус 3: 6 HP/сек, теги сняты, AP быстрее 6 сек."}}, {"add_effect": {"type": "buff", "stat": "ap_rate", "value": 0.7, "duration": 6, "radius": 3}}]},
+      {"name": "Попутный ветер", "desc": "И бег быстрее.", "mods": [{"set": {"desc": "Радиус 3: регенерация, AP и бег быстрее, теги сняты."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 0.7, "duration": 6, "radius": 3}}]}]}
+  },
+  "fire_bomb": {
+    "A": {"name": "Напалм", "tiers": [
+      {"name": "Напалм", "desc": "Горит весь радиус 4 сек.", "mods": [{"set": {"desc": "Радиус 1: 20 урона + Огонь, клетки горят 4 сек."}}, {"effect": {"type": "hazard", "set": {"radius": 1, "duration": 4}}}]},
+      {"name": "Жидкий огонь", "desc": "26 урона.", "mods": [{"set": {"desc": "Радиус 1: 26 урона + Огонь, клетки горят 4 сек."}}, {"effect": {"type": "damage", "set": {"amount": 26}}}]}]},
+    "B": {"name": "Осколочная", "tiers": [
+      {"name": "Осколочная", "desc": "Без огня: 28 урона и отбрасывание.", "mods": [{"set": {"name": "Осколочная бомба", "desc": "Радиус 1: 28 урона и отбрасывание на 1."}, "effects": [{"type": "damage", "amount": 28, "kind": "ranged", "radius": 1}, {"type": "knockback", "cells": 1, "radius": 1}]}]},
+      {"name": "Картечь", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: 28 урона и отбрасывание.", "radius": 2}}, {"radius_add": 1}]}]}
+  },
+  "oil_flask": {
+    "A": {"name": "Горючая смесь", "tiers": [
+      {"name": "Горючая смесь", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: Масло на врагов и масляные лужи 8 сек.", "radius": 2}}, {"radius_add": 1}]},
+      {"name": "Липкая смесь", "desc": "Враги замедлены 4 сек.", "mods": [{"set": {"desc": "Радиус 2: Масло, лужи, замедление 4 сек."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.5, "duration": 4, "radius": 2, "affects": "enemies"}}]}]},
+    "B": {"name": "Кислота", "tiers": [
+      {"name": "Кислота", "desc": "Вместо масла: 6 урона + Яд, −3 брони, ядовитая лужа.", "mods": [{"set": {"name": "Кислотная склянка", "desc": "Радиус 1: 6 урона + Яд, −3 брони 6 сек, ядовитая лужа 6 сек."}, "effects": [{"type": "damage", "amount": 6, "kind": "spell", "radius": 1, "tag": "poison"}, {"type": "buff", "stat": "armor", "value": -3, "duration": 6, "radius": 1, "affects": "enemies"}, {"type": "hazard", "hazard": "poison", "duration": 6, "radius": 1}]}]},
+      {"name": "Царская водка", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: Яд, −3 брони, ядовитые лужи.", "radius": 2}}, {"radius_add": 1}]}]}
+  },
+  "healing_potion": {
+    "A": {"name": "Эликсир", "tiers": [
+      {"name": "Эликсир", "desc": "Лечит на 40 и снимает теги.", "mods": [{"set": {"desc": "Союзник и все рядом: лечение 40, теги сняты."}}, {"effect": {"type": "heal", "set": {"amount": 40}}}, {"add_effect": {"type": "cleanse", "radius": 1}}]},
+      {"name": "Панацея", "desc": "И 5 HP/сек 4 сек.", "mods": [{"set": {"desc": "Лечение 40, теги сняты, затем 5 HP/сек 4 сек."}}, {"add_effect": {"type": "buff", "stat": "regen", "value": 5, "duration": 4, "radius": 1}}]}]},
+    "B": {"name": "Зелье силы", "tiers": [
+      {"name": "Зелье силы", "desc": "Лечит на 15, атаки ×1.3 и быстрее 6 сек.", "mods": [{"set": {"name": "Зелье силы", "desc": "Союзник и все рядом: лечение 15, атаки ×1.3 и на 20% чаще 6 сек.", "auto": {"on": true, "conds": []}}, "effects": [{"type": "heal", "amount": 15, "radius": 1}, {"type": "buff", "stat": "atk_mult", "value": 1.3, "duration": 6, "radius": 1}, {"type": "buff", "stat": "atk_speed", "value": 0.8, "duration": 6, "radius": 1}]}]},
+      {"name": "Эликсир гиганта", "desc": "И +3 брони.", "mods": [{"set": {"desc": "Зелье силы и +3 брони 6 сек."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 3, "duration": 6, "radius": 1}}]}]}
+  },
+  "mine": {
+    "A": {"name": "Минное поле", "tiers": [
+      {"name": "Минное поле", "desc": "Мины в радиусе 1 (5 сек перезарядка).", "mods": [{"set": {"desc": "Мины на всех клетках радиуса 1 (30 сек).", "radius": 1, "cooldown": 5}}, {"effect": {"type": "hazard", "set": {"radius": 1}}}]},
+      {"name": "Растяжки", "desc": "Дальность 5.", "mods": [{"set": {"desc": "Мины в радиусе 1, дальность 5.", "range": 5}}]}]},
+    "B": {"name": "Бочка с порохом", "tiers": [
+      {"name": "Бочка с порохом", "desc": "Взрыв сразу: радиус 1, 34 урона + Огонь.", "mods": [{"set": {"name": "Бочка с порохом", "desc": "Радиус 1: 34 урона + Огонь, отбрасывание.", "radius": 1, "cast": 0.8, "cooldown": 6, "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]}}, "effects": [{"type": "damage", "amount": 34, "kind": "spell", "radius": 1, "tag": "fire"}, {"type": "knockback", "cells": 1, "radius": 1}]}]},
+      {"name": "Пороховой склад", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: 34 урона + Огонь, отбрасывание.", "radius": 2}}, {"radius_add": 1}]}]}
+  },
+  "poison_cloud": {
+    "A": {"name": "Чума", "tiers": [
+      {"name": "Чума", "desc": "Облако 10 сек.", "mods": [{"set": {"desc": "Радиус 1: 8 урона + Яд, облако 10 сек."}}, {"effect": {"type": "hazard", "set": {"duration": 10}}}]},
+      {"name": "Мор", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: 8 урона + Яд, облако 10 сек.", "radius": 2}}, {"radius_add": 1}]}]},
+    "B": {"name": "Нервный газ", "tiers": [
+      {"name": "Нервный газ", "desc": "Ещё и замедление 4 сек.", "mods": [{"set": {"desc": "Радиус 1: Яд, облако, замедление 4 сек."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.6, "duration": 4, "radius": 1, "affects": "enemies"}}]},
+      {"name": "Паралич", "desc": "И враги бьют слабее (×0.7) 5 сек.", "mods": [{"set": {"desc": "Радиус 1: Яд, облако, замедление, атаки ×0.7."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 0.7, "duration": 5, "radius": 1, "affects": "enemies"}}]}]}
+  },
+  "consecrate": {
+    "A": {"name": "Святая земля", "tiers": [
+      {"name": "Святая земля", "desc": "Союзникам ещё 4 HP/сек 5 сек.", "mods": [{"set": {"desc": "Радиус 2: +20 HP и 4 HP/сек союзникам, 14 урона врагам."}}, {"add_effect": {"type": "buff", "stat": "regen", "value": 4, "duration": 5, "radius": 2}}]},
+      {"name": "Благословение", "desc": "И +2 брони союзникам.", "mods": [{"set": {"desc": "Святая земля и +2 брони союзникам на 5 сек."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 2, "duration": 5, "radius": 2}}]}]},
+    "B": {"name": "Кара небес", "tiers": [
+      {"name": "Кара небес", "desc": "Врагам 24 урона + Огонь.", "mods": [{"set": {"desc": "Радиус 2: +20 HP союзникам, 24 урона + Огонь врагам."}}, {"effect": {"type": "damage", "set": {"amount": 24, "tag": "fire"}}}]},
+      {"name": "Испепеление", "desc": "Враги оглушены на 1 сек.", "mods": [{"set": {"desc": "Кара небес и оглушение врагов 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0, "radius": 2}}]}]}
+  },
+  "headshot": {
+    "A": {"name": "Охотник за головами", "tiers": [
+      {"name": "Охотник за головами", "desc": "55 урона.", "mods": [{"set": {"desc": "Дальность 8: 55 урона, ×1.5 по раненым."}}, {"effect": {"type": "damage", "set": {"amount": 55}}}]},
+      {"name": "Контрольный", "desc": "Добивание ×2.", "mods": [{"set": {"desc": "Дальность 8: 55 урона, ×2 по целям с HP < 30%."}}, {"effect": {"type": "damage", "set": {"execute": {"below": 0.3, "mult": 2.0}}}}]}]},
+    "B": {"name": "Подавление", "tiers": [
+      {"name": "Подавление", "desc": "Быстрый выстрел (каст 0.4): 30 урона и оглушение 1.2 сек.", "mods": [{"set": {"name": "Подавление", "desc": "Каст 0.4 сек: 30 урона и оглушение 1.2 сек.", "cast": 0.4, "auto": {"on": true, "conds": [{"type": "target_casting"}]}}, "effects": [{"type": "damage", "amount": 30, "kind": "ranged"}, {"type": "stun", "duration": 1.2}]}]},
+      {"name": "Прибить к земле", "desc": "И замедление 4 сек.", "mods": [{"set": {"desc": "30 урона, оглушение 1.2 сек, замедление 4 сек."}}, {"effect": {"type": "damage", "set": {"on_hit_buff": {"stat": "slow", "value": 1.6, "duration": 4}}}}]}]}
+  },
+  "blizzard": {
+    "A": {"name": "Вечная мерзлота", "tiers": [
+      {"name": "Вечная мерзлота", "desc": "Ледяные клетки 8 сек.", "mods": [{"set": {"desc": "Радиус 1: 20 урона + Лёд, ледяные клетки 8 сек."}}, {"effect": {"type": "hazard", "set": {"duration": 8}}}]},
+      {"name": "Ледник", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: 20 урона + Лёд, ледяные клетки 8 сек.", "radius": 2}}, {"radius_add": 1}]}]},
+    "B": {"name": "Ледяная игла", "tiers": [
+      {"name": "Ледяная игла", "desc": "Одна цель: 40 урона + Лёд, каст 0.8.", "mods": [{"set": {"name": "Ледяная игла", "desc": "Враг (дальность 5): каст 0.8, 40 урона + Лёд.", "target": "enemy", "radius": 0, "cast": 0.8, "auto": {"on": true, "conds": []}}, "effects": [{"type": "damage", "amount": 40, "kind": "spell", "tag": "ice"}]}]},
+      {"name": "Абсолютный ноль", "desc": "×2 по замороженным/оглушённым — оглушение 1 сек.", "mods": [{"set": {"desc": "Враг: 40 урона + Лёд и оглушение 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]}]}
+  },
+  "revive": {
+    "A": {"name": "Второе дыхание", "tiers": [
+      {"name": "Второе дыхание", "desc": "С 55% HP.", "mods": [{"set": {"desc": "Каст 2 сек: павший союзник встаёт с 55% HP."}}, {"effect": {"type": "revive", "set": {"pct": 0.55}}}]},
+      {"name": "Чудо", "desc": "Перезарядка 25.", "mods": [{"set": {"desc": "Каст 2 сек: павший союзник встаёт с 55% HP. Перезарядка 25.", "cooldown": 25}}]}]},
+    "B": {"name": "Быстрая молитва", "tiers": [
+      {"name": "Быстрая молитва", "desc": "Каст 0.8 сек, 30% HP.", "mods": [{"set": {"desc": "Каст 0.8 сек: павший союзник встаёт с 30% HP.", "cast": 0.8}}, {"effect": {"type": "revive", "set": {"pct": 0.3}}}]},
+      {"name": "Ангел-хранитель", "desc": "Воскрешённый получает щит 40.", "mods": [{"set": {"desc": "Каст 0.8 сек: встаёт с 30% HP и щитом 40."}}, {"add_effect": {"type": "shield", "amount": 40, "duration": 6, "radius": 1}}]}]}
+  },
+  "guard_ally": {
+    "A": {"name": "Щит-брат", "tiers": [
+      {"name": "Щит-брат", "desc": "Защита 12 сек и щит 20 союзнику.", "mods": [{"set": {"desc": "Прыжок к союзнику (до 3): 12 сек удары по нему идут в воина, союзнику щит 20."}}, {"effect": {"type": "guard", "set": {"duration": 12}}}, {"add_effect": {"type": "shield", "amount": 20, "duration": 6}}]},
+      {"name": "Стальной заслон", "desc": "Воин получает +3 брони на 8 сек.", "mods": [{"set": {"desc": "Прыжок к союзнику: 12 сек удары по нему идут в воина, щит 20, воину +3 брони 8 сек."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 3, "duration": 8, "at": "caster"}}]}]},
+    "B": {"name": "Опека", "tiers": [
+      {"name": "Дальний рывок", "desc": "Дальность 5, перезарядка 3 сек.", "mods": [{"set": {"desc": "Прыжок к союзнику (до 5): 8 сек удары по нему идут в воина.", "range": 5, "cooldown": 3}}]},
+      {"name": "Двойная опека", "desc": "Под защиту попадают и союзники рядом с целью.", "mods": [{"set": {"desc": "Прыжок к союзнику (до 5): он и союзники рядом 8 сек под защитой воина.", "radius": 1}}, {"effect": {"type": "guard", "set": {"radius": 1}}}]}]}
+  },
+  "overwatch": {
+    "A": {"name": "Сектор обстрела", "tiers": [
+      {"name": "Два выстрела", "desc": "Дозор стреляет дважды.", "mods": [{"set": {"desc": "Зона радиусом 1 на 10 сек: два первых вошедших врага получают выстрел ×2.5."}}, {"effect": {"type": "watch", "set": {"shots": 2}}}]},
+      {"name": "Широкий сектор", "desc": "Радиус зоны 2.", "mods": [{"set": {"desc": "Зона радиусом 2 на 10 сек: два первых вошедших врага получают выстрел ×2.5.", "radius": 2}}, {"effect": {"type": "watch", "set": {"radius": 2}}}]}]},
+    "B": {"name": "Особые стрелы", "tiers": [
+      {"name": "Огненная стрела", "desc": "Выстрел поджигает (Огонь) — работа для Пироманта.", "mods": [{"set": {"desc": "Зона радиусом 1 на 10 сек: первый вошедший враг получает огненный выстрел ×2.5."}}, {"effect": {"type": "watch", "set": {"tag": "fire"}}}]},
+      {"name": "Пригвоздить", "desc": "Выстрел оглушает на 1 сек.", "mods": [{"set": {"desc": "Зона радиусом 1 на 10 сек: первый вошедший враг — огненный выстрел ×2.5 и оглушение 1 сек."}}, {"effect": {"type": "watch", "set": {"stun": 1.0}}}]}]}
+  },
+  "flashpoint": {
+    "A": {"name": "Пожирание", "tiers": [
+      {"name": "Пожирание", "desc": "После вспышки маг получает щит 30.", "mods": [{"set": {"desc": "Горящее в радиусе 6 взрывается: 24 урона (горящим ×1.5), магу щит 30."}}, {"add_effect": {"type": "shield", "amount": 30, "duration": 6, "at": "caster"}}]},
+      {"name": "Испепеление", "desc": "32 урона.", "mods": [{"set": {"desc": "Горящее в радиусе 6 взрывается: 32 урона (горящим ×1.5), магу щит 30."}}, {"effect": {"type": "detonate", "set": {"amount": 32}}}]}]},
+    "B": {"name": "Раздуть", "tiers": [
+      {"name": "Раздуть", "desc": "Огонь не гаснет после вспышки (18 урона).", "mods": [{"set": {"desc": "Горящее в радиусе 6 взрывается, но продолжает гореть: 18 урона (горящим ×1.5)."}}, {"effect": {"type": "detonate", "set": {"amount": 18, "keep_fire": true}}}]},
+      {"name": "Огненный шторм", "desc": "Взрыв каждой клетки задевает радиус 2.", "mods": [{"set": {"desc": "Горящее в радиусе 6 взрывается (взрыв радиусом 2) и горит дальше: 18 урона."}}, {"effect": {"type": "detonate", "set": {"blast": 2}}}]}]}
+  },
+  "vow": {
+    "A": {"name": "Скорый обет", "tiers": [
+      {"name": "Скорый обет", "desc": "Приходит через 1.8 сек.", "mods": [{"set": {"desc": "Через 1.8 сек союзник получает 80 HP и очищается от тегов."}}, {"effect": {"type": "delay", "set": {"time": 1.8}}}]},
+      {"name": "Свет обета", "desc": "Лечит и союзников рядом с целью.", "mods": [{"set": {"desc": "Через 1.8 сек союзник и соседи получают 80 HP и очищаются от тегов."}}, {"effect": {"type": "delay", "set": {"effects": [{"type": "cleanse", "radius": 1}, {"type": "heal", "amount": 80, "radius": 1}]}}}]}]},
+    "B": {"name": "Терпение", "tiers": [
+      {"name": "Долгий обет", "desc": "Через 4 сек, но 130 HP.", "mods": [{"set": {"desc": "Через 4 сек союзник получает 130 HP и очищается от тегов."}}, {"effect": {"type": "delay", "set": {"time": 4.0, "effects": [{"type": "cleanse"}, {"type": "heal", "amount": 130}]}}}]},
+      {"name": "Залог", "desc": "Сразу — щит 25, пока обет не пришёл.", "mods": [{"set": {"desc": "Сразу щит 25, через 4 сек 130 HP и очищение."}}, {"add_effect": {"type": "shield", "amount": 25, "duration": 4}}]}]}
+  },
+  "powder_keg": {
+    "A": {"name": "Масло", "tiers": [
+      {"name": "Бочка с маслом", "desc": "Ставит бочку с маслом: разлитая — масло вокруг, подожжённая — пожар.", "mods": [{"set": {"name": "Бочка с маслом", "desc": "Бочка с маслом (до 3): разбитая разливает масло, подожжённая вспыхивает."}, "effects": [{"type": "place_object", "object": "barrel_oil", "limit": 3}]}]},
+      {"name": "Склад", "desc": "До 4 бочек.", "mods": [{"set": {"desc": "Бочка с маслом (до 4): разбитая разливает масло, подожжённая — пожар."}}, {"effect": {"type": "place_object", "set": {"limit": 4}}}]}]},
+    "B": {"name": "Крупный заряд", "tiers": [
+      {"name": "Крупный заряд", "desc": "Большая бочка: 38 урона, радиус 1.", "mods": [{"set": {"name": "Большая бочка", "desc": "Большая бочка (до 3): от огня или удара — 38 урона и Огонь вокруг."}, "effects": [{"type": "place_object", "object": "barrel_big", "limit": 3}]}]},
+      {"name": "Расторопность", "desc": "1 AP, без перезарядки.", "mods": [{"set": {"desc": "Большая бочка (до 3): 38 урона и Огонь вокруг, 1 AP.", "cooldown": 0}}, {"add": {"ap": -1}}]}]}
+  },
+  "fuse": {
+    "A": {"name": "Короткий фитиль", "tiers": [
+      {"name": "Короткий фитиль", "desc": "Взрыв через 1 сек.", "mods": [{"set": {"desc": "Свои бочки в радиусе 6 взрываются через 1 сек."}}, {"effect": {"type": "fuse", "set": {"delay": 1.0}}}]},
+      {"name": "Бикфордов шнур", "desc": "Радиус 9, 1 AP.", "mods": [{"set": {"desc": "Свои бочки в радиусе 9 взрываются через 1 сек, 1 AP."}}, {"effect": {"type": "fuse", "set": {"radius": 9}}}, {"add": {"ap": -1}}]}]},
+    "B": {"name": "Подготовка", "tiers": [
+      {"name": "Длинный запал", "desc": "Радиус 9.", "mods": [{"set": {"desc": "Свои бочки в радиусе 9 взрываются через 2 сек."}}, {"effect": {"type": "fuse", "set": {"radius": 9}}}]},
+      {"name": "Цепной подрыв", "desc": "Перезарядка 2 сек.", "mods": [{"set": {"desc": "Свои бочки в радиусе 9 взрываются через 2 сек.", "cooldown": 2}}]}]}
+  },
+  "rhythm": {
+    "A": {"name": "Марш", "tiers": [
+      {"name": "Марш", "desc": "Финал ещё ускоряет союзников.", "mods": [{"set": {"desc": "Песня на 4 такта: ноты за навыки союзников. Финал: HP, урон и скорость за ноты."}}, {"effect": {"type": "song", "set": {"finale": [{"type": "heal", "amount": 6, "per_note": 5}, {"type": "buff", "stat": "atk_mult", "value": 1.0, "per_note": 0.06, "duration": 6}, {"type": "buff", "stat": "slow", "value": 0.8, "duration": 6}]}}}]},
+      {"name": "Длинная песня", "desc": "5 тактов.", "mods": [{"set": {"desc": "Песня на 5 тактов: ноты за навыки союзников. Финал: HP, урон и скорость за ноты."}}, {"effect": {"type": "song", "set": {"beats": 5}}}]}]},
+    "B": {"name": "Гимн", "tiers": [
+      {"name": "Гимн стойкости", "desc": "Финал даёт броню за ноты.", "mods": [{"set": {"desc": "Песня на 4 такта: ноты за навыки союзников. Финал: HP и +1 брони за ноту на 6 сек."}}, {"effect": {"type": "song", "set": {"finale": [{"type": "heal", "amount": 6, "per_note": 5}, {"type": "buff", "stat": "armor", "value": 0, "per_note": 1, "duration": 6}]}}}]},
+      {"name": "Овация", "desc": "Финал возвращает союзникам AP (1 за 2 ноты).", "mods": [{"set": {"desc": "Песня на 4 такта. Финал: HP, броня и AP за ноты."}}, {"effect": {"type": "song", "set": {"finale": [{"type": "heal", "amount": 6, "per_note": 5}, {"type": "buff", "stat": "armor", "value": 0, "per_note": 1, "duration": 6}, {"type": "ap", "amount": 0, "per_note": 0.5}]}}}]}]}
+  },
+  "kick": {
+    "A": {"name": "Пушечный пинок", "tiers": [
+      {"name": "Далеко", "desc": "Толчок на 3.", "mods": [{"set": {"desc": "Соседняя клетка: 14 урона врагу и толчок на 3 — кого угодно."}}, {"effect": {"type": "push", "set": {"cells": 3}}}]},
+      {"name": "Тяжёлый сапог", "desc": "22 урона.", "mods": [{"set": {"desc": "Соседняя клетка: 22 урона врагу и толчок на 3 — кого угодно."}}, {"effect": {"type": "push", "set": {"amount": 22}}}]}]},
+    "B": {"name": "Ошеломление", "tiers": [
+      {"name": "Лёгкая нога", "desc": "1 AP.", "mods": [{"set": {"desc": "Соседняя клетка: 14 урона и толчок на 2 — кого угодно. 1 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Звон в ушах", "desc": "Враг оглушён на 0.8 сек.", "mods": [{"set": {"desc": "Соседняя клетка: 14 урона, толчок на 2 и оглушение 0.8 сек. 1 AP."}}, {"add_effect": {"type": "stun", "duration": 0.8}}]}]}
+  },
+  "rush": {
+    "A": {"name": "Бульдозер", "tiers": [
+      {"name": "Бульдозер", "desc": "Толчок на 3.", "mods": [{"set": {"desc": "Бег по прямой до 4: первого на пути — 18 урона и толчок на 3."}}, {"effect": {"type": "rush", "set": {"cells": 3}}}]},
+      {"name": "Разгон", "desc": "До 5 клеток, 26 урона.", "mods": [{"set": {"desc": "Бег по прямой до 5: первого на пути — 26 урона и толчок на 3.", "range": 5}}, {"effect": {"type": "rush", "set": {"length": 5, "amount": 26}}}]}]},
+    "B": {"name": "Плечом вперёд", "tiers": [
+      {"name": "Плечом вперёд", "desc": "Перед бегом щит 20.", "mods": [{"set": {"desc": "Щит 20 на 4 сек, бег по прямой до 4: первого — 18 урона и толчок на 2."}}, {"effects": [{"type": "shield", "amount": 20, "duration": 4, "at": "caster"}, {"type": "rush", "length": 4, "cells": 2, "amount": 18}]}]},
+      {"name": "Неудержимый", "desc": "Перезарядка 2 сек.", "mods": [{"set": {"desc": "Щит 20, бег по прямой до 4: первого — 18 урона и толчок на 2.", "cooldown": 2}}]}]}
+  },
+  "quake": {
+    "A": {"name": "Ударная волна", "tiers": [
+      {"name": "Ударная волна", "desc": "Отлетают на 2 клетки.", "mods": [{"set": {"desc": "Все соседи отлетают на 2 клетки, врагам 10 урона."}}, {"effect": {"type": "push", "set": {"cells": 2}}}]},
+      {"name": "Сокрушение", "desc": "18 урона.", "mods": [{"set": {"desc": "Все соседи отлетают на 2 клетки, врагам 18 урона."}}, {"effect": {"type": "push", "set": {"amount": 18}}}]}]},
+    "B": {"name": "Землетрясение", "tiers": [
+      {"name": "Вязкая земля", "desc": "Враги рядом замедлены на 3 сек.", "mods": [{"set": {"desc": "Соседи отлетают на 1, врагам 10 урона и замедление 3 сек."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.4, "duration": 3, "radius": 1, "affects": "enemies"}}]},
+      {"name": "Только враги", "desc": "Союзников не трогает, радиус 2.", "mods": [{"set": {"desc": "Враги в радиусе 2 отлетают на 1, 10 урона и замедление 3 сек.", "radius": 2}}, {"effect": {"type": "push", "set": {"affects": "enemies", "radius": 2}}}]}]}
+  },
+  "toss": {
+    "A": {"name": "Дальний бросок", "tiers": [
+      {"name": "Дальний бросок", "desc": "До 5 клеток.", "mods": [{"set": {"desc": "Бросок соседа на клетку до 5: 18 урона, у падения 12.", "range": 5}}]},
+      {"name": "Тяжёлое приземление", "desc": "У падения 20 урона.", "mods": [{"set": {"desc": "Бросок соседа на клетку до 5: 18 урона, у падения 20."}}, {"effect": {"type": "toss", "set": {"splash": 20}}}]}]},
+    "B": {"name": "Подкинуть своего", "tiers": [
+      {"name": "Подкинуть своего", "desc": "Берёт ближайшего к цели — и союзника тоже: забросить бойца в гущу.", "mods": [{"set": {"desc": "Бросок соседа, ближайшего к клетке (союзника тоже), до 4: врагам у падения 12."}}, {"effect": {"type": "toss", "set": {"prefer": null}}}]},
+      {"name": "Конвейер", "desc": "Перезарядка 1 сек.", "mods": [{"set": {"desc": "Бросок соседа, ближайшего к клетке, до 4: врагам у падения 12.", "cooldown": 1}}]}]}
+  },
+  "fault_line": {
+    "A": {"name": "Глубокий разлом", "tiers": [
+      {"name": "Длинный разлом", "desc": "Линия 4.", "mods": [{"set": {"desc": "Линия до 4 клеток: 16 урона и толчок на 2.", "range": 4}}, {"effect": {"type": "line", "set": {"length": 4}}}]},
+      {"name": "Обвал", "desc": "Толчок на 3.", "mods": [{"set": {"desc": "Линия до 4 клеток: 16 урона и толчок на 3."}}, {"effect": {"type": "line", "set": {"push": 3}}}]}]},
+    "B": {"name": "Трещина", "tiers": [
+      {"name": "Трещина", "desc": "24 урона.", "mods": [{"set": {"desc": "Линия до 3 клеток: 24 урона и толчок на 2."}}, {"effect": {"type": "line", "set": {"amount": 24}}}]},
+      {"name": "Пыль", "desc": "Задетые замедлены на 3 сек.", "mods": [{"set": {"desc": "Линия до 3: 24 урона, толчок на 2, замедление 3 сек."}}, {"effect": {"type": "line", "set": {"on_hit_buff": {"stat": "slow", "value": 1.4, "duration": 3}}}}]}]}
+  },
+  "fan_flames": {
+    "A": {"name": "Пожар", "tiers": [
+      {"name": "Долгий пожар", "desc": "Клетки горят 6 сек.", "mods": [{"set": {"desc": "Огонь в радиусе 2 перекидывается на соседей и горит 6 сек."}}, {"effect": {"type": "spread_fire", "set": {"duration": 6}}}]},
+      {"name": "Раздутый очаг", "desc": "Радиус 3.", "mods": [{"set": {"desc": "Огонь в радиусе 3 перекидывается на соседей и горит 6 сек.", "radius": 3}}, {"effect": {"type": "spread_fire", "set": {"radius": 3}}}]}]},
+    "B": {"name": "Жар", "tiers": [
+      {"name": "Жар", "desc": "Ещё 10 урона врагам в радиусе.", "mods": [{"set": {"desc": "Огонь в радиусе 2 перекидывается на соседей, врагам в радиусе 10 урона."}}, {"add_effect": {"type": "damage", "amount": 10, "kind": "spell", "radius": 2}}]},
+      {"name": "Лёгкое дыхание", "desc": "1 AP.", "mods": [{"set": {"desc": "Огонь в радиусе 2 перекидывается на соседей, врагам 10 урона. 1 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "cinder_field": {
+    "A": {"name": "Пламя", "tiers": [
+      {"name": "Широкое поле", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: 8 урона + Огонь, клетки горят 6 сек.", "radius": 2}}, {"radius_add": 1}]},
+      {"name": "Пекло", "desc": "Клетки горят 9 сек.", "mods": [{"set": {"desc": "Радиус 2: 8 урона + Огонь, клетки горят 9 сек."}}, {"effect": {"type": "hazard", "set": {"duration": 9}}}]}]},
+    "B": {"name": "Искры", "tiers": [
+      {"name": "Искры", "desc": "3 AP.", "mods": [{"set": {"desc": "Радиус 1: 8 урона + Огонь, клетки горят 6 сек. 3 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Россыпь", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Радиус 1: 8 урона + Огонь, горит 6 сек, дальность 7.", "range": 7}}]}]}
+  },
+  "snare": {
+    "A": {"name": "Сеть капканов", "tiers": [
+      {"name": "Четыре капкана", "desc": "До 4 капканов.", "mods": [{"set": {"desc": "Невидимый капкан (до 4): 12 урона, держит 2.5 сек, раскрывает."}}, {"effect": {"type": "trap", "set": {"limit": 4}}}]},
+      {"name": "Быстрые руки", "desc": "1 AP, без перезарядки.", "mods": [{"set": {"desc": "Невидимый капкан (до 4): 12 урона, держит 2.5 сек, раскрывает. 1 AP.", "cooldown": 0}}, {"add": {"ap": -1}}]}]},
+    "B": {"name": "Дальний бросок", "tiers": [
+      {"name": "Дальний бросок", "desc": "Дальность 6.", "mods": [{"set": {"desc": "Невидимый капкан (до 3) на дальность 6: держит 2.5 сек, раскрывает.", "range": 6}}]},
+      {"name": "Двойной капкан", "desc": "Ставит сразу два: в точку и соседнюю.", "mods": [{"set": {"desc": "Два невидимых капкана рядом (до 4): держат 2.5 сек, раскрывают."}}, {"effects": [{"type": "trap", "hazard": "snare", "limit": 4}]}, {"add_effect": {"type": "trap", "hazard": "snare", "limit": 4, "offset": [1, 0]}}]}]}
+  },
+  "lure": {
+    "A": {"name": "Крепкое чучело", "tiers": [
+      {"name": "Набитое чучело", "desc": "Живёт 9 сек, прочнее.", "mods": [{"set": {"desc": "Чучело на 9 сек: враги в радиусе 3 бросаются на него."}}, {"effect": {"type": "summon", "set": {"duration": 9, "power": 1.6}}}]},
+      {"name": "Колючее чучело", "desc": "Бьющих его ранит шипами.", "mods": [{"set": {"desc": "Чучело на 9 сек: враги в радиусе 3 бросаются на него, шипы ранят бьющих."}}, {"effect": {"type": "summon", "set": {"unit": "decoy_thorns"}}}]}]},
+    "B": {"name": "Хитрая приманка", "tiers": [
+      {"name": "Дальний манок", "desc": "Дальность 6.", "mods": [{"set": {"desc": "Чучело на 6 сек на дальность 6: враги бросаются на него.", "range": 6}}]},
+      {"name": "Манок", "desc": "Перезарядка 5 сек.", "mods": [{"set": {"desc": "Чучело на 6 сек на дальность 6.", "cooldown": 5}}]}]}
+  },
+  "hunter_mark": {
+    "A": {"name": "Охота", "tiers": [
+      {"name": "Долгая охота", "desc": "8 сек.", "mods": [{"set": {"desc": "Враг раскрыт 8 сек: +25% урона, удар в спину от всех."}}, {"effect": {"type": "buff", "set": {"duration": 8}}}]},
+      {"name": "Загнанный", "desc": "+35% урона и замедление.", "mods": [{"set": {"desc": "Враг раскрыт 8 сек: +35% урона, удар в спину от всех, замедлен."}}, {"effect": {"type": "buff", "set": {"value": 1.35}}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.4, "duration": 8, "affects": "enemies"}}]}]},
+    "B": {"name": "Стая", "tiers": [
+      {"name": "Метка стаи", "desc": "Метка и на врагов рядом с целью.", "mods": [{"set": {"desc": "Враг и соседи раскрыты 6 сек: +25% урона, удар в спину от всех.", "radius": 1}}, {"effect": {"type": "buff", "set": {"radius": 1}}}]},
+      {"name": "Выстрел по метке", "desc": "Ещё и стрела: 14 урона.", "mods": [{"set": {"desc": "Стрела 14 урона, враг и соседи раскрыты 6 сек."}}, {"add_effect": {"type": "damage", "amount": 14, "kind": "ranged"}}]}]}
+  },
+  "bear_trap": {
+    "A": {"name": "Железо", "tiers": [
+      {"name": "Три капкана", "desc": "До 3.", "mods": [{"set": {"desc": "Невидимый медвежий капкан (до 3): 30 урона, держит 3.5 сек."}}, {"effect": {"type": "trap", "set": {"limit": 3}}}]},
+      {"name": "Лёгкая установка", "desc": "2 AP.", "mods": [{"set": {"desc": "Медвежий капкан (до 3), 2 AP."}}, {"add": {"ap": -1}}]}]},
+    "B": {"name": "Дальше", "tiers": [
+      {"name": "Дальний бросок", "desc": "Дальность 6.", "mods": [{"set": {"desc": "Медвежий капкан (до 2) на дальность 6.", "range": 6}}]},
+      {"name": "Без перезарядки", "desc": "Перезарядка 0.", "mods": [{"set": {"desc": "Медвежий капкан (до 2) на дальность 6.", "cooldown": 0}}]}]}
+  },
+  "hunting_horn": {
+    "A": {"name": "Громкий рог", "tiers": [
+      {"name": "Громкий рог", "desc": "Отбегают на 3.", "mods": [{"set": {"desc": "Враги в радиусе 3 отбегают на 3 клетки."}}, {"effect": {"type": "push", "set": {"cells": 3}}}]},
+      {"name": "Паника", "desc": "И замедлены.", "mods": [{"set": {"desc": "Враги в радиусе 3 отбегают на 3 клетки и замедлены 3 сек."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.4, "duration": 3, "radius": 3, "affects": "enemies"}}]}]},
+    "B": {"name": "Охотничий клич", "tiers": [
+      {"name": "Перезарядка", "desc": "Перезарядка 5.", "mods": [{"set": {"desc": "Враги в радиусе 3 отбегают на 2 клетки.", "cooldown": 5}}]},
+      {"name": "Клич", "desc": "Отряду рядом +15% урона на 5 сек.", "mods": [{"set": {"desc": "Враги в радиусе 3 отбегают на 2, союзникам рядом +15% урона 5 сек."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.15, "duration": 5, "radius": 3, "affects": "allies"}}]}]}
+  },
+  "ice_wall": {
+    "A": {"name": "Крепость", "tiers": [
+      {"name": "Длинная стена", "desc": "5 глыб.", "mods": [{"set": {"desc": "Стена из 5 глыб поперёк направления (10 сек)."}}, {"effect": {"type": "wall", "set": {"length": 5}}}]},
+      {"name": "Вечный лёд", "desc": "Стоит 16 сек.", "mods": [{"set": {"desc": "Стена из 5 глыб поперёк направления (16 сек)."}}, {"effect": {"type": "wall", "set": {"life": 16}}}]}]},
+    "B": {"name": "Ловушка изо льда", "tiers": [
+      {"name": "Быстрая кладка", "desc": "2 AP.", "mods": [{"set": {"desc": "Стена из 3 глыб поперёк направления (10 сек). 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Морозный выдох", "desc": "Врагам у стены Лёд.", "mods": [{"set": {"desc": "Стена из 3 глыб (10 сек), врагам рядом Лёд."}}, {"add_effect": {"type": "status", "tag": "ice", "radius": 1}}]}]}
+  },
+  "rink": {
+    "A": {"name": "Большой каток", "tiers": [
+      {"name": "Большой каток", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: клетки 8 сек скользкий лёд.", "radius": 2}}, {"effect": {"type": "terrain", "set": {"radius": 2}}}]},
+      {"name": "Долгий каток", "desc": "12 сек.", "mods": [{"set": {"desc": "Радиус 2: клетки 12 сек скользкий лёд."}}, {"effect": {"type": "terrain", "set": {"duration": 12}}}]}]},
+    "B": {"name": "Гололёд", "tiers": [
+      {"name": "Гололёд", "desc": "Врагам Лёд (замедление).", "mods": [{"set": {"desc": "Радиус 1: скользкий лёд 8 сек, врагам Лёд."}}, {"add_effect": {"type": "status", "tag": "ice", "radius": 1}}]},
+      {"name": "Хрусткий лёд", "desc": "И 12 урона.", "mods": [{"set": {"desc": "Радиус 1: скользкий лёд 8 сек, врагам Лёд и 12 урона."}}, {"add_effect": {"type": "damage", "amount": 12, "kind": "spell", "radius": 1}}]}]}
+  },
+  "shatter": {
+    "A": {"name": "Шрапнель", "tiers": [
+      {"name": "Острые осколки", "desc": "26 урона.", "mods": [{"set": {"desc": "Свои постройки взрываются: врагам рядом 26 урона + Лёд."}}, {"effect": {"type": "shatter", "set": {"amount": 26}}}]},
+      {"name": "Широкий разлёт", "desc": "Радиус осколков 2.", "mods": [{"set": {"desc": "Свои постройки взрываются: 26 урона + Лёд в радиусе 2."}}, {"effect": {"type": "shatter", "set": {"blast": 2}}}]}]},
+    "B": {"name": "Хрупкость", "tiers": [
+      {"name": "Хрупкость", "desc": "2 AP.", "mods": [{"set": {"desc": "Свои постройки взрываются: 18 урона + Лёд. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Иней", "desc": "Задетые замедлены сильнее.", "mods": [{"set": {"desc": "Свои постройки взрываются: 18 урона + Лёд, замедление."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.5, "duration": 4, "radius": 6, "affects": "enemies"}}]}]}
+  },
+  "frost_guard": {
+    "A": {"name": "Панцирь", "tiers": [
+      {"name": "Толстый панцирь", "desc": "Щит 60.", "mods": [{"set": {"desc": "Союзнику щит 60 и +3 брони на 6 сек."}}, {"effect": {"type": "shield", "set": {"amount": 60}}}]},
+      {"name": "Отражение", "desc": "Бьющих его — Лёд.", "mods": [{"set": {"desc": "Союзнику щит 60, +3 брони и шипы изо льда 6 сек."}}, {"add_effect": {"type": "buff", "stat": "thorns", "value": 0.3, "duration": 6}}]}]},
+    "B": {"name": "Ледяной кокон", "tiers": [
+      {"name": "Кокон", "desc": "Ещё стена-глыба рядом с союзником.", "mods": [{"set": {"desc": "Союзнику щит 40, +3 брони; рядом встаёт ледяная глыба."}}, {"add_effect": {"type": "wall", "object": "ice_wall", "length": 1, "life": 8}}]},
+      {"name": "Быстрый лёд", "desc": "2 AP.", "mods": [{"set": {"desc": "Союзнику щит 40, +3 брони, глыба рядом. 2 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "corpse_blast": {
+    "A": {"name": "Гниль", "tiers": [
+      {"name": "Тухлый взрыв", "desc": "32 урона.", "mods": [{"set": {"desc": "Труп взрывается: 32 урона + Яд в радиусе 1."}}, {"effect": {"type": "corpse", "set": {"amount": 32}}}]},
+      {"name": "Широкий взрыв", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Труп взрывается: 32 урона + Яд в радиусе 2.", "radius": 2}}, {"effect": {"type": "corpse", "set": {"radius": 2}}}]}]},
+    "B": {"name": "Цепь трупов", "tiers": [
+      {"name": "Дальний взрыв", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Труп взрывается: 24 урона + Яд в радиусе 1.", "range": 7}}]},
+      {"name": "Лёгкая рука", "desc": "1 AP.", "mods": [{"set": {"desc": "Труп взрывается: 24 урона + Яд. 1 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "raise_dead": {
+    "A": {"name": "Армия", "tiers": [
+      {"name": "Трое", "desc": "До 3 мертвецов.", "mods": [{"set": {"desc": "Труп встаёт скелетом на 15 сек (до 3)."}}, {"effect": {"type": "corpse", "set": {"limit": 3}}}]},
+      {"name": "Долгая нежизнь", "desc": "25 сек.", "mods": [{"set": {"desc": "Труп встаёт скелетом на 25 сек (до 3)."}}, {"effect": {"type": "corpse", "set": {"duration": 25}}}]}]},
+    "B": {"name": "Рыцарь смерти", "tiers": [
+      {"name": "Костяной рыцарь", "desc": "Поднимает крепкого рыцаря (до 1).", "mods": [{"set": {"name": "Костяной рыцарь", "desc": "Труп встаёт рыцарем на 15 сек (до 1)."}, "effects": [{"type": "corpse", "do": "raise", "unit": "risen_knight", "limit": 1, "duration": 15}]}]},
+      {"name": "Клятва", "desc": "Рыцарь стоит 25 сек.", "mods": [{"set": {"desc": "Труп встаёт рыцарем на 25 сек (до 1)."}}, {"effect": {"type": "corpse", "set": {"duration": 25}}}]}]}
+  },
+  "devour": {
+    "A": {"name": "Ненасытность", "tiers": [
+      {"name": "Ненасытность", "desc": "Щит 26 за труп.", "mods": [{"set": {"desc": "Трупы в радиусе 2: щит 26 за каждый."}}, {"effect": {"type": "corpse", "set": {"shield": 26}}}]},
+      {"name": "Длинные руки", "desc": "Радиус 3.", "mods": [{"set": {"desc": "Трупы в радиусе 3: щит 26 за каждый.", "radius": 3}}, {"effect": {"type": "corpse", "set": {"radius": 3}}}]}]},
+    "B": {"name": "Пир", "tiers": [
+      {"name": "Пир", "desc": "И лечение 10 за труп.", "mods": [{"set": {"desc": "Трупы в радиусе 2: щит 18 и +10 HP за каждый."}}, {"add_effect": {"type": "heal", "amount": 20, "at": "caster"}}]},
+      {"name": "Без перезарядки", "desc": "Перезарядка 0.", "mods": [{"set": {"desc": "Трупы в радиусе 2: щит 18 и HP.", "cooldown": 0}}]}]}
+  },
+  "corpse_cloud": {
+    "A": {"name": "Мор", "tiers": [
+      {"name": "Мор", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Труп — облако яда радиусом 2 на 6 сек.", "radius": 2}}, {"effect": {"type": "corpse", "set": {"radius": 2}}}]},
+      {"name": "Долгий мор", "desc": "10 сек.", "mods": [{"set": {"desc": "Труп — облако яда радиусом 2 на 10 сек."}}, {"effect": {"type": "corpse", "set": {"duration": 10}}}]}]},
+    "B": {"name": "Зараза", "tiers": [
+      {"name": "Дальше", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Труп — облако яда на 6 сек, дальность 7.", "range": 7}}]},
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Труп — облако яда на 6 сек. 1 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "bone_wall": {
+    "A": {"name": "Ограда", "tiers": [
+      {"name": "Прочная", "desc": "Стоит 18 сек.", "mods": [{"set": {"desc": "Труп — костяная стена на 18 сек."}}, {"effect": {"type": "corpse", "set": {"life": 18}}}]},
+      {"name": "Дальше", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Труп — костяная стена на 18 сек, дальность 7.", "range": 7}}]}]},
+    "B": {"name": "Склеп", "tiers": [
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Труп — костяная стена на 12 сек. 1 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Склеп", "desc": "Ещё и щит некроманту 15.", "mods": [{"set": {"desc": "Труп — стена, некроманту щит 15."}}, {"add_effect": {"type": "shield", "amount": 15, "duration": 6, "at": "caster"}}]}]}
+  },
+  "rewind": {
+    "A": {"name": "Глубокий откат", "tiers": [
+      {"name": "Пять секунд", "desc": "Откат на 4.5 сек.", "mods": [{"set": {"desc": "Союзник возвращается на 4.5 сек назад (клетка и HP)."}}, {"effect": {"type": "rewind", "set": {"seconds": 4.5}}}]},
+      {"name": "Чистое прошлое", "desc": "Ещё и снимает теги.", "mods": [{"set": {"desc": "Откат на 4.5 сек и очищение от тегов."}}, {"add_effect": {"type": "cleanse"}}]}]},
+    "B": {"name": "Скорый откат", "tiers": [
+      {"name": "Скорый откат", "desc": "Перезарядка 3 сек.", "mods": [{"set": {"desc": "Союзник возвращается на 3 сек назад.", "cooldown": 3}}]},
+      {"name": "Дальний откат", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Союзник возвращается на 3 сек назад, дальность 7.", "range": 7}}]}]}
+  },
+  "haste": {
+    "A": {"name": "Разгон", "tiers": [
+      {"name": "Долгий разгон", "desc": "9 сек.", "mods": [{"set": {"desc": "Союзник 9 сек: AP вдвое быстрее, атаки быстрее."}}, {"effect": {"type": "buff", "set": {"duration": 9}}}]},
+      {"name": "Вихрь времени", "desc": "И +2 AP сразу.", "mods": [{"set": {"desc": "Союзник 9 сек: AP вдвое быстрее, атаки быстрее, +2 AP."}}, {"add_effect": {"type": "refresh", "ap": 2}}]}]},
+    "B": {"name": "Поток", "tiers": [
+      {"name": "Поток", "desc": "И движение быстрее.", "mods": [{"set": {"desc": "Союзник 6 сек: AP, атаки и шаги быстрее."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 0.7, "duration": 6}}]},
+      {"name": "Общий поток", "desc": "И союзникам рядом.", "mods": [{"set": {"desc": "Союзник и соседи 6 сек: AP, атаки и шаги быстрее.", "radius": 1}}, {"radius_add": 1}]}]}
+  },
+  "stasis": {
+    "A": {"name": "Остановка", "tiers": [
+      {"name": "Долгий стазис", "desc": "4.5 сек.", "mods": [{"set": {"desc": "Цель 4.5 сек вне времени: неуязвима и не действует."}}, {"effect": {"type": "stasis", "set": {"duration": 4.5}}}]},
+      {"name": "Мгновение", "desc": "2 AP.", "mods": [{"set": {"desc": "Цель 4.5 сек вне времени. 2 AP."}}, {"add": {"ap": -1}}]}]},
+    "B": {"name": "Спасение", "tiers": [
+      {"name": "Спасти своего", "desc": "Стазис на союзника: спасает от смерти.", "mods": [{"set": {"name": "Стазис союзника", "desc": "Союзник 3 сек вне времени: неуязвим, не действует.", "target": "ally", "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 20}]}}, "effects": [{"type": "stasis", "duration": 3}]}]},
+      {"name": "Короткий стазис", "desc": "Перезарядка 5.", "mods": [{"set": {"desc": "Союзник 3 сек вне времени.", "cooldown": 5}}]}]}
+  },
+  "slow_field": {
+    "A": {"name": "Трясина времени", "tiers": [
+      {"name": "Шире", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: враги 5 сек медленнее.", "radius": 2}}, {"radius_add": 1}]},
+      {"name": "Дольше", "desc": "8 сек.", "mods": [{"set": {"desc": "Радиус 2: враги 8 сек медленнее."}}, {"effect": {"type": "buff", "set": {"duration": 8}}}]}]},
+    "B": {"name": "Застывший миг", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Радиус 1: враги 5 сек медленнее. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Хрупкий миг", "desc": "Задетые получают +15% урона.", "mods": [{"set": {"desc": "Радиус 1: враги медленнее и уязвимее."}}, {"add_effect": {"type": "buff", "stat": "dmg_taken", "value": 1.15, "duration": 5, "radius": 1, "affects": "enemies"}}]}]}
+  },
+  "rewind_foe": {
+    "A": {"name": "Дальше назад", "tiers": [
+      {"name": "Пять секунд", "desc": "4.5 сек назад.", "mods": [{"set": {"desc": "Враг возвращается на 4.5 сек назад."}}, {"effect": {"type": "rewind", "set": {"seconds": 4.5}}}]},
+      {"name": "Сбить с толку", "desc": "И оглушение 1 сек.", "mods": [{"set": {"desc": "Враг на 4.5 сек назад и оглушён 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]}]},
+    "B": {"name": "Петля", "tiers": [
+      {"name": "Петля", "desc": "Перезарядка 2.", "mods": [{"set": {"desc": "Враг возвращается на 3 сек назад.", "cooldown": 2}}]},
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Враг возвращается на 3 сек назад. 1 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "singularity": {
+    "A": {"name": "Чёрная дыра", "tiers": [
+      {"name": "Глубокая воронка", "desc": "Тянет на 3 клетки.", "mods": [{"set": {"desc": "Враги в радиусе 2 стягиваются к точке на 3 клетки."}}, {"effect": {"type": "gather", "set": {"cells": 3}}}]},
+      {"name": "Горизонт", "desc": "Радиус 3.", "mods": [{"set": {"desc": "Враги в радиусе 3 стягиваются к точке на 3 клетки.", "radius": 3}}, {"effect": {"type": "gather", "set": {"radius": 3}}}]}]},
+    "B": {"name": "Сжатие", "tiers": [
+      {"name": "Сжатие", "desc": "И 10 урона каждому.", "mods": [{"set": {"desc": "Враги в радиусе 2 стягиваются к точке и получают 10 урона."}}, {"effect": {"type": "gather", "set": {"amount": 10}}}]},
+      {"name": "Лёгкая воронка", "desc": "3 AP.", "mods": [{"set": {"desc": "Враги в радиусе 2 стягиваются к точке, 10 урона. 3 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "swap": {
+    "A": {"name": "Подмена", "tiers": [
+      {"name": "Ловушка", "desc": "Враг на новом месте оглушён на 1 сек.", "mods": [{"set": {"desc": "Гравитомант и враг меняются местами, враг оглушён 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]},
+      {"name": "Короткий обмен", "desc": "Перезарядка 3.", "mods": [{"set": {"desc": "Меняются местами, враг оглушён 1 сек.", "cooldown": 3}}]}]},
+    "B": {"name": "Спасение", "tiers": [
+      {"name": "Спасти своего", "desc": "Обмен с союзником: вытащить его из окружения.", "mods": [{"set": {"name": "Обмен с союзником", "desc": "Гравитомант и союзник меняются местами (до 5).", "target": "ally", "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 30}]}}, "effects": [{"type": "swap"}]}]},
+      {"name": "Щит при обмене", "desc": "Союзнику щит 25.", "mods": [{"set": {"desc": "Меняются местами, союзнику щит 25."}}, {"add_effect": {"type": "shield", "amount": 25, "duration": 5}}]}]}
+  },
+  "levitate": {
+    "A": {"name": "Высота", "tiers": [
+      {"name": "Высоко", "desc": "Падение — 24 урона.", "mods": [{"set": {"desc": "Враг 3 сек в воздухе, падая — 24 урона."}}, {"effect": {"type": "levitate", "set": {"fall": 24}}}]},
+      {"name": "Долгий полёт", "desc": "4.5 сек.", "mods": [{"set": {"desc": "Враг 4.5 сек в воздухе, падая — 24 урона."}}, {"effect": {"type": "levitate", "set": {"duration": 4.5}}}]}]},
+    "B": {"name": "Подъём", "tiers": [
+      {"name": "Подъём толпы", "desc": "Поднимает и врагов рядом.", "mods": [{"set": {"desc": "Враг и соседи 3 сек в воздухе.", "radius": 1}}, {"effects": [{"type": "levitate", "duration": 3, "fall": 12}]}]},
+      {"name": "Лёгкость", "desc": "2 AP.", "mods": [{"set": {"desc": "Враг 3 сек в воздухе. 2 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "collapse": {
+    "A": {"name": "Масса", "tiers": [
+      {"name": "Плотность", "desc": "8 за каждого.", "mods": [{"set": {"desc": "Враги в радиусе 2: 6 + 8 за каждого."}}, {"effect": {"type": "collapse", "set": {"per_unit": 8}}}]},
+      {"name": "Звезда", "desc": "Радиус 3.", "mods": [{"set": {"desc": "Враги в радиусе 3: 6 + 8 за каждого.", "radius": 3}}, {"effect": {"type": "collapse", "set": {"radius": 3}}}]}]},
+    "B": {"name": "Быстро", "tiers": [
+      {"name": "3 AP", "desc": "3 AP.", "mods": [{"set": {"desc": "Враги в радиусе 2: 6 + 6 за каждого. 3 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Без отката", "desc": "Перезарядка 2.", "mods": [{"set": {"desc": "Враги в радиусе 2: 6 + 6 за каждого.", "cooldown": 2}}]}]}
+  },
+  "repulse": {
+    "A": {"name": "Волна", "tiers": [
+      {"name": "Сильная волна", "desc": "На 3 клетки.", "mods": [{"set": {"desc": "Враги в радиусе 2 разлетаются на 3 клетки."}}, {"effect": {"type": "push", "set": {"cells": 3}}}]},
+      {"name": "И урон", "desc": "10 урона.", "mods": [{"set": {"desc": "Враги разлетаются на 3 клетки, 10 урона."}}, {"effect": {"type": "push", "set": {"amount": 10}}}]}]},
+    "B": {"name": "Импульс", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Враги в радиусе 2 разлетаются на 2 клетки. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Частые импульсы", "desc": "Перезарядка 3.", "mods": [{"set": {"desc": "Враги разлетаются на 2 клетки.", "cooldown": 3}}]}]}
+  },
+  "earth_power": {
+    "A": {"name": "Родство", "tiers": [
+      {"name": "Глубокая связь", "desc": "Всё сильнее на треть.", "mods": [{"set": {"desc": "Сила земли по клетке под ногами — на треть сильнее."}}, {"effects": [{"type": "terrain_cast", "by": {"grass": [{"type": "damage", "amount": 18, "kind": "spell"}, {"type": "stun", "duration": 1.4, "look": "root"}], "water": [{"type": "damage", "amount": 26, "kind": "spell", "tag": "water"}, {"type": "knockback", "cells": 1}], "stone": [{"type": "damage", "amount": 45, "kind": "ranged"}], "lava": [{"type": "damage", "amount": 31, "kind": "spell", "radius": 1, "tag": "fire"}], "ice_floor": [{"type": "damage", "amount": 29, "kind": "spell", "radius": 1, "tag": "ice"}], "default": [{"type": "damage", "amount": 23, "kind": "spell"}]}}]}]},
+      {"name": "Дальше", "desc": "Дальность 6.", "mods": [{"set": {"desc": "Сила земли (на треть сильнее), дальность 6.", "range": 6}}]}]},
+    "B": {"name": "Ритм земли", "tiers": [
+      {"name": "Без отката", "desc": "Перезарядка 0.", "mods": [{"set": {"desc": "Сила земли по клетке под ногами.", "cooldown": 0}}]},
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Сила земли по клетке под ногами. 2 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "reshape": {
+    "A": {"name": "Широкий шаг", "tiers": [
+      {"name": "Вокруг себя", "desc": "И клетки рядом.", "mods": [{"set": {"desc": "Клетки в радиусе 1 перековываются на 20 сек.", "radius": 1}}, {"effect": {"type": "terrain", "set": {"radius": 1}}}]},
+      {"name": "Навсегда почти", "desc": "60 сек.", "mods": [{"set": {"desc": "Клетки в радиусе 1 перековываются на 60 сек."}}, {"effect": {"type": "terrain", "set": {"duration": 60}}}]}]},
+    "B": {"name": "Огненный путь", "tiers": [
+      {"name": "Жар земли", "desc": "В цикле есть лава (стоять на ней больно).", "mods": [{"set": {"desc": "Клетка под геомантом: трава → вода → камень → лава → трава (20 сек)."}}, {"effect": {"type": "terrain", "set": {"cycle": ["grass", "water", "stone", "lava"]}}}]},
+      {"name": "Мгновенно", "desc": "Без перезарядки.", "mods": [{"set": {"desc": "Клетка: трава → вода → камень → лава.", "cooldown": 0}}]}]}
+  },
+  "rockfall": {
+    "A": {"name": "Камнепад", "tiers": [
+      {"name": "Тяжёлый", "desc": "20 урона.", "mods": [{"set": {"desc": "Валун (до 2): 20 урона врагам рядом."}}, {"effect": {"type": "damage", "set": {"amount": 20}}}]},
+      {"name": "Три валуна", "desc": "До 3.", "mods": [{"set": {"desc": "Валун (до 3): 20 урона врагам рядом."}}, {"effect": {"type": "place_object", "set": {"limit": 3}}}]}]},
+    "B": {"name": "Россыпь", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Валун (до 2): 10 урона рядом. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Оглушение", "desc": "Задетые оглушены 0.8 сек.", "mods": [{"set": {"desc": "Валун: 10 урона и оглушение рядом."}}, {"add_effect": {"type": "stun", "duration": 0.8, "radius": 1}}]}]}
+  },
+  "lava_vent": {
+    "A": {"name": "Извержение", "tiers": [
+      {"name": "Долгое", "desc": "12 сек.", "mods": [{"set": {"desc": "Радиус 1: лава 12 сек."}}, {"effect": {"type": "terrain", "set": {"duration": 12}}}]},
+      {"name": "Выброс", "desc": "И 16 урона + Огонь.", "mods": [{"set": {"desc": "Радиус 1: лава 12 сек, 16 урона + Огонь."}}, {"add_effect": {"type": "damage", "amount": 16, "kind": "spell", "radius": 1, "tag": "fire"}}]}]},
+    "B": {"name": "Точечное", "tiers": [
+      {"name": "Одна клетка, 2 AP", "desc": "Радиус 0, 2 AP.", "mods": [{"set": {"desc": "Клетка 8 сек — лава. 2 AP.", "radius": 0}}, {"effect": {"type": "terrain", "set": {"radius": 0}}}, {"add": {"ap": -2}}]},
+      {"name": "Часто", "desc": "Перезарядка 3.", "mods": [{"set": {"desc": "Клетка 8 сек — лава.", "cooldown": 3}}]}]}
+  },
+  "spring": {
+    "A": {"name": "Разлив", "tiers": [
+      {"name": "Широкий разлив", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: вода 8 сек, врагам Вода.", "radius": 2}}, {"radius_add": 1}]},
+      {"name": "Половодье", "desc": "14 сек.", "mods": [{"set": {"desc": "Радиус 2: вода 14 сек, врагам Вода."}}, {"effect": {"type": "terrain", "set": {"duration": 14}}}]}]},
+    "B": {"name": "Ключ", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Радиус 1: вода 8 сек, врагам Вода. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Целебный ключ", "desc": "Союзникам рядом +15 HP.", "mods": [{"set": {"desc": "Радиус 1: вода, врагам Вода, союзникам +15 HP."}}, {"add_effect": {"type": "heal", "amount": 15, "radius": 1}}]}]}
+  },
+  "coat": {
+    "A": {"name": "Масляная смазка", "tiers": [
+      {"name": "Масляная смазка", "desc": "Атаки накладывают Масло — для Пироманта.", "mods": [{"set": {"desc": "Атаки союзника 10 сек накладывают Масло и бьют ×1.1."}}, {"effects": [{"type": "buff", "stat": "atk_tag", "value": "oil", "duration": 10}, {"type": "buff", "stat": "atk_mult", "value": 1.1, "duration": 10}]}]},
+      {"name": "Горючая смесь", "desc": "×1.25.", "mods": [{"set": {"desc": "Атаки союзника 10 сек: Масло и урон ×1.25."}}, {"effects": [{"type": "buff", "stat": "atk_tag", "value": "oil", "duration": 10}, {"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 10}]}]}]},
+    "B": {"name": "Ядовитая смазка", "tiers": [
+      {"name": "Ядовитая смазка", "desc": "Атаки отравляют.", "mods": [{"set": {"desc": "Атаки союзника 10 сек накладывают Яд и бьют ×1.1."}}, {"effects": [{"type": "buff", "stat": "atk_tag", "value": "poison", "duration": 10}, {"type": "buff", "stat": "atk_mult", "value": 1.1, "duration": 10}]}]},
+      {"name": "Долгая смазка", "desc": "16 сек.", "mods": [{"set": {"desc": "Атаки союзника 16 сек накладывают Яд."}}, {"effect": {"type": "buff", "set": {"duration": 16}}}]}]}
+  },
+  "flask": {
+    "A": {"name": "Масляная склянка", "tiers": [
+      {"name": "Масло", "desc": "Тег Масло.", "mods": [{"set": {"desc": "Радиус 1: враги в Масле."}}, {"effect": {"type": "status", "set": {"tag": "oil"}}}]},
+      {"name": "Лужа", "desc": "И масляная лужа 8 сек.", "mods": [{"set": {"desc": "Радиус 1: враги в Масле, лужа масла 8 сек."}}, {"add_effect": {"type": "hazard", "hazard": "oil", "duration": 8, "radius": 1}}]}]},
+    "B": {"name": "Ледяная склянка", "tiers": [
+      {"name": "Лёд", "desc": "Тег Лёд.", "mods": [{"set": {"desc": "Радиус 1: враги во Льду (замедлены)."}}, {"effect": {"type": "status", "set": {"tag": "ice"}}}]},
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Радиус 1: враги во Льду. 1 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "reagent": {
+    "A": {"name": "Концентрат", "tiers": [
+      {"name": "Концентрат", "desc": "20 за тег.", "mods": [{"set": {"desc": "20 урона за каждый тег на враге."}}, {"effect": {"type": "reagent", "set": {"per_tag": 20}}}]},
+      {"name": "Дальний бросок", "desc": "Дальность 7.", "mods": [{"set": {"desc": "20 урона за тег, дальность 7.", "range": 7}}]}]},
+    "B": {"name": "Быстрый реактив", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "10 урона за тег. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Без отката", "desc": "Перезарядка 1.", "mods": [{"set": {"desc": "10 урона за тег.", "cooldown": 1}}]}]}
+  },
+  "toxic_flask": {
+    "A": {"name": "Мор", "tiers": [
+      {"name": "Широкое облако", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: Яд и облако 6 сек.", "radius": 2}}, {"radius_add": 1}]},
+      {"name": "Долгое облако", "desc": "10 сек.", "mods": [{"set": {"desc": "Радиус 2: Яд и облако 10 сек."}}, {"effect": {"type": "hazard", "set": {"duration": 10}}}]}]},
+    "B": {"name": "Быстро", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Радиус 1: Яд и облако 6 сек. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Часто", "desc": "Перезарядка 2.", "mods": [{"set": {"desc": "Радиус 1: Яд и облако 6 сек.", "cooldown": 2}}]}]}
+  },
+  "volatile_mix": {
+    "A": {"name": "Детонация", "tiers": [
+      {"name": "Мощнее", "desc": "20 за тег.", "mods": [{"set": {"desc": "Каждый тег взрывается: 20 урона рядом."}}, {"effect": {"type": "reagent", "set": {"per_tag": 20}}}]},
+      {"name": "Шире", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Каждый тег взрывается: 20 урона в радиусе 2."}}, {"effect": {"type": "reagent", "set": {"radius": 2}}}]}]},
+    "B": {"name": "Быстро", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Каждый тег взрывается: 14 урона рядом. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Часто", "desc": "Перезарядка 2.", "mods": [{"set": {"desc": "Каждый тег взрывается.", "cooldown": 2}}]}]}
+  },
+  "blood_strike": {
+    "A": {"name": "Рассечь", "tiers": [
+      {"name": "Глубокая рана", "desc": "48 урона.", "mods": [{"set": {"desc": "Стоит 10 HP: 48 урона, лечит на 30%."}}, {"effect": {"type": "damage", "set": {"amount": 48}}}]},
+      {"name": "Кровотечение", "desc": "Ещё Яд цели.", "mods": [{"set": {"desc": "Стоит 10 HP: 48 урона, лечит на 30%, Яд."}}, {"add_effect": {"type": "status", "tag": "poison"}}]}]},
+    "B": {"name": "Пить кровь", "tiers": [
+      {"name": "Пить кровь", "desc": "Лечит на 60%.", "mods": [{"set": {"desc": "Стоит 10 HP: 38 урона, лечит на 60%."}}, {"effect": {"type": "damage", "set": {"lifesteal": 0.6}}}]},
+      {"name": "Дешевле", "desc": "Стоит 6 HP.", "mods": [{"set": {"desc": "Стоит 6 HP: 38 урона, лечит на 60%.", "hp_cost": 6}}]}]}
+  },
+  "bloodlet": {
+    "A": {"name": "Безумие", "tiers": [
+      {"name": "Безумие", "desc": "×1.35.", "mods": [{"set": {"desc": "Стоит 16 HP: атаки быстрее и ×1.35 на 6 сек."}}, {"effects": [{"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 1.35, "duration": 6}]}]},
+      {"name": "Дольше", "desc": "9 сек.", "mods": [{"set": {"desc": "Стоит 16 HP: атаки быстрее и ×1.35 на 9 сек."}}, {"effect": {"type": "buff", "set": {"duration": 9}}}]}]},
+    "B": {"name": "Холодная кровь", "tiers": [
+      {"name": "Дешевле", "desc": "Стоит 10 HP.", "mods": [{"set": {"desc": "Стоит 10 HP: атаки быстрее и ×1.2.", "hp_cost": 10}}]},
+      {"name": "Частое", "desc": "Перезарядка 5.", "mods": [{"set": {"desc": "Стоит 10 HP: атаки быстрее и ×1.2.", "cooldown": 5}}]}]}
+  },
+  "trance": {
+    "A": {"name": "Пламя крови", "tiers": [
+      {"name": "Жарче", "desc": "+1.5% за 1 HP.", "mods": [{"set": {"desc": "8 сек: лечение → +1.5% урона за 1 HP."}}, {"effects": [{"type": "buff", "stat": "trance", "value": 0.015, "duration": 8}, {"type": "buff", "stat": "dmg_taken", "value": 0.85, "duration": 8}]}]},
+      {"name": "Дольше", "desc": "12 сек.", "mods": [{"set": {"desc": "12 сек: лечение → ярость."}}, {"effect": {"type": "buff", "set": {"duration": 12}}}]}]},
+    "B": {"name": "Стойкость", "tiers": [
+      {"name": "Стойкость", "desc": "Урон по нему −30%.", "mods": [{"set": {"desc": "8 сек: лечение → ярость, урон по нему −30%."}}, {"effects": [{"type": "buff", "stat": "trance", "value": 0.01, "duration": 8}, {"type": "buff", "stat": "dmg_taken", "value": 0.7, "duration": 8}]}]},
+      {"name": "Чаще", "desc": "Перезарядка 9.", "mods": [{"set": {"desc": "8 сек: лечение → ярость.", "cooldown": 9}}]}]}
+  },
+  "cleave": {
+    "A": {"name": "Мясорубка", "tiers": [
+      {"name": "Мясорубка", "desc": "34 урона.", "mods": [{"set": {"desc": "Стоит 12 HP: 34 урона всем рядом."}}, {"effect": {"type": "damage", "set": {"amount": 34}}}]},
+      {"name": "Вампиризм", "desc": "Лечит на 25%.", "mods": [{"set": {"desc": "Стоит 12 HP: 34 урона рядом, лечит на 25%."}}, {"effect": {"type": "damage", "set": {"lifesteal": 0.25}}}]}]},
+    "B": {"name": "Раскрутка", "tiers": [
+      {"name": "Без отката", "desc": "Перезарядка 1.", "mods": [{"set": {"desc": "Стоит 12 HP: 26 урона всем рядом.", "cooldown": 1}}]},
+      {"name": "Дешевле", "desc": "Стоит 8 HP.", "mods": [{"set": {"desc": "Стоит 8 HP: 26 урона всем рядом.", "hp_cost": 8}}]}]}
+  },
+  "undying_rage": {
+    "A": {"name": "Бессмертие", "tiers": [
+      {"name": "Дольше", "desc": "6 сек.", "mods": [{"set": {"desc": "6 сек берсерк не умирает, атаки ×1.3."}}, {"effect": {"type": "buff", "set": {"duration": 6}}}]},
+      {"name": "Ярость", "desc": "Атаки ×1.6.", "mods": [{"set": {"desc": "6 сек не умирает, атаки ×1.6."}}, {"effects": [{"type": "buff", "stat": "undying", "value": 1, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 1.6, "duration": 6}]}]}]},
+    "B": {"name": "Чаще", "tiers": [
+      {"name": "Чаще", "desc": "Перезарядка 14.", "mods": [{"set": {"desc": "4 сек не умирает, атаки ×1.3.", "cooldown": 14}}]},
+      {"name": "Без AP", "desc": "0 AP.", "mods": [{"set": {"desc": "4 сек не умирает, атаки ×1.3. 0 AP."}}, {"add": {"ap": -2}}]}]}
+  },
+  "forward": {
+    "A": {"name": "Натиск", "tiers": [
+      {"name": "Двойной удар", "desc": "Две атаки.", "mods": [{"set": {"desc": "Союзник сразу атакует дважды."}}, {"effect": {"type": "extra_attack", "set": {"count": 2}}}]},
+      {"name": "Ярость приказа", "desc": "И +20% урона на 4 сек.", "mods": [{"set": {"desc": "Союзник атакует дважды, +20% урона 4 сек."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 4}}]}]},
+    "B": {"name": "Чёткий приказ", "tiers": [
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Союзник сразу атакует ещё раз. 1 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Без отката", "desc": "Перезарядка 1.", "mods": [{"set": {"desc": "Союзник сразу атакует ещё раз.", "cooldown": 1}}]}]}
+  },
+  "regroup": {
+    "A": {"name": "Манёвр", "tiers": [
+      {"name": "Широкий манёвр", "desc": "Союзник до 3 клеток.", "mods": [{"set": {"desc": "Союзник до 3 клеток встаёт на клетку."}}, {"effect": {"type": "regroup", "set": {"reach": 3}}}]},
+      {"name": "Под прикрытием", "desc": "Ему щит 20.", "mods": [{"set": {"desc": "Союзник до 3 клеток встаёт на клетку, щит 20."}}, {"add_effect": {"type": "shield", "amount": 20, "duration": 4, "radius": 0}}]}]},
+    "B": {"name": "Быстро", "tiers": [
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Союзник встаёт на клетку. 1 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Часто", "desc": "Перезарядка 2.", "mods": [{"set": {"desc": "Союзник встаёт на клетку.", "cooldown": 2}}]}]}
+  },
+  "focus": {
+    "A": {"name": "Охота", "tiers": [
+      {"name": "Беспощадно", "desc": "+30%.", "mods": [{"set": {"desc": "Весь отряд атакует цель, +30% урона 5 сек."}}, {"effect": {"type": "focus", "set": {"mult": 1.3}}}]},
+      {"name": "Долго", "desc": "8 сек.", "mods": [{"set": {"desc": "Весь отряд атакует цель, +30% урона 8 сек."}}, {"effect": {"type": "focus", "set": {"duration": 8}}}]}]},
+    "B": {"name": "Слаженность", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Отряд атакует цель, +20% урона. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Часто", "desc": "Перезарядка 5.", "mods": [{"set": {"desc": "Отряд атакует цель, +20% урона.", "cooldown": 5}}]}]}
+  },
+  "all_out": {
+    "A": {"name": "Атака", "tiers": [
+      {"name": "Дольше", "desc": "8 сек.", "mods": [{"set": {"desc": "Союзники в радиусе 3: быстрее 8 сек."}}, {"effect": {"type": "buff", "set": {"duration": 8}}}]},
+      {"name": "Шире", "desc": "Радиус 4.", "mods": [{"set": {"desc": "Союзники в радиусе 4: быстрее 8 сек.", "radius": 4}}, {"radius_add": 1}]}]},
+    "B": {"name": "Порядок", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Союзники в радиусе 3: быстрее 5 сек. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Часто", "desc": "Перезарядка 6.", "mods": [{"set": {"desc": "Союзники в радиусе 3: быстрее 5 сек.", "cooldown": 6}}]}]}
+  },
+  "ambush_order": {
+    "A": {"name": "Западня", "tiers": [
+      {"name": "Долго", "desc": "8 сек.", "mods": [{"set": {"desc": "Враг раскрыт 8 сек, отряд атакует его."}}, {"effect": {"type": "buff", "set": {"duration": 8}}}]},
+      {"name": "Беспощадно", "desc": "+35%.", "mods": [{"set": {"desc": "Враг раскрыт 8 сек (+35%), отряд атакует."}}, {"effect": {"type": "buff", "set": {"value": 1.35}}}]}]},
+    "B": {"name": "Быстро", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Враг раскрыт 5 сек. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Часто", "desc": "Перезарядка 5.", "mods": [{"set": {"desc": "Враг раскрыт 5 сек.", "cooldown": 5}}]}]}
+  },
+  "tether": {
+    "A": {"name": "Крепкая нить", "tiers": [
+      {"name": "Крепкая нить", "desc": "+6 HP/сек.", "mods": [{"set": {"desc": "15 сек: половина урона — в связующего, +6 HP/сек."}}, {"effect": {"type": "tether", "set": {"regen": 6}}}]},
+      {"name": "Долгая нить", "desc": "25 сек.", "mods": [{"set": {"desc": "25 сек: половина урона — в связующего, +6 HP/сек."}}, {"effect": {"type": "tether", "set": {"duration": 25}}}]}]},
+    "B": {"name": "Дальняя нить", "tiers": [
+      {"name": "Дальность 7", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Привязь на дальность 7.", "range": 7}}]},
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Привязь: половина урона — в связующего. 1 AP."}}, {"add": {"ap": -1}}]}]}
+  },
+  "merge": {
+    "A": {"name": "Единство", "tiers": [
+      {"name": "Единство", "desc": "Урон ×1.4.", "mods": [{"set": {"desc": "6 сек внутри союзника: +3 брони, урон ×1.4."}}, {"effect": {"type": "merge", "set": {"host": [{"type": "buff", "stat": "armor", "value": 3, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 1.4, "duration": 6}]}}}]},
+      {"name": "Дольше", "desc": "9 сек.", "mods": [{"set": {"desc": "9 сек внутри союзника: +3 брони, урон ×1.4."}}, {"effect": {"type": "merge", "set": {"duration": 9}}}]}]},
+    "B": {"name": "Убежище", "tiers": [
+      {"name": "Целитель внутри", "desc": "Союзнику +6 HP/сек.", "mods": [{"set": {"desc": "6 сек внутри: +3 брони, урон ×1.25, +6 HP/сек."}}, {"effect": {"type": "merge", "set": {"host": [{"type": "buff", "stat": "armor", "value": 3, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 6}, {"type": "buff", "stat": "regen", "value": 6, "duration": 6}]}}}]},
+      {"name": "Часто", "desc": "Перезарядка 9.", "mods": [{"set": {"desc": "6 сек внутри союзника.", "cooldown": 9}}]}]}
+  },
+  "life_transfer": {
+    "A": {"name": "Щедрость", "tiers": [
+      {"name": "Щедрость", "desc": "Союзнику 44.", "mods": [{"set": {"desc": "−20 HP себе, +44 союзнику."}}, {"effect": {"type": "life_transfer", "set": {"amount": 44}}}]},
+      {"name": "Даром", "desc": "Себе −12.", "mods": [{"set": {"desc": "−12 HP себе, +44 союзнику."}}, {"effect": {"type": "life_transfer", "set": {"cost": 12}}}]}]},
+    "B": {"name": "Поток", "tiers": [
+      {"name": "Без отката", "desc": "Перезарядка 0.", "mods": [{"set": {"desc": "−20 HP себе, +32 союзнику.", "cooldown": 0}}]},
+      {"name": "Дальше", "desc": "Дальность 7.", "mods": [{"set": {"desc": "−20 HP себе, +32 союзнику, дальность 7.", "range": 7}}]}]}
+  },
+  "soul_shield": {
+    "A": {"name": "Броня души", "tiers": [
+      {"name": "Толще", "desc": "Щит 70.", "mods": [{"set": {"desc": "Союзнику щит 70."}}, {"effect": {"type": "shield", "set": {"amount": 70}}}]},
+      {"name": "Дольше", "desc": "10 сек.", "mods": [{"set": {"desc": "Союзнику щит 70 на 10 сек."}}, {"effect": {"type": "shield", "set": {"duration": 10}}}]}]},
+    "B": {"name": "Быстро", "tiers": [
+      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Союзнику щит 50. 2 AP."}}, {"add": {"ap": -1}}]},
+      {"name": "Часто", "desc": "Перезарядка 3.", "mods": [{"set": {"desc": "Союзнику щит 50.", "cooldown": 3}}]}]}
+  },
+  "share_pain": {
+    "A": {"name": "Тяжесть", "tiers": [
+      {"name": "Тяжесть", "desc": "−45%.", "mods": [{"set": {"desc": "16 урона, −45% к урону врага 6 сек."}}, {"effect": {"type": "buff", "set": {"value": 0.55}}}]},
+      {"name": "Дольше", "desc": "9 сек.", "mods": [{"set": {"desc": "16 урона, −45% к урону 9 сек."}}, {"effect": {"type": "buff", "set": {"duration": 9}}}]}]},
+    "B": {"name": "Боль", "tiers": [
+      {"name": "Сильнее", "desc": "26 урона.", "mods": [{"set": {"desc": "26 урона, −30% к урону врага."}}, {"effect": {"type": "damage", "set": {"amount": 26}}}]},
+      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "26 урона, −30% к урону. 1 AP."}}, {"add": {"ap": -1}}]}]}
+  }
+}

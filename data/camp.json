@@ -1,0 +1,19 @@
+{
+  "groups": [
+    {"id": "power", "name": "Сила отряда"},
+    {"id": "economy", "name": "Экономика вылазки"},
+    {"id": "arsenal", "name": "Арсенал"}
+  ],
+  "upgrades": {
+    "hardening": {"group": "power", "name": "Закалка", "desc": "+6% макс. HP всем героям", "bonus": "hp_pct", "per_level": 0.06, "costs": [40, 80, 140]},
+    "weapons": {"group": "power", "name": "Оружейник", "desc": "+6% урона атак и силы навыков", "bonus": "power_pct", "per_level": 0.06, "costs": [40, 80, 140]},
+    "meditation": {"group": "power", "name": "Медитация", "desc": "+1 AP всем героям", "bonus": "ap", "per_level": 1, "costs": [150]},
+    "treasury": {"group": "economy", "name": "Казна", "desc": "+15 золота в начале вылазки", "bonus": "start_gold", "per_level": 15, "costs": [30, 60, 100]},
+    "kitchen": {"group": "economy", "name": "Полевая кухня", "desc": "+10% лечения после победы", "bonus": "post_battle_heal", "per_level": 0.1, "costs": [50, 100]},
+    "trade": {"group": "economy", "name": "Торговые связи", "desc": "Цены у торговца −15%", "bonus": "discount", "per_level": 0.15, "costs": [50, 100]},
+    "lucky_coin": {"group": "economy", "name": "Счастливая монета", "desc": "+1 переброс наград за вылазку", "bonus": "rerolls", "per_level": 1, "costs": [60, 120]},
+    "rack": {"group": "arsenal", "name": "Оружейная стойка", "desc": "+1 предмет из арсенала на вылазку", "bonus": "arsenal_slots", "per_level": 1, "costs": [40, 90, 150]},
+    "appraiser": {"group": "arsenal", "name": "Оценщик", "desc": "Чаще редкие и эпические предметы", "bonus": "rare_chance", "per_level": 0.15, "costs": [60, 120]},
+    "reliquary": {"group": "arsenal", "name": "Реликварий", "desc": "Вылазка начинается со случайной реликвией", "bonus": "start_relics", "per_level": 1, "costs": [120]}
+  }
+}

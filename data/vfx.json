@@ -1,0 +1,1452 @@
+{
+  "sfx": {
+    "cast_disc": {"mode": "disc", "size": 140, "ground": true, "under": true, "alpha": [0.5, 0.5], "hdr": 1.3, "color": "tag"},
+    "charge_orb": {"mode": "orb", "size": 46, "color": "tag", "hdr": 1.5, "grow": [0.2, 1.0]},
+    "charge_fireorb": {"mode": "fireorb", "size": 64, "color": "white", "hdr": 2.0, "grow": [0.2, 1.0]},
+    "charge_fireorb_big": {"mode": "fireorb", "size": 120, "color": "white", "hdr": 2.2, "grow": [0.15, 1.0]},
+    "shockwave": {"mode": "ring", "size": 230, "ground": true, "under": true, "life": 0.45, "alpha": [0.9, 0.2], "hdr": 1.4, "color": "tag_light"},
+    "shockwave_big": {"mode": "ring", "size": 460, "ground": true, "under": true, "life": 0.65, "alpha": [0.85, 0.2], "hdr": 1.5, "color": "tag_light"},
+    "shock_air": {"mode": "ring", "size": 150, "life": 0.28, "alpha": [0.9, 0.1], "hdr": 1.6, "color": "tag_light"},
+    "dist_ring": {"mode": "d_ring", "size": 280, "ground": true, "life": 0.5, "extra": 12},
+    "dist_ring_air": {"mode": "d_ring", "size": 200, "life": 0.35, "extra": 10},
+    "dist_ring_big": {"mode": "d_ring", "size": 560, "ground": true, "life": 0.75, "extra": 22},
+    "heat_haze": {"mode": "d_haze", "size": [190, 230], "life": 1.6, "extra": 5, "alpha": [1, 0]},
+    "heat_haze_big": {"mode": "d_haze", "size": [340, 360], "life": 2.4, "extra": 7, "alpha": [1, 0]},
+    "pinch": {"mode": "d_pinch", "size": 180, "life": 0.4, "extra": 9, "alpha": [1, 0]},
+    "fireorb": {"mode": "fireorb", "size": 58, "color": "white", "hdr": 2.2},
+    "fireorb_big": {"mode": "fireorb", "size": 120, "color": "white", "hdr": 2.4},
+    "fire_dart_orb": {"mode": "fireorb", "size": 34, "color": "white", "hdr": 2.2},
+    "energy_orb": {"mode": "orb", "size": 34, "color": "tag", "hdr": 1.5},
+    "ice_orb": {"mode": "orb", "size": 46, "color": [150, 215, 255], "hdr": 1.5},
+    "dark_orb": {"mode": "orb", "size": 50, "color": [180, 90, 255], "hdr": 1.5},
+    "holy_orb": {"mode": "orb", "size": 40, "color": [255, 225, 150], "hdr": 1.5},
+    "fire_pillar": {"mode": "pillar", "size": [170, 560], "life": 0.9, "color": [255, 140, 50], "hdr": 1.5},
+    "holy_pillar": {"mode": "pillar", "size": [130, 600], "life": 0.75, "color": [255, 225, 150], "hdr": 1.5},
+    "heal_pillar": {"mode": "pillar", "size": [96, 420], "life": 0.8, "color": "tag_light", "hdr": 1.2},
+    "vortex_dark": {"mode": "vortex", "size": 200, "ground": true, "under": true, "life": 1.0, "color": [170, 80, 255], "hdr": 1.7},
+    "vortex_wind": {"mode": "vortex", "size": 260, "ground": true, "life": 0.45, "color": [255, 245, 230], "hdr": 1.0, "alpha": [0.8, 0], "extra": 2},
+    "tornado": {"mode": "vortex", "size": [220, 300], "life": 0.7, "color": [215, 210, 195], "hdr": 0.9, "alpha": [0.7, 0], "extra": 3},
+    "vortex_blood": {"mode": "vortex", "size": 260, "ground": true, "life": 0.55, "color": [255, 60, 50], "hdr": 1.8, "extra": 2},
+    "dome": {"mode": "dome", "size": 116, "life": 1.0, "color": [150, 195, 255], "hdr": 1.3, "alpha": [1, 0]},
+    "dome_ice": {"mode": "dome", "size": 104, "life": 0.9, "color": [170, 225, 255], "hdr": 1.05, "alpha": [0.8, 0.8]},
+    "dome_gold": {"mode": "dome", "size": 120, "life": 1.2, "color": [255, 220, 140], "hdr": 1.3, "alpha": [1, 0]},
+    "dome_mirror": {"mode": "dome", "size": 124, "life": 1.3, "color": [230, 240, 255], "hdr": 1.4, "alpha": [1, 0]},
+    "ground_aoe": {"mode": "disc", "size": 220, "ground": true, "under": true, "life": 0.7, "alpha": [0.6, 0], "hdr": 1.1, "color": "tag"},
+    "ground_aoe_big": {"mode": "disc", "size": 380, "ground": true, "under": true, "life": 0.9, "alpha": [0.6, 0], "hdr": 1.1, "color": "tag"},
+    "cracks_lava": {"mode": "cracks", "size": 300, "ground": true, "under": true, "life": 1.8, "alpha": [1, 0], "color": [255, 130, 40], "hdr": 1.7},
+    "cracks_light": {"mode": "cracks", "size": 200, "ground": true, "under": true, "life": 0.9, "alpha": [1, 0], "color": "tag", "hdr": 1.3},
+    "aura_rage": {"mode": "aura", "size": [100, 140], "life": 1.1, "color": [255, 70, 40], "hdr": 1.5, "alpha": [1, 0]},
+    "aura_buff": {"mode": "aura", "size": [100, 140], "life": 1.1, "color": "tag", "hdr": 1.4, "alpha": [1, 0]},
+    "rays_holy": {"mode": "rays", "size": 260, "life": 0.6, "color": [255, 230, 160], "hdr": 1.15},
+    "rays_burst": {"mode": "rays", "size": 220, "life": 0.4, "color": "tag", "hdr": 1.5},
+    "rays_ice": {"mode": "spikes", "size": 280, "life": 0.5, "color": [180, 225, 255], "hdr": 1.4},
+    "spikes_steel": {"mode": "spikes", "size": 200, "life": 0.6, "color": [220, 225, 235], "hdr": 1.2},
+    "wave_water": {"mode": "wave", "size": 320, "ground": true, "life": 0.6, "extra": 1.1, "rot": "dir", "color": [120, 190, 255], "hdr": 1.5},
+    "wave_cleave": {"mode": "wave", "size": 260, "ground": true, "life": 0.4, "extra": 0.9, "rot": "dir", "color": "tag_light", "hdr": 1.9},
+    "aura_song": {"mode": "ring", "size": 300, "ground": true, "under": true, "life": 0.7, "alpha": [0.8, 0.1], "hdr": 1.3, "color": "tag"},
+    "shadow_vortex": {"mode": "vortex", "size": 140, "ground": true, "under": true, "life": 0.6, "alpha": [0.9, 0], "color": [120, 80, 200], "hdr": 1.4},
+    "aura_poison": {"mode": "aura", "size": [80, 110], "life": 1.0, "color": [130, 220, 90], "hdr": 1.4, "alpha": [1, 0]},
+    "aura_steel": {"mode": "aura", "size": [90, 120], "life": 1.0, "color": [210, 220, 235], "hdr": 1.2, "alpha": [1, 0]},
+    "aura_nature": {"mode": "aura", "size": [100, 130], "life": 1.0, "color": [130, 230, 110], "hdr": 1.5, "alpha": [1, 0]},
+    "storm_orb": {"mode": "orb", "size": 50, "color": [160, 175, 255], "hdr": 1.6},
+    "green_disc": {"mode": "disc", "size": 220, "ground": true, "under": true, "life": 0.8, "alpha": [0.6, 0], "hdr": 1.1, "color": [130, 220, 90]},
+    "holy_disc": {"mode": "disc", "size": 360, "ground": true, "under": true, "life": 0.9, "alpha": [0.6, 0], "hdr": 1.2, "color": [255, 220, 140]},
+    "portal_ring": {"mode": "vortex", "size": 90, "ground": true, "under": true, "life": 0.5, "alpha": [0.9, 0.9], "color": [170, 110, 255], "hdr": 1.5},
+    "dome_frost": {"mode": "dome", "size": 100, "life": 0.6, "color": [170, 225, 255], "hdr": 1.2, "alpha": [0.9, 0]}
+  },
+
+  "ribbons": {
+    "slash": {"mode": "slash", "width": 30, "life": 0.14, "color": "tag_light", "hdr": 2.0},
+    "slash_heavy": {"mode": "slash", "width": 56, "life": 0.2, "color": "tag_light", "hdr": 2.4},
+    "slash_red": {"mode": "slash", "width": 50, "life": 0.22, "color": [255, 70, 60], "hdr": 2.4},
+    "whirl": {"mode": "slash", "width": 44, "life": 0.22, "color": [255, 245, 230], "hdr": 2.0},
+    "whirl_red": {"mode": "slash", "width": 44, "life": 0.24, "color": [255, 80, 70], "hdr": 2.2},
+    "arrow_streak": {"mode": "energy", "width": 5, "life": 0.1, "color": [255, 245, 225], "hdr": 1.0},
+    "arrow_heavy": {"mode": "energy", "width": 14, "life": 0.22, "color": "tag_light", "hdr": 2.2},
+    "ice_arrow": {"mode": "energy", "width": 8, "life": 0.14, "color": [170, 220, 255], "hdr": 1.6},
+    "fire_arrow": {"mode": "fire", "width": 14, "life": 0.22, "color": "white", "hdr": 1.8},
+    "fire_trail": {"mode": "fire", "width": 38, "life": 0.3, "color": "white", "hdr": 2.0},
+    "meteor_fire": {"mode": "fire", "width": 84, "life": 0.32, "color": "white", "hdr": 2.2},
+    "meteor_smoke": {"mode": "smoke", "width": 76, "life": 0.7, "color": [64, 58, 62], "blend": "alpha"},
+    "ice_trail": {"mode": "energy", "width": 20, "life": 0.22, "color": [160, 215, 255], "hdr": 2.0},
+    "dark_trail": {"mode": "energy", "width": 22, "life": 0.3, "color": [180, 90, 255], "hdr": 1.8},
+    "dark_smoke": {"mode": "smoke", "width": 34, "life": 0.45, "color": [50, 20, 70], "blend": "alpha"},
+    "water_trail": {"mode": "water", "width": 12, "life": 0.16, "color": [150, 200, 255], "hdr": 1.2},
+    "bolt_trail": {"mode": "energy", "width": 12, "life": 0.16, "color": "tag", "hdr": 1.8},
+    "link": {"mode": "energy", "width": 10, "life": 0.18, "color": "tag", "hdr": 2.0},
+    "pierce": {"mode": "energy", "width": 30, "life": 0.4, "color": "tag_light", "hdr": 2.6},
+    "charge": {"mode": "energy", "width": 44, "life": 0.25, "color": [255, 240, 220], "hdr": 1.4},
+    "drain": {"mode": "energy", "width": 10, "life": 0.3, "color": "tag", "hdr": 2.0},
+    "holy": {"mode": "energy", "width": 18, "life": 0.3, "color": [255, 230, 160], "hdr": 2.0},
+    "sparkle": {"mode": "energy", "width": 8, "life": 0.25, "color": [200, 230, 255], "hdr": 1.6},
+    "chain": {"mode": "slash", "width": 6, "life": 0.25, "color": [200, 200, 210], "hdr": 1.0},
+    "notes": {"mode": "energy", "width": 12, "life": 0.35, "color": "tag", "hdr": 1.6},
+    "shadow": {"mode": "smoke", "width": 40, "life": 0.4, "color": [50, 40, 70], "blend": "alpha"},
+    "spear": {"mode": "slash", "width": 26, "life": 0.18, "color": [240, 240, 250], "hdr": 1.8},
+    "dart": {"mode": "energy", "width": 5, "life": 0.12, "color": [150, 230, 110], "hdr": 1.4}
+  },
+
+  "lights": {
+    "flash_small": {"radius": 120, "intensity": 1.2, "life": 0.25, "color": "tag"},
+    "flash": {"radius": 200, "intensity": 1.6, "life": 0.45, "color": "tag"},
+    "flash_big": {"radius": 340, "intensity": 2.0, "life": 0.8, "color": "tag"},
+    "fire": {"radius": 230, "intensity": 1.8, "life": 1.0, "color": [255, 140, 50], "flicker": 0.25, "curve": 1.2},
+    "fire_big": {"radius": 380, "intensity": 2.2, "life": 1.6, "color": [255, 130, 40], "flicker": 0.25, "curve": 1.0},
+    "orb": {"radius": 130, "intensity": 1.0, "color": "tag"},
+    "orb_fire": {"radius": 150, "intensity": 1.2, "color": [255, 140, 50], "flicker": 0.2},
+    "orb_big": {"radius": 260, "intensity": 1.6, "color": [255, 140, 50], "flicker": 0.2},
+    "holy": {"radius": 260, "intensity": 1.8, "life": 0.8, "color": [255, 225, 150]},
+    "ice": {"radius": 220, "intensity": 1.4, "life": 0.7, "color": [140, 200, 255]}
+  },
+
+  "effects": {
+    "slash_hit": [
+      {"t": 0, "arc": {"ribbon": "slash", "radius": 34, "from": -80, "to": 70, "time": 0.07, "flip": "random"}, "at": "target"},
+      {"t": 0.03, "fx": "hit_sparks", "at": "target", "angle": "dir"},
+      {"t": 0.03, "light": "flash_small", "at": "target", "scale": 0.7}
+    ],
+    "arrow_hit": [
+      {"t": 0, "fx": "hit_sparks", "at": "target", "angle": "dir", "count": 5},
+      {"t": 0, "fx": "flare", "at": "target", "scale": 0.25}
+    ],
+    "arrow_hit_ice": [
+      {"t": 0, "fx": "ice_shards", "at": "target", "count": 6, "scale": 0.6},
+      {"t": 0, "fx": "flare", "at": "target", "scale": 0.3, "color": [170, 220, 255]},
+      {"t": 0, "fx": "snowflakes", "at": "target", "count": 3}
+    ],
+    "bolt_hit": [
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.45},
+      {"t": 0, "sfx": "shock_air", "at": "target", "scale": 0.4},
+      {"t": 0, "fx": "light_motes", "at": "target", "count": 6},
+      {"t": 0, "light": "flash_small", "at": "target", "scale": 0.6}
+    ],
+    "link_hit": [
+      {"t": 0, "fx": "burst_fb", "at": "target", "scale": 0.5},
+      {"t": 0, "fx": "sparks", "at": "target", "count": 8},
+      {"t": 0, "light": "flash_small", "at": "target"}
+    ],
+    "pierce_line": [
+      {"t": 0, "streak": {"ribbon": "pierce", "time": 0.08, "extend": 60}},
+      {"t": 0, "line": "light_motes", "step": 60},
+      {"t": 0.04, "fx": "sparks", "at": "cells", "count": 18},
+      {"t": 0.04, "sfx": "shock_air", "at": "cells", "offset": [0, -26], "scale": 0.5, "max": 6},
+      {"t": 0, "sfx": "dist_ring_air", "at": "caster", "scale": 0.6},
+      {"t": 0.02, "screen": {"shake": 5, "hitstop": 0.05}},
+      {"t": 0.04, "fx": "sparks_bounce", "at": "cells", "count": 10, "min_tier": 2, "color": [255, 160, 120]}
+    ],
+    "hit_fire": [
+      {"t": 0, "fx": "embers", "at": "target", "count": 8},
+      {"t": 0, "fx": "fire_tongues", "at": "target_ground", "count": 3, "scale": 0.7}
+    ],
+    "hit_ice": [
+      {"t": 0, "fx": "ice_shards", "at": "target", "count": 6, "scale": 0.7},
+      {"t": 0, "fx": "snowflakes", "at": "target", "count": 4}
+    ],
+    "hit_water": [
+      {"t": 0, "fx": "water_drops", "at": "target", "count": 10},
+      {"t": 0, "fx": "water_ripple", "at": "target_ground", "scale": 0.6}
+    ],
+    "big_hit": [
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.6},
+      {"t": 0, "screen": {"shake": 3, "hitstop": 0.04}}
+    ],
+    "cast_release": [
+      {"t": 0, "fx": "flare", "at": "caster", "scale": 0.6},
+      {"t": 0, "fx": "sparks_up", "at": "caster", "count": 6},
+      {"t": 0, "sfx": "pinch", "at": "caster", "scale": 0.6},
+      {"t": 0, "light": "flash_small", "at": "caster"}
+    ],
+    "heavy_slash": [
+      {"t": 0, "arc": {"ribbon": "slash_heavy", "radius": 50, "from": -110, "to": 80, "time": 0.09}, "at": "target"},
+      {"t": 0.05, "fx": "flash_core", "at": "target", "scale": 0.5},
+      {"t": 0.05, "fx": "flare", "at": "target", "scale": 0.6},
+      {"t": 0.05, "fx": "sparks_bounce", "at": "target", "count": 14},
+      {"t": 0.05, "sfx": "shockwave", "at": "target_ground", "scale": 0.8},
+      {"t": 0.05, "sfx": "dist_ring", "at": "target_ground", "scale": 0.7},
+      {"t": 0.06, "fx": "dust_fb", "at": "target_ground", "count": 5},
+      {"t": 0.05, "light": "flash", "at": "target", "scale": 0.7},
+      {"t": 0.05, "screen": {"shake": 6, "hitstop": 0.06}}
+    ],
+    "crush": [
+      {"t": 0, "arc": {"ribbon": "slash_heavy", "radius": 60, "from": -170, "to": -10, "time": 0.1, "rot": 0}, "at": "target", "offset": [0, -10]},
+      {"t": 0.07, "fx": "flash_core", "at": "target", "scale": 0.6},
+      {"t": 0.07, "sfx": "shockwave_big", "at": "target_ground", "scale": 0.7},
+      {"t": 0.07, "sfx": "wave_cleave", "at": "target_ground"},
+      {"t": 0.07, "sfx": "dist_ring_big", "at": "target_ground", "scale": 0.6},
+      {"t": 0.07, "sfx": "cracks_light", "at": "target_ground", "color": [255, 220, 170]},
+      {"t": 0.07, "props": {"name": ["rock", "pebble", "pebble"], "count": 8, "speed": [220, 420], "spread": 130}, "at": "target_ground", "offset": [0, -6]},
+      {"t": 0.07, "fx": "rock_bits", "at": "target_ground", "offset": [0, -20]},
+      {"t": 0.08, "fx": "dust_fb", "at": "target_ground", "count": 8},
+      {"t": 0.07, "mark": {"name": "cracks", "size": 130}, "at": "target_ground"},
+      {"t": 0.07, "light": "flash", "at": "target"},
+      {"t": 0.07, "screen": {"shake": 10, "hitstop": 0.09, "zoom": 1.05, "zoom_time": 0.25, "radial": 0.35}},
+      {"t": 0.1, "sfx": "shockwave_big", "at": "target_ground", "min_tier": 2},
+      {"t": 0.1, "fx": "stun_stars", "at": "target", "offset": [0, -30], "min_tier": 2}
+    ],
+    "execute": [
+      {"t": 0, "screen": {"dim": 0.35, "dim_time": 0.25}},
+      {"t": 0, "arc": {"ribbon": "slash_red", "radius": 50, "from": -130, "to": 60, "time": 0.07}, "at": "target"},
+      {"t": 0.08, "arc": {"ribbon": "slash_red", "radius": 50, "from": 130, "to": -60, "time": 0.07}, "at": "target"},
+      {"t": 0.12, "fx": "burst_fb", "at": "target", "color": [255, 70, 60]},
+      {"t": 0.12, "fx": "sparks", "at": "target", "color": [255, 90, 70], "count": 18},
+      {"t": 0.12, "sfx": "shock_air", "at": "target", "color": [255, 70, 60]},
+      {"t": 0.12, "mark": {"name": "gash", "size": 90, "rot": 20}, "at": "target_ground"},
+      {"t": 0.12, "light": "flash", "at": "target", "color": [255, 70, 60]},
+      {"t": 0.12, "screen": {"shake": 8, "hitstop": 0.11, "aberration": 0.8, "flash": 0.15, "flash_color": [255, 60, 50]}},
+      {"t": 0.2, "projectile": {"from": "target", "count": 1, "time": 0.35, "arc": 30, "ribbon": "drain", "head": "drain_motes", "color": [255, 80, 70]}, "at": "caster", "min_tier": 2}
+    ],
+    "shield_impact": [
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.8},
+      {"t": 0, "sfx": "shock_air", "at": "target", "color": [220, 230, 255]},
+      {"t": 0, "fx": "sparks_bounce", "at": "target", "count": 12},
+      {"t": 0, "fx": "stun_stars", "at": "target", "offset": [0, -30]},
+      {"t": 0, "light": "flash_small", "at": "target"},
+      {"t": 0, "screen": {"shake": 6, "hitstop": 0.07}}
+    ],
+    "taunt_pulse": [
+      {"t": 0, "decal": {"shape": "circle_blood", "size": 220, "life": 0.8, "alpha": [0.9, 0], "grow": [0.5, 1.1], "spin": 90, "ground": true, "under": true, "color": [255, 90, 70], "hdr": 1.8}, "at": "caster_ground"},
+      {"t": 0, "sfx": "shockwave", "at": "caster_ground", "color": [255, 90, 70]},
+      {"t": 0.12, "sfx": "shockwave", "at": "caster_ground", "color": [255, 90, 70]},
+      {"t": 0.24, "sfx": "shockwave", "at": "caster_ground", "color": [255, 90, 70]},
+      {"t": 0, "sfx": "aura_rage", "at": "caster", "follow": true},
+      {"t": 0, "sfx": "dist_ring", "at": "caster_ground"},
+      {"t": 0, "light": "flash", "at": "caster", "color": [255, 90, 70]},
+      {"t": 0, "screen": {"shake": 4, "zoom": 1.03, "zoom_time": 0.2}}
+    ],
+    "bastion": [
+      {"t": 0, "sfx": "dome_gold", "at": "caster", "follow": true, "color": [230, 220, 200]},
+      {"t": 0, "decal": {"shape": "circle_runes", "size": 200, "life": 1.0, "alpha": [0.9, 0], "grow": [0.5, 1.0], "spin": 60, "ground": true, "under": true, "color": [255, 220, 150], "hdr": 1.7}, "at": "caster_ground"},
+      {"t": 0, "sfx": "shockwave", "at": "caster_ground", "color": [255, 220, 150]},
+      {"t": 0.05, "fx": "shield_sparkles", "at": "caster", "count": 14},
+      {"t": 0.1, "sfx": "spikes_steel", "at": "caster", "min_tier": 2},
+      {"t": 0, "light": "flash", "at": "caster", "color": [255, 220, 150]},
+      {"t": 0, "screen": {"shake": 4}}
+    ],
+    "war_cry": [
+      {"t": 0, "sfx": "aura_buff", "at": "caster", "follow": true, "color": [255, 190, 80]},
+      {"t": 0, "sfx": "shockwave_big", "at": "caster_ground", "color": [255, 200, 100], "scale": 0.7},
+      {"t": 0.1, "sfx": "shockwave_big", "at": "caster_ground", "color": [255, 200, 100], "scale": 0.9},
+      {"t": 0, "sfx": "dist_ring_big", "at": "caster_ground", "scale": 0.6},
+      {"t": 0, "sfx": "rays_burst", "at": "caster", "color": [255, 210, 120]},
+      {"t": 0.05, "fx": "buff_up", "at": "cells", "count": 30, "color": [255, 210, 120]},
+      {"t": 0, "light": "flash_big", "at": "caster", "color": [255, 190, 90]},
+      {"t": 0, "screen": {"shake": 6, "zoom": 1.05, "zoom_time": 0.3, "aberration": 0.4}}
+    ],
+    "leap_start": [
+      {"t": 0, "fx": "dust_fb", "at": "caster_ground", "count": 5},
+      {"t": 0, "sfx": "shockwave", "at": "caster_ground", "scale": 0.5, "color": [220, 210, 190]},
+      {"t": 0, "fx": "speed_lines", "at": "caster", "angle": "dir"}
+    ],
+    "land_impact": [
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [240, 230, 210]},
+      {"t": 0, "sfx": "dist_ring", "at": "target_ground", "scale": 0.7},
+      {"t": 0, "fx": "dust_fb", "at": "target_ground", "count": 8},
+      {"t": 0, "fx": "rock_bits", "at": "target_ground", "offset": [0, -16], "count": 10},
+      {"t": 0, "mark": {"name": "cracks", "size": 100}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 6, "hitstop": 0.05}}
+    ],
+    "land_light": [
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.6, "color": [220, 230, 210]},
+      {"t": 0, "fx": "dust_fb", "at": "target_ground", "count": 5}
+    ],
+    "ram": [
+      {"t": 0, "play": "land_impact"},
+      {"t": 0, "sfx": "wave_cleave", "at": "target_ground", "color": [255, 230, 200]},
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.9},
+      {"t": 0, "fx": "sparks_bounce", "at": "target", "count": 16},
+      {"t": 0, "fx": "stun_stars", "at": "target", "offset": [0, -30]},
+      {"t": 0, "light": "flash", "at": "target"},
+      {"t": 0, "screen": {"shake": 9, "hitstop": 0.08, "zoom": 1.05, "zoom_time": 0.2, "radial": 0.3}}
+    ],
+    "intercept": [
+      {"t": 0, "play": "land_light"},
+      {"t": 0, "sfx": "dome_gold", "at": "target", "scale": 1.3},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "color": [255, 215, 130], "scale": 0.6},
+      {"t": 0.05, "fx": "shield_sparkles", "at": "cells", "count": 30, "color": [255, 220, 150]},
+      {"t": 0, "light": "flash", "at": "target", "color": [255, 215, 130]},
+      {"t": 0, "screen": {"shake": 4}}
+    ],
+    "whirl": [
+      {"t": 0, "arc": {"ribbon": "whirl", "radius": 66, "from": 0, "to": 400, "time": 0.22, "rot": 0, "squash": 0.5}, "at": "caster", "offset": [0, 10]},
+      {"t": 0, "sfx": "vortex_wind", "at": "caster_ground"},
+      {"t": 0, "fx": "sparks", "at": "caster", "count": 20},
+      {"t": 0.05, "fx": "dust_fb", "at": "caster_ground", "count": 7},
+      {"t": 0.1, "sfx": "shockwave", "at": "caster_ground", "scale": 1.1, "color": [240, 235, 225]},
+      {"t": 0.1, "sfx": "dist_ring", "at": "caster_ground"},
+      {"t": 0.1, "screen": {"shake": 6, "hitstop": 0.05}}
+    ],
+    "tornado": [
+      {"t": 0, "arc": {"ribbon": "whirl", "radius": 90, "from": 0, "to": 720, "time": 0.32, "rot": 0, "squash": 0.5}, "at": "caster", "offset": [0, 10]},
+      {"t": 0.04, "arc": {"ribbon": "whirl", "radius": 60, "from": 180, "to": 900, "time": 0.32, "rot": 0, "squash": 0.5}, "at": "caster", "offset": [0, -16]},
+      {"t": 0, "sfx": "tornado", "at": "caster", "offset": [0, -60]},
+      {"t": 0, "sfx": "vortex_wind", "at": "caster_ground", "scale": 1.2},
+      {"t": 0.05, "fx": "dust_fb", "at": "cells", "count": 14},
+      {"t": 0.05, "props": {"name": ["pebble", "splinter"], "count": 8, "speed": [200, 380], "spread": 180}, "at": "caster_ground", "offset": [0, -10]},
+      {"t": 0.15, "sfx": "shockwave_big", "at": "caster_ground", "scale": 0.8, "color": [240, 235, 225]},
+      {"t": 0.15, "sfx": "dist_ring_big", "at": "caster_ground", "scale": 0.6},
+      {"t": 0.15, "screen": {"shake": 8, "hitstop": 0.06, "zoom": 1.04, "zoom_time": 0.3}}
+    ],
+    "blood_whirl": [
+      {"t": 0, "arc": {"ribbon": "whirl_red", "radius": 66, "from": 0, "to": 400, "time": 0.22, "rot": 0, "squash": 0.5}, "at": "caster", "offset": [0, 10]},
+      {"t": 0, "sfx": "vortex_blood", "at": "caster_ground"},
+      {"t": 0, "fx": "sparks", "at": "caster", "count": 18, "color": [255, 90, 70]},
+      {"t": 0.1, "sfx": "shockwave", "at": "caster_ground", "color": [255, 70, 60]},
+      {"t": 0.1, "fx": "drain_motes", "at": "cells", "count": 30, "color": [255, 80, 70]},
+      {"t": 0.12, "fx": "curse_motes", "at": "caster", "color": [255, 80, 70]},
+      {"t": 0.1, "sfx": "aura_rage", "at": "caster", "follow": true, "min_tier": 2},
+      {"t": 0.1, "light": "flash", "at": "caster", "color": [255, 70, 60]},
+      {"t": 0.1, "screen": {"shake": 6, "hitstop": 0.05, "aberration": 0.4}}
+    ],
+    "pierce_hit": [
+      {"t": 0, "fx": "burst_fb", "at": "target", "scale": 0.7},
+      {"t": 0, "fx": "flare", "at": "target", "scale": 0.9},
+      {"t": 0, "fx": "sparks", "at": "target", "angle": "dir"},
+      {"t": 0, "sfx": "shock_air", "at": "target", "scale": 0.7},
+      {"t": 0, "sfx": "dist_ring_air", "at": "target", "scale": 0.6},
+      {"t": 0, "light": "flash_small", "at": "target"},
+      {"t": 0, "screen": {"shake": 4, "hitstop": 0.04}}
+    ],
+    "deadly_shot": [
+      {"t": 0, "fx": "burst_fb", "at": "target", "scale": 0.9},
+      {"t": 0, "fx": "sparks", "at": "target", "angle": "dir", "count": 26},
+      {"t": 0, "sfx": "shock_air", "at": "target", "scale": 1.4},
+      {"t": 0, "sfx": "rays_burst", "at": "target", "scale": 0.8},
+      {"t": 0, "sfx": "dist_ring_big", "at": "target", "scale": 0.5},
+      {"t": 0, "light": "flash_big", "at": "target"},
+      {"t": 0, "screen": {"shake": 10, "hitstop": 0.12, "zoom": 1.08, "zoom_time": 0.3, "aberration": 0.9, "radial": 0.5, "flash": 0.15}},
+      {"t": 0.05, "decal": {"shape": "circle_blood", "size": 90, "life": 2.2, "alpha": [0.9, 0], "spin": 90, "color": [255, 70, 60], "hdr": 1.8}, "at": "target", "offset": [0, -40], "follow": true, "min_tier": 2}
+    ],
+    "volley_rain": [
+      {"t": 0, "projectile": {"from": "caster", "prop": "arrow", "count": 5, "stagger": 0.03, "speed": 1700, "spread": 24, "ribbon": "arrow_streak"}, "at": "caster", "offset": [50, -330]},
+      {"t": 0.3, "projectile": {"from": "sky", "sky": [-90, -460], "prop": "arrow", "count_total": 14, "stagger": 0.022, "speed": 1600, "spread": 26, "stick": true, "impact": "arrow_land", "ribbon": "arrow_streak"}, "at": "cells"},
+      {"t": 0.6, "fx": "dust_fb", "at": "cells", "count": 10},
+      {"t": 0.6, "screen": {"shake": 4}}
+    ],
+    "arrow_land": [
+      {"t": 0, "fx": "hit_sparks", "at": "target", "count": 3},
+      {"t": 0, "fx": "rock_bits", "at": "target", "count": 3, "offset": [0, -6]}
+    ],
+    "stake_rain": [
+      {"t": 0, "projectile": {"from": "caster", "prop": "stake", "count": 5, "stagger": 0.03, "speed": 1600, "spread": 24, "ribbon": "arrow_streak"}, "at": "caster", "offset": [50, -330]},
+      {"t": 0.3, "projectile": {"from": "sky", "sky": [-70, -460], "prop": "stake", "count_total": 18, "stagger": 0.02, "speed": 1500, "spread": 28, "stick": true, "impact": "stake_land", "ribbon": "arrow_streak"}, "at": "cells"},
+      {"t": 0.6, "sfx": "ground_aoe_big", "at": "target_ground", "color": [150, 120, 80], "scale": 0.8},
+      {"t": 0.6, "fx": "dust_fb", "at": "cells", "count": 14},
+      {"t": 0.6, "screen": {"shake": 5, "hitstop": 0.04}}
+    ],
+    "stake_land": [
+      {"t": 0, "fx": "rock_bits", "at": "target", "count": 4, "offset": [0, -6]},
+      {"t": 0, "fx": "dust", "at": "target", "count": 2}
+    ],
+    "fire_volley": [
+      {"t": 0, "projectile": {"from": "caster", "prop": "arrow_fire", "count": 5, "stagger": 0.03, "speed": 1700, "spread": 24, "ribbon": "fire_arrow"}, "at": "caster", "offset": [50, -330]},
+      {"t": 0.3, "projectile": {"from": "sky", "sky": [-90, -460], "prop": "arrow_fire", "count_total": 14, "stagger": 0.022, "speed": 1600, "spread": 26, "stick": true, "impact": "fire_arrow_land", "ribbon": "fire_arrow"}, "at": "cells"},
+      {"t": 0.6, "fx": "flame_tongues_fb", "at": "cells", "count": 16},
+      {"t": 0.6, "light": "fire", "at": "target_ground"},
+      {"t": 0.6, "sfx": "heat_haze", "at": "target_ground", "offset": [0, -60]},
+      {"t": 0.6, "mark": {"name": "scorch", "size": [60, 90], "alpha": 0.5}, "at": "cells"},
+      {"t": 0.6, "sfx": "cracks_lava", "at": "target_ground", "min_tier": 2},
+      {"t": 0.6, "screen": {"shake": 5, "flash": 0.12, "flash_color": [255, 140, 60]}}
+    ],
+    "fire_arrow_land": [
+      {"t": 0, "fx": "fire_puffs", "at": "target", "count": 2},
+      {"t": 0, "fx": "embers", "at": "target", "count": 5}
+    ],
+    "somersault": [
+      {"t": 0, "play": "land_light"},
+      {"t": 0, "sfx": "aura_buff", "at": "target", "color": [140, 255, 170]},
+      {"t": 0, "fx": "buff_up", "at": "target", "color": [140, 255, 170]}
+    ],
+    "smoke_bomb": [
+      {"t": 0, "projectile": {"from": "caster", "prop": "smoke_bomb", "time": 0.16, "arc": 40, "spin": 900, "impact": "smoke_burst"}, "at": "caster_ground"}
+    ],
+    "smoke_burst": [
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.6},
+      {"t": 0, "sfx": "shockwave", "at": "target", "color": [220, 220, 220]},
+      {"t": 0, "fx": "smokebomb_fb", "at": "target", "offset": [0, -20]},
+      {"t": 0, "fx": "toxic_fb", "at": "target", "offset": [0, -20], "min_tier": 2},
+      {"t": 0, "sfx": "dist_ring", "at": "target"},
+      {"t": 0, "fx": "stun_stars", "at": "cells", "count": 20},
+      {"t": 0, "screen": {"shake": 5, "hitstop": 0.05}}
+    ],
+    "trap_snap": [
+      {"t": 0, "attach": {"prop": "trap_closed", "life": 3.0, "scale": 2.6, "grow": [1.4, 1.0], "grow_time": 0.08}, "at": "target_ground", "offset": [0, -6]},
+      {"t": 0, "fx": "sparks_bounce", "at": "target_ground", "offset": [0, -16], "count": 12},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.6, "color": [230, 210, 170]},
+      {"t": 0, "fx": "dust_fb", "at": "target_ground", "count": 5},
+      {"t": 0.04, "fx": "rock_spikes", "at": "cells", "count": 18},
+      {"t": 0, "fx": "stun_stars", "at": "cells", "count": 14, "offset": [0, -40]},
+      {"t": 0, "mark": {"name": "cracks", "size": 90}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 5, "hitstop": 0.07}}
+    ],
+    "pit_trap": [
+      {"t": 0, "play": "trap_snap"},
+      {"t": 0.03, "mark": {"name": "crater", "size": 170}, "at": "target_ground"},
+      {"t": 0.03, "fx": "dust_fb", "at": "cells", "count": 14},
+      {"t": 0.03, "props": {"name": ["pebble", "rock"], "count": 6, "speed": [150, 300]}, "at": "target_ground", "offset": [0, -6]},
+      {"t": 0.06, "fx": "rock_spikes", "at": "cells", "count": 22, "min_tier": 2}
+    ],
+    "poison_trap": [
+      {"t": 0, "play": "trap_snap"},
+      {"t": 0.03, "sfx": "ground_aoe", "at": "target_ground", "color": [130, 220, 90]},
+      {"t": 0.03, "fx": "poison_bubbles", "at": "cells", "count": 30},
+      {"t": 0.05, "fx": "toxic_fb", "at": "target", "count": 5, "scale": 0.7},
+      {"t": 0.03, "mark": {"name": "mud", "size": 120, "alpha": 0.6}, "at": "target_ground"}
+    ],
+    "fire_explosion": [
+      {"t": 0, "fx": "fire_core", "at": "target"},
+      {"t": 0, "fx": "explosion_fb", "at": "target", "offset": [0, -10]},
+      {"t": 0.03, "fx": "explosion_puffs", "at": "target"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [255, 160, 70]},
+      {"t": 0, "sfx": "dist_ring", "at": "target_ground"},
+      {"t": 0.03, "fx": "flame_tongues_fb", "at": "cells", "count": 12},
+      {"t": 0.03, "fx": "embers_bounce", "at": "target"},
+      {"t": 0.15, "fx": "smoke_fb", "at": "target", "offset": [0, -20]},
+      {"t": 0.05, "sfx": "heat_haze", "at": "target_ground", "offset": [0, -70]},
+      {"t": 0, "light": "fire", "at": "target"},
+      {"t": 0, "mark": {"name": "scorch", "size": [60, 80], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "mark": {"name": "crater", "size": 110}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 8, "hitstop": 0.05, "flash": 0.2, "flash_color": [255, 140, 60]}}
+    ],
+    "meteor_impact": [
+      {"t": 0, "fx": "flash_big", "at": "target_ground", "offset": [0, -30], "color": [255, 170, 80], "scale": 0.6},
+      {"t": 0, "fx": "explosion_fb", "at": "target_ground", "offset": [0, -50], "scale": 1.25},
+      {"t": 0.04, "fx": "explosion_puffs", "at": "cells", "count": 8},
+      {"t": 0, "sfx": "fire_pillar", "at": "target_ground", "offset": [0, -250]},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "color": [255, 150, 60]},
+      {"t": 0.08, "sfx": "shockwave_big", "at": "target_ground", "color": [255, 200, 120], "scale": 1.25},
+      {"t": 0, "sfx": "dist_ring_big", "at": "target_ground"},
+      {"t": 0, "sfx": "cracks_lava", "at": "target_ground", "scale": 1.2},
+      {"t": 0.06, "fx": "flame_tongues_fb", "at": "cells", "count": 20},
+      {"t": 0.02, "fx": "embers_bounce", "at": "target_ground", "offset": [0, -20], "count": 40},
+      {"t": 0.02, "props": {"name": ["rock", "rock", "pebble"], "count": 12, "speed": [300, 560], "spread": 140, "gravity": 1000}, "at": "target_ground", "offset": [0, -10]},
+      {"t": 0.2, "fx": "smoke_fb", "at": "target_ground", "offset": [0, -60], "count": 12, "scale": 1.4},
+      {"t": 0.05, "sfx": "heat_haze_big", "at": "target_ground", "offset": [0, -100]},
+      {"t": 0, "light": "fire_big", "at": "target_ground"},
+      {"t": 0, "mark": {"name": "scorch", "size": [80, 110], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "mark": {"name": "crater", "size": 210}, "at": "target_ground"},
+      {"t": 0, "mark": {"name": "cracks", "size": 260}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 16, "hitstop": 0.12, "zoom": 1.08, "zoom_time": 0.35, "radial": 0.6, "aberration": 0.7, "flash": 0.35, "flash_color": [255, 150, 70]}},
+      {"t": 0.12, "sfx": "shockwave_big", "at": "target_ground", "color": [255, 230, 180], "scale": 1.5, "min_tier": 2},
+      {"t": 0.12, "fx": "stun_stars", "at": "cells", "count": 30, "offset": [0, -40], "min_tier": 2}
+    ],
+    "fire_arrows_hit": [
+      {"t": 0, "fx": "explosion_fb", "at": "target", "scale": 0.55},
+      {"t": 0, "fx": "burst_fb", "at": "target", "scale": 0.6, "color": [255, 150, 60]},
+      {"t": 0, "fx": "embers_bounce", "at": "target", "count": 10},
+      {"t": 0, "light": "fire", "at": "target", "scale": 0.6},
+      {"t": 0, "screen": {"shake": 4, "hitstop": 0.03}}
+    ],
+    "ice_burst": [
+      {"t": 0, "fx": "flash_core", "at": "target", "color": [150, 210, 255]},
+      {"t": 0, "sfx": "rays_ice", "at": "target", "scale": 0.7},
+      {"t": 0, "fx": "ice_shards", "at": "target"},
+      {"t": 0, "fx": "ice_bits", "at": "target", "count": 8},
+      {"t": 0, "props": {"name": "ice_chunk", "count": 4, "speed": [150, 300]}, "at": "target"},
+      {"t": 0.04, "fx": "ice_spikes", "at": "cells", "count": 10},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [150, 210, 255], "scale": 0.8},
+      {"t": 0, "sfx": "dist_ring", "at": "target_ground", "scale": 0.6},
+      {"t": 0.05, "fx": "snowflakes", "at": "target"},
+      {"t": 0.1, "fx": "frost_mist", "at": "target_ground"},
+      {"t": 0, "mark": {"name": "frost", "size": 110}, "at": "target_ground"},
+      {"t": 0, "light": "ice", "at": "target"},
+      {"t": 0, "screen": {"shake": 4, "hitstop": 0.03, "flash": 0.1, "flash_color": [150, 200, 255]}}
+    ],
+    "ice_prison": [
+      {"t": 0, "play": "ice_burst"},
+      {"t": 0.04, "sfx": "dome_ice", "at": "target", "follow": true, "while": "stun"},
+      {"t": 0.04, "fx": "ice_crystals", "at": "target_ground"},
+      {"t": 0.04, "mark": {"name": "ice", "size": 120}, "at": "target_ground"},
+      {"t": 0.04, "screen": {"hitstop": 0.06, "zoom": 1.04, "zoom_time": 0.25}},
+      {"t": 0.06, "mark": {"name": "ice", "size": [70, 90], "alpha": 0.5}, "at": "cells", "min_tier": 2},
+      {"t": 0.06, "fx": "ice_spikes", "at": "cells", "count": 24, "min_tier": 2}
+    ],
+    "ice_line": [
+      {"t": 0, "streak": {"ribbon": "ice_trail", "time": 0.1, "extend": 80}},
+      {"t": 0, "fx": "ice_spikes", "at": "cells", "count": 20},
+      {"t": 0, "fx": "ice_bits", "at": "cells", "count": 14, "offset": [0, -20]},
+      {"t": 0, "mark": {"name": "frost", "size": [60, 80], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "screen": {"shake": 5, "hitstop": 0.04}}
+    ],
+    "shield_dome": [
+      {"t": 0, "sfx": "dome", "at": "target", "follow": true},
+      {"t": 0, "decal": {"shape": "hex", "size": 96, "life": 0.55, "alpha": [0.9, 0], "grow": [0.6, 1.05], "color": [150, 190, 255], "hdr": 1.7}, "at": "target"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.6, "color": [150, 190, 255]},
+      {"t": 0.05, "fx": "shield_sparkles", "at": "target"},
+      {"t": 0, "light": "flash", "at": "target", "color": [150, 190, 255], "scale": 0.7}
+    ],
+    "barrier": [
+      {"t": 0, "decal": {"shape": "circle_arcane", "size": 330, "life": 1.0, "alpha": [0.9, 0], "grow": [0.4, 1.0], "spin": 50, "ground": true, "under": true, "color": [150, 190, 255], "hdr": 1.8}, "at": "target_ground"},
+      {"t": 0, "sfx": "ground_aoe_big", "at": "target_ground", "color": [150, 190, 255], "scale": 0.8},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "color": [170, 205, 255], "scale": 0.7},
+      {"t": 0.05, "fx": "shield_sparkles", "at": "cells", "count": 40},
+      {"t": 0.1, "fx": "rune_motes", "at": "cells", "count": 20, "color": [255, 255, 220], "min_tier": 2},
+      {"t": 0, "light": "flash", "at": "target", "color": [150, 190, 255]},
+      {"t": 0, "screen": {"shake": 3, "zoom": 1.03, "zoom_time": 0.25}}
+    ],
+    "mirror_shield": [
+      {"t": 0, "sfx": "dome_mirror", "at": "target", "follow": true},
+      {"t": 0, "sfx": "spikes_steel", "at": "target", "color": [230, 240, 255]},
+      {"t": 0, "fx": "flares", "at": "target", "color": [230, 240, 255]},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [230, 240, 255]},
+      {"t": 0, "light": "flash", "at": "target", "color": [220, 235, 255]},
+      {"t": 0.1, "sfx": "aura_buff", "at": "target", "follow": true, "color": [200, 220, 255], "min_tier": 2}
+    ],
+    "blink": [
+      {"t": 0, "fx": "flash_core", "at": "caster", "scale": 0.7, "color": [190, 150, 255]},
+      {"t": 0, "sfx": "pinch", "at": "caster"},
+      {"t": 0, "fx": "light_motes", "at": "caster", "color": [190, 150, 255]},
+      {"t": 0, "streak": {"ribbon": "link", "time": 0.06, "to": "target_ground"}, "color": [190, 150, 255]},
+      {"t": 0.05, "fx": "burst_fb", "at": "target_ground", "offset": [0, -26], "scale": 0.7, "color": [190, 150, 255]},
+      {"t": 0.05, "sfx": "shockwave", "at": "target_ground", "scale": 0.6, "color": [190, 150, 255]},
+      {"t": 0.05, "sfx": "dist_ring", "at": "target_ground", "scale": 0.5}
+    ],
+    "curse_hit": [
+      {"t": 0, "decal": {"shape": "circle_runes", "size": 120, "life": 1.0, "alpha": [0.9, 0], "grow": [1.2, 0.8], "spin": -120, "ground": true, "under": true, "color": [190, 90, 255], "hdr": 1.7}, "at": "target_ground"},
+      {"t": 0, "sfx": "vortex_dark", "at": "target_ground", "scale": 0.7},
+      {"t": 0, "fx": "curse_motes", "at": "target"},
+      {"t": 0, "sfx": "pinch", "at": "target"},
+      {"t": 0.15, "fx": "curse_fb", "at": "target", "count": 4},
+      {"t": 0.15, "fx": "curse_burst", "at": "target"},
+      {"t": 0.15, "fx": "flash_core", "at": "target", "scale": 0.6, "color": [170, 80, 255]},
+      {"t": 0.15, "light": "flash", "at": "target", "color": [170, 80, 255]},
+      {"t": 0.15, "screen": {"shake": 3, "aberration": 0.3}}
+    ],
+    "plague": [
+      {"t": 0, "play": "curse_hit"},
+      {"t": 0.1, "sfx": "vortex_dark", "at": "target_ground", "scale": 1.5},
+      {"t": 0.1, "sfx": "ground_aoe_big", "at": "target_ground", "color": [150, 80, 220]},
+      {"t": 0.15, "fx": "curse_fb", "at": "cells", "count": 12},
+      {"t": 0.15, "fx": "poison_bubbles", "at": "cells", "count": 24, "color": [190, 120, 255]},
+      {"t": 0.15, "mark": {"name": "glyph", "size": 140, "alpha": 0.7}, "at": "target_ground", "min_tier": 2}
+    ],
+    "wither": [
+      {"t": 0, "play": "curse_hit"},
+      {"t": 0.2, "projectile": {"from": "target", "count": 3, "stagger": 0.06, "time": 0.4, "arc": 40, "spread": 0, "ribbon": "drain", "head": "drain_motes", "color": [150, 255, 160]}, "at": "caster"},
+      {"t": 0.2, "fx": "drain_motes", "at": "target", "color": [190, 120, 255]},
+      {"t": 0.6, "play": "heal_small", "at": "caster"}
+    ],
+    "holy_heal": [
+      {"t": 0, "sfx": "heal_pillar", "at": "target_ground", "offset": [0, -190]},
+      {"t": 0, "decal": {"shape": "circle_holy", "size": 130, "life": 0.9, "alpha": [0.9, 0], "grow": [0.5, 1.0], "spin": 70, "ground": true, "under": true, "color": "tag", "hdr": 1.7}, "at": "target_ground"},
+      {"t": 0.05, "fx": "heal_motes", "at": "target_ground"},
+      {"t": 0.1, "fx": "heal_sparkles", "at": "target"},
+      {"t": 0.15, "fx": "feathers", "at": "target", "offset": [0, -30]},
+      {"t": 0, "light": "flash", "at": "target", "color": [190, 255, 190]}
+    ],
+    "nature_heal": [
+      {"t": 0, "sfx": "heal_pillar", "at": "target_ground", "offset": [0, -190], "color": [140, 255, 170]},
+      {"t": 0, "decal": {"shape": "circle_nature", "size": 130, "life": 1.0, "alpha": [0.9, 0], "grow": [0.5, 1.0], "spin": 50, "ground": true, "under": true, "color": [140, 255, 170], "hdr": 1.7}, "at": "target_ground"},
+      {"t": 0.05, "fx": "heal_motes", "at": "target_ground", "color": [140, 255, 170]},
+      {"t": 0.1, "fx": "leaves", "at": "target", "offset": [0, -40]},
+      {"t": 0, "light": "flash", "at": "target", "color": [140, 255, 170]}
+    ],
+    "renewal": [
+      {"t": 0, "play": "nature_heal"},
+      {"t": 0, "sfx": "aura_buff", "at": "target", "follow": true, "color": [140, 255, 170]},
+      {"t": 0.1, "decal": {"shape": "circle_nature", "size": 300, "life": 1.2, "alpha": [0.8, 0], "grow": [0.4, 1.0], "spin": 40, "ground": true, "under": true, "color": [140, 255, 170], "hdr": 1.6}, "at": "target_ground", "min_tier": 2},
+      {"t": 0.1, "fx": "leaves", "at": "cells", "count": 30, "min_tier": 2}
+    ],
+    "great_heal": [
+      {"t": 0, "sfx": "holy_pillar", "at": "target_ground", "offset": [0, -270]},
+      {"t": 0, "decal": {"shape": "circle_holy", "size": 260, "life": 1.2, "alpha": [0.95, 0], "grow": [0.4, 1.0], "spin": 60, "ground": true, "under": true, "color": [255, 230, 160], "hdr": 1.9}, "at": "target_ground"},
+      {"t": 0, "sfx": "rays_holy", "at": "target", "scale": 0.8},
+      {"t": 0.05, "fx": "god_rays", "at": "target", "offset": [0, -120], "color": [255, 230, 160]},
+      {"t": 0.05, "fx": "heal_motes", "at": "target_ground", "count": 30},
+      {"t": 0.1, "fx": "holy_feathers", "at": "target", "offset": [0, -60]},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "color": [255, 230, 160], "scale": 0.6},
+      {"t": 0, "light": "holy", "at": "target"},
+      {"t": 0, "screen": {"zoom": 1.04, "zoom_time": 0.35, "flash": 0.12, "flash_color": [255, 240, 200]}},
+      {"t": 0.1, "sfx": "dome_gold", "at": "target", "follow": true, "min_tier": 2}
+    ],
+    "bottle_smash": [
+      {"t": 0, "fx": "glass_bits", "at": "target"},
+      {"t": 0, "props": {"name": "glass", "count": 6, "speed": [150, 300], "scale": 2.0}, "at": "target"},
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.6, "color": [140, 200, 255]},
+      {"t": 0, "fx": "water_jets", "at": "target_ground", "offset": [0, -6]},
+      {"t": 0, "fx": "water_drops", "at": "cells", "count": 40},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [140, 200, 255]},
+      {"t": 0.12, "fx": "water_ripple", "at": "target_ground", "scale": 1.3},
+      {"t": 0.05, "fx": "foam", "at": "target_ground"},
+      {"t": 0.05, "fx": "heal_sparkles", "at": "target", "count": 6, "color": [180, 220, 255]},
+      {"t": 0, "mark": {"name": "puddle", "size": [70, 90], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "light": "flash", "at": "target", "color": [140, 200, 255], "scale": 0.8},
+      {"t": 0, "screen": {"shake": 3}}
+    ],
+    "flood": [
+      {"t": 0, "play": "bottle_smash"},
+      {"t": 0.03, "sfx": "wave_water", "at": "target_ground", "scale": 1.2},
+      {"t": 0.03, "fx": "water_jets", "at": "cells", "count": 40},
+      {"t": 0.1, "fx": "foam", "at": "cells", "count": 30},
+      {"t": 0.03, "sfx": "dist_ring", "at": "target_ground"},
+      {"t": 0.15, "sfx": "wave_water", "at": "target_ground", "scale": 1.7, "min_tier": 2},
+      {"t": 0.15, "sfx": "dist_ring_big", "at": "target_ground", "scale": 0.6, "min_tier": 2},
+      {"t": 0.15, "screen": {"shake": 6}, "min_tier": 2}
+    ],
+    "smite": [
+      {"t": 0, "screen": {"dim": 0.4, "dim_time": 0.4}},
+      {"t": 0.08, "sfx": "holy_pillar", "at": "target_ground", "offset": [0, -280], "scale": 0.9},
+      {"t": 0.08, "fx": "flash_big", "at": "target", "color": [255, 230, 160], "scale": 0.5},
+      {"t": 0.08, "sfx": "rays_holy", "at": "target", "scale": 0.8},
+      {"t": 0.08, "sfx": "shockwave", "at": "target_ground", "color": [255, 225, 150]},
+      {"t": 0.08, "mark": {"name": "glyph", "size": 110}, "at": "target_ground"},
+      {"t": 0.08, "fx": "heal_motes", "at": "cells", "count": 20},
+      {"t": 0.08, "light": "holy", "at": "target"},
+      {"t": 0.08, "screen": {"shake": 6, "hitstop": 0.06, "flash": 0.15, "flash_color": [255, 240, 200]}},
+      {"t": 0.1, "screen": {"flash": 0.35, "aberration": 0.6}, "min_tier": 2}
+    ],
+    "cleanse_wind": [
+      {"t": 0, "fx": "flare", "at": "target", "color": [255, 255, 220]},
+      {"t": 0, "sfx": "vortex_wind", "at": "target_ground", "scale": 0.5, "color": [255, 255, 220]},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.7, "color": [255, 255, 220]},
+      {"t": 0.05, "fx": "heal_motes", "at": "target_ground", "color": [255, 255, 220]},
+      {"t": 0.05, "fx": "light_motes", "at": "target", "color": [255, 255, 220]},
+      {"t": 0, "light": "flash", "at": "target", "color": [255, 255, 220], "scale": 0.7}
+    ],
+    "immunity": [
+      {"t": 0, "play": "cleanse_wind"},
+      {"t": 0, "sfx": "dome_gold", "at": "target", "follow": true, "color": [255, 250, 220]},
+      {"t": 0.1, "sfx": "shockwave_big", "at": "target_ground", "color": [255, 250, 220], "scale": 0.7, "min_tier": 2},
+      {"t": 0.1, "fx": "shield_sparkles", "at": "cells", "count": 30, "color": [255, 250, 220], "min_tier": 2}
+    ],
+    "transfer": [
+      {"t": 0, "play": "cleanse_wind"},
+      {"t": 0, "fx": "rune_motes", "at": "target", "color": [255, 200, 120]}
+    ],
+    "holy_ring": [
+      {"t": 0, "decal": {"shape": "circle_holy", "size": 320, "life": 0.9, "alpha": [0.9, 0], "grow": [0.4, 1.0], "spin": 50, "ground": true, "under": true, "color": [255, 225, 140], "hdr": 1.8}, "at": "caster_ground"},
+      {"t": 0, "sfx": "dome_gold", "at": "caster", "follow": true},
+      {"t": 0, "fx": "flash_core", "at": "caster", "color": [255, 230, 160]},
+      {"t": 0.05, "fx": "holy_rays", "at": "caster_ground", "count": 16},
+      {"t": 0, "light": "holy", "at": "caster"},
+      {"t": 0, "screen": {"flash": 0.12, "flash_color": [255, 230, 160]}}
+    ],
+    "judgment_beam": [
+      {"t": 0, "screen": {"dim": 0.5, "dim_time": 0.55, "bars": 0.5, "bars_time": 0.6}},
+      {"t": 0, "decal": {"shape": "circle_holy", "size": 180, "life": 0.8, "alpha": [1, 0], "grow": [1.3, 0.9], "spin": 140, "ground": true, "under": true, "color": [255, 220, 130], "hdr": 2.0}, "at": "target_ground"},
+      {"t": 0, "fx": "god_rays", "at": "target", "offset": [0, -140], "color": [255, 230, 160]},
+      {"t": 0.14, "sfx": "holy_pillar", "at": "target_ground", "offset": [0, -280]},
+      {"t": 0.14, "fx": "flash_big", "at": "target", "color": [255, 220, 130], "scale": 0.5},
+      {"t": 0.14, "sfx": "rays_holy", "at": "target"},
+      {"t": 0.14, "sfx": "shockwave_big", "at": "target_ground", "color": [255, 220, 130], "scale": 0.8},
+      {"t": 0.14, "sfx": "dist_ring_big", "at": "target_ground", "scale": 0.7},
+      {"t": 0.14, "sfx": "cracks_light", "at": "target_ground", "color": [255, 220, 140]},
+      {"t": 0.16, "fx": "holy_feathers", "at": "target", "offset": [0, -60]},
+      {"t": 0.14, "mark": {"name": "glyph", "size": 150}, "at": "target_ground"},
+      {"t": 0.14, "light": "holy", "at": "target", "scale": 1.3},
+      {"t": 0.14, "screen": {"shake": 9, "hitstop": 0.09, "zoom": 1.06, "zoom_time": 0.3, "flash": 0.22, "flash_color": [255, 230, 170]}}
+    ],
+    "purge_fire": [
+      {"t": 0, "screen": {"dim": 0.4, "dim_time": 0.5}},
+      {"t": 0.1, "sfx": "fire_pillar", "at": "target_ground", "offset": [0, -250], "scale": 0.8, "color": [255, 170, 80]},
+      {"t": 0.1, "fx": "explosion_fb", "at": "target", "scale": 0.8},
+      {"t": 0.12, "fx": "holy_flame_fb", "at": "cells", "count": 20, "color": [255, 190, 90]},
+      {"t": 0.1, "sfx": "shockwave", "at": "target_ground", "color": [255, 190, 100]},
+      {"t": 0.1, "fx": "embers_bounce", "at": "target", "count": 14},
+      {"t": 0.1, "mark": {"name": "scorch", "size": [60, 80], "alpha": 0.5}, "at": "cells"},
+      {"t": 0.1, "mark": {"name": "glyph", "size": 130}, "at": "target_ground"},
+      {"t": 0.1, "light": "fire", "at": "target"},
+      {"t": 0.1, "sfx": "heat_haze", "at": "target_ground", "offset": [0, -70]},
+      {"t": 0.1, "screen": {"shake": 7, "hitstop": 0.06, "flash": 0.15, "flash_color": [255, 170, 80]}},
+      {"t": 0.15, "fx": "flame_tongues_fb", "at": "cells", "count": 16, "min_tier": 2}
+    ],
+    "retribution_light": [
+      {"t": 0, "play": "judgment_beam"},
+      {"t": 0.2, "sfx": "ground_aoe_big", "at": "target_ground", "color": [190, 255, 190]},
+      {"t": 0.2, "fx": "heal_motes", "at": "cells", "count": 40},
+      {"t": 0.25, "fx": "heal_sparkles", "at": "cells", "count": 20, "color": [190, 255, 190]}
+    ],
+    "mud_splat": [
+      {"t": 0, "fx": "mud_drops", "at": "target"},
+      {"t": 0, "props": {"name": "mud_bit", "count": 8, "speed": [150, 320], "scale": 2.0}, "at": "target"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [150, 120, 80], "scale": 0.8},
+      {"t": 0.05, "fx": "water_ripple", "at": "target_ground", "color": [150, 120, 80]},
+      {"t": 0, "mark": {"name": "mud", "size": [70, 100], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "screen": {"shake": 3}}
+    ],
+    "net_wrap": [
+      {"t": 0, "attach": {"prop": "net", "scale": 2.4, "grow": [0.3, 1.0], "grow_time": 0.12}, "at": "target", "offset": [0, -2], "while": "stun"},
+      {"t": 0, "fx": "net_bits", "at": "target"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.5, "color": [210, 200, 170]},
+      {"t": 0, "fx": "stun_stars", "at": "target", "offset": [0, -36]},
+      {"t": 0, "screen": {"hitstop": 0.04}}
+    ],
+    "frost_storm": [
+      {"t": 0, "screen": {"dim": 0.55, "dim_time": 1.0, "bars": 0.6, "bars_time": 1.0}},
+      {"t": 0, "decal": {"shape": "circle_frost", "size": 360, "life": 1.3, "alpha": [1, 0], "grow": [0.6, 1.0], "spin": 70, "ground": true, "under": true, "color": [140, 200, 255], "hdr": 2.0}, "at": "target_ground"},
+      {"t": 0.08, "fx": "flash_core", "at": "target", "scale": 1.5, "color": [150, 210, 255]},
+      {"t": 0.08, "sfx": "rays_ice", "at": "target", "scale": 1.4},
+      {"t": 0, "fx": "snowflakes", "at": "cells", "count": 60},
+      {"t": 0.08, "fx": "ice_spikes", "at": "cells", "count": 34},
+      {"t": 0.08, "fx": "ice_crystals", "at": "cells", "count": 18},
+      {"t": 0.08, "fx": "ice_glow", "at": "cells", "count": 14},
+      {"t": 0.08, "fx": "ice_bits", "at": "cells", "count": 30, "offset": [0, -20]},
+      {"t": 0.08, "props": {"name": "ice_chunk", "count": 10, "speed": [200, 420]}, "at": "target_ground", "offset": [0, -10]},
+      {"t": 0.1, "fx": "steam_fb", "at": "cells", "count": 10, "color": [210, 235, 255]},
+      {"t": 0.08, "sfx": "shockwave_big", "at": "target_ground", "color": [150, 210, 255]},
+      {"t": 0.08, "sfx": "dist_ring_big", "at": "target_ground"},
+      {"t": 0.08, "mark": {"name": "ice", "size": [80, 100], "alpha": 0.5}, "at": "cells"},
+      {"t": 0.08, "light": "ice", "at": "target", "scale": 1.6},
+      {"t": 0.08, "screen": {"shake": 12, "hitstop": 0.1, "zoom": 1.06, "zoom_time": 0.35, "aberration": 0.6, "flash": 0.2, "flash_color": [160, 210, 255]}}
+    ],
+    "ice_nova": [
+      {"t": 0, "fx": "flash_core", "at": "caster", "color": [150, 210, 255]},
+      {"t": 0, "sfx": "rays_ice", "at": "caster"},
+      {"t": 0, "fx": "ice_shards", "at": "caster", "count": 24},
+      {"t": 0.04, "fx": "ice_spikes", "at": "cells", "count": 20},
+      {"t": 0.04, "fx": "ice_crystals", "at": "caster_ground"},
+      {"t": 0, "sfx": "shockwave_big", "at": "caster_ground", "scale": 0.7, "color": [150, 210, 255]},
+      {"t": 0, "sfx": "dist_ring_big", "at": "caster_ground", "scale": 0.5},
+      {"t": 0.04, "props": {"name": "ice_chunk", "count": 8, "speed": [200, 400]}, "at": "caster_ground", "offset": [0, -10]},
+      {"t": 0.1, "fx": "frost_mist", "at": "caster_ground"},
+      {"t": 0, "mark": {"name": "frost", "size": [60, 90], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "light": "ice", "at": "caster"},
+      {"t": 0, "screen": {"shake": 7, "hitstop": 0.06, "flash": 0.15, "flash_color": [150, 200, 255]}}
+    ],
+    "beetle_explode": [
+      {"t": 0, "fx": "fire_core", "at": "caster", "scale": 1.1},
+      {"t": 0, "fx": "explosion_fb", "at": "caster", "scale": 1.2},
+      {"t": 0.03, "fx": "explosion_puffs", "at": "caster"},
+      {"t": 0.03, "fx": "flame_tongues_fb", "at": "cells", "count": 14},
+      {"t": 0, "sfx": "shockwave_big", "at": "caster_ground", "scale": 0.7, "color": [255, 150, 60]},
+      {"t": 0, "sfx": "dist_ring_big", "at": "caster_ground", "scale": 0.5},
+      {"t": 0.05, "fx": "embers_bounce", "at": "caster", "count": 24},
+      {"t": 0.03, "props": {"name": ["pebble", "pebble", "rock"], "count": 6, "speed": [200, 400]}, "at": "caster_ground", "offset": [0, -10]},
+      {"t": 0.12, "fx": "smoke_fb", "at": "caster", "count": 8},
+      {"t": 0, "mark": {"name": "scorch", "size": [60, 80], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "mark": {"name": "crater", "size": 110}, "at": "caster_ground"},
+      {"t": 0, "light": "fire", "at": "caster"},
+      {"t": 0, "screen": {"shake": 10, "hitstop": 0.06, "flash": 0.3, "flash_color": [255, 150, 70]}}
+    ],
+    "reaction_steam": [
+      {"t": 0, "fx": "flash_core", "at": "target", "color": [235, 240, 245]},
+      {"t": 0, "fx": "steam_fb", "at": "target"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [235, 240, 245]},
+      {"t": 0, "sfx": "heat_haze", "at": "target"},
+      {"t": 0, "screen": {"shake": 4, "flash": 0.15}}
+    ],
+    "reaction_melt": [
+      {"t": 0, "fx": "fire_core", "at": "target", "scale": 1.0},
+      {"t": 0, "fx": "explosion_fb", "at": "target", "scale": 0.9},
+      {"t": 0, "fx": "ice_shards", "at": "target", "count": 10},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "scale": 0.7, "color": [255, 150, 60]},
+      {"t": 0, "sfx": "dist_ring", "at": "target_ground"},
+      {"t": 0.08, "fx": "steam_fb", "at": "target", "count": 6},
+      {"t": 0, "light": "fire", "at": "target", "scale": 0.8},
+      {"t": 0, "screen": {"shake": 8, "hitstop": 0.06, "flash": 0.3, "flash_color": [255, 160, 80]}}
+    ],
+    "reaction_freeze": [
+      {"t": 0, "fx": "flash_core", "at": "target", "color": [160, 215, 255]},
+      {"t": 0, "decal": {"shape": "snow", "size": 120, "life": 0.6, "alpha": [1, 0], "grow": [0.4, 1.2], "spin": 160, "color": [200, 235, 255], "hdr": 1.8}, "at": "target"},
+      {"t": 0, "sfx": "rays_ice", "at": "target", "scale": 0.7},
+      {"t": 0, "fx": "ice_crystals", "at": "target_ground", "count": 8},
+      {"t": 0, "fx": "ice_shards", "at": "target", "count": 12},
+      {"t": 0.05, "fx": "snowflakes", "at": "target"},
+      {"t": 0, "mark": {"name": "ice", "size": 100}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 5, "hitstop": 0.05, "flash": 0.18, "flash_color": [160, 210, 255]}}
+    ],
+    "heal_small": [
+      {"t": 0, "fx": "heal_motes", "at": "target_ground", "count": 8},
+      {"t": 0, "fx": "heal_sparkles", "at": "target", "count": 3, "color": [140, 255, 170]}
+    ],
+    "shield_small": [
+      {"t": 0, "sfx": "dome", "at": "target", "scale": 0.8, "follow": true},
+      {"t": 0, "fx": "shield_sparkles", "at": "target", "count": 6}
+    ],
+    "buff_good": [
+      {"t": 0, "fx": "buff_up", "at": "target"},
+      {"t": 0, "fx": "flare", "at": "target", "scale": 0.4, "color": [150, 255, 170]}
+    ],
+    "buff_bad": [
+      {"t": 0, "fx": "debuff_down", "at": "target"}
+    ],
+    "passive": [
+      {"t": 0, "fx": "flare", "at": "target", "scale": 0.55, "color": [255, 120, 200]},
+      {"t": 0, "fx": "passive_motes", "at": "target"}
+    ],
+    "cleanse_small": [
+      {"t": 0, "fx": "light_motes", "at": "target", "color": [255, 255, 220]}
+    ],
+    "status_fire": [
+      {"t": 0, "fx": "embers", "at": "target", "count": 6}
+    ],
+    "status_ice": [
+      {"t": 0, "fx": "snowflakes", "at": "target", "count": 5}
+    ],
+    "status_water": [
+      {"t": 0, "fx": "water_drops", "at": "target", "count": 6}
+    ],
+    "death": [
+      {"t": 0, "fx": "soul", "at": "target"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.5, "color": [150, 160, 210]}
+    ],
+    "aoe_hit": [
+      {"t": 0, "fx": "burst_fb", "at": "target", "scale": 0.8},
+      {"t": 0, "sfx": "ground_aoe", "at": "target_ground"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground"},
+      {"t": 0, "light": "flash", "at": "target"}
+    ],
+    "cell_burst": [
+      {"t": 0, "fx": "light_motes", "at": "target_ground", "count": 6}
+    ],
+    "shadow_puff": [
+      {"t": 0, "fx": "shadow_fb", "at": "caster_ground", "offset": [0, -24]},
+      {"t": 0, "sfx": "shadow_vortex", "at": "caster_ground"},
+      {"t": 0, "streak": {"ribbon": "shadow", "time": 0.1, "to": "target"}}
+    ],
+    "dagger_strike": [
+      {"t": 0, "arc": {"ribbon": "slash_red", "radius": 36, "from": -90, "to": 70, "time": 0.06, "flip": "random"}, "at": "target"},
+      {"t": 0.06, "arc": {"ribbon": "slash", "radius": 36, "from": 90, "to": -70, "time": 0.06}, "at": "target", "color": [220, 200, 255]},
+      {"t": 0.06, "fx": "hit_sparks", "at": "target", "count": 10},
+      {"t": 0.06, "light": "flash_small", "at": "target"},
+      {"t": 0.06, "screen": {"shake": 4, "hitstop": 0.04}}
+    ],
+    "blade_dance": [
+      {"t": 0, "play": "dagger_strike"},
+      {"t": 0.12, "arc": {"ribbon": "whirl", "radius": 50, "from": 0, "to": 360, "time": 0.16, "rot": 0, "squash": 0.5}, "at": "target", "color": [200, 180, 255], "min_tier": 2},
+      {"t": 0.12, "sfx": "shockwave", "at": "target_ground", "scale": 0.6, "color": [200, 160, 255], "min_tier": 2}
+    ],
+    "silence_strike": [
+      {"t": 0, "play": "dagger_strike"},
+      {"t": 0.06, "fx": "stun_stars", "at": "target", "offset": [0, -30]},
+      {"t": 0.06, "sfx": "pinch", "at": "target"},
+      {"t": 0.06, "screen": {"aberration": 0.4}}
+    ],
+    "venom_coat": [
+      {"t": 0, "sfx": "aura_poison", "at": "caster", "follow": true},
+      {"t": 0, "fx": "poison_bubbles", "at": "caster", "count": 12},
+      {"t": 0, "fx": "flare", "at": "caster", "scale": 0.4, "color": [150, 240, 100]}
+    ],
+    "dart_hit": [
+      {"t": 0, "fx": "acid_splash", "at": "target", "count": 8},
+      {"t": 0, "fx": "poison_bubbles", "at": "target", "count": 6}
+    ],
+    "vanish_smoke": [
+      {"t": 0, "fx": "shadow_fb", "at": "caster", "count": 10},
+      {"t": 0, "sfx": "pinch", "at": "caster"},
+      {"t": 0, "fx": "smoke_puffs", "at": "caster", "count": 6},
+      {"t": 0, "screen": {"aberration": 0.3}}
+    ],
+    "death_mark": [
+      {"t": 0, "decal": {"shape": "circle_blood", "size": 80, "life": 2.5, "alpha": [0.9, 0], "spin": 120, "color": [255, 70, 90], "hdr": 1.7}, "at": "target", "offset": [0, -46], "follow": true},
+      {"t": 0, "fx": "curse_motes", "at": "target", "color": [255, 80, 100]},
+      {"t": 0, "sfx": "pinch", "at": "target"}
+    ],
+    "parry_stance": [
+      {"t": 0, "sfx": "aura_steel", "at": "caster", "follow": true},
+      {"t": 0, "sfx": "spikes_steel", "at": "caster", "scale": 0.7},
+      {"t": 0, "fx": "shield_sparkles", "at": "caster", "count": 10, "color": [230, 235, 250]}
+    ],
+    "shapeshift": [
+      {"t": 0, "fx": "leaves_burst", "at": "caster"},
+      {"t": 0, "fx": "flash_core", "at": "caster", "color": [150, 240, 120]},
+      {"t": 0, "sfx": "shockwave", "at": "caster_ground", "color": [150, 230, 110], "scale": 0.7},
+      {"t": 0, "light": "flash", "at": "caster", "color": [150, 240, 120]},
+      {"t": 0, "screen": {"shake": 4}}
+    ],
+    "roots": [
+      {"t": 0, "fx": "thorns", "at": "cells", "count": 24},
+      {"t": 0, "fx": "rock_spikes", "at": "cells", "count": 10, "color": [110, 90, 60]},
+      {"t": 0, "sfx": "green_disc", "at": "target_ground"},
+      {"t": 0, "fx": "leaves_burst", "at": "target", "count": 8},
+      {"t": 0, "mark": {"name": "cracks", "size": 110}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 4, "hitstop": 0.04}}
+    ],
+    "strangle": [
+      {"t": 0, "sfx": "vortex_dark", "at": "target_ground", "color": [110, 200, 80], "scale": 0.7},
+      {"t": 0, "fx": "thorns", "at": "target_ground", "count": 8},
+      {"t": 0, "fx": "poison_bubbles", "at": "target"}
+    ],
+    "nature_bloom": [
+      {"t": 0, "play": "nature_heal"},
+      {"t": 0, "sfx": "aura_nature", "at": "target", "follow": true},
+      {"t": 0.05, "fx": "leaves", "at": "cells", "count": 20}
+    ],
+    "tree_grow": [
+      {"t": 0, "decal": {"shape": "circle_nature", "size": 200, "life": 1.2, "alpha": [0.9, 0], "grow": [0.4, 1], "spin": 40, "ground": true, "under": true, "color": [140, 255, 150], "hdr": 1.6}, "at": "target_ground"},
+      {"t": 0, "fx": "leaves_burst", "at": "target"},
+      {"t": 0, "light": "flash", "at": "target", "color": [140, 255, 150]}
+    ],
+    "spear_thrust": [
+      {"t": 0, "streak": {"ribbon": "spear", "time": 0.06, "extend": 40}},
+      {"t": 0.04, "fx": "hit_sparks", "at": "target", "angle": "dir", "count": 10},
+      {"t": 0.04, "light": "flash_small", "at": "target"},
+      {"t": 0.04, "screen": {"shake": 3, "hitstop": 0.04}}
+    ],
+    "spear_line": [
+      {"t": 0, "streak": {"ribbon": "spear", "time": 0.07, "extend": 30}},
+      {"t": 0.03, "fx": "sparks", "at": "cells", "count": 14},
+      {"t": 0.03, "sfx": "shock_air", "at": "cells", "offset": [0, -26], "scale": 0.4, "max": 4},
+      {"t": 0.03, "screen": {"shake": 4, "hitstop": 0.05}}
+    ],
+    "spear_crush": [
+      {"t": 0, "play": "spear_thrust"},
+      {"t": 0.04, "sfx": "wave_cleave", "at": "target_ground"},
+      {"t": 0.04, "fx": "dust_fb", "at": "target_ground", "count": 5},
+      {"t": 0.04, "fx": "stun_stars", "at": "target", "offset": [0, -30], "min_tier": 2}
+    ],
+    "hook_hit": [
+      {"t": 0, "fx": "hit_sparks", "at": "target", "count": 8},
+      {"t": 0, "sfx": "shock_air", "at": "target", "scale": 0.4}
+    ],
+    "shield_wall_fx": [
+      {"t": 0, "sfx": "dome_gold", "at": "caster", "follow": true, "color": [220, 215, 200]},
+      {"t": 0, "decal": {"shape": "hex", "size": 130, "life": 0.6, "alpha": [0.9, 0], "grow": [0.6, 1.1], "color": [230, 220, 190], "hdr": 1.5}, "at": "caster"},
+      {"t": 0, "sfx": "shockwave", "at": "caster_ground", "color": [230, 220, 190]},
+      {"t": 0.05, "fx": "shield_sparkles", "at": "cells", "count": 24},
+      {"t": 0, "screen": {"shake": 3}}
+    ],
+    "brace_fx": [
+      {"t": 0, "sfx": "aura_steel", "at": "caster", "follow": true},
+      {"t": 0, "fx": "dust_fb", "at": "caster_ground", "count": 4},
+      {"t": 0, "sfx": "shockwave", "at": "caster_ground", "scale": 0.5, "color": [220, 220, 230]}
+    ],
+    "dragoon_land": [
+      {"t": 0, "play": "land_impact"},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "scale": 0.6},
+      {"t": 0, "fx": "sparks_bounce", "at": "target_ground", "offset": [0, -20], "count": 16},
+      {"t": 0, "props": {"name": ["pebble", "rock"], "count": 6, "speed": [200, 380]}, "at": "target_ground", "offset": [0, -8]},
+      {"t": 0, "screen": {"shake": 9, "hitstop": 0.08, "zoom": 1.04, "zoom_time": 0.2}}
+    ],
+    "lightning_strike": [
+      {"t": 0, "bolt": {"from": "caster", "width": 11, "forks": 2, "life": 0.32}, "at": "target"},
+      {"t": 0, "fx": "storm_sparks", "at": "target"},
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.6, "color": [170, 180, 255]},
+      {"t": 0, "sfx": "dist_ring_air", "at": "target", "scale": 0.5},
+      {"t": 0, "light": "flash", "at": "target", "color": [150, 165, 255]},
+      {"t": 0, "screen": {"shake": 4, "hitstop": 0.03, "flash": 0.08, "flash_color": [180, 190, 255]}}
+    ],
+    "link_storm": [
+      {"t": 0, "fx": "storm_sparks", "at": "target", "count": 8},
+      {"t": 0, "light": "flash_small", "at": "target", "color": [150, 165, 255]}
+    ],
+    "thunder_clap": [
+      {"t": 0, "bolt": {"from": "sky", "width": 12, "forks": 3, "life": 0.25}, "at": "target_ground"},
+      {"t": 0.02, "sfx": "shockwave", "at": "target_ground", "color": [170, 180, 255]},
+      {"t": 0.02, "sfx": "dist_ring", "at": "target_ground"},
+      {"t": 0.02, "fx": "storm_sparks", "at": "cells", "count": 24},
+      {"t": 0.02, "mark": {"name": "cracks", "size": 100}, "at": "target_ground"},
+      {"t": 0.02, "light": "flash_big", "at": "target", "color": [150, 165, 255]},
+      {"t": 0.02, "screen": {"shake": 8, "hitstop": 0.06, "flash": 0.15, "flash_color": [180, 190, 255]}}
+    ],
+    "thunderstorm_fx": [
+      {"t": 0, "screen": {"dim": 0.5, "dim_time": 1.0, "bars": 0.4, "bars_time": 0.9}},
+      {"t": 0.05, "bolt": {"from": "sky", "width": 11, "forks": 2, "life": 0.22}, "at": "cells", "max": 9},
+      {"t": 0.2, "bolt": {"from": "sky", "width": 9, "forks": 1, "life": 0.2}, "at": "cells", "max": 5},
+      {"t": 0.05, "fx": "storm_sparks", "at": "cells", "count": 40},
+      {"t": 0.05, "sfx": "shockwave_big", "at": "target_ground", "color": [170, 180, 255]},
+      {"t": 0.05, "sfx": "dist_ring_big", "at": "target_ground"},
+      {"t": 0.05, "light": "flash_big", "at": "target", "color": [150, 165, 255]},
+      {"t": 0.05, "mark": {"name": "scorch", "size": [50, 70], "alpha": 0.5}, "at": "cells"},
+      {"t": 0.05, "screen": {"shake": 12, "hitstop": 0.08, "flash": 0.25, "flash_color": [190, 200, 255], "aberration": 0.5}}
+    ],
+    "totem_storm_drop": [
+      {"t": 0, "bolt": {"from": "sky", "width": 9, "forks": 2}, "at": "target_ground"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [150, 165, 255], "scale": 0.6}
+    ],
+    "totem_heal_drop": [
+      {"t": 0, "fx": "heal_motes", "at": "target_ground", "count": 16},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [140, 255, 170], "scale": 0.6}
+    ],
+    "spirit_link_fx": [
+      {"t": 0, "streak": {"ribbon": "holy", "time": 0.15}, "color": [150, 200, 255]},
+      {"t": 0.12, "play": "shield_dome", "color": [150, 200, 255]},
+      {"t": 0.12, "fx": "rune_motes", "at": "target", "color": [160, 210, 255]}
+    ],
+    "song_fx": [
+      {"t": 0, "fx": "notes_burst", "at": "caster"},
+      {"t": 0, "sfx": "aura_song", "at": "caster_ground"},
+      {"t": 0.1, "sfx": "aura_song", "at": "caster_ground", "scale": 1.2},
+      {"t": 0, "fx": "notes", "at": "cells", "count": 24},
+      {"t": 0, "sfx": "aura_buff", "at": "caster", "follow": true},
+      {"t": 0, "light": "flash", "at": "caster"}
+    ],
+    "lullaby_fx": [
+      {"t": 0, "fx": "notes", "at": "cells", "count": 20, "color": [210, 180, 255]},
+      {"t": 0, "sfx": "aura_song", "at": "target_ground", "color": [200, 170, 255], "scale": 0.8},
+      {"t": 0, "fx": "zzz", "at": "cells", "count": 12, "offset": [0, -40]},
+      {"t": 0, "screen": {"dim": 0.2, "dim_time": 0.4}}
+    ],
+    "dissonance_fx": [
+      {"t": 0, "fx": "notes_burst", "at": "target", "color": [255, 90, 120]},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [255, 90, 120]},
+      {"t": 0, "sfx": "dist_ring", "at": "target_ground"},
+      {"t": 0, "screen": {"aberration": 0.6, "shake": 4}}
+    ],
+    "inspire_fx": [
+      {"t": 0, "streak": {"ribbon": "notes", "time": 0.15}},
+      {"t": 0.1, "fx": "notes_burst", "at": "target"},
+      {"t": 0.1, "fx": "gold_motes", "at": "target"},
+      {"t": 0.1, "light": "flash", "at": "target", "color": [255, 220, 140]}
+    ],
+    "sonic_fx": [
+      {"t": 0, "sfx": "shockwave", "at": "caster_ground", "color": [255, 150, 200]},
+      {"t": 0.06, "sfx": "shockwave", "at": "caster_ground", "color": [255, 150, 200], "scale": 1.4},
+      {"t": 0, "sfx": "dist_ring_big", "at": "caster_ground", "scale": 0.5},
+      {"t": 0, "fx": "notes_burst", "at": "caster"},
+      {"t": 0, "screen": {"shake": 7, "hitstop": 0.05, "aberration": 0.5}}
+    ],
+    "serenade_fx": [
+      {"t": 0, "fx": "notes", "at": "cells", "count": 20, "color": [150, 255, 180]},
+      {"t": 0, "sfx": "aura_song", "at": "caster_ground", "color": [150, 255, 180]},
+      {"t": 0, "fx": "heal_motes", "at": "cells", "count": 30}
+    ],
+    "shrapnel": [
+      {"t": 0, "fx": "flash_core", "at": "target"},
+      {"t": 0, "fx": "explosion_fb", "at": "target", "scale": 0.7},
+      {"t": 0, "fx": "rock_bits", "at": "cells", "count": 24, "offset": [0, -10]},
+      {"t": 0, "fx": "sparks_bounce", "at": "target", "count": 20},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground"},
+      {"t": 0, "sfx": "dist_ring", "at": "target_ground"},
+      {"t": 0, "fx": "smoke_fb", "at": "target", "count": 4},
+      {"t": 0, "mark": {"name": "crater", "size": 100}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 8, "hitstop": 0.05}}
+    ],
+    "oil_burst": [
+      {"t": 0, "fx": "oil_splash", "at": "target"},
+      {"t": 0, "fx": "glass_bits", "at": "target", "count": 8, "color": [200, 170, 120]},
+      {"t": 0, "mark": {"name": "mud", "size": [70, 100], "alpha": 0.5}, "at": "cells"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [150, 120, 70], "scale": 0.6}
+    ],
+    "acid_burst": [
+      {"t": 0, "fx": "acid_splash", "at": "target"},
+      {"t": 0, "fx": "glass_bits", "at": "target", "count": 8, "color": [170, 250, 120]},
+      {"t": 0, "fx": "toxic_fb", "at": "target", "count": 4, "scale": 0.6},
+      {"t": 0, "mark": {"name": "mud", "size": [60, 90], "alpha": 0.5}, "at": "cells"}
+    ],
+    "potion_heal": [
+      {"t": 0, "fx": "red_splash", "at": "target"},
+      {"t": 0, "fx": "glass_bits", "at": "target", "count": 6, "color": [255, 160, 150]},
+      {"t": 0, "fx": "heal_motes", "at": "cells", "count": 24},
+      {"t": 0, "light": "flash", "at": "target", "color": [255, 140, 130]}
+    ],
+    "potion_power": [
+      {"t": 0, "fx": "red_splash", "at": "target", "color": [255, 160, 60]},
+      {"t": 0, "fx": "buff_up", "at": "cells", "count": 20, "color": [255, 170, 80]},
+      {"t": 0, "sfx": "aura_rage", "at": "target", "follow": true, "color": [255, 170, 80]}
+    ],
+    "mine_place": [
+      {"t": 0, "fx": "dust", "at": "target_ground", "count": 4}
+    ],
+    "toxic_burst": [
+      {"t": 0, "fx": "acid_splash", "at": "target"},
+      {"t": 0, "fx": "toxic_fb", "at": "target"},
+      {"t": 0, "sfx": "green_disc", "at": "target_ground"},
+      {"t": 0, "fx": "poison_bubbles", "at": "cells", "count": 20}
+    ],
+    "consecrate_fx": [
+      {"t": 0, "decal": {"shape": "circle_holy", "size": 330, "life": 1.0, "alpha": [0.9, 0], "grow": [0.4, 1.0], "spin": 50, "ground": true, "under": true, "color": [255, 225, 140], "hdr": 1.7}, "at": "caster_ground"},
+      {"t": 0, "sfx": "holy_disc", "at": "caster_ground"},
+      {"t": 0, "sfx": "rays_holy", "at": "caster", "scale": 0.8},
+      {"t": 0.05, "fx": "holy_flame_fb", "at": "cells", "count": 14, "color": [255, 220, 140]},
+      {"t": 0.05, "fx": "heal_motes", "at": "cells", "count": 24},
+      {"t": 0, "light": "holy", "at": "caster"},
+      {"t": 0, "screen": {"shake": 4, "flash": 0.1, "flash_color": [255, 230, 170]}}
+    ],
+    "headshot_hit": [
+      {"t": 0, "play": "deadly_shot"}
+    ],
+    "blizzard_fx": [
+      {"t": 0, "decal": {"shape": "circle_frost", "size": 260, "life": 1.0, "alpha": [1, 0], "grow": [0.6, 1.0], "spin": 60, "ground": true, "under": true, "color": [150, 210, 255], "hdr": 1.8}, "at": "target_ground"},
+      {"t": 0, "fx": "snowflakes", "at": "cells", "count": 50},
+      {"t": 0.05, "fx": "ice_spikes", "at": "cells", "count": 24},
+      {"t": 0.05, "fx": "ice_bits", "at": "cells", "count": 20, "offset": [0, -20]},
+      {"t": 0.05, "sfx": "shockwave", "at": "target_ground", "color": [150, 210, 255]},
+      {"t": 0.05, "fx": "steam_fb", "at": "cells", "count": 6, "color": [210, 235, 255]},
+      {"t": 0.05, "mark": {"name": "ice", "size": [70, 90], "alpha": 0.5}, "at": "cells"},
+      {"t": 0.05, "light": "ice", "at": "target"},
+      {"t": 0.05, "screen": {"shake": 7, "hitstop": 0.05}}
+    ],
+    "revive_fx": [
+      {"t": 0, "sfx": "holy_pillar", "at": "target_ground", "offset": [0, -270]},
+      {"t": 0, "decal": {"shape": "circle_holy", "size": 200, "life": 1.2, "alpha": [1, 0], "grow": [0.5, 1], "spin": 60, "ground": true, "under": true, "color": [255, 230, 160], "hdr": 1.8}, "at": "target_ground"},
+      {"t": 0.05, "fx": "holy_feathers", "at": "target", "offset": [0, -40]},
+      {"t": 0, "fx": "god_rays", "at": "target", "offset": [0, -120], "color": [255, 230, 160]},
+      {"t": 0, "light": "holy", "at": "target"},
+      {"t": 0, "screen": {"zoom": 1.05, "zoom_time": 0.4, "flash": 0.2, "flash_color": [255, 240, 200]}}
+    ],
+    "summon_appear": [
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.6},
+      {"t": 0, "fx": "light_motes", "at": "target", "count": 12},
+      {"t": 0, "fx": "dust_fb", "at": "target_ground", "count": 4}
+    ],
+    "aura_pulse": [
+      {"t": 0, "sfx": "aura_song", "at": "caster_ground", "scale": 0.7}
+    ],
+    "backstab_fx": [
+      {"t": 0, "fx": "burst_fb", "at": "target", "scale": 0.5, "color": [255, 70, 90]},
+      {"t": 0, "arc": {"ribbon": "slash_red", "radius": 30, "from": 120, "to": -40, "time": 0.05}, "at": "target"}
+    ],
+    "reveal_fx": [
+      {"t": 0, "fx": "shadow_fb", "at": "target", "count": 4, "scale": 0.7}
+    ],
+    "pull_fx": [
+      {"t": 0, "fx": "dust", "at": "target_ground", "count": 6},
+      {"t": 0, "streak": {"ribbon": "chain", "time": 0.12, "from": "caster", "to": "target"}}
+    ],
+    "refresh_fx": [
+      {"t": 0, "fx": "gold_motes", "at": "target"},
+      {"t": 0, "fx": "notes", "at": "target", "count": 4, "color": [255, 220, 140]}
+    ],
+    "mine_blast": [
+      {"t": 0, "fx": "explosion_fb", "at": "target_ground", "offset": [0, -30], "scale": 0.6},
+      {"t": 0, "fx": "flash_core", "at": "target_ground", "offset": [0, -20]},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground"},
+      {"t": 0, "fx": "rock_bits", "at": "target_ground", "offset": [0, -14], "count": 10},
+      {"t": 0, "mark": {"name": "crater", "size": 80}, "at": "target_ground"},
+      {"t": 0, "light": "fire", "at": "target_ground", "scale": 0.6},
+      {"t": 0, "screen": {"shake": 7, "hitstop": 0.05}}
+    ],
+    "reaction_shock": [
+      {"t": 0, "bolt": {"from": "sky", "width": 9, "forks": 3, "life": 0.2}, "at": "target"},
+      {"t": 0, "fx": "storm_sparks", "at": "target", "count": 24},
+      {"t": 0, "fx": "water_drops", "at": "target", "count": 12},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [150, 180, 255]},
+      {"t": 0, "screen": {"shake": 5, "hitstop": 0.05, "flash": 0.12, "flash_color": [170, 190, 255]}}
+    ],
+    "reaction_shatter": [
+      {"t": 0, "fx": "ice_bits", "at": "target", "count": 20},
+      {"t": 0, "sfx": "rays_ice", "at": "target", "scale": 0.6},
+      {"t": 0, "bolt": {"from": "sky", "width": 7, "forks": 1}, "at": "target"},
+      {"t": 0, "screen": {"shake": 5, "hitstop": 0.05}}
+    ],
+    "reaction_overload": [
+      {"t": 0, "fx": "explosion_fb", "at": "target", "scale": 0.8},
+      {"t": 0, "fx": "storm_sparks", "at": "target", "count": 30},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "scale": 0.6, "color": [200, 170, 255]},
+      {"t": 0, "sfx": "dist_ring", "at": "target_ground"},
+      {"t": 0, "light": "flash", "at": "target", "color": [200, 170, 255]},
+      {"t": 0, "screen": {"shake": 8, "hitstop": 0.06, "flash": 0.2, "flash_color": [210, 190, 255]}}
+    ],
+    "reaction_toxic": [
+      {"t": 0, "fx": "toxic_fb", "at": "target"},
+      {"t": 0, "fx": "fire_puffs", "at": "target", "count": 3},
+      {"t": 0, "sfx": "green_disc", "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 4}}
+    ],
+    "reaction_blaze": [
+      {"t": 0, "fx": "explosion_fb", "at": "target", "scale": 0.9},
+      {"t": 0, "fx": "flame_tongues_fb", "at": "target_ground", "count": 12},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [255, 150, 60]},
+      {"t": 0, "light": "fire", "at": "target"},
+      {"t": 0, "mark": {"name": "scorch", "size": 120}, "at": "target_ground"},
+      {"t": 0, "screen": {"shake": 8, "hitstop": 0.06, "flash": 0.25, "flash_color": [255, 150, 70]}}
+    ],
+    "status_storm": [
+      {"t": 0, "fx": "storm_sparks", "at": "target", "count": 6}
+    ],
+    "status_poison": [
+      {"t": 0, "fx": "poison_bubbles", "at": "target", "count": 6}
+    ],
+    "status_oil": [
+      {"t": 0, "fx": "oil_drips", "at": "target", "count": 6}
+    ],
+    "hit_storm": [
+      {"t": 0, "fx": "storm_sparks", "at": "target", "count": 6},
+      {"t": 0, "fx": "storm_crackle", "at": "target", "count": 2}
+    ],
+    "hit_poison": [
+      {"t": 0, "fx": "poison_bubbles", "at": "target", "count": 5}
+    ],
+    "hit_oil": [
+      {"t": 0, "fx": "oil_splash", "at": "target", "count": 6}
+    ],
+    "eruption_hit": [
+      {"t": 0, "fx": "explosion_fb", "at": "target_ground", "offset": [0, -34], "scale": 0.7},
+      {"t": 0, "fx": "flame_tongues_fb", "at": "target_ground", "count": 6},
+      {"t": 0, "fx": "embers_bounce", "at": "target_ground", "offset": [0, -20], "count": 12},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [255, 150, 60], "scale": 0.6},
+      {"t": 0, "mark": {"name": "scorch", "size": 80}, "at": "target_ground"},
+      {"t": 0, "light": "fire", "at": "target_ground", "scale": 0.6},
+      {"t": 0, "screen": {"shake": 5}}
+    ],
+    "lightning_cell": [
+      {"t": 0, "bolt": {"from": "sky", "width": 10, "forks": 2, "life": 0.25}, "at": "target_ground"},
+      {"t": 0, "fx": "storm_sparks", "at": "target_ground", "offset": [0, -10]},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [170, 180, 255], "scale": 0.5},
+      {"t": 0, "mark": {"name": "scorch", "size": 50}, "at": "target_ground"},
+      {"t": 0, "light": "flash", "at": "target_ground", "color": [160, 175, 255]},
+      {"t": 0, "screen": {"shake": 4, "flash": 0.08, "flash_color": [190, 200, 255]}}
+    ],
+    "avalanche_hit": [
+      {"t": 0, "projectile": {"from": "sky", "sky": [40, -420], "prop": "ice_chunk", "count": 2, "stagger": 0.05, "speed": 1500, "spread": 20, "spin": 500, "prop_scale": 3.0}, "at": "cells"},
+      {"t": 0.25, "fx": "ice_bits", "at": "cells", "count": 20, "offset": [0, -10]},
+      {"t": 0.25, "fx": "steam_fb", "at": "cells", "count": 6, "color": [235, 245, 255]},
+      {"t": 0.25, "mark": {"name": "frost", "size": [70, 90], "alpha": 0.5}, "at": "cells"},
+      {"t": 0.25, "screen": {"shake": 9, "hitstop": 0.05}}
+    ],
+    "wind_gust": [
+      {"t": 0, "fx": "wind_lines", "at": "target", "count": 40},
+      {"t": 0, "fx": "dust_fb", "at": "cells", "count": 8},
+      {"t": 0, "screen": {"shake": 3}}
+    ],
+    "tide_wave": [
+      {"t": 0, "fx": "water_jets", "at": "cells", "count": 40},
+      {"t": 0, "fx": "foam", "at": "cells", "count": 30},
+      {"t": 0, "fx": "water_ripple", "at": "cells", "count": 10},
+      {"t": 0, "screen": {"shake": 3}}
+    ],
+    "rise_fx": [
+      {"t": 0, "fx": "bone_motes", "at": "target"},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "color": [180, 230, 160], "scale": 0.5},
+      {"t": 0, "fx": "curse_motes", "at": "target", "color": [160, 230, 150]},
+      {"t": 0, "decal": {"shape": "circle_runes", "size": 90, "life": 0.7, "alpha": [0.9, 0], "spin": 120, "ground": true, "under": true, "color": [150, 230, 150], "hdr": 1.5}, "at": "target_ground"}
+    ],
+    "charm_fx": [
+      {"t": 0, "fx": "hearts", "at": "target"},
+      {"t": 0, "sfx": "aura_buff", "at": "target", "follow": true, "color": [255, 120, 200]},
+      {"t": 0, "fx": "flare", "at": "target", "scale": 0.4, "color": [255, 140, 210]}
+    ],
+    "fall_fx": [
+      {"t": 0, "fx": "dust_fb", "at": "target_ground", "count": 6},
+      {"t": 0, "fx": "rock_bits", "at": "target_ground", "count": 8},
+      {"t": 0, "screen": {"shake": 5}}
+    ],
+    "portal_fx": [
+      {"t": 0, "fx": "flash_core", "at": "target", "scale": 0.5, "color": [190, 140, 255]},
+      {"t": 0, "sfx": "pinch", "at": "target"},
+      {"t": 0, "fx": "portal_motes", "at": "target_ground", "count": 12}
+    ],
+    "armor_break_fx": [
+      {"t": 0, "fx": "ice_bits", "at": "target", "count": 16},
+      {"t": 0, "fx": "ice_shards", "at": "target", "count": 10},
+      {"t": 0, "sfx": "shock_air", "at": "target", "color": [180, 225, 255], "scale": 0.5}
+    ],
+    "frost_armor_fx": [
+      {"t": 0, "sfx": "dome_frost", "at": "target", "follow": true},
+      {"t": 0, "fx": "frost_sparkle", "at": "target", "count": 4}
+    ],
+    "raise_fx": [
+      {"t": 0, "decal": {"shape": "circle_runes", "size": 120, "life": 0.8, "alpha": [0.9, 0], "spin": -90, "ground": true, "under": true, "color": [150, 230, 150], "hdr": 1.6}, "at": "caster_ground"},
+      {"t": 0, "fx": "curse_motes", "at": "caster", "color": [150, 230, 150]},
+      {"t": 0, "light": "flash", "at": "caster", "color": [150, 230, 150]}
+    ],
+    "mirror_fx": [
+      {"t": 0, "fx": "flash_core", "at": "caster", "scale": 0.6, "color": [220, 170, 255]},
+      {"t": 0, "fx": "light_motes", "at": "caster", "color": [230, 190, 255]}
+    ],
+    "rain_fx": [
+      {"t": 0, "projectile": {"from": "sky", "sky": [-30, -300], "head": "water_trail", "count_total": 10, "stagger": 0.02, "speed": 1400, "spread": 30}, "at": "cells"},
+      {"t": 0.2, "fx": "water_drops", "at": "cells", "count": 30},
+      {"t": 0.2, "fx": "water_ripple", "at": "target_ground"}
+    ],
+    "flame_breath_fx": [
+      {"t": 0, "streak": {"ribbon": "fire_trail", "time": 0.15, "extend": 30}},
+      {"t": 0.1, "fx": "flame_tongues_fb", "at": "cells", "count": 8},
+      {"t": 0.1, "fx": "embers", "at": "target"},
+      {"t": 0.1, "light": "fire", "at": "target", "scale": 0.5}
+    ],
+    "gravity_fx": [
+      {"t": 0, "sfx": "pinch", "at": "target"},
+      {"t": 0, "sfx": "vortex_dark", "at": "target_ground", "scale": 0.6},
+      {"t": 0, "fx": "curse_motes", "at": "target"}
+    ]
+  },
+
+  "casts": {
+    "default": {"circle": "circle_runes", "size": 110},
+    "aimed_shot": {"circle": "circle_runes", "size": 90},
+    "aimed_shot.B": {"circle": "circle_blood", "size": 120, "orb": "charge_orb", "dim": 0.3, "bars": 0.4},
+    "volley": {"circle": "circle_runes", "size": 100},
+    "fireball": {"circle": "circle_arcane", "size": 120, "orb": "charge_fireorb"},
+    "fireball.A": {"circle": "circle_arcane", "size": 190, "orb": "charge_fireorb_big", "dim": 0.45, "bars": 0.6},
+    "ice_bolt": {"circle": "circle_frost", "size": 110, "orb": "charge_orb"},
+    "ice_dart": {"circle": "circle_frost", "size": 90},
+    "heal": {"circle": "circle_holy", "size": 110},
+    "heal.B": {"circle": "circle_holy", "size": 160, "orb": "charge_orb", "dim": 0.25},
+    "holy_water": {"circle": "circle_holy", "size": 110},
+    "judgment": {"circle": "circle_holy", "size": 130, "orb": "charge_orb"},
+    "frog_heal": {"circle": "circle_nature", "size": 100},
+    "mud_splash": {"circle": "circle_nature", "size": 100},
+    "frost_storm": {"circle": "circle_frost", "size": 190, "dim": 0.35, "orb": "charge_orb", "bars": 0.4},
+    "curse": {"circle": "circle_runes", "size": 110, "orb": "charge_orb"},
+    "faith_shield": {"circle": "circle_holy", "size": 140},
+    "spike_trap": {"circle": "circle_nature", "size": 90},
+    "entangle": {"circle": "circle_nature", "size": 100},
+    "chain_lightning": {"circle": "circle_runes", "size": 110, "orb": "charge_orb"},
+    "chain_lightning.B": {"circle": "circle_runes", "size": 130, "orb": "charge_orb"},
+    "lullaby": {"circle": "circle_nature", "size": 100},
+    "fire_bomb": {"circle": "circle_runes", "size": 90},
+    "thunderstorm": {"circle": "circle_arcane", "size": 170, "orb": "charge_orb", "dim": 0.35, "bars": 0.4},
+    "blizzard": {"circle": "circle_frost", "size": 150, "orb": "charge_orb"},
+    "revive": {"circle": "circle_holy", "size": 160, "orb": "charge_orb", "dim": 0.3, "bars": 0.4},
+    "headshot": {"circle": "circle_runes", "size": 100, "orb": "charge_orb"},
+    "poison_cloud": {"circle": "circle_nature", "size": 90},
+    "mine.B": {"circle": "circle_runes", "size": 90}
+  },
+
+  "unit_attacks": {"bog_archer": "arrow_ice"},
+
+  "skills": {
+    "power_strike": {"impact": "heavy_slash", "branches": {"A": {"impact": "crush"}, "B": {"impact": "execute"}}},
+    "shield_bash": {"impact": "shield_impact"},
+    "taunt": {"impact": "taunt_pulse", "branches": {"A": {"impact": "bastion"}, "B": {"impact": "war_cry"}}},
+    "charge": {"release": "leap_start", "impact": "land_impact", "travel": {"ribbon": "charge", "time": 0.12, "head": null, "to": "ground"}, "branches": {"A": {"impact": "ram"}, "B": {"impact": "intercept"}}},
+    "whirlwind": {"impact": "whirl", "branches": {"A": {"impact": "tornado"}, "B": {"impact": "blood_whirl"}}},
+    "aimed_shot": {"travel": {"prop": "arrow_heavy", "head": "arrow_glow", "ribbon": "arrow_heavy", "speed": 1500, "light": "orb"}, "impact": "pierce_hit", "branches": {"B": {"impact": "deadly_shot", "travel": {"prop": "arrow_heavy", "head": "arrow_glow", "ribbon": ["arrow_heavy", "pierce"], "speed": 1900, "light": "orb", "prop_scale": 2.4}}}},
+    "volley": {"impact": "volley_rain", "delay": 0.55, "branches": {"A": {"impact": "stake_rain"}, "B": {"impact": "fire_volley", "color": [255, 140, 50]}}},
+    "leap_back": {"release": "leap_start", "impact": "land_light", "branches": {"A": {"impact": "somersault"}, "B": {"release": "smoke_bomb"}}},
+    "spike_trap": {"travel": {"prop": "trap_open", "speed": 700, "arc": 70, "spin": 540, "to": "ground"}, "impact": "trap_snap", "branches": {"A": {"impact": "pit_trap"}, "B": {"impact": "poison_trap"}}},
+    "net": {"travel": {"prop": "net_ball", "speed": 800, "arc": 50, "spin": 720}, "impact": "net_wrap"},
+    "fireball": {"release": "cast_release", "travel": {"sfx": "fireorb", "ribbon": "fire_trail", "trail": "fire_puffs", "trail_rate": 40, "light": "orb_fire", "speed": 900, "arc": 50}, "impact": "fire_explosion", "branches": {"A": {"release": "cast_release", "travel": {"from": "sky", "to": "ground", "sky": [-160, -620], "time": 0.45, "sfx": "fireorb_big", "ribbon": ["meteor_smoke", "meteor_fire"], "trail": "fire_puffs", "trail_rate": 90, "light": "orb_big"}, "impact": "meteor_impact"}, "B": {"release": null, "travel": {"sfx": "fire_dart_orb", "head": "fire_dart", "ribbon": "fire_arrow", "speed": 1400, "light": "orb_fire"}, "impact": "fire_arrows_hit"}}},
+    "ice_bolt": {"release": "cast_release", "travel": {"sfx": "ice_orb", "ribbon": "ice_trail", "trail": "ice_trail", "light": "orb", "speed": 1100}, "impact": "ice_burst", "scale": 0.8, "branches": {"A": {"impact": "ice_prison"}, "B": {"line_fx": "ice_line", "travel": {"sfx": "ice_orb", "ribbon": "ice_trail", "light": "orb", "speed": 1600}}}},
+    "ice_dart": {"travel": {"prop": "arrow_ice", "ribbon": "ice_arrow", "head": "ice_trail", "speed": 1200, "arc": 14}, "impact": "ice_burst", "scale": 0.6},
+    "curse": {"release": "cast_release", "travel": {"sfx": "dark_orb", "ribbon": ["dark_smoke", "dark_trail"], "light": "orb", "speed": 900, "arc": 20}, "impact": "curse_hit", "branches": {"A": {"impact": "plague"}, "B": {"impact": "wither"}}},
+    "mana_shield": {"impact": "shield_dome", "branches": {"A": {"impact": "barrier"}, "B": {"impact": "mirror_shield"}}},
+    "faith_shield": {"impact": "holy_ring"},
+    "blink": {"impact": "blink"},
+    "heal": {"release": "cast_release", "impact": "holy_heal", "branches": {"A": {"impact": "renewal", "color": [140, 255, 170]}, "B": {"impact": "great_heal"}}},
+    "frog_heal": {"impact": "nature_heal", "color": [140, 255, 170]},
+    "holy_water": {"release": "cast_release", "travel": {"prop": "bottle", "spin": 600, "speed": 800, "arc": 90, "trail": "sparkle_trail", "trail_rate": 40, "light": "orb", "color": [150, 200, 255]}, "impact": "bottle_smash", "color": [140, 200, 255], "branches": {"A": {"impact": "flood"}, "B": {"travel": null, "impact": "smite", "color": [255, 225, 150]}}},
+    "mud_splash": {"travel": {"prop": "mud", "spin": 400, "speed": 800, "arc": 70, "trail": "mud_drops", "trail_rate": 30, "color": [150, 120, 80]}, "impact": "mud_splat", "color": [150, 120, 80]},
+    "purify": {"impact": "cleanse_wind", "branches": {"A": {"impact": "immunity"}, "B": {"impact": "transfer"}}},
+    "judgment": {"release": "cast_release", "impact": "judgment_beam", "color": [255, 225, 150], "branches": {"A": {"impact": "purge_fire", "color": [255, 170, 80]}, "B": {"impact": "retribution_light"}}},
+    "frost_storm": {"impact": "frost_storm"},
+    "ice_ring": {"impact": "ice_nova"},
+    "_on_death": {"impact": "beetle_explode"},
+    "shadow_step": {"release": "shadow_puff", "impact": "dagger_strike", "color": [180, 140, 255], "branches": {"A": {"impact": "blade_dance"}, "B": {"impact": "silence_strike"}}},
+    "venom_blade": {"impact": "venom_coat", "color": [130, 220, 90], "branches": {"B": {"travel": {"prop": "dart", "ribbon": "dart", "speed": 1300, "arc": 10}, "impact": "dart_hit"}}},
+    "vanish": {"impact": "vanish_smoke", "branches": {"B": {"release": "vanish_smoke", "impact": "reveal_fx"}}},
+    "shadow_mark": {"impact": "death_mark", "color": [255, 70, 90]},
+    "riposte": {"impact": "parry_stance"},
+    "bear_form": {"impact": "shapeshift"},
+    "wolf_form": {"impact": "shapeshift"},
+    "entangle": {"impact": "roots", "color": [130, 200, 90], "branches": {"B": {"impact": "strangle"}}},
+    "rejuvenate": {"impact": "nature_heal", "color": [140, 255, 170], "branches": {"A": {"impact": "nature_bloom"}}},
+    "spirit_tree": {"impact": "tree_grow", "color": [140, 255, 150]},
+    "lunge": {"impact": "spear_thrust", "line_fx": "spear_line", "color": [235, 235, 245], "branches": {"B": {"impact": "spear_crush"}}},
+    "hook": {"travel": {"prop": "grapple", "ribbon": "chain", "speed": 1100, "arc": 20}, "impact": "hook_hit", "branches": {"B": {"travel": null, "impact": "spear_crush"}}},
+    "shield_wall": {"impact": "shield_wall_fx"},
+    "brace": {"impact": "brace_fx"},
+    "jump_strike": {"release": "leap_start", "impact": "dragoon_land", "travel": {"ribbon": "charge", "time": 0.16, "head": null, "to": "ground", "arc": 60}},
+    "chain_lightning": {"release": "cast_release", "impact": "lightning_strike", "color": [160, 175, 255], "branches": {"B": {"impact": "thunder_clap"}}},
+    "storm_totem": {"release": "cast_release", "impact": "totem_storm_drop", "color": [150, 165, 255]},
+    "healing_totem": {"release": "cast_release", "impact": "totem_heal_drop", "color": [140, 255, 170], "branches": {"B": {"impact": "summon_appear"}}},
+    "thunderstorm": {"impact": "thunderstorm_fx", "color": [160, 175, 255]},
+    "spirit_link": {"impact": "spirit_link_fx", "color": [150, 200, 255]},
+    "war_song": {"impact": "song_fx", "color": [255, 200, 110], "branches": {"B": {"color": [150, 220, 255]}}},
+    "lullaby": {"impact": "lullaby_fx", "color": [210, 180, 255], "branches": {"B": {"impact": "dissonance_fx", "color": [255, 90, 120]}}},
+    "inspire": {"impact": "inspire_fx", "color": [255, 220, 140]},
+    "sonic_blast": {"impact": "sonic_fx", "color": [255, 150, 200]},
+    "serenade": {"impact": "serenade_fx", "color": [150, 255, 180]},
+    "fire_bomb": {"travel": {"prop": "bomb", "spin": 600, "speed": 800, "arc": 80, "trail": "embers", "trail_rate": 30}, "impact": "fire_explosion", "scale": 0.8, "branches": {"B": {"impact": "shrapnel"}}},
+    "oil_flask": {"travel": {"prop": "oil_bottle", "spin": 600, "speed": 800, "arc": 80}, "impact": "oil_burst", "color": [150, 120, 70], "branches": {"B": {"travel": {"prop": "potion_green", "spin": 600, "speed": 800, "arc": 80}, "impact": "acid_burst", "color": [150, 230, 100]}}},
+    "healing_potion": {"travel": {"prop": "potion_red", "spin": 600, "speed": 800, "arc": 60}, "impact": "potion_heal", "color": [255, 140, 130], "branches": {"B": {"impact": "potion_power"}}},
+    "mine": {"travel": {"prop": "mine", "spin": 360, "speed": 800, "arc": 60}, "impact": "mine_place", "branches": {"B": {"travel": {"prop": "barrel", "spin": 300, "speed": 800, "arc": 80}, "impact": "fire_explosion", "scale": 1.0}}},
+    "poison_cloud": {"travel": {"prop": "potion_green", "spin": 600, "speed": 800, "arc": 80}, "impact": "toxic_burst", "color": [130, 220, 90]},
+    "consecrate": {"impact": "consecrate_fx", "color": [255, 225, 150]},
+    "headshot": {"travel": {"prop": "arrow_heavy", "head": "arrow_glow", "ribbon": ["arrow_heavy", "pierce"], "speed": 2200, "light": "orb", "prop_scale": 2.4}, "impact": "headshot_hit", "branches": {"B": {"impact": "pierce_hit"}}},
+    "blizzard": {"impact": "blizzard_fx", "color": [150, 210, 255], "branches": {"B": {"travel": {"sfx": "ice_orb", "ribbon": "ice_trail", "light": "orb", "speed": 1300}, "impact": "ice_burst"}}},
+    "revive": {"impact": "revive_fx", "color": [255, 230, 160]},
+    "e_fireball": {"travel": {"sfx": "fireorb", "ribbon": "fire_trail", "light": "orb_fire", "speed": 900, "arc": 50}, "impact": "fire_explosion", "scale": 0.8},
+    "e_hammer": {"travel": {"prop": "rock", "spin": 720, "speed": 800, "arc": 40, "prop_scale": 2.6}, "impact": "shield_impact", "color": [220, 200, 170]},
+    "e_flame_breath": {"impact": "flame_breath_fx", "color": [255, 140, 50]},
+    "e_lash": {"travel": {"prop": "grapple", "ribbon": "chain", "speed": 1100, "arc": 10}, "impact": "hook_hit"},
+    "e_meteor": {"travel": {"from": "sky", "to": "ground", "sky": [-160, -620], "time": 0.45, "sfx": "fireorb_big", "ribbon": ["meteor_smoke", "meteor_fire"], "light": "orb_big"}, "impact": "meteor_impact"},
+    "e_raise": {"impact": "raise_fx"},
+    "e_raise_lich": {"impact": "raise_fx"},
+    "e_raise_mummy": {"impact": "raise_fx"},
+    "e_wither": {"travel": {"sfx": "dark_orb", "ribbon": ["dark_smoke", "dark_trail"], "speed": 900, "arc": 20}, "impact": "curse_hit", "color": [150, 230, 150]},
+    "e_wail": {"impact": "sonic_fx", "color": [190, 215, 240]},
+    "e_slam": {"impact": "dragoon_land"},
+    "e_frost_ward": {"impact": "shield_dome", "color": [170, 225, 255]},
+    "e_frost_breath": {"impact": "ice_burst", "scale": 0.8},
+    "e_avalanche": {"impact": "frost_storm", "scale": 0.7},
+    "e_charge": {"release": "leap_start", "impact": "ram", "travel": {"ribbon": "charge", "time": 0.12, "head": null, "to": "ground"}},
+    "e_rain": {"impact": "rain_fx", "color": [120, 180, 255]},
+    "e_chain": {"impact": "lightning_strike", "color": [160, 175, 255]},
+    "e_war_cry": {"impact": "war_cry"},
+    "e_thunderstorm": {"impact": "thunderstorm_fx", "color": [160, 175, 255]},
+    "e_club": {"impact": "heavy_slash", "color": [220, 190, 140]},
+    "e_heal": {"impact": "holy_heal", "color": [190, 255, 190]},
+    "e_plague": {"travel": {"prop": "potion_green", "spin": 600, "speed": 800, "arc": 80}, "impact": "toxic_burst", "color": [130, 220, 90]},
+    "e_charm": {"travel": {"sfx": "energy_orb", "ribbon": "notes", "speed": 900, "arc": 30}, "impact": "charm_fx", "color": [255, 140, 210]},
+    "e_mirror": {"impact": "mirror_fx", "color": [220, 170, 255]},
+    "e_regrowth": {"impact": "nature_heal", "color": [140, 255, 170]},
+    "e_entangle": {"impact": "roots", "color": [130, 200, 90]},
+    "e_sleep": {"impact": "lullaby_fx", "color": [210, 180, 255]},
+    "e_drag": {"travel": {"prop": "grapple", "ribbon": "chain", "speed": 1100, "arc": 10}, "impact": "hook_hit", "color": [120, 200, 200]},
+    "e_claw": {"impact": "heavy_slash", "color": [255, 160, 110]},
+    "e_tidal": {"impact": "flood", "color": [120, 190, 255]},
+    "e_shield_push": {"impact": "shield_impact"},
+    "e_star_bolt": {"travel": {"sfx": "energy_orb", "ribbon": "bolt_trail", "light": "orb", "speed": 1200}, "impact": "bolt_hit", "color": [200, 210, 255]},
+    "e_gravity": {"impact": "gravity_fx", "color": [180, 110, 255]},
+    "e_archon_wave": {"impact": "holy_ring"},
+    "guard_ally": {"release": "leap_start", "impact": "intercept", "travel": {"ribbon": "charge", "time": 0.12, "head": null, "to": "ground"}},
+    "overwatch": {"impact": "death_mark"},
+    "flashpoint": {"release": "reaction_blaze", "impact": "fire_explosion"},
+    "vow": {"impact": "holy_ring"},
+    "powder_keg": {"impact": "mine_place"},
+    "fuse": {"impact": "cast_release"},
+    "rhythm": {"impact": "song_fx"},
+    "kick": {"impact": "crush"},
+    "rush": {"release": "leap_start", "impact": "ram", "travel": {"ribbon": "charge", "time": 0.15, "head": null, "to": "ground"}},
+    "quake": {"impact": "thunder_clap"},
+    "toss": {"impact": "land_impact", "delay": 0.3},
+    "fault_line": {"impact": "crush", "line_fx": "spear_line"},
+    "fan_flames": {"impact": "reaction_blaze"},
+    "cinder_field": {"impact": "fire_explosion"},
+    "snare": {"impact": "trap_snap"},
+    "bear_trap": {"impact": "trap_snap"},
+    "lure": {"impact": "summon_appear"},
+    "hunter_mark": {"travel": {"prop": "arrow", "head": "arrow_glow", "ribbon": "arrow_heavy", "speed": 1600}, "impact": "death_mark"},
+    "hunting_horn": {"impact": "war_cry"},
+    "ice_wall": {"impact": "ice_burst"},
+    "rink": {"impact": "ice_nova"},
+    "shatter": {"impact": "cast_release"},
+    "frost_guard": {"impact": "barrier"},
+    "corpse_blast": {"impact": "toxic_burst"},
+    "raise_dead": {"impact": "raise_fx"},
+    "devour": {"impact": "wither"},
+    "corpse_cloud": {"impact": "plague"},
+    "bone_wall": {"impact": "raise_fx"},
+    "rewind": {"impact": "refresh_fx"},
+    "haste": {"impact": "inspire_fx"},
+    "stasis": {"impact": "mirror_fx"},
+    "slow_field": {"impact": "gravity_fx"},
+    "rewind_foe": {"impact": "transfer"},
+    "singularity": {"impact": "gravity_fx"},
+    "swap": {"impact": "blink"},
+    "levitate": {"impact": "pull_fx"},
+    "collapse": {"impact": "gravity_fx"},
+    "repulse": {"impact": "sonic_fx"},
+    "earth_power": {"impact": "land_impact"},
+    "reshape": {"impact": "nature_bloom"},
+    "rockfall": {"impact": "crush"},
+    "lava_vent": {"impact": "eruption_hit"},
+    "spring": {"impact": "tide_wave"},
+    "coat": {"impact": "venom_coat"},
+    "flask": {"impact": "bottle_smash"},
+    "reagent": {"impact": "acid_burst"},
+    "toxic_flask": {"impact": "toxic_burst"},
+    "volatile_mix": {"impact": "reaction_blaze"},
+    "blood_strike": {"impact": "heavy_slash"},
+    "bloodlet": {"impact": "blood_whirl"},
+    "trance": {"impact": "war_cry"},
+    "cleave": {"impact": "whirl"},
+    "undying_rage": {"impact": "war_cry"},
+    "forward": {"impact": "inspire_fx"},
+    "regroup": {"impact": "blink"},
+    "focus": {"impact": "death_mark"},
+    "all_out": {"impact": "war_cry"},
+    "ambush_order": {"impact": "death_mark"},
+    "tether": {"impact": "spirit_link_fx"},
+    "merge": {"impact": "spirit_link_fx"},
+    "life_transfer": {"impact": "transfer"},
+    "soul_shield": {"impact": "shield_dome"},
+    "share_pain": {"impact": "curse_hit"}
+  },
+
+  "defaults": {
+    "enemy": {"travel": {"sfx": "energy_orb", "ribbon": "bolt_trail", "speed": 1000}, "impact": "bolt_hit"},
+    "cell": {"impact": "aoe_hit"},
+    "ally": {"impact": "heal_small"},
+    "self": {"impact": "cast_release"}
+  },
+
+  "attacks": {
+    "melee": {"impact": "slash_hit"},
+    "arrow": {"travel": {"prop": "arrow", "ribbon": "arrow_streak", "speed": 1150, "arc": 16}, "impact": "arrow_hit"},
+    "arrow_ice": {"travel": {"prop": "arrow_ice", "ribbon": "ice_arrow", "speed": 1150, "arc": 16}, "impact": "arrow_hit_ice"},
+    "bolt": {"travel": {"sfx": "energy_orb", "ribbon": "bolt_trail", "light": "orb", "speed": 1000}, "impact": "bolt_hit"}
+  }
+}

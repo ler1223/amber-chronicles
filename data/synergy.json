@@ -1,0 +1,32 @@
+{
+  "_note": "Связки отряда на экране «Отряд»: что герой даёт (gives) и что ему нужно (needs: любой из тегов). Только подсказка — в бою ничего не меняет.",
+  "tags": {
+    "tank": "держит удар", "fragile": "хрупкий союзник", "fire": "поджигает", "push": "толкает", "pull": "стягивает",
+    "control": "держит врагов", "heal": "лечит", "shield": "щиты", "objects": "ставит объекты", "walls": "строит стены",
+    "aoe": "бьёт по площади", "burst": "большой урон по цели", "attacker": "часто бьёт оружием",
+    "skills": "часто применяет навыки", "kills": "добивает врагов", "tags": "вешает теги", "buff": "усиливает союзников"
+  },
+  "classes": {
+    "warrior": {"gives": ["tank", "shield"], "needs": [{"any": ["fragile"], "text": "хрупкий союзник, которого он прикроет"}]},
+    "archer": {"gives": ["burst", "kills", "attacker", "fragile"], "needs": [{"any": ["push", "pull", "control"], "text": "кто загонит врагов в дозор"}]},
+    "mage": {"gives": ["fire", "aoe", "skills", "fragile"], "needs": [{"any": ["pull", "control"], "text": "кто соберёт врагов на горящих клетках"}]},
+    "priest": {"gives": ["heal", "fragile"], "needs": [{"any": ["tank", "shield"], "text": "кто выдержит урон, пока лечение в пути"}]},
+    "assassin": {"gives": ["burst", "kills", "attacker"], "needs": [{"any": ["tank", "control"], "text": "кто отвлечёт цель — удар в спину"}]},
+    "druid": {"gives": ["tank", "heal", "attacker"], "needs": []},
+    "guardian": {"gives": ["tank", "control", "attacker"], "needs": [{"any": ["walls", "objects"], "text": "узкий проход: стены, бочки, валуны"}]},
+    "shaman": {"gives": ["tags", "objects", "aoe", "skills"], "needs": [{"any": ["tank"], "text": "кто прикроет тотемы"}]},
+    "bard": {"gives": ["buff", "fragile"], "needs": [{"any": ["skills"], "text": "союзники, часто применяющие навыки"}]},
+    "alchemist": {"gives": ["objects", "fire", "aoe", "fragile"], "needs": [{"any": ["fire", "push"], "text": "кто взорвёт бочки огнём или пинком"}]},
+    "ram": {"gives": ["push", "tank", "attacker"], "needs": [{"any": ["objects", "walls"], "text": "обо что бить: стены, бочки, валуны"}]},
+    "trapper": {"gives": ["control", "fragile"], "needs": [{"any": ["push", "pull", "tank"], "text": "кто пригонит врагов на капканы"}]},
+    "cryo": {"gives": ["walls", "objects", "control", "skills", "fragile"], "needs": [{"any": ["push"], "text": "кто бьёт врагов о стены"}]},
+    "necro": {"gives": ["skills", "fragile"], "needs": [{"any": ["kills"], "text": "кто убивает — трупы для некроманта"}]},
+    "chrono": {"gives": ["buff", "heal", "fragile"], "needs": [{"any": ["burst", "attacker"], "text": "сильный союзник для ускорения и отката"}]},
+    "gravity": {"gives": ["pull", "control", "skills", "fragile"], "needs": [{"any": ["aoe"], "text": "кто ударит по стянутой куче"}]},
+    "geomancer": {"gives": ["objects", "control", "skills"], "needs": [{"any": ["push"], "text": "кто пнёт валуны во врагов"}]},
+    "brewer": {"gives": ["tags", "buff", "fragile"], "needs": [{"any": ["attacker"], "text": "кто часто бьёт смазанным оружием"}]},
+    "bloodrager": {"gives": ["burst", "attacker", "kills"], "needs": [{"any": ["heal", "shield"], "text": "лечение или щиты — держать его на грани"}]},
+    "tactician": {"gives": ["buff", "tank"], "needs": [{"any": ["attacker", "burst"], "text": "сильные бойцы для приказов"}]},
+    "binder": {"gives": ["heal", "fragile"], "needs": [{"any": ["tank"], "text": "крепкий партнёр для привязи"}]}
+  }
+}

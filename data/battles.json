@@ -1,0 +1,443 @@
+{
+  "bog": {
+    "objects": [{"type": "boulder", "pos": [5, 3]}, {"type": "barrel_powder", "pos": [5, 2]}]
+  },
+  "reeds": {
+    "objects": [{"type": "boulder", "pos": [4, 2]}]
+  },
+  "nest": {
+    "objects": [{"type": "barrel_powder", "pos": [6, 3]}, {"type": "barrel_powder", "pos": [6, 5]}]
+  },
+  "camp": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 3]}, {"type": "barrel_powder", "pos": [5, 0]}]
+  },
+  "slime_court": {
+    "map": ["..............", "..............", "......~~....~~", "....~~~~....~~", "....~~~~....~~", "......~~....~~", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "slime_king", "pos": [11, 3]}, {"type": "beetle", "pos": [10, 1]}, {"type": "beetle", "pos": [10, 6]}, {"type": "bog_archer", "pos": [12, 5]}],
+    "waves": [[{"type": "bog_archer", "pos": [13, 2]}, {"type": "beetle", "pos": [13, 1]}]],
+    "objects": [{"type": "boulder", "pos": [10, 3]}]
+  },
+  "witch": {
+    "map": ["..............", "..............", "......~~....~~", "......~~....~~", "..............", "......#......#", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "ice_witch", "pos": [12, 4]}, {"type": "slime", "pos": [10, 3]}, {"type": "slime", "pos": [10, 5]}, {"type": "frog_shaman", "pos": [12, 2]}, {"type": "bog_archer", "pos": [11, 2]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "bog_archer", "pos": [13, 4]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "slime", "pos": [13, 4]}]}],
+    "objects": [{"type": "barrel_powder", "pos": [7, 6]}]
+  },
+  "reeds_guard": {
+    "objects": [{"type": "barrel_powder", "pos": [6, 2]}]
+  },
+  "mill_guard": {
+    "objective": {"type": "hold", "name": "Островок среди трясины", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "frog_shaman", "pos": [9, 2]}, {"type": "frog_shaman", "pos": [9, 0]}], [{"type": "beetle", "pos": [9, 5]}, {"type": "frog_shaman", "pos": [9, 3]}, {"type": "slime", "pos": [9, 4]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "barrel_powder", "pos": [5, 1]}],
+    "enemies": [{"type": "slime", "pos": [7, 1]}, {"type": "slime", "pos": [7, 3]}, {"type": "slime", "pos": [7, 5]}, {"type": "bog_archer", "pos": [9, 4]}]
+  },
+  "nest_guard": {
+    "map": ["..............", "..............", ".....^........", "....~~.^....^.", "....~~........", ".....^.^....^.", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "beetle", "pos": [9, 1]}, {"type": "beetle", "pos": [10, 4]}, {"type": "beetle", "pos": [9, 6]}, {"type": "beetle", "pos": [11, 2]}, {"type": "bog_archer", "pos": [12, 3]}, {"type": "frog_shaman", "pos": [12, 5]}, {"type": "beetle", "pos": [12, 1]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "nest", "pos": [12, 0], "spawn": ["beetle", "slime"]}, {"type": "nest", "pos": [11, 5], "spawn": ["beetle", "slime"]}, {"type": "barrel_powder", "pos": [8, 0]}]
+  },
+  "camp_guard": {
+    "objective": {"type": "defend", "name": "Защитить: Застрявшая телега"},
+    "waves": [[{"type": "frog_shaman", "pos": [9, 3]}, {"type": "beetle", "pos": [9, 0]}, {"type": "frog_shaman", "pos": [9, 3]}]],
+    "objects": [{"type": "cart", "pos": [0, 2], "name": "Застрявшая телега"}, {"type": "boulder", "pos": [6, 0]}],
+    "enemies": [{"type": "slime", "pos": [6, 1]}, {"type": "slime", "pos": [6, 4]}, {"type": "beetle", "pos": [7, 0]}, {"type": "beetle", "pos": [7, 5]}, {"type": "frog_shaman", "pos": [9, 2]}]
+  },
+  "forge_0": {
+    "objects": [{"type": "barrel_oil", "pos": [6, 0]}]
+  },
+  "forge_1": {
+    "objects": [{"type": "barrel_powder", "pos": [5, 5]}]
+  },
+  "forge_2": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 0]}]
+  },
+  "forge_3": {
+    "objects": [{"type": "boulder", "pos": [4, 4]}, {"type": "barrel_oil", "pos": [6, 5]}]
+  },
+  "forge_4": {
+    "map": ["......LL....LL", "......LL....LL", "...=..LL....LL", "...=..........", "....L...#..#..", "...LLL........", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "hammer_thrower", "pos": [12, 3]}, {"type": "flame_priest", "pos": [12, 4]}, {"type": "forge_overseer", "pos": [10, 3]}, {"type": "fire_imp", "pos": [10, 4]}],
+    "waves": [[{"type": "magma_golem", "pos": [13, 6]}, {"type": "salamander", "pos": [13, 4]}]],
+    "objects": [{"type": "boulder", "pos": [4, 6]}]
+  },
+  "forge_5": {
+    "objects": [{"type": "boulder", "pos": [5, 5]}]
+  },
+  "forge_6": {
+    "objective": {"type": "hold", "name": "Плавильная площадка", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "fire_imp", "pos": [9, 3]}, {"type": "salamander", "pos": [9, 0]}], [{"type": "flame_priest", "pos": [9, 2]}, {"type": "fire_imp", "pos": [9, 3]}, {"type": "hammer_thrower", "pos": [9, 4]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "boulder", "pos": [6, 4]}],
+    "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "hammer_thrower", "pos": [9, 3]}, {"type": "flame_priest", "pos": [8, 1]}, {"type": "salamander", "pos": [7, 3]}]
+  },
+  "forge_7": {
+    "map": ["..............", "..............", "....L..L....L.", "...LL.#LL..LL.", "....L..L....L.", "...#..........", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "hammer_thrower", "pos": [13, 3]}, {"type": "flame_priest", "pos": [11, 4]}, {"type": "magma_golem", "pos": [9, 4]}, {"type": "salamander", "pos": [10, 5]}, {"type": "fire_imp", "pos": [9, 2]}, {"type": "flame_priest", "pos": [12, 1]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "hearth", "pos": [12, 0], "spawn": ["fire_imp", "magma_golem", "salamander"]}, {"type": "hearth", "pos": [12, 5], "spawn": ["fire_imp", "magma_golem", "salamander"]}, {"type": "boulder", "pos": [6, 0]}]
+  },
+  "forge_8": {
+    "objective": {"type": "defend", "name": "Защитить: Пленный кузнец"},
+    "waves": [[{"type": "fire_imp", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 2]}, {"type": "fire_imp", "pos": [9, 0]}]],
+    "objects": [{"type": "prisoner", "pos": [1, 3]}, {"type": "barrel_powder", "pos": [4, 2]}],
+    "enemies": [{"type": "hammer_thrower", "pos": [9, 2]}, {"type": "flame_priest", "pos": [9, 3]}, {"type": "magma_golem", "pos": [7, 2]}, {"type": "magma_golem", "pos": [7, 3]}]
+  },
+  "forge_9": {
+    "map": ["..............", "..............", "....L..L....L.", "...LL.#LL..LL.", "....L..L....L.", "...#..........", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "forge_lord", "pos": [13, 3]}, {"type": "flame_priest", "pos": [11, 4]}, {"type": "fire_imp", "pos": [9, 4]}, {"type": "salamander", "pos": [10, 5]}, {"type": "fire_imp", "pos": [12, 6]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "hammer_thrower", "pos": [13, 4]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "salamander", "pos": [13, 6]}]}],
+    "objects": [{"type": "barrel_powder", "pos": [4, 1]}]
+  },
+  "crypt_0": {
+    "objects": [{"type": "boulder", "pos": [5, 0]}]
+  },
+  "crypt_1": {
+    "objects": [{"type": "boulder", "pos": [5, 0]}, {"type": "boulder", "pos": [5, 4]}]
+  },
+  "crypt_2": {
+    "objects": [{"type": "barrel_powder", "pos": [5, 3]}, {"type": "boulder", "pos": [4, 2]}]
+  },
+  "crypt_3": {
+    "objects": [{"type": "barrel_oil", "pos": [4, 5]}]
+  },
+  "crypt_4": {
+    "map": ["..............", "..............", "....##........", "...=..=.......", "...=..=.......", "....##........", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "skeleton_archer", "pos": [12, 3]}, {"type": "necromancer", "pos": [12, 4]}, {"type": "death_knight", "pos": [10, 3]}, {"type": "skeleton", "pos": [10, 4]}],
+    "waves": [[{"type": "ghoul", "pos": [13, 2]}, {"type": "skeleton_archer", "pos": [13, 3]}]],
+    "objects": [{"type": "barrel_oil", "pos": [5, 4]}]
+  },
+  "crypt_5": {
+    "objects": [{"type": "boulder", "pos": [4, 0]}]
+  },
+  "crypt_6": {
+    "objective": {"type": "hold", "name": "Освящённый круг", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "ghoul", "pos": [9, 3]}, {"type": "skeleton", "pos": [9, 5]}], [{"type": "ghoul", "pos": [9, 0]}, {"type": "banshee", "pos": [9, 1]}, {"type": "necromancer", "pos": [9, 2]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "boulder", "pos": [5, 0]}],
+    "enemies": [{"type": "banshee", "pos": [9, 2]}, {"type": "skeleton_archer", "pos": [9, 3]}, {"type": "skeleton_archer", "pos": [8, 1]}, {"type": "skeleton", "pos": [7, 3]}]
+  },
+  "crypt_7": {
+    "map": ["..............", "..............", "...#....#.....", "..............", ".....=........", "...#....#..#..", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "banshee", "pos": [12, 3]}, {"type": "necromancer", "pos": [12, 4]}, {"type": "skeleton", "pos": [10, 3]}, {"type": "skeleton", "pos": [10, 4]}, {"type": "ghoul", "pos": [9, 3]}, {"type": "skeleton", "pos": [12, 1]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "sarcophagus", "pos": [11, 3], "spawn": ["ghoul", "skeleton"]}, {"type": "sarcophagus", "pos": [12, 5], "spawn": ["ghoul", "skeleton"]}, {"type": "barrel_powder", "pos": [4, 2]}]
+  },
+  "crypt_8": {
+    "objective": {"type": "defend", "name": "Защитить: Факел-оберег"},
+    "waves": [[{"type": "ghoul", "pos": [9, 3]}, {"type": "ghoul", "pos": [9, 3]}, {"type": "skeleton", "pos": [9, 1]}]],
+    "objects": [{"type": "ward_torch", "pos": [1, 3]}, {"type": "barrel_powder", "pos": [5, 5]}],
+    "enemies": [{"type": "banshee", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton_archer", "pos": [8, 1]}, {"type": "ghoul", "pos": [7, 2]}]
+  },
+  "crypt_9": {
+    "map": ["..............", "..............", "...#....#..#..", "..............", ".....=........", "...#....#.....", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "lich", "pos": [12, 3]}, {"type": "banshee", "pos": [12, 4]}, {"type": "skeleton", "pos": [10, 3]}, {"type": "skeleton", "pos": [10, 4]}, {"type": "necromancer", "pos": [11, 3]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "ghoul", "pos": [13, 5]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "banshee", "pos": [13, 6]}]}],
+    "objects": [{"type": "barrel_oil", "pos": [8, 3]}]
+  },
+  "pass_0": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 4]}]
+  },
+  "pass_1": {
+    "objects": [{"type": "boulder", "pos": [5, 1]}]
+  },
+  "pass_2": {
+    "objects": [{"type": "barrel_powder", "pos": [6, 4]}, {"type": "barrel_powder", "pos": [6, 3]}]
+  },
+  "pass_3": {
+    "objects": [{"type": "barrel_powder", "pos": [6, 5]}]
+  },
+  "pass_4": {
+    "map": ["..............", "..............", "...##..I....I.", "....IIII....II", "...IIII......I", "...#..........", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "frost_shaman", "pos": [12, 3]}, {"type": "yeti_alpha", "pos": [10, 3]}, {"type": "frost_wolf", "pos": [10, 4]}, {"type": "frost_wolf", "pos": [9, 3]}],
+    "waves": [[{"type": "frost_wolf", "pos": [13, 5]}, {"type": "ice_archer", "pos": [13, 6]}]],
+    "objects": [{"type": "barrel_oil", "pos": [4, 3]}]
+  },
+  "pass_5": {
+    "objects": [{"type": "boulder", "pos": [6, 0]}]
+  },
+  "pass_6": {
+    "objective": {"type": "hold", "name": "Перевал между лавинами", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "frost_wolf", "pos": [9, 2]}, {"type": "frost_wolf", "pos": [9, 4]}], [{"type": "ice_archer", "pos": [9, 3]}, {"type": "frost_shaman", "pos": [9, 1]}, {"type": "yeti", "pos": [9, 4]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "boulder", "pos": [5, 5]}],
+    "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "frost_shaman", "pos": [9, 3]}, {"type": "frost_wolf", "pos": [7, 2]}, {"type": "frost_wolf", "pos": [7, 3]}]
+  },
+  "pass_7": {
+    "map": ["..............", "..............", "...IIIIII..III", "...I#..I....I.", "...I..#I....I.", "...IIIIII..III", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "ice_archer", "pos": [12, 3]}, {"type": "frost_shaman", "pos": [12, 4]}, {"type": "yeti", "pos": [10, 3]}, {"type": "yeti", "pos": [10, 4]}, {"type": "frost_wolf", "pos": [9, 3]}, {"type": "yeti", "pos": [11, 4]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "ice_idol", "pos": [12, 1], "spawn": ["frost_wolf", "yeti"]}, {"type": "ice_idol", "pos": [12, 6], "spawn": ["frost_wolf", "yeti"]}, {"type": "barrel_powder", "pos": [6, 7]}]
+  },
+  "pass_8": {
+    "objective": {"type": "defend", "name": "Защитить: Обоз"},
+    "waves": [[{"type": "frost_wolf", "pos": [9, 3]}, {"type": "frost_wolf", "pos": [9, 2]}, {"type": "ice_archer", "pos": [9, 3]}]],
+    "objects": [{"type": "cart", "pos": [1, 3], "name": "Обоз"}, {"type": "barrel_oil", "pos": [5, 0]}],
+    "enemies": [{"type": "ice_archer", "pos": [9, 2]}, {"type": "ice_archer", "pos": [9, 3]}, {"type": "frost_shaman", "pos": [8, 1]}, {"type": "yeti", "pos": [7, 2]}]
+  },
+  "pass_9": {
+    "map": ["..............", "..............", "...IIIIII..III", "...I#..I....I.", "...I..#I....I#", "...IIIIII..III", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "frost_shaman", "pos": [12, 3]}, {"type": "frost_giant", "pos": [12, 4]}, {"type": "frost_wolf", "pos": [10, 3]}, {"type": "frost_wolf", "pos": [10, 4]}, {"type": "frost_wolf", "pos": [12, 2]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "ice_archer", "pos": [13, 3]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "ice_archer", "pos": [13, 4]}]}],
+    "objects": [{"type": "barrel_oil", "pos": [6, 6]}]
+  },
+  "steppe_0": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 0]}, {"type": "barrel_powder", "pos": [4, 2]}]
+  },
+  "steppe_1": {
+    "objects": [{"type": "barrel_oil", "pos": [5, 5]}, {"type": "barrel_oil", "pos": [4, 5]}]
+  },
+  "steppe_2": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 2]}]
+  },
+  "steppe_3": {
+    "objects": [{"type": "barrel_oil", "pos": [5, 0]}]
+  },
+  "steppe_4": {
+    "map": [".....~........", ".....~........", "...=.~........", "......~~....~~", "...~..........", "...~..=.......", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "storm_hawk", "pos": [12, 3]}, {"type": "stormcaller", "pos": [12, 4]}, {"type": "warchief", "pos": [10, 3]}, {"type": "raider", "pos": [10, 4]}],
+    "waves": [[{"type": "raider", "pos": [13, 2]}, {"type": "storm_hawk", "pos": [13, 0]}]],
+    "objects": [{"type": "barrel_oil", "pos": [6, 4]}]
+  },
+  "steppe_5": {
+    "objects": [{"type": "barrel_powder", "pos": [5, 2]}, {"type": "barrel_powder", "pos": [6, 1]}]
+  },
+  "steppe_6": {
+    "objective": {"type": "hold", "name": "Курган", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "raider", "pos": [9, 3]}, {"type": "raider", "pos": [9, 2]}], [{"type": "storm_hawk", "pos": [9, 2]}, {"type": "raider", "pos": [9, 0]}, {"type": "raider", "pos": [9, 5]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "barrel_powder", "pos": [5, 5]}],
+    "enemies": [{"type": "storm_hawk", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "stormcaller", "pos": [8, 1]}, {"type": "steppe_ogre", "pos": [7, 2]}]
+  },
+  "steppe_7": {
+    "map": [".....~........", ".....~........", "...=.~........", "......~~....~~", "...~..........", "...~..=......=", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "stormcaller", "pos": [12, 3]}, {"type": "storm_hawk", "pos": [12, 4]}, {"type": "steppe_ogre", "pos": [10, 3]}, {"type": "steppe_ogre", "pos": [10, 4]}, {"type": "raider", "pos": [9, 3]}, {"type": "storm_hawk", "pos": [12, 2]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "raider_tent", "pos": [11, 2], "spawn": ["raider", "steppe_ogre"]}, {"type": "raider_tent", "pos": [11, 6], "spawn": ["raider", "steppe_ogre"]}, {"type": "barrel_powder", "pos": [5, 2]}]
+  },
+  "steppe_8": {
+    "objective": {"type": "defend", "name": "Защитить: Громоотвод"},
+    "waves": [[{"type": "raider", "pos": [9, 2]}, {"type": "raider", "pos": [9, 4]}, {"type": "stormcaller", "pos": [9, 0]}]],
+    "objects": [{"type": "lightning_rod", "pos": [0, 4]}, {"type": "barrel_powder", "pos": [4, 1]}],
+    "enemies": [{"type": "stormcaller", "pos": [9, 2]}, {"type": "storm_hawk", "pos": [9, 3]}, {"type": "raider", "pos": [7, 2]}, {"type": "raider", "pos": [7, 3]}]
+  },
+  "steppe_9": {
+    "map": ["..............", "..............", "...~~..~~..~~.", "....#.........", ".....#........", "...~~..~~..~~.", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "storm_khan", "pos": [12, 3]}, {"type": "storm_hawk", "pos": [12, 4]}, {"type": "stormcaller", "pos": [11, 2]}, {"type": "raider", "pos": [10, 3]}, {"type": "steppe_ogre", "pos": [11, 3]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "raider", "pos": [13, 6]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "raider", "pos": [13, 5]}]}],
+    "objects": [{"type": "barrel_powder", "pos": [7, 1]}]
+  },
+  "tomb_0": {
+    "objects": [{"type": "boulder", "pos": [6, 1]}, {"type": "barrel_powder", "pos": [4, 3]}]
+  },
+  "tomb_1": {
+    "objects": [{"type": "barrel_powder", "pos": [6, 1]}, {"type": "barrel_powder", "pos": [5, 3]}]
+  },
+  "tomb_2": {
+    "objects": [{"type": "boulder", "pos": [6, 0]}]
+  },
+  "tomb_3": {
+    "objects": [{"type": "boulder", "pos": [6, 3]}, {"type": "boulder", "pos": [4, 5]}]
+  },
+  "tomb_4": {
+    "map": ["..............", "..............", "...##.........", "......=.......", "...=..........", ".....##.......", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "sand_priest", "pos": [12, 3]}, {"type": "tomb_guardian", "pos": [10, 3]}, {"type": "scarab", "pos": [10, 4]}, {"type": "scarab", "pos": [9, 4]}],
+    "waves": [[{"type": "mummy", "pos": [13, 4]}, {"type": "scarab", "pos": [13, 1]}]],
+    "objects": [{"type": "barrel_powder", "pos": [5, 0]}]
+  },
+  "tomb_5": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 0]}, {"type": "barrel_powder", "pos": [5, 1]}]
+  },
+  "tomb_6": {
+    "objective": {"type": "hold", "name": "Тень обелиска", "cells": [[5, 2], [6, 2], [5, 3], [6, 3]], "time": 25.0},
+    "waves": [[{"type": "mummy", "pos": [9, 2]}, {"type": "mummy", "pos": [9, 1]}], [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "scarab", "pos": [9, 1]}, {"type": "tomb_archer", "pos": [9, 0]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "barrel_oil", "pos": [4, 2]}],
+    "enemies": [{"type": "tomb_archer", "pos": [9, 2]}, {"type": "sand_priest", "pos": [9, 3]}, {"type": "sarcophagus", "pos": [7, 2]}]
+  },
+  "tomb_7": {
+    "map": ["..............", "...#....#.....", "..............", "...#....#.....", "..............", "...#....#..#..", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "tomb_archer", "pos": [12, 3]}, {"type": "sarcophagus", "pos": [10, 3]}, {"type": "sarcophagus", "pos": [10, 4]}, {"type": "mummy", "pos": [9, 3]}, {"type": "scarab", "pos": [9, 4]}, {"type": "scarab", "pos": [12, 5]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "hive", "pos": [11, 3], "spawn": ["mummy", "sarcophagus", "scarab"]}, {"type": "hive", "pos": [11, 6], "spawn": ["mummy", "sarcophagus", "scarab"]}, {"type": "barrel_oil", "pos": [5, 2]}]
+  },
+  "tomb_8": {
+    "objective": {"type": "defend", "name": "Защитить: Караван"},
+    "waves": [[{"type": "scarab", "pos": [9, 3]}, {"type": "scarab", "pos": [9, 3]}, {"type": "sarcophagus", "pos": [9, 5]}]],
+    "objects": [{"type": "caravan", "pos": [1, 2]}, {"type": "barrel_oil", "pos": [4, 5]}],
+    "enemies": [{"type": "sand_priest", "pos": [9, 2]}, {"type": "tomb_archer", "pos": [9, 3]}, {"type": "tomb_archer", "pos": [8, 1]}, {"type": "mummy", "pos": [7, 2]}, {"type": "mummy", "pos": [7, 3]}]
+  },
+  "tomb_9": {
+    "map": ["........#..#..", "...#....#..#..", "..............", "...#....#.....", "..............", "...#....#..#..", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "pharaoh", "pos": [12, 3]}, {"type": "tomb_archer", "pos": [12, 4]}, {"type": "sarcophagus", "pos": [10, 3]}, {"type": "scarab", "pos": [10, 4]}, {"type": "scarab", "pos": [9, 3]}, {"type": "sarcophagus", "pos": [12, 5]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "scarab", "pos": [13, 2]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "mummy", "pos": [13, 5]}]}],
+    "objects": [{"type": "barrel_powder", "pos": [10, 7]}]
+  },
+  "fae_0": {
+    "objects": [{"type": "boulder", "pos": [6, 3]}]
+  },
+  "fae_1": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 5]}, {"type": "barrel_powder", "pos": [4, 0]}]
+  },
+  "fae_2": {
+    "objects": [{"type": "barrel_powder", "pos": [6, 4]}]
+  },
+  "fae_3": {
+    "objects": [{"type": "boulder", "pos": [5, 4]}]
+  },
+  "fae_4": {
+    "map": ["...T...T....T.", "...T...T....T.", "..............", "....TT........", "..............", "...T...T....T.", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "sprite", "pos": [12, 3]}, {"type": "dryad", "pos": [12, 4]}, {"type": "fae_knight", "pos": [10, 3]}, {"type": "maneater", "pos": [10, 4]}],
+    "waves": [[{"type": "dryad", "pos": [13, 4]}, {"type": "maneater", "pos": [13, 1]}]],
+    "objects": [{"type": "boulder", "pos": [7, 6]}]
+  },
+  "fae_5": {
+    "objects": [{"type": "boulder", "pos": [5, 5]}]
+  },
+  "fae_6": {
+    "objective": {"type": "hold", "name": "Светлый круг грибов", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "thorn_beast", "pos": [9, 2]}, {"type": "sprite", "pos": [9, 5]}], [{"type": "sprite", "pos": [9, 3]}, {"type": "thorn_beast", "pos": [9, 1]}, {"type": "thorn_beast", "pos": [9, 5]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "barrel_powder", "pos": [6, 3]}],
+    "enemies": [{"type": "illusionist", "pos": [9, 2]}, {"type": "sprite", "pos": [9, 3]}, {"type": "sprite", "pos": [8, 1]}, {"type": "dryad", "pos": [8, 4]}]
+  },
+  "fae_7": {
+    "map": [".......T......", "...T...T......", "..............", "....TT........", "..............", "...T...T....T.", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "sprite", "pos": [12, 3]}, {"type": "dryad", "pos": [12, 4]}, {"type": "maneater", "pos": [10, 3]}, {"type": "maneater", "pos": [10, 4]}, {"type": "thorn_beast", "pos": [9, 3]}, {"type": "illusionist", "pos": [12, 1]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "witch_ring", "pos": [11, 2], "spawn": ["maneater", "thorn_beast"]}, {"type": "witch_ring", "pos": [12, 6], "spawn": ["maneater", "thorn_beast"]}, {"type": "barrel_powder", "pos": [4, 6]}]
+  },
+  "fae_8": {
+    "objective": {"type": "defend", "name": "Защитить: Светлячковое древо"},
+    "waves": [[{"type": "thorn_beast", "pos": [9, 3]}, {"type": "illusionist", "pos": [9, 4]}, {"type": "illusionist", "pos": [9, 5]}]],
+    "objects": [{"type": "glow_tree", "pos": [1, 3]}, {"type": "boulder", "pos": [4, 4]}],
+    "enemies": [{"type": "illusionist", "pos": [9, 2]}, {"type": "sprite", "pos": [9, 3]}, {"type": "dryad", "pos": [9, 1]}, {"type": "thorn_beast", "pos": [7, 2]}]
+  },
+  "fae_9": {
+    "map": ["..............", "..............", "...T....T..T..", ".....~~......~", ".....~~......~", "...T....T.....", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "fae_queen", "pos": [12, 3]}, {"type": "dryad", "pos": [12, 4]}, {"type": "thorn_beast", "pos": [10, 3]}, {"type": "maneater", "pos": [10, 4]}, {"type": "maneater", "pos": [12, 1]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "sprite", "pos": [13, 0]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "thorn_beast", "pos": [13, 1]}]}],
+    "objects": [{"type": "barrel_powder", "pos": [5, 5]}]
+  },
+  "sunken_0": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 3]}, {"type": "barrel_powder", "pos": [6, 0]}]
+  },
+  "sunken_1": {
+    "objects": [{"type": "boulder", "pos": [6, 4]}]
+  },
+  "sunken_2": {
+    "objects": [{"type": "barrel_oil", "pos": [4, 2]}]
+  },
+  "sunken_3": {
+    "objects": [{"type": "barrel_powder", "pos": [4, 4]}, {"type": "barrel_oil", "pos": [6, 0]}]
+  },
+  "sunken_4": {
+    "map": ["..............", "..............", "....~~~~....~~", "...#~~~~#...~~", "....~~~~....~~", "..............", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "eel", "pos": [12, 3]}, {"type": "siren", "pos": [12, 4]}, {"type": "drowned_captain", "pos": [10, 3]}, {"type": "drowned", "pos": [10, 4]}],
+    "waves": [[{"type": "eel", "pos": [13, 4]}, {"type": "siren", "pos": [13, 2]}]],
+    "objects": [{"type": "barrel_powder", "pos": [9, 0]}]
+  },
+  "sunken_5": {
+    "objects": [{"type": "barrel_powder", "pos": [5, 1]}]
+  },
+  "sunken_6": {
+    "objective": {"type": "hold", "name": "Возвышение до отлива", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "crab_knight", "pos": [9, 3]}, {"type": "eel", "pos": [9, 0]}], [{"type": "drowned", "pos": [9, 3]}, {"type": "crab_knight", "pos": [9, 1]}, {"type": "eel", "pos": [9, 5]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "boulder", "pos": [6, 5]}],
+    "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "siren", "pos": [8, 1]}, {"type": "drowned", "pos": [7, 2]}]
+  },
+  "sunken_7": {
+    "map": ["..............", "..............", "...~~..~~..~~.", "...~~##~~..~~.", "...~~..~~..~~.", "...~~..~~..~~.", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "eel", "pos": [12, 3]}, {"type": "siren", "pos": [12, 4]}, {"type": "crab_knight", "pos": [10, 3]}, {"type": "crab_knight", "pos": [10, 4]}, {"type": "drowned", "pos": [9, 4]}, {"type": "crab_knight", "pos": [12, 1]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "conch", "pos": [11, 1], "spawn": ["crab_knight", "drowned"]}, {"type": "conch", "pos": [11, 7], "spawn": ["crab_knight", "drowned"]}, {"type": "boulder", "pos": [10, 6]}]
+  },
+  "sunken_8": {
+    "objective": {"type": "defend", "name": "Защитить: Колокол"},
+    "waves": [[{"type": "crab_knight", "pos": [9, 2]}, {"type": "eel", "pos": [9, 0]}, {"type": "siren", "pos": [9, 2]}]],
+    "objects": [{"type": "bell", "pos": [0, 2]}, {"type": "barrel_oil", "pos": [5, 4]}],
+    "enemies": [{"type": "eel", "pos": [9, 2]}, {"type": "eel", "pos": [9, 3]}, {"type": "siren", "pos": [8, 1]}, {"type": "drowned", "pos": [7, 2]}, {"type": "drowned", "pos": [7, 3]}]
+  },
+  "sunken_9": {
+    "map": ["..............", "..............", "...~~..~~..~~.", "...~~##~~..~~#", "...~~..~~..~~.", "...~~..~~..~~.", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "deep_lord", "pos": [12, 3]}, {"type": "eel", "pos": [12, 4]}, {"type": "siren", "pos": [11, 2]}, {"type": "drowned", "pos": [10, 3]}, {"type": "drowned", "pos": [12, 1]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "eel", "pos": [13, 2]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "drowned", "pos": [13, 5]}]}],
+    "objects": [{"type": "barrel_oil", "pos": [8, 3]}]
+  },
+  "citadel_0": {
+    "objects": [{"type": "boulder", "pos": [6, 0]}, {"type": "boulder", "pos": [4, 4]}]
+  },
+  "citadel_1": {
+    "objects": [{"type": "boulder", "pos": [4, 3]}, {"type": "barrel_powder", "pos": [4, 1]}]
+  },
+  "citadel_2": {
+    "objects": [{"type": "barrel_oil", "pos": [6, 5]}, {"type": "boulder", "pos": [6, 0]}]
+  },
+  "citadel_3": {
+    "objects": [{"type": "barrel_oil", "pos": [6, 2]}, {"type": "barrel_powder", "pos": [6, 0]}]
+  },
+  "citadel_4": {
+    "map": ["..............", "..............", "...__..__.._..", "....O..O......", "...__..__..__.", "..............", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "sentinel", "pos": [12, 3]}, {"type": "seraph", "pos": [12, 5]}, {"type": "storm_paladin", "pos": [9, 3]}, {"type": "harpy", "pos": [9, 4]}],
+    "waves": [[{"type": "sky_knight", "pos": [13, 3]}, {"type": "sentinel", "pos": [13, 5]}]],
+    "objects": [{"type": "barrel_oil", "pos": [10, 3]}]
+  },
+  "citadel_5": {
+    "objects": [{"type": "barrel_powder", "pos": [5, 4]}, {"type": "barrel_powder", "pos": [5, 0]}]
+  },
+  "citadel_6": {
+    "objective": {"type": "hold", "name": "Площадка над пропастью", "cells": [[4, 2], [5, 2], [4, 3], [5, 3]], "time": 25.0},
+    "waves": [[{"type": "harpy", "pos": [9, 1]}, {"type": "seraph", "pos": [9, 1]}], [{"type": "seraph", "pos": [9, 1]}, {"type": "sentinel", "pos": [9, 0]}, {"type": "harpy", "pos": [9, 5]}]],
+    "wave_timeout": 18.0,
+    "objects": [{"type": "boulder", "pos": [5, 4]}],
+    "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "seraph", "pos": [9, 3]}, {"type": "harpy", "pos": [7, 2]}, {"type": "harpy", "pos": [6, 3]}]
+  },
+  "citadel_7": {
+    "map": ["..............", "..............", "..._.....__...", "...O....O.....", "...#....#.....", "..._....._....", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "sentinel", "pos": [12, 3]}, {"type": "arcanist", "pos": [12, 4]}, {"type": "seraph", "pos": [11, 2]}, {"type": "sky_knight", "pos": [10, 3]}, {"type": "sky_knight", "pos": [10, 4]}, {"type": "harpy", "pos": [12, 2]}],
+    "objective": {"type": "destroy", "name": "Разрушить источники"},
+    "objects": [{"type": "anchor", "pos": [11, 3], "spawn": ["harpy", "sky_knight"]}, {"type": "anchor", "pos": [12, 5], "spawn": ["harpy", "sky_knight"]}, {"type": "barrel_powder", "pos": [7, 2]}]
+  },
+  "citadel_8": {
+    "objective": {"type": "defend", "name": "Защитить: Опора моста"},
+    "waves": [[{"type": "harpy", "pos": [9, 3]}, {"type": "arcanist", "pos": [9, 1]}, {"type": "arcanist", "pos": [9, 5]}]],
+    "objects": [{"type": "sky_bridge", "pos": [1, 3]}, {"type": "barrel_powder", "pos": [4, 0]}],
+    "enemies": [{"type": "sentinel", "pos": [9, 2]}, {"type": "sentinel", "pos": [9, 3]}, {"type": "arcanist", "pos": [8, 4]}, {"type": "sky_knight", "pos": [6, 2]}]
+  },
+  "citadel_9": {
+    "map": ["..............", "..............", "..._.....__...", "...O....O.....", "...#....#..#..", "..._.....__...", "..............", ".............."],
+    "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
+    "enemies": [{"type": "archon", "pos": [12, 3]}, {"type": "seraph", "pos": [12, 4]}, {"type": "sky_knight", "pos": [10, 3]}, {"type": "harpy", "pos": [10, 4]}, {"type": "harpy", "pos": [12, 5]}],
+    "phases": [{"at": 0.66, "name": "Гнев", "spawn": [{"type": "sky_knight", "pos": [13, 4]}]}, {"at": 0.33, "name": "Последний рубеж", "spawn": [{"type": "arcanist", "pos": [13, 3]}]}],
+    "objects": [{"type": "barrel_powder", "pos": [7, 0]}]
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "swamp": {
+    "name": "Болото",
+    "desc": "Топи, где хозяйничают слизни, огненные жуки и жабы-шаманы. Ледяная ведьма ждёт в башне.",
+    "boss_after": 3,
+    "regions": [
+      {"id": "reeds", "name": "Камыши", "pos": [0.1, 0.28], "threat": 1, "start": true, "links": ["mill", "nest"], "guard": "reeds_guard", "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "start_gold", "value": 20, "name": "Деревня", "desc": "+20 золота в начале вылазки"}},
+      {"id": "mill", "name": "Старая мельница", "pos": [0.14, 0.76], "threat": 1, "start": true, "links": ["reeds", "camp"], "guard": "mill_guard", "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "post_battle_heal", "value": 0.1, "name": "Храм", "desc": "Лечение после победы +10%"}},
+      {"id": "nest", "name": "Огненное гнездо", "pos": [0.42, 0.22], "threat": 2, "links": ["reeds", "camp", "court"], "guard": "nest_guard", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "shop_items", "value": 1, "name": "Кузня", "desc": "+1 предмет у торговца"}},
+      {"id": "camp", "name": "Лагерь жаб", "pos": [0.46, 0.72], "threat": 2, "links": ["mill", "nest", "court"], "guard": "camp_guard", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "scout_hp", "value": 1, "name": "Сторожевая башня", "desc": "Разведка показывает HP и урон врагов"}},
+      {"id": "court", "name": "Двор слизней", "pos": [0.7, 0.48], "threat": 3, "links": ["nest", "camp", "tower"], "guard": "slime_court", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "hp_pct", "value": 0.1, "name": "Целебный источник", "desc": "+10% макс. HP отряду"}},
+      {"id": "tower", "name": "Башня ведьмы", "pos": [0.92, 0.48], "threat": 3, "boss": true, "links": ["court", "nest", "camp"], "guard": "witch", "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ],
+    "order": 0,
+    "mechanics": ["Вода: стоящие в воде мокнут — Лёд по мокрым замораживает, Огонь даёт пар", "Реакции тегов: жабы и стрелки смешивают Воду и Лёд", "Взрывы при смерти: огненные жуки взрываются рядом с героями"],
+    "palette": {},
+    "events": [],
+    "adds": {"heroic": ["toxic_slime"], "nightmare": ["bog_horror"]},
+    "power": {"hp": 1.0, "damage": 1.0}
+  },
+  "forge": {
+    "name": "Огненные кузни",
+    "desc": "Подземные горны, реки лавы и рабы огня. Владыка кузни куёт армию из магмы.",
+    "order": 1,
+    "boss_after": 3,
+    "mechanics": ["Лава: клетки лавы жгут всегда (6 урона/сек + Огонь)", "Извержения: отмеченные клетки через 1.5 сек вспыхивают огнём", "Перегрев: враги кузни в огне и на лаве бьют сильнее и восстанавливаются — гасите их Водой и Льдом"],
+    "palette": {"grass": [58, 48, 44], "stone": [84, 72, 66], "water": [40, 60, 90]},
+    "events": [{"type": "eruption", "name": "Извержение", "every": [10, 14], "first": 6, "count": 3, "warn": 1.6, "damage": 14, "burn": 3}],
+    "adds": {"heroic": ["obsidian_guard", "fire_imp"], "nightmare": ["living_lava"]},
+    "power": {"hp": 1.12, "damage": 1.05},
+    "regions": [
+      {"id": "forge_r0", "name": "Ворота кузни", "pos": [0.1, 0.28], "threat": 1, "links": ["forge_r1", "forge_r2"], "guard": "forge_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "power_pct", "value": 0.04, "name": "Горн", "desc": "+4% урона атак и силы навыков"}},
+      {"id": "forge_r1", "name": "Угольные шахты", "pos": [0.14, 0.76], "threat": 1, "links": ["forge_r0", "forge_r3"], "guard": "forge_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "start_gold", "value": 15, "name": "Казна рабов", "desc": "+15 золота в начале вылазки"}},
+      {"id": "forge_r2", "name": "Кипящий канал", "pos": [0.42, 0.22], "threat": 2, "links": ["forge_r0", "forge_r3", "forge_r4"], "guard": "forge_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "shop_items", "value": 1, "name": "Склад оружия", "desc": "+1 предмет у торговца"}},
+      {"id": "forge_r3", "name": "Арсенал", "pos": [0.46, 0.72], "threat": 2, "links": ["forge_r1", "forge_r2", "forge_r4"], "guard": "forge_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "hp_pct", "value": 0.04, "name": "Закалённая сталь", "desc": "+4% макс. HP отряду"}},
+      {"id": "forge_r4", "name": "Зал надсмотрщика", "pos": [0.7, 0.48], "threat": 3, "links": ["forge_r2", "forge_r3", "forge_r5"], "guard": "forge_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "rare_chance", "value": 0.05, "name": "Мастерская", "desc": "Редкие предметы чаще на 5%"}},
+      {"id": "forge_r5", "name": "Сердце горна", "pos": [0.92, 0.48], "threat": 3, "links": ["forge_r4", "forge_r2", "forge_r3"], "guard": "forge_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  },
+  "crypt": {
+    "name": "Склеп нежити",
+    "desc": "Катакомбы под заброшенным монастырём. Лич поднимает мёртвых снова и снова.",
+    "order": 2,
+    "boss_after": 3,
+    "mechanics": ["Нежить встаёт: скелеты и рыцари смерти поднимаются через 3 сек с половиной HP — добивайте Огнём", "Проклятие: некроманты делают лечение героя вдвое слабее", "Туман: на разведке видны не все враги — часть появится только в бою"],
+    "palette": {"grass": [46, 46, 56], "stone": [70, 70, 82], "water": [40, 50, 70]},
+    "events": [],
+    "adds": {"heroic": ["bone_golem", "skeleton"], "nightmare": ["wraith"]},
+    "power": {"hp": 1.36, "damage": 1.2},
+    "regions": [
+      {"id": "crypt_r0", "name": "Ограда кладбища", "pos": [0.1, 0.28], "threat": 1, "links": ["crypt_r1", "crypt_r2"], "guard": "crypt_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "post_battle_heal", "value": 0.05, "name": "Святая вода", "desc": "Лечение после победы +5%"}},
+      {"id": "crypt_r1", "name": "Часовня", "pos": [0.14, 0.76], "threat": 1, "links": ["crypt_r0", "crypt_r3"], "guard": "crypt_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "rerolls", "value": 1, "name": "Чётки", "desc": "+1 переброс наград"}},
+      {"id": "crypt_r2", "name": "Склеп аббата", "pos": [0.42, 0.22], "threat": 2, "links": ["crypt_r0", "crypt_r3", "crypt_r4"], "guard": "crypt_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "hp_pct", "value": 0.05, "name": "Мощи", "desc": "+5% макс. HP отряду"}},
+      {"id": "crypt_r3", "name": "Колодец душ", "pos": [0.46, 0.72], "threat": 2, "links": ["crypt_r1", "crypt_r2", "crypt_r4"], "guard": "crypt_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "start_gold", "value": 15, "name": "Подношения", "desc": "+15 золота в начале вылазки"}},
+      {"id": "crypt_r4", "name": "Чертог рыцаря", "pos": [0.7, 0.48], "threat": 3, "links": ["crypt_r2", "crypt_r3", "crypt_r5"], "guard": "crypt_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "power_pct", "value": 0.04, "name": "Реликварий", "desc": "+4% урона атак и силы навыков"}},
+      {"id": "crypt_r5", "name": "Трон лича", "pos": [0.92, 0.48], "threat": 3, "links": ["crypt_r4", "crypt_r2", "crypt_r3"], "guard": "crypt_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  },
+  "pass": {
+    "name": "Ледяные перевалы",
+    "desc": "Горные тропы над пропастью снега. Йети и ледяной великан не пускают дальше.",
+    "order": 3,
+    "boss_after": 3,
+    "mechanics": ["Скользкий лёд: шаг на лёд протаскивает ещё на клетку (звери перевала не скользят)", "Лавины: отмеченный участок через 2 сек накрывает — урон, Лёд и оглушение", "Ледяная броня: щит врага нарастает снова каждые 8 сек; Огонь колет его и бьёт ×1.5"],
+    "palette": {"grass": [112, 126, 140], "stone": [88, 98, 112], "water": [60, 90, 130]},
+    "events": [{"type": "avalanche", "name": "Лавина", "every": [11, 15], "first": 6, "warn": 2.0, "damage": 20, "stun": 1.2}],
+    "adds": {"heroic": ["ice_golem", "frost_wolf"], "nightmare": ["frost_wyrmling"]},
+    "power": {"hp": 1.54, "damage": 1.3},
+    "regions": [
+      {"id": "pass_r0", "name": "Застава", "pos": [0.1, 0.28], "threat": 1, "links": ["pass_r1", "pass_r2"], "guard": "pass_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "hp_pct", "value": 0.05, "name": "Тёплые меха", "desc": "+5% макс. HP отряду"}},
+      {"id": "pass_r1", "name": "Тропа волков", "pos": [0.14, 0.76], "threat": 1, "links": ["pass_r0", "pass_r3"], "guard": "pass_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "discount", "value": 0.05, "name": "Горные торговцы", "desc": "Цены у торговца −5%"}},
+      {"id": "pass_r2", "name": "Перевал бурь", "pos": [0.42, 0.22], "threat": 2, "links": ["pass_r0", "pass_r3", "pass_r4"], "guard": "pass_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "power_pct", "value": 0.04, "name": "Закалка морозом", "desc": "+4% урона атак и силы навыков"}},
+      {"id": "pass_r3", "name": "Ледяной водопад", "pos": [0.46, 0.72], "threat": 2, "links": ["pass_r1", "pass_r2", "pass_r4"], "guard": "pass_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "start_gold", "value": 15, "name": "Пошлина", "desc": "+15 золота в начале вылазки"}},
+      {"id": "pass_r4", "name": "Логово вожака", "pos": [0.7, 0.48], "threat": 3, "links": ["pass_r2", "pass_r3", "pass_r5"], "guard": "pass_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "post_battle_heal", "value": 0.05, "name": "Горячие источники", "desc": "Лечение после победы +5%"}},
+      {"id": "pass_r5", "name": "Вершина великана", "pos": [0.92, 0.48], "threat": 3, "links": ["pass_r4", "pass_r2", "pass_r3"], "guard": "pass_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  },
+  "steppe": {
+    "name": "Грозовая степь",
+    "desc": "Бескрайние травы под вечной грозой. Орды налётчиков служат Хану бури.",
+    "order": 4,
+    "boss_after": 3,
+    "mechanics": ["Гроза: молнии бьют в отмеченные клетки — мокрым героям грозит электрошок", "Ветер: порыв сдвигает всех на клетку (в стену — урон)", "Налётчики: быстрые всадники врываются в тыл прыжком"],
+    "palette": {"grass": [88, 94, 56], "stone": [96, 90, 78], "water": [50, 80, 110]},
+    "events": [{"type": "lightning", "name": "Удар молнии", "every": [7, 10], "first": 4, "count": 3, "warn": 1.2, "damage": 16}, {"type": "wind", "name": "Порыв ветра", "every": [13, 17], "first": 9, "warn": 1.5, "push": 1}],
+    "adds": {"heroic": ["thunder_elemental", "raider"], "nightmare": ["wind_rider"]},
+    "power": {"hp": 1.72, "damage": 1.4},
+    "regions": [
+      {"id": "steppe_r0", "name": "Кочевье", "pos": [0.1, 0.28], "threat": 1, "links": ["steppe_r1", "steppe_r2"], "guard": "steppe_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "rerolls", "value": 1, "name": "Гадалка", "desc": "+1 переброс наград"}},
+      {"id": "steppe_r1", "name": "Каменные бабы", "pos": [0.14, 0.76], "threat": 1, "links": ["steppe_r0", "steppe_r3"], "guard": "steppe_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "power_pct", "value": 0.05, "name": "Табун", "desc": "+5% урона атак и силы навыков"}},
+      {"id": "steppe_r2", "name": "Брод", "pos": [0.42, 0.22], "threat": 2, "links": ["steppe_r0", "steppe_r3", "steppe_r4"], "guard": "steppe_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "start_gold", "value": 20, "name": "Дань", "desc": "+20 золота в начале вылазки"}},
+      {"id": "steppe_r3", "name": "Становище орды", "pos": [0.46, 0.72], "threat": 2, "links": ["steppe_r1", "steppe_r2", "steppe_r4"], "guard": "steppe_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "hp_pct", "value": 0.05, "name": "Кумыс", "desc": "+5% макс. HP отряду"}},
+      {"id": "steppe_r4", "name": "Шатёр вождя", "pos": [0.7, 0.48], "threat": 3, "links": ["steppe_r2", "steppe_r3", "steppe_r5"], "guard": "steppe_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "ap", "value": 1, "name": "Боевой рог", "desc": "+1 AP всем героям"}},
+      {"id": "steppe_r5", "name": "Ставка хана", "pos": [0.92, 0.48], "threat": 3, "links": ["steppe_r4", "steppe_r2", "steppe_r3"], "guard": "steppe_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  },
+  "tomb": {
+    "name": "Пустынные гробницы",
+    "desc": "Пески скрывают усыпальницы древних царей. Фараон не желает покоя.",
+    "order": 5,
+    "boss_after": 3,
+    "mechanics": ["Песчаная буря: на 6 сек дальность всех стрелков и магов −2", "Саркофаги: каменные гробы поднимают мумий, пока их не разбить", "Скарабеи: рои мелких жуков с ядом — Яд режет лечение"],
+    "palette": {"grass": [150, 128, 88], "stone": [128, 110, 82], "water": [60, 110, 130]},
+    "events": [{"type": "sandstorm", "name": "Песчаная буря", "every": [14, 18], "first": 7, "warn": 1.5, "range": 2, "duration": 6}],
+    "adds": {"heroic": ["sand_golem", "scarab"], "nightmare": ["anubis_guard"]},
+    "power": {"hp": 1.9, "damage": 1.5},
+    "regions": [
+      {"id": "tomb_r0", "name": "Оазис", "pos": [0.1, 0.28], "threat": 1, "links": ["tomb_r1", "tomb_r2"], "guard": "tomb_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "rare_chance", "value": 0.05, "name": "Карта сокровищ", "desc": "Редкие предметы чаще на 5%"}},
+      {"id": "tomb_r1", "name": "Некрополь", "pos": [0.14, 0.76], "threat": 1, "links": ["tomb_r0", "tomb_r3"], "guard": "tomb_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "start_gold", "value": 20, "name": "Золото гробниц", "desc": "+20 золота в начале вылазки"}},
+      {"id": "tomb_r2", "name": "Лабиринт", "pos": [0.42, 0.22], "threat": 2, "links": ["tomb_r0", "tomb_r3", "tomb_r4"], "guard": "tomb_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "hp_pct", "value": 0.05, "name": "Бальзам", "desc": "+5% макс. HP отряду"}},
+      {"id": "tomb_r3", "name": "Храм солнца", "pos": [0.46, 0.72], "threat": 2, "links": ["tomb_r1", "tomb_r2", "tomb_r4"], "guard": "tomb_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "power_pct", "value": 0.05, "name": "Скарабей удачи", "desc": "+5% урона атак и силы навыков"}},
+      {"id": "tomb_r4", "name": "Зал хранителя", "pos": [0.7, 0.48], "threat": 3, "links": ["tomb_r2", "tomb_r3", "tomb_r5"], "guard": "tomb_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "start_relics", "value": 1, "name": "Погребальный дар", "desc": "Вылазка начинается со случайной реликвией"}},
+      {"id": "tomb_r5", "name": "Усыпальница фараона", "pos": [0.92, 0.48], "threat": 3, "links": ["tomb_r4", "tomb_r2", "tomb_r3"], "guard": "tomb_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  },
+  "fae": {
+    "name": "Тёмный лес фей",
+    "desc": "Лес, где тропы меняются, а феи играют с разумом путников. Королева ждёт в сердце чащи.",
+    "order": 6,
+    "boss_after": 3,
+    "mechanics": ["Очарование: феи заставляют героя 4 сек сражаться против своих", "Иллюзии: иллюзионисты создают двойников-приманок", "Хищные растения: стоят на месте, хватают героев рядом и лечат фей"],
+    "palette": {"grass": [48, 52, 66], "stone": [72, 66, 84], "water": [40, 60, 100], "tree": [86, 70, 130]},
+    "events": [],
+    "adds": {"heroic": ["treant", "thorn_beast"], "nightmare": ["shade_fae"]},
+    "power": {"hp": 2.08, "damage": 1.6},
+    "regions": [
+      {"id": "fae_r0", "name": "Опушка", "pos": [0.1, 0.28], "threat": 1, "links": ["fae_r1", "fae_r2"], "guard": "fae_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "post_battle_heal", "value": 0.05, "name": "Родник", "desc": "Лечение после победы +5%"}},
+      {"id": "fae_r1", "name": "Туманная лощина", "pos": [0.14, 0.76], "threat": 1, "links": ["fae_r0", "fae_r3"], "guard": "fae_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "rerolls", "value": 1, "name": "Клевер", "desc": "+1 переброс наград"}},
+      {"id": "fae_r2", "name": "Сад росянок", "pos": [0.42, 0.22], "threat": 2, "links": ["fae_r0", "fae_r3", "fae_r4"], "guard": "fae_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "power_pct", "value": 0.05, "name": "Пыльца фей", "desc": "+5% урона атак и силы навыков"}},
+      {"id": "fae_r3", "name": "Лунная поляна", "pos": [0.46, 0.72], "threat": 2, "links": ["fae_r1", "fae_r2", "fae_r4"], "guard": "fae_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "hp_pct", "value": 0.05, "name": "Сердце дуба", "desc": "+5% макс. HP отряду"}},
+      {"id": "fae_r4", "name": "Шипастый двор", "pos": [0.7, 0.48], "threat": 3, "links": ["fae_r2", "fae_r3", "fae_r5"], "guard": "fae_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "discount", "value": 0.05, "name": "Торговцы-гномы", "desc": "Цены у торговца −5%"}},
+      {"id": "fae_r5", "name": "Чертог королевы", "pos": [0.92, 0.48], "threat": 3, "links": ["fae_r4", "fae_r2", "fae_r3"], "guard": "fae_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  },
+  "sunken": {
+    "name": "Затонувший город",
+    "desc": "Город, ушедший под воду. В отлив открываются улицы, в прилив — пасть глубин.",
+    "order": 7,
+    "boss_after": 3,
+    "mechanics": ["Приливы: волна затапливает два ряда клеток на 6 сек — Вода на всех, кто там стоит", "Утаскивание: утопленники притягивают героев и оглушают", "Угри: электрические твари бьют Грозой — по мокрым будет электрошок"],
+    "palette": {"grass": [62, 74, 80], "stone": [84, 96, 102], "water": [34, 70, 110]},
+    "events": [{"type": "tide", "name": "Прилив", "every": [12, 16], "first": 6, "warn": 2.0, "rows": 2, "duration": 6}],
+    "adds": {"heroic": ["deep_priest", "crab_knight"], "nightmare": ["kraken_arm"]},
+    "power": {"hp": 2.26, "damage": 1.7},
+    "regions": [
+      {"id": "sunken_r0", "name": "Маяк", "pos": [0.1, 0.28], "threat": 1, "links": ["sunken_r1", "sunken_r2"], "guard": "sunken_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "shop_items", "value": 1, "name": "Контрабанда", "desc": "+1 предмет у торговца"}},
+      {"id": "sunken_r1", "name": "Каналы", "pos": [0.14, 0.76], "threat": 1, "links": ["sunken_r0", "sunken_r3"], "guard": "sunken_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "hp_pct", "value": 0.05, "name": "Жемчуг", "desc": "+5% макс. HP отряду"}},
+      {"id": "sunken_r2", "name": "Затопленный дворец", "pos": [0.42, 0.22], "threat": 2, "links": ["sunken_r0", "sunken_r3", "sunken_r4"], "guard": "sunken_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "power_pct", "value": 0.05, "name": "Трезубец", "desc": "+5% урона атак и силы навыков"}},
+      {"id": "sunken_r3", "name": "Кладбище кораблей", "pos": [0.46, 0.72], "threat": 2, "links": ["sunken_r1", "sunken_r2", "sunken_r4"], "guard": "sunken_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "start_gold", "value": 20, "name": "Сундук утопленника", "desc": "+20 золота в начале вылазки"}},
+      {"id": "sunken_r4", "name": "Палуба капитана", "pos": [0.7, 0.48], "threat": 3, "links": ["sunken_r2", "sunken_r3", "sunken_r5"], "guard": "sunken_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "rare_chance", "value": 0.05, "name": "Затонувшие сокровища", "desc": "Редкие предметы чаще на 5%"}},
+      {"id": "sunken_r5", "name": "Бездна", "pos": [0.92, 0.48], "threat": 3, "links": ["sunken_r4", "sunken_r2", "sunken_r3"], "guard": "sunken_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  },
+  "citadel": {
+    "name": "Небесная цитадель",
+    "desc": "Парящая крепость над облаками. Небесный архонт сбрасывает непрошеных гостей в пропасть.",
+    "order": 8,
+    "boss_after": 3,
+    "mechanics": ["Пропасти: сброшенный в пропасть враг гибнет, герой теряет 40% HP — отталкивания решают", "Порталы: шаг в портал переносит к парному порталу", "Летающие: крылатые враги парят над пропастями; на героической и выше дует ветер"],
+    "palette": {"grass": [150, 150, 166], "stone": [118, 118, 138], "water": [70, 110, 160]},
+    "events": [{"type": "wind", "name": "Порыв ветра", "every": [14, 18], "first": 10, "warn": 1.5, "push": 1, "min_diff": "heroic"}],
+    "adds": {"heroic": ["griffin", "sky_knight"], "nightmare": ["void_watcher"]},
+    "power": {"hp": 2.44, "damage": 1.8},
+    "regions": [
+      {"id": "citadel_r0", "name": "Внешняя стена", "pos": [0.1, 0.28], "threat": 1, "links": ["citadel_r1", "citadel_r2"], "guard": "citadel_5", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "power_pct", "value": 0.06, "name": "Звёздная сталь", "desc": "+6% урона атак и силы навыков"}},
+      {"id": "citadel_r1", "name": "Гнёзда гарпий", "pos": [0.14, 0.76], "threat": 1, "links": ["citadel_r0", "citadel_r3"], "guard": "citadel_6", "start": true, "layers": [1, 2, 2, 1], "tiers": [1, 1, 1], "bonus": {"type": "hp_pct", "value": 0.06, "name": "Благословение небес", "desc": "+6% макс. HP отряду"}},
+      {"id": "citadel_r2", "name": "Мост ветров", "pos": [0.42, 0.22], "threat": 2, "links": ["citadel_r0", "citadel_r3", "citadel_r4"], "guard": "citadel_7", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "start_relics", "value": 1, "name": "Сокровищница", "desc": "Вылазка начинается со случайной реликвией"}},
+      {"id": "citadel_r3", "name": "Шпиль часовых", "pos": [0.46, 0.72], "threat": 2, "links": ["citadel_r1", "citadel_r2", "citadel_r4"], "guard": "citadel_8", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "rerolls", "value": 1, "name": "Оракул", "desc": "+1 переброс наград"}},
+      {"id": "citadel_r4", "name": "Зал паладина", "pos": [0.7, 0.48], "threat": 3, "links": ["citadel_r2", "citadel_r3", "citadel_r5"], "guard": "citadel_4", "layers": [1, 2, 3, 2, 1], "tiers": [1, 2, 2], "force_elite": false, "bonus": {"type": "ap", "value": 1, "name": "Небесный горн", "desc": "+1 AP всем героям"}},
+      {"id": "citadel_r5", "name": "Тронный зал небес", "pos": [0.92, 0.48], "threat": 3, "links": ["citadel_r4", "citadel_r2", "citadel_r3"], "guard": "citadel_9", "boss": true, "layers": [1, 2, 3, 2, 3, 2, 1], "tiers": [1, 1, 2, 2, 2]}
+    ]
+  }
+}

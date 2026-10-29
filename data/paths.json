@@ -1,0 +1,338 @@
+{
+  "berserker": {
+    "class": "warrior",
+    "name": "Берсерк",
+    "desc": "Меньше брони, больше урона. Вместо Провокации — Вихрь, вместо Блока — Ярость.",
+    "replace": {"taunt": "whirlwind"},
+    "passive": {"kind": "rage", "name": "Ярость", "pp": 1, "stat": "atk_mult", "value": 1.5, "duration": 3, "desc": "Удар по берсерку: −1 деление шкалы, его атаки ×1.5 на 3 сек"},
+    "mods": [{"stat": "armor", "add": -1}, {"stat": "atk_damage", "add": 4}]
+  },
+  "ranger": {
+    "class": "archer",
+    "name": "Следопыт",
+    "desc": "Ловушки и маскировка. Вместо Залпа — Шипастая ловушка, уворачивается от стрел, а не от клинков.",
+    "replace": {"volley": "spike_trap"},
+    "passive": {"kind": "dodge", "vs": ["ranged", "spell"], "name": "Маскировка", "pp": 1, "desc": "Дальняя атака или заклинание по следопыту: −1 деление шкалы, промах"},
+    "mods": [{"stat": "move_time", "mult": 0.85}]
+  },
+  "warlock": {
+    "class": "mage",
+    "name": "Чернокнижник",
+    "desc": "Проклятия и похищение жизни. Вместо Ледяной стрелы — Проклятие, вместо Концентрации — Похищение жизни.",
+    "replace": {"fan_flames": "curse"},
+    "passive": {"kind": "siphon", "name": "Похищение жизни", "pp": 1, "pct": 0.3, "desc": "Урон навыком: −1 деление шкалы, маг лечится на 30% нанесённого"},
+    "mods": [{"stat": "hp", "add": 10}]
+  },
+  "inquisitor": {
+    "class": "priest",
+    "name": "Инквизитор",
+    "desc": "Карающий жрец. Вместо Святой воды — Приговор, вместо Заступничества — Праведный гнев.",
+    "replace": {"holy_water": "judgment"},
+    "passive": {"kind": "retaliate", "name": "Праведный гнев", "pp": 1, "damage": 10, "tag": "fire", "desc": "Ближняя атака по инквизитору: −1 деление шкалы, обидчик получает 10 урона + Огонь"},
+    "mods": [{"stat": "atk_damage", "add": 3}, {"stat": "armor", "add": 1}]
+  },
+  "shadow": {
+    "class": "assassin",
+    "name": "Тень",
+    "desc": "Метит цели для всего отряда. Вместо Ядовитого клинка — Метка смерти, вместо Удара в спину — Ускользание.",
+    "replace": {"venom_blade": "shadow_mark"},
+    "passive": {"kind": "dodge", "vs": ["melee", "ranged"], "name": "Ускользание", "pp": 1, "desc": "Атака оружием по ассасину: −1 деление шкалы, промах"},
+    "mods": [{"stat": "move_time", "mult": 0.9}]
+  },
+  "duelist": {
+    "class": "assassin",
+    "name": "Дуэлянт",
+    "desc": "Держит удар в ближнем бою. Вместо Исчезновения — Парирование, вместо Удара в спину — Контратака.",
+    "replace": {"vanish": "riposte"},
+    "passive": {"kind": "retaliate", "name": "Контратака", "pp": 1, "damage": 12, "desc": "Ближняя атака по дуэлянту: −1 деление шкалы, 12 урона атакующему"},
+    "mods": [{"stat": "hp", "add": 20}, {"stat": "armor", "add": 1}]
+  },
+  "wild": {
+    "class": "druid",
+    "name": "Дикий оборотень",
+    "desc": "Ближний бой в облике волка. Вместо Омоложения — Облик волка, вместо Силы природы — Звериная ярость.",
+    "replace": {"rejuvenate": "wolf_form"},
+    "passive": {"kind": "rage", "name": "Звериная ярость", "pp": 1, "stat": "atk_mult", "value": 1.4, "duration": 3, "desc": "Удар по друиду: −1 деление шкалы, его атаки ×1.4 на 3 сек"},
+    "mods": [{"stat": "atk_damage", "add": 2}]
+  },
+  "grove": {
+    "class": "druid",
+    "name": "Хранитель рощи",
+    "desc": "Лечит отряд через древо. Вместо Облика медведя — Древо жизни, вместо Силы природы — Покров рощи.",
+    "replace": {"bear_form": "spirit_tree"},
+    "passive": {"kind": "intercede", "name": "Покров рощи", "pp": 1, "range": 1, "heal": 8, "desc": "Соседа-союзника бьют: −1 деление шкалы, лечит его на 8"},
+    "mods": [{"stat": "ap_max", "add": 1}]
+  },
+  "sentinel": {
+    "class": "guardian",
+    "name": "Часовой",
+    "desc": "Неприступная стойка. Вместо Крюка — Упор, стойка бьёт на 2 клетки и сильнее.",
+    "replace": {"hook": "brace"},
+    "passive": {"kind": "zoc", "name": "Длинная стойка", "pp": 1, "mult": 1.3, "halt": 1.0, "range": 2, "desc": "Враг подошёл на 2 клетки: −1 деление шкалы, удар ×1.3, враг замешкался"},
+    "mods": [{"stat": "armor", "add": 1}]
+  },
+  "dragoon": {
+    "class": "guardian",
+    "name": "Драгун",
+    "desc": "Врывается в строй. Вместо Стены щитов — Прыжок драгуна, вместо Стойки — Натиск.",
+    "replace": {"shield_wall": "jump_strike"},
+    "passive": {"kind": "rage", "name": "Натиск", "pp": 1, "stat": "atk_mult", "value": 1.3, "duration": 4, "desc": "Удар по драгуну: −1 деление шкалы, его атаки ×1.3 на 4 сек"},
+    "mods": [{"stat": "armor", "add": -1}, {"stat": "move_time", "mult": 0.85}]
+  },
+  "thunderlord": {
+    "class": "shaman",
+    "name": "Громовержец",
+    "desc": "Чистая гроза. Вместо Тотема исцеления — Гроза, вместо Статического заряда — Сосредоточение.",
+    "replace": {"healing_totem": "thunderstorm"},
+    "passive": {"kind": "concentration", "name": "Сосредоточение", "pp": 1, "desc": "Каст прерывают: −1 деление шкалы, каст продолжается"},
+    "mods": [{"stat": "power", "mult": 1.08}]
+  },
+  "spiritwalker": {
+    "class": "shaman",
+    "name": "Хранитель духов",
+    "desc": "Поддержка через духов. Вместо Цепной молнии — Связь духов, вместо Статического заряда — Духи предков.",
+    "replace": {"chain_lightning": "spirit_link"},
+    "passive": {"kind": "rage", "name": "Духи предков", "pp": 1, "stat": "armor", "value": 4, "duration": 3, "desc": "Удар по шаману: −1 деление шкалы, +4 брони на 3 сек"},
+    "mods": [{"stat": "hp", "add": 15}]
+  },
+  "skald": {
+    "class": "bard",
+    "name": "Скальд",
+    "desc": "Боевой бард в гуще схватки. Вместо Колыбельной — Звуковая волна, вместо Импровизации — Боевой раж.",
+    "replace": {"lullaby": "sonic_blast"},
+    "passive": {"kind": "rage", "name": "Боевой раж", "pp": 1, "stat": "atk_mult", "value": 1.4, "duration": 3, "desc": "Удар по скальду: −1 деление шкалы, его атаки ×1.4 на 3 сек"},
+    "mods": [{"stat": "hp", "add": 25}, {"stat": "armor", "add": 1}]
+  },
+  "minstrel": {
+    "class": "bard",
+    "name": "Менестрель",
+    "desc": "Целитель песней. Вместо Боевой песни — Серенада, вместо Импровизации — Утешение.",
+    "replace": {"inspire": "serenade"},
+    "passive": {"kind": "intercede", "name": "Утешение", "pp": 1, "range": 1, "heal": 6, "desc": "Соседа-союзника бьют: −1 деление шкалы, лечит его на 6"},
+    "mods": [{"stat": "ap_max", "add": 1}]
+  },
+  "demolitionist": {
+    "class": "alchemist",
+    "name": "Минёр",
+    "desc": "Мины и взрывы. Вместо Лечебного зелья — Мина.",
+    "replace": {"fuse": "mine"},
+    "passive": {"kind": "catalyst", "name": "Детонатор", "pp": 1, "mult": 2.0, "desc": "Реакция от удара подрывника: −1 деление шкалы, она сильнее вдвое"},
+    "mods": [{"stat": "power", "mult": 1.08}]
+  },
+  "poisoner": {
+    "class": "alchemist",
+    "name": "Отравитель",
+    "desc": "Яды и облака. Вместо Огненной бомбы — Ядовитое облако, вместо Катализатора — Миазмы.",
+    "replace": {"powder_keg": "poison_cloud"},
+    "passive": {"kind": "retaliate", "name": "Миазмы", "pp": 1, "damage": 6, "tag": "poison", "desc": "Ближняя атака по отравителю: −1 деление шкалы, 6 урона + Яд атакующему"},
+    "mods": [{"attack_tag": "poison"}]
+  },
+  "paladin": {
+    "class": "warrior",
+    "name": "Паладин",
+    "desc": "Танк-целитель. Вместо Рывка — Освящение, вместо Блока — Святая защита.",
+    "replace": {"power_strike": "consecrate"},
+    "passive": {"kind": "intercede", "name": "Святая защита", "pp": 1, "range": 1, "heal": 8, "desc": "Соседа-союзника бьют: −1 деление шкалы, лечит его на 8"},
+    "mods": [{"stat": "power", "mult": 1.05}]
+  },
+  "sniper": {
+    "class": "archer",
+    "name": "Снайпер",
+    "desc": "Дальний выстрел. Вместо Отскока — В голову, вместо Уворота — Хладнокровие, +1 дальность.",
+    "replace": {"aimed_shot": "headshot"},
+    "passive": {"kind": "concentration", "name": "Хладнокровие", "pp": 1, "desc": "Каст прерывают: −1 деление шкалы, каст продолжается"},
+    "mods": [{"stat": "atk_range", "add": 1}, {"stat": "move_time", "mult": 1.1}]
+  },
+  "lifekeeper": {
+    "class": "priest",
+    "name": "Хранитель жизни",
+    "desc": "Возвращает павших. Вместо Очищения — Воскрешение.",
+    "replace": {"purify": "revive"},
+    "passive": {"kind": "intercede", "name": "Заступничество", "pp": 1, "range": 1, "heal": 8, "desc": "Соседа-союзника бьют: −1 деление шкалы, лечит его на 8"},
+    "mods": [{"stat": "ap_max", "add": 1}]
+  },
+  "thrower": {
+    "class": "ram",
+    "name": "Метатель",
+    "desc": "«Натиск» → «Бросок»: швыряет соседа — врага в толпу, союзника за спину врагам, бочку во врагов.",
+    "replace": {"rush": "toss"},
+    "passive": {"kind": "momentum", "name": "Размах", "pp": 1, "cells": 1, "desc": "Толчок: −1 деление шкалы, на клетку дальше"},
+    "mods": [{"stat": "hp", "add": 10}]
+  },
+  "breaker": {
+    "class": "ram",
+    "name": "Землелом",
+    "desc": "«Сотрясение» → «Разлом»: линия, которая расталкивает строй врага.",
+    "replace": {"quake": "fault_line"},
+    "passive": {"kind": "momentum", "name": "Тяжёлая поступь", "pp": 1, "cells": 2, "desc": "Толчок: −1 деление шкалы, на 2 клетки дальше"},
+    "mods": [{"stat": "armor", "add": 1}]
+  },
+  "igniter": {
+    "class": "mage",
+    "name": "Поджигатель",
+    "desc": "«Огненный шар» → «Тлеющее поле»: сам зажигает клетки надолго — топливо для Вспышки.",
+    "replace": {"fireball": "cinder_field"},
+    "passive": {"kind": "concentration", "name": "Тление", "pp": 1, "desc": "Каст прерывают: −1 деление шкалы, каст продолжается"},
+    "mods": [{"stat": "hp", "add": 10}]
+  },
+  "trapmaster": {
+    "class": "trapper",
+    "name": "Капканщик",
+    "desc": "«Приманка» → «Медвежий капкан»: меньше, но страшнее.",
+    "replace": {"lure": "bear_trap"},
+    "passive": {"kind": "backstab", "name": "Добивание", "pp": 1, "mult": 1.7, "desc": "Атака по пойманной цели: −1 деление шкалы, урон ×1.7"},
+    "mods": [{"stat": "atk_damage", "add": 2}]
+  },
+  "beater": {
+    "class": "trapper",
+    "name": "Загонщик",
+    "desc": "«Метка охотника» → «Рог загонщика»: гонит врагов на капканы.",
+    "replace": {"hunter_mark": "hunting_horn"},
+    "passive": {"kind": "dodge", "vs": ["melee"], "name": "Отскок", "pp": 1, "desc": "Ближняя атака по загонщику: −1 деление шкалы, промах"},
+    "mods": [{"stat": "move_time", "mult": 0.9}]
+  },
+  "iceguard": {
+    "class": "cryo",
+    "name": "Ледяной страж",
+    "desc": "«Каток» → «Ледяная броня»: защищает союзников.",
+    "replace": {"rink": "frost_guard"},
+    "passive": {"kind": "block", "name": "Ледяной панцирь", "pp": 1, "mult": 0.6, "desc": "Любой удар: −1 деление шкалы, урон ×0.6"},
+    "mods": [{"stat": "hp", "add": 20}]
+  },
+  "stormfrost": {
+    "class": "cryo",
+    "name": "Повелитель метели",
+    "desc": "«Раскол» → «Буран»: ледяная буря по площади.",
+    "replace": {"shatter": "blizzard"},
+    "passive": {"kind": "concentration", "name": "Холодный ум", "pp": 1, "desc": "Каст прерывают: −1 деление шкалы, каст продолжается"},
+    "mods": [{"stat": "power", "mult": 1.05}]
+  },
+  "plaguebearer": {
+    "class": "necro",
+    "name": "Чумной",
+    "desc": "«Поднять мертвеца» → «Чумной труп»: облака яда.",
+    "replace": {"raise_dead": "corpse_cloud"},
+    "passive": {"kind": "retaliate", "name": "Миазмы", "pp": 1, "damage": 6, "tag": "poison", "desc": "Ближняя атака по некроманту: −1 деление шкалы, 6 урона + Яд"},
+    "mods": [{"stat": "hp", "add": 10}]
+  },
+  "bonelord": {
+    "class": "necro",
+    "name": "Костяной лорд",
+    "desc": "«Пожрать» → «Костяная стена»: строит из трупов.",
+    "replace": {"devour": "bone_wall"},
+    "passive": {"kind": "block", "name": "Костяной доспех", "pp": 1, "mult": 0.6, "desc": "Любой удар: −1 деление шкалы, урон ×0.6"},
+    "mods": [{"stat": "armor", "add": 1}]
+  },
+  "momentkeeper": {
+    "class": "chrono",
+    "name": "Хранитель мгновения",
+    "desc": "«Стазис» → «Вязкое время»: замедляет врагов по площади.",
+    "replace": {"stasis": "slow_field"},
+    "passive": {"kind": "concentration", "name": "Безвременье", "pp": 1, "desc": "Каст прерывают: −1 деление шкалы, каст продолжается"},
+    "mods": [{"stat": "hp", "add": 15}]
+  },
+  "fateweaver": {
+    "class": "chrono",
+    "name": "Ткач судьбы",
+    "desc": "«Ускорение» → «Вспять»: отбрасывает врага назад во времени.",
+    "replace": {"haste": "rewind_foe"},
+    "passive": {"kind": "dodge", "vs": ["melee", "ranged", "spell"], "name": "Предвидение", "pp": 1, "desc": "Любая атака: −1 деление шкалы, промах"},
+    "mods": [{"stat": "ap_max", "add": 1}]
+  },
+  "collapser": {
+    "class": "gravity",
+    "name": "Коллапсар",
+    "desc": "«Обмен» → «Коллапс»: урон по куче.",
+    "replace": {"swap": "collapse"},
+    "passive": {"kind": "siphon", "name": "Поглощение", "pp": 1, "pct": 0.25, "desc": "Урон навыком: −1 деление шкалы, лечится на 25%"},
+    "mods": [{"stat": "power", "mult": 1.05}]
+  },
+  "orbiter": {
+    "class": "gravity",
+    "name": "Орбита",
+    "desc": "«Невесомость» → «Отталкивание»: разбрасывает врагов о стены и бочки.",
+    "replace": {"levitate": "repulse"},
+    "passive": {"kind": "dodge", "vs": ["ranged"], "name": "Искривление", "pp": 1, "desc": "Дальняя атака: −1 деление шкалы, промах"},
+    "mods": [{"stat": "hp", "add": 15}]
+  },
+  "lavalord": {
+    "class": "geomancer",
+    "name": "Повелитель лавы",
+    "desc": "«Перековать» → «Жерло».",
+    "replace": {"reshape": "lava_vent"},
+    "passive": {"kind": "retaliate", "name": "Магма", "pp": 1, "damage": 8, "tag": "fire", "desc": "Ближняя атака: −1 деление шкалы, 8 урона + Огонь"},
+    "mods": [{"resist": "fire", "mult": 0.5}]
+  },
+  "springkeeper": {
+    "class": "geomancer",
+    "name": "Хранитель источников",
+    "desc": "«Обвал» → «Родник».",
+    "replace": {"rockfall": "spring"},
+    "passive": {"kind": "block", "name": "Каменная кожа", "pp": 1, "mult": 0.65, "desc": "Любой удар: −1 деление шкалы, урон ×0.65"},
+    "mods": [{"stat": "hp", "add": 15}]
+  },
+  "toxicologist": {
+    "class": "brewer",
+    "name": "Ядовар",
+    "desc": "«Склянка» → «Ядовитая склянка».",
+    "replace": {"flask": "toxic_flask"},
+    "passive": {"kind": "retaliate", "name": "Пары", "pp": 1, "damage": 6, "tag": "poison", "desc": "Ближняя атака: −1 деление шкалы, 6 урона + Яд"},
+    "mods": [{"stat": "hp", "add": 10}]
+  },
+  "blaster": {
+    "class": "brewer",
+    "name": "Взрывотехник",
+    "desc": "«Реактив» → «Гремучая смесь».",
+    "replace": {"reagent": "volatile_mix"},
+    "passive": {"kind": "catalyst", "name": "Цепная реакция", "pp": 1, "mult": 1.7, "desc": "Реакция от удара: −1 деление шкалы, сильнее в 1.7 раза"},
+    "mods": [{"stat": "power", "mult": 1.05}]
+  },
+  "butcher": {
+    "class": "bloodrager",
+    "name": "Мясник",
+    "desc": "«Кровопускание» → «Размах».",
+    "replace": {"bloodlet": "cleave"},
+    "passive": {"kind": "rage", "name": "Запах крови", "pp": 1, "stat": "atk_mult", "value": 1.3, "duration": 3, "desc": "Удар по берсерку: −1 деление шкалы, атаки ×1.3 на 3 сек"},
+    "mods": [{"stat": "hp", "add": 15}]
+  },
+  "frenzied": {
+    "class": "bloodrager",
+    "name": "Неистовый",
+    "desc": "«Кровавый транс» → «Неистовая ярость».",
+    "replace": {"trance": "undying_rage"},
+    "passive": {"kind": "rage", "name": "Боль — топливо", "pp": 1, "stat": "atk_speed", "value": 0.7, "duration": 3, "desc": "Удар: −1 деление шкалы, атаки быстрее 3 сек"},
+    "mods": [{"stat": "atk_damage", "add": 2}]
+  },
+  "warlord": {
+    "class": "tactician",
+    "name": "Полководец",
+    "desc": "«Перестроение» → «Общий натиск».",
+    "replace": {"regroup": "all_out"},
+    "passive": {"kind": "block", "name": "Знамя-щит", "pp": 1, "mult": 0.6, "desc": "Любой удар: −1 деление шкалы, урон ×0.6"},
+    "mods": [{"stat": "hp", "add": 15}]
+  },
+  "strategist": {
+    "class": "tactician",
+    "name": "Стратег",
+    "desc": "«Фокус» → «Засада».",
+    "replace": {"focus": "ambush_order"},
+    "passive": {"kind": "dodge", "vs": ["ranged"], "name": "Предусмотрительность", "pp": 1, "desc": "Дальняя атака: −1 деление шкалы, промах"},
+    "mods": [{"stat": "ap_max", "add": 1}]
+  },
+  "soulguard": {
+    "class": "binder",
+    "name": "Страж души",
+    "desc": "«Слияние» → «Щит души».",
+    "replace": {"merge": "soul_shield"},
+    "passive": {"kind": "intercede", "name": "Опека", "pp": 1, "range": 2, "heal": 10, "desc": "Союзника рядом (2) бьют: −1 деление шкалы, лечит на 10"},
+    "mods": [{"stat": "hp", "add": 15}]
+  },
+  "empath": {
+    "class": "binder",
+    "name": "Сопереживающий",
+    "desc": "«Отдать силы» → «Разделить боль».",
+    "replace": {"life_transfer": "share_pain"},
+    "passive": {"kind": "retaliate", "name": "Отражение боли", "pp": 1, "damage": 10, "desc": "Ближняя атака: −1 деление шкалы, 10 урона атакующему"},
+    "mods": [{"stat": "armor", "add": 1}]
+  }
+}
