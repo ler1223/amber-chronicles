@@ -275,7 +275,7 @@ def preview(path, tris_list):
         ob.location = (-3, i * 1.6, 0)
         mat = bpy.data.materials.new("m")
         mat.use_nodes = True
-        mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.55, 0.75, 0.95, 1)
+        next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED").inputs["Base Color"].default_value = (0.55, 0.75, 0.95, 1)
         me.materials.append(mat)
     cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))
     sc.collection.objects.link(cam)

@@ -7,11 +7,11 @@ from game.world_scene import WorldScene
 from sim.profile import Profile
 
 
-def stats_path(base):
-    """Профиль режима героев рядом с основным: profile.json → stats.json, sandbox.json → sandbox_stats.json."""
+def stats_path(base, mode="stats"):
+    """Профиль режима рядом с основным: profile.json → stats.json / story.json, sandbox.json → sandbox_stats.json."""
     import os
     name = os.path.basename(base)
-    name = "stats.json" if name == "profile.json" else name.replace(".json", "") + "_stats.json"
+    name = f"{mode}.json" if name == "profile.json" else name.replace(".json", "") + f"_{mode}.json"
     return os.path.join(os.path.dirname(os.path.abspath(base)), name)
 
 
@@ -48,6 +48,10 @@ class App:
     def to_hub(self):
         from game.hub_scene import HubScene
         self.run = None
+        if self.profile.mode == "story":
+            from game.story_scenes import StoryHub
+            self.switch(StoryHub(self))
+            return
         new = self.profile.new_heroes()
         if new and not self.profile.sandbox:            # открылась глава — сначала «Новые союзники»
             from game.allies_scene import NewAlliesScene
@@ -57,6 +61,12 @@ class App:
 
     def new_game(self):
         path = self.profile.path
+        if self.profile.mode == "story":
+            from sim.story import StoryProfile
+            self.profile = StoryProfile(self.profile.data, None)
+            self.profile.path = path
+            self.profile.save()
+            return
         self.profile = Profile(self.data, None, mode=self.profile.mode)
         self.profile.path = path
         self.profile.save()
@@ -68,7 +78,7 @@ class App:
             self._base_path = base = self.profile.path
         if mode == "base" or base is None:
             return base
-        return stats_path(base)
+        return stats_path(base, mode)
 
     def switch_mode(self, mode):
         """Основная игра ⇄ режим героев: свой профиль у каждого, прогресс не смешивается."""
@@ -76,7 +86,11 @@ class App:
             return
         path = self.mode_path(mode)
         sandbox = self.profile.sandbox
-        prof = Profile(self.data, path, sandbox=sandbox, mode=mode)
+        if mode == "story":                     # сюжет: свои бои (обучающие карты) и свой состав героев
+            from sim.story import StoryProfile, story_data
+            prof = StoryProfile(story_data(self.data), path, sandbox=sandbox)
+        else:
+            prof = Profile(self.data, path, sandbox=sandbox, mode=mode)
         prof.mode = mode
         prof.path = path
         self.profile = prof
@@ -117,6 +131,60 @@ class App:
             self.switch(trophy_scene(self, end, show_end) if end["trophies"] else RunEndScene(self, end))
         else:
             self.switch(reward_scene(self, summary))
+
+    # ---------- сюжет (sim/story.py) ----------
+
+    def story_go(self):
+        """Следующая вылазка сюжета: вступление → цепочка боёв."""
+        from game.story_scenes import DialogScene
+        prof = self.profile
+        exp = prof.current()
+        seed = None if self.seed is None else self.seed + prof.expeditions
+        self.run = prof.start_chain(seed)
+        self.switch(DialogScene(self, exp.get("intro", []), lambda: self._story_battle(0), title=exp["name"]))
+
+    def _story_battle(self, i):
+        from game.story_scenes import DialogScene
+        run, prof = self.run, self.profile
+        node = run.enter(i)
+        b = node["story"]
+
+        def fight():
+            self.switch(BattleScene(prof.data, node["encounter"], autoplay=self.autoplay,
+                                    squad=run.combat_squad(), formation=run.formation,
+                                    on_finish=self._story_battle_done, enemy_scale=run.enemy_scale(),
+                                    fx=run.combat_fx(), difficulty="normal", cheats=prof.sandbox,
+                                    tutorial=None if self.autoplay else b.get("tutorial")))
+        if b.get("intro"):
+            self.switch(DialogScene(self, b["intro"], fight))
+        else:
+            fight()
+
+    def _story_battle_done(self, combat, formation):
+        from game.story_scenes import BetweenScene, DialogScene
+        run, prof = self.run, self.profile
+        run.finish_battle(combat, formation)
+        prof.remember_autocast(run)
+        if not run.result:                        # передышка сюжета: перевязали раны
+            run.heal_all(prof.story.get("heal_between", 0.0))
+            nxt = run.nodes[run.node]["next"][0]
+            self.switch(BetweenScene(self, None, lambda: self._story_battle(nxt)))
+            return
+        end = prof.finish_chain(run)
+        if run.result != "victory":
+            lines = [{"who": "narrator", "text": "Отряд отступил к лагерю. Раны заживут — попробуйте ещё раз."},
+                     {"who": "narrator", "text": f"Добыто янтаря: {end['amber']}."}]
+            self.switch(DialogScene(self, lines, self.to_hub))
+            return
+        lines = list(run.story.get("outro", [])) + [
+            {"who": "narrator", "text": f"Вылазка пройдена. Янтарь: +{end['amber']}."}]
+
+        def trophies():
+            if end["trophies"]:
+                self.switch(trophy_scene(self, end, self.to_hub))
+            else:
+                self.to_hub()
+        self.switch(DialogScene(self, lines, trophies))
 
     def continue_run(self):
         """После награды/отдыха/торговца — обратно на карту вылазки."""

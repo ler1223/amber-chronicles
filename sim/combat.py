@@ -51,7 +51,10 @@ class Combat:
 
         self.units = []
         squad = squad or [{"cls": c, "proto": data.classes[c]} for c in data.squad["units"]]
-        spawns = self.enc["player_spawn"]
+        spawns = [tuple(p) for p in self.enc["player_spawn"]]
+        if len(spawns) < len(squad):           # отряд больше точек высадки карты (сюжет: до 6 героев)
+            zone = sorted(self.deploy_cells() - set(spawns), key=lambda q: (-q[0], abs(q[1] - self.grid.h / 2), q))
+            spawns += zone[:len(squad) - len(spawns)]
         if player_positions:
             spawns = self._fit_positions([tuple(p) for p in player_positions[:len(squad)]], spawns, len(squad))
         for m, pos in zip(squad, spawns):
@@ -110,7 +113,7 @@ class Combat:
             lvl = scale["level"]
             if u.elite or u.boss:
                 lvl += self.data.stats_mode["enemy"]["elite_levels"]
-            else:
+            elif scale.get("titles", True):             # сюжет: в первых вылазках ветеранов и чемпионов нет
                 t = S.roll_title(self.data, self.rng)
                 if t:
                     lvl += t["levels"]
@@ -122,8 +125,9 @@ class Combat:
             u.armor += int(round(k["armor"]))
         else:
             k = scale
-        u.max_hp = u.hp = int(round(u.max_hp * k.get("hp", 1.0)))
-        u.atk_damage = int(round(u.atk_damage * k.get("damage", 1.0)))
+        mod = (scale.get("mods") or {}).get(u.proto_id, {})    # сюжет: отдельные враги слабее (слизни в начале)
+        u.max_hp = u.hp = max(1, int(round(u.max_hp * k.get("hp", 1.0) * mod.get("hp", 1.0))))
+        u.atk_damage = int(round(u.atk_damage * k.get("damage", 1.0) * mod.get("damage", 1.0)))
         u.base.update(atk_damage=u.atk_damage, armor=u.armor)
         if u.frost_armor:
             u.shield, u.shield_time = u.frost_armor["shield"], 1e9

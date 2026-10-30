@@ -14,9 +14,21 @@ OPTIONS = [
     ("hitstop", "Стоп-кадр на ударах", [False, True], ["выкл", "вкл"]),
     ("flash", "Вспышки и аберрация", [0.0, 0.5, 1.0], ["выкл", "слабые", "обычные"]),
     ("zoom", "Зум камеры", [False, True], ["выкл", "вкл"]),
-    ("pixel_fx", "Пиксельные огонь и лёд (F9 в бою)", [False, True], ["старые", "пиксельные"]),
+    ("fx_style", "Стиль эффектов огня и льда (F9 в бою)", ["old", "pixel", "flipbook", "shader", "mesh", "fluid"],
+     ["старые", "пиксельные", "флипбуки Blender", "шейдеры", "меш-эффекты", "симуляция"]),
 ]
-DEFAULTS = {"bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "pixel_fx": True}
+DEFAULTS = {"bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "fx_style": "pixel"}
+STYLES = OPTIONS[-1][2]
+
+
+def style():
+    return SETTINGS.get("fx_style", "pixel")
+
+
+def next_style():
+    """F9: следующий стиль эффектов по кругу. Возвращает подпись."""
+    cycle("fx_style")
+    return label("fx_style")
 SETTINGS = dict(DEFAULTS)
 
 

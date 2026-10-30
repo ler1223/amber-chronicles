@@ -58,6 +58,16 @@ class Particles:
         k = min(int(count), self.CAP - self.n)
         if k <= 0:
             return slice(0, 0)
+        if k < count:                          # лимит частиц: массивы параметров урезаем вместе с числом
+            def cut(v):
+                if isinstance(v, (tuple, list)):
+                    return type(v)(cut(x) for x in v)
+                a = np.asarray(v)
+                return a[:k] if a.ndim and len(a) == count else v
+            pos, vel = cut(pos), cut(vel)
+            life, temp, cool, buoy, drag, grav, bounce, size, grow, alpha, smoke_at, tag, streak, tall = (
+                cut(v) for v in (life, temp, cool, buoy, drag, grav, bounce, size, grow, alpha, smoke_at, tag,
+                                 streak, tall))
         s = slice(self.n, self.n + k)
         r = self.rng
         for i, f in enumerate(("x", "y", "z")):

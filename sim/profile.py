@@ -41,6 +41,11 @@ class Profile:
             self.open_everything()
         self.sync_heroes()
 
+    @property
+    def uses_stats(self):
+        """Уровни героев, атрибуты и скейлы (sim/stats.py): режим героев и сюжет."""
+        return self.mode in ("stats", "story")
+
     def open_everything(self):
         """Песочница: всё нанято и открыто, мастерство на максимуме, лагерь улучшен, весь арсенал в наличии.
         Выбор героев (пути, ветки, таланты, предметы) сохраняется между запусками."""
@@ -561,7 +566,7 @@ class Profile:
             before = self.mastery(m.cls)
             h["xp"] += xp
             h["autocast"] = copy.deepcopy(m.autocast)
-            if self.mode == "stats":           # уровень и опыт героя — навсегда
+            if self.uses_stats:                # уровень и опыт героя — навсегда
                 h["rpg"] = copy.deepcopy(m.rpg)
             mastery[m.cls] = (before, self.mastery(m.cls))
         trophies = self.trophy_options(run) if run.result == "victory" else []

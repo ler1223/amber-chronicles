@@ -1,7 +1,7 @@
 """Пилот пиксельного стиля в бою (art_style.md, раздел 9.1): огонь и лёд — навыки, атаки, статусы, клетки, реакции.
 
 BattleView спрашивает пилот в нужных местах: если он нарисовал своё, старый эффект не играется. Переключатель —
-настройка pixel_fx (F9 в бою), чтобы сравнивать со старыми эффектами на одном и том же бою.
+настройка fx_style (F9 в бою) — сравнение стилей на одном и том же бою (ui/fxlab — остальные стили).
 """
 import math
 
@@ -48,10 +48,9 @@ class PixelPilot:
 
     @property
     def on(self):
-        return bool(SETTINGS.get("pixel_fx", True))
+        return SETTINGS.get("fx_style", "pixel") == "pixel"
 
     def toggle(self):
-        SETTINGS["pixel_fx"] = not self.on
         self.fx.clear()
         self.spells.clear()
         self.fire.clear()
@@ -59,6 +58,7 @@ class PixelPilot:
         return self.on
 
     def reset(self):
+        self.burning, self.burning_units, self.icy = set(), set(), set()   # «уже горело» — только в этом бою
         self._breaks.clear()
         self._wall_rects.clear()
         self._born.clear()

@@ -35,7 +35,19 @@ def _angular(rng, n, k, sharp, bias=None, bias_k=0.0):
     return f
 
 
-def scar(cx, cy, R, terrain_at, dirv=(0.0, 0.0), embers=(), seed=0, crater=0.35, style="soot"):
+def _smooth_bake(v, pal, alpha):
+    """Как bake, но без пикселей: плавный тон между цветами палитры и плавная прозрачность."""
+    pal = np.array(pal, float)
+    t = np.clip(v, 0, 1) * (len(pal) - 1)
+    i = np.minimum(t.astype(int), len(pal) - 2)
+    f = (t - i)[..., None]
+    rgba = np.zeros(v.shape + (4,), np.uint8)
+    rgba[..., :3] = pal[i] * (1 - f) + pal[i + 1] * f
+    rgba[..., 3] = np.clip(alpha, 0, 1) * 255
+    return rgba
+
+
+def scar(cx, cy, R, terrain_at, dirv=(0.0, 0.0), embers=(), seed=0, crater=0.35, style="soot", smooth=False):
     """След удара с центром (cx, cy) клеток и радиусом R клеток. terrain_at(xs, ys) → массив названий рельефа.
     embers — точки (x, y), куда упали раскалённые осколки. Возвращает (картинка плоской карты, точка вставки)
     или None, если весь след пришёлся на воду/лаву."""
@@ -79,6 +91,9 @@ def scar(cx, cy, R, terrain_at, dirv=(0.0, 0.0), embers=(), seed=0, crater=0.35,
     if v.max() < 0.05:
         return None
     ter = terrain_at(gx.ravel(), gy.ravel()).reshape(n, n)
+    paint = _smooth_bake if smooth else bake
+    if smooth:
+        v = blur(blur(v))
     if style == "frost":
         rgba = _frost(v, body, ray, ter, theta, dist, edge[ti], noise, rng)
         if not rgba[..., 3].any():
@@ -86,7 +101,6 @@ def scar(cx, cy, R, terrain_at, dirv=(0.0, 0.0), embers=(), seed=0, crater=0.35,
         surf = pygame.image.frombuffer(np.ascontiguousarray(rgba).tobytes(), (n, n), "RGBA")
         surf = pygame.transform.scale(surf, (n * P.FLAT // RES, n * P.FLAT // RES))
         return surf, P.ground_to_flat(cx, cy)
-    bright = np.clip(0.75 - v * 0.75 + core * 0.0, 0, 1)                  # темнее к центру
     rgba = np.zeros((n, n, 4), np.uint8)
     for kind, pal in SCAR_PAL.items():
         m = (ter == kind) if kind != "ground" else ~np.isin(ter, list(SCAR_PAL) + list(NO_SCAR))
@@ -94,14 +108,15 @@ def scar(cx, cy, R, terrain_at, dirv=(0.0, 0.0), embers=(), seed=0, crater=0.35,
             continue
         if kind == "ice":                     # лёд не коптится — подтаял: мокрое пятно и трещины
             crack = (np.abs(np.sin(theta * 5 + noise * 6)) < 0.08) & (dist < edge[ti])
-            out = bake(np.clip(0.55 - v * 0.35 + crack * 0.3, 0, 1), pal, np.clip(v * 1.1, 0, 1) * 0.8)
+            out = paint(np.clip(0.55 - v * 0.35 + crack * 0.3, 0, 1), pal, np.clip(v * 1.1, 0, 1) * 0.8)
         else:
-            out = bake(bright, pal, np.clip(v * 1.2, 0, 1) * 0.95)
+            out = paint(np.clip(0.75 - v * 0.75, 0, 1), pal, np.clip(v * 1.2, 0, 1) * 0.95)   # темнее к центру
         rgba[m] = out[m]
     if not rgba[..., 3].any():
         return None
     surf = pygame.image.frombuffer(np.ascontiguousarray(rgba).tobytes(), (n, n), "RGBA")
-    surf = pygame.transform.scale(surf, (n * P.FLAT // RES, n * P.FLAT // RES))
+    size = (n * P.FLAT // RES, n * P.FLAT // RES)
+    surf = pygame.transform.smoothscale(surf, size) if smooth else pygame.transform.scale(surf, size)
     fx, fy = P.ground_to_flat(cx, cy)
     return surf, (fx, fy)
 

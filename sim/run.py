@@ -31,8 +31,8 @@ class Member:
         self.autocast = copy.deepcopy(b.get("autocast", {}))   # переживает бои и вылазки
         self.items = {}        # слот -> id предмета
         self.runes = {}        # skill id -> [rune id]
-        self.level = 1
-        self.xp = 0
+        self.level = b.get("level", 1)       # сюжет: уровень героя растёт от вылазки к вылазке
+        self.xp = b.get("xp", 0)
         self.hp = 0
         self.rpg = copy.deepcopy(b.get("rpg") or stats.new_rpg())   # режим героев: постоянный уровень
 
@@ -44,7 +44,7 @@ class Run:
     def __init__(self, data, seed=None, region=None, bonus=None, heroes=None, chapter="swamp", difficulty="normal",
                  mode="base"):
         self.data = data
-        self.stats = mode == "stats"      # режим героев: уровень героя и атрибуты вместо уровней вылазки
+        self.stats = mode in ("stats", "story")   # режим героев и сюжет: уровень героя и атрибуты навсегда
         self.cfg = data.config["run"]
         self.region = region
         self.chapter = chapter            # глава (data/biomes.json): пул боёв и сила врагов

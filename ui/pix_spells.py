@@ -275,11 +275,11 @@ class Spells:
         self.ps.spawn(10, (x, y, 0.02), (0, 0, 2.2), life=0.9, temp=self.rng.uniform(0.6, 0.95, 10), cool=0.5,
                       grav=G, size=1.3, pal="fire", smoke=None, spread=0.8, land=DIE)
 
-    def scorch_mark(self, x, y, R, dirv, embers=(), crater=0.35):
+    def scorch_mark(self, x, y, R, dirv, embers=(), crater=0.35, smooth=False):
         """Один след на весь удар (ui/pixmarks.py): воронка, копоть, лучи выброса, пятна от осколков."""
         from ui.pixmarks import scar
         self._tag_seed = getattr(self, "_tag_seed", 0) + 1
-        m = scar(x, y, R, self.terrain_at, dirv[:2], embers, seed=self._tag_seed, crater=crater)
+        m = scar(x, y, R, self.terrain_at, dirv[:2], embers, seed=self._tag_seed, crater=crater, smooth=smooth)
         if m is not None:
             self.pilot.view.marks.stamp_surface(m[0], *m[1])
 

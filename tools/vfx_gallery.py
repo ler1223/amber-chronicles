@@ -21,6 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--sheet")
 parser.add_argument("--only")
 parser.add_argument("--times", default="0.3,0.8,1.6,3.0")
+parser.add_argument("--styles", help="стили эффектов для раскадровки через запятую: old,pixel,flipbook,shader,mesh,fluid")
 args = parser.parse_args()
 if args.sheet:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -33,7 +34,7 @@ from sim.data import GameData  # noqa: E402
 from ui import theme as T  # noqa: E402
 from ui.pixfx import family  # noqa: E402
 from ui.present import Presenter  # noqa: E402
-from ui.settings import SETTINGS  # noqa: E402
+from ui import settings as ST  # noqa: E402
 from ui.skill_preview import BACK, MAIN, SIDE, SkillPreview  # noqa: E402
 
 LIST_W = 380
@@ -155,7 +156,7 @@ class Gallery:
                 self.terrain = (self.terrain + 1) % len(TERRAINS)
                 self.play()
             elif k == pygame.K_F9:
-                SETTINGS["pixel_fx"] = not SETTINGS.get("pixel_fx", True)
+                self.pv.view.pix.toggle()             # старые → пиксельные → флипбуки → шейдеры → меши → симуляция
                 self.play()
             elif k == pygame.K_BACKSPACE:
                 self.filter = self.filter[:-1]
@@ -178,6 +179,9 @@ class Gallery:
 
     def glow_layer(self):
         return self.pv.view.glow_layer()
+
+    def lab_frame(self):
+        return self.pv.view.lab_frame()
 
     def draw_layers(self, world, ui, units):
         world.fill((0, 0, 0))
@@ -208,7 +212,7 @@ class Gallery:
         it = self.current()
         title = it[0] if it else "ничего не найдено"
         T.text(surf, title, (VIEW.x, 10), 18, (255, 235, 170), shadow=True)
-        mode = "пиксельные" if SETTINGS.get("pixel_fx", True) else "старые"
+        mode = ST.label("fx_style")
         T.text(surf, f"Enter / Пробел / F5 — применить · F2 — под целью: {TERRAIN_NAMES[TERRAINS[self.terrain]]} · "
                f"F9 — эффекты: {mode} · ↑/↓, колесо — выбор · буквы — поиск · Esc — выход",
                (VIEW.x, T.SCREEN_H - 30), 14, T.TEXT_DIM)
@@ -233,11 +237,14 @@ def main():
     if args.sheet:
         keys = args.only.split(",") if args.only else [it[4] for it in g.items]
         rows = [i for i, it in enumerate(g.items) if any(k == it[4] or k in it[0] for k in keys)]
+        styles = args.styles.split(",") if args.styles else [ST.style()]
+        rows = [(i, st) for i in rows for st in styles]
         times = [float(t) for t in args.times.split(",")]
         tw, th = 480, 300
         sheet = pygame.Surface((tw * len(times), th * len(rows)))
         g.filter = ""
-        for r, idx in enumerate(rows):
+        for r, (idx, st) in enumerate(rows):
+            ST.SETTINGS["fx_style"] = st
             g.sel = g.shown().index(idx)
             g.play()
             t = 0.0
@@ -248,7 +255,9 @@ def main():
                 presenter.frame(g)
                 img = presenter.snapshot().subsurface(VIEW)
                 sheet.blit(pygame.transform.smoothscale(img, (tw, th)), (col * tw, r * th))
-            T.text(sheet, g.items[idx][0], (8, r * th + 6), 16, (255, 255, 120), shadow=True)
+            ST.SETTINGS["fx_style"] = st
+            T.text(sheet, f"{g.items[idx][0]} — {ST.label('fx_style')}", (8, r * th + 6), 16, (255, 255, 120),
+                   shadow=True)
         pygame.image.save(sheet, args.sheet)
         return
 

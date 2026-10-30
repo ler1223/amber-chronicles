@@ -657,7 +657,13 @@ class GLRenderer:
         p["u_fog"] = tuple(float(v) for v in fog)
         self.vao_plane.render(moderngl.TRIANGLE_STRIP)
 
-    def render(self, world, vfx=None, ui=None, units=None, plane=None, glow=None):
+    def _lab(self):
+        if getattr(self, "lab_gl", None) is None:
+            from ui.fxlab.gl import LabGL
+            self.lab_gl = LabGL(self.ctx, self.noise)
+        return self.lab_gl
+
+    def render(self, world, vfx=None, ui=None, units=None, plane=None, glow=None, lab=None):
         """world — земля (или весь мир, если units нет), units — прозрачный слой юнитов, ui — интерфейс.
         plane — (плоская карта, цвет дымки): земля HD-2D вместо world. glow — яркие пиксели эффектов для bloom."""
         ctx = self.ctx
@@ -693,6 +699,9 @@ class GLRenderer:
             self._instances(groups["under_alpha"], self.atlas, self.premul, sc)
             self._sfx(sfx["under_add"], add, sc)
             self._instances(groups["under_add"], self.atlas, add, sc)
+        if lab is not None:                    # стили эффектов (ui/fxlab): то, что лежит на земле
+            self._lab().time = vfx.time if vfx else 0.0
+            self._lab().draw(lab, "ground", sc, (self.w, self.h), self._fx(sc))
         # 2. юниты и укрытия
         if units is not None:
             self._layer(self.tex_units, sc, self.premul)
@@ -706,6 +715,8 @@ class GLRenderer:
             self._sfx(sfx["air_add"], add, sc)
             self._ribbons(ribs["add"], add, sc)
             self._instances(groups["air_add"], self.atlas, add, sc)
+        if lab is not None:
+            self._lab().draw(lab, "air", sc, (self.w, self.h), self._fx(sc))
         # 3б. фигурки просвечивают сквозь эффекты: слой юнитов ещё раз, полупрозрачно (где эффекта нет —
         #     кадр не меняется: тот же цвет поверх того же цвета)
         if units is not None and vfx is not None:
@@ -719,6 +730,9 @@ class GLRenderer:
             self._sfx(sfx["air_add"], add, sc)
             self._ribbons(ribs["add"], add, sc)
             self._instances(groups["air_add"], self.atlas, add, sc)
+        if lab is not None:                   # стили эффектов: светящееся (сложение) — ещё раз в источник свечения
+            self._lab().draw(lab, "ground", sc, (self.w, self.h), self._fx(sc), only_add=True)
+            self._lab().draw(lab, "air", sc, (self.w, self.h), self._fx(sc), only_add=True)
         if glow is not None:                  # пиксельные эффекты светятся только двумя верхними цветами палитры
             self._layer(self.tex_glow, sc, add, 0.95 * self._fx(sc))
         # 5. искажение (половинное разрешение)

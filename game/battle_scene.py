@@ -24,8 +24,10 @@ class BattleScene:
     С on_finish (бой забега) — переигровки нет, по Enter после боя вызывается on_finish(combat, расстановка)."""
 
     def __init__(self, data, encounter_index=0, autoplay=False, squad=None, formation=None, on_finish=None,
-                 enemy_scale=None, scout_hp=False, fx=None, difficulty="normal", cheats=False):
+                 enemy_scale=None, scout_hp=False, fx=None, difficulty="normal", cheats=False, tutorial=None):
         self.data = data
+        from game.tutorial import Tutorial
+        self.tutorial = Tutorial(tutorial) if tutorial else None   # сюжет: подсказки, ждущие действий игрока
         self.cheats = cheats or not on_finish    # песочница и отдельный бой: F7 — всё готово, F8 — победа
         self.difficulty = difficulty
         self.fx = fx                  # боевые эффекты реликвий
@@ -106,8 +108,12 @@ class BattleScene:
             self.combat.step()
             self.acc -= self.combat.dt
             steps += 1
+        if self.tutorial:
+            self.tutorial.observe(self.combat.events)
         self.view.consume(self.combat.events)
         self.combat.events.clear()
+        if self.tutorial:
+            self.tutorial.update(self, real_dt)
         self.view.update(game_dt, real_dt)
         if self.toast:
             self.toast = (self.toast[0], self.toast[1] - real_dt)
@@ -121,10 +127,14 @@ class BattleScene:
 
     def draw(self, surf):
         self.view.draw(surf, self)
+        if self.tutorial:
+            self.tutorial.draw(surf)
 
     def draw_layers(self, world, ui, units=None):
         """Для OpenGL: земля, юниты и интерфейс отдельными слоями, эффекты (self.vfx) кладёт видеокарта."""
         self.view.draw_layers(world, ui, self, units)
+        if self.tutorial:
+            self.tutorial.draw(ui)
 
     def plane(self):
         """Земля HD-2D для видеокарты: плоская карта и цвет дымки."""
@@ -132,6 +142,9 @@ class BattleScene:
 
     def glow_layer(self):
         return self.view.glow_layer()
+
+    def lab_frame(self):
+        return self.view.lab_frame()
 
     @property
     def vfx(self):
@@ -154,19 +167,31 @@ class BattleScene:
             return lambda v: not u.is_enemy(v) and not v.obj
         return None
 
-    def cell_at(self, mx, my):
-        # сначала фигурка под курсором или рядом с ним (юнит мог уже перейти на соседнюю клетку), потом земля
-        u = self.view.pick_unit((mx, my), self.pick_filter())
-        if u is not None:
-            return u.cell
+    def unit_target(self):
+        """Прицел навыком по юниту (враг или союзник) — клетка «прилипает» к фигурке."""
+        return bool(self.targeting and self.selected
+                    and self.selected.skill_defs[self.targeting]["target"] in ("enemy", "ally"))
+
+    def ground_cell(self, mx, my):
+        """Клетка земли под курсором — фигурки не мешают (перемещение, маршрут, навыки по площади)."""
         wx, wy = self.view.uncam((mx, my))
         return P.screen_to_cell(wx, wy, self.combat.grid.w, self.combat.grid.h)
+
+    def cell_at(self, mx, my):
+        """Клетка под курсором. Прилипает к фигурке (юнит мог уже перейти на соседнюю клетку) только там, где
+        цель — юнит: навык по врагу или союзнику и расстановка своих перед боем."""
+        if self.unit_target() or self.phase == "deploy":
+            u = self.view.pick_unit((mx, my), self.pick_filter())
+            if u is not None:
+                return u.cell
+        return self.ground_cell(mx, my)
 
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
-            self.hover_cell = self.cell_at(*ev.pos)
-            self.pick = self.view.pick_unit(ev.pos, self.pick_filter()) if self.phase == "battle" else None
+            self.hover_cell = self.ground_cell(*ev.pos) if self.picked else self.cell_at(*ev.pos)
+            self.pick = (self.view.pick_unit(ev.pos, self.pick_filter()) if self.unit_target()
+                         else self.view.pick_unit(ev.pos, reach=0)) if self.phase == "battle" else None
             if self.route is not None and getattr(ev, "buttons", (0, 0, 0))[2]:
                 self._extend_route(self.hover_cell)
         elif ev.type == pygame.MOUSEWHEEL:
@@ -315,8 +340,14 @@ class BattleScene:
         if self.cheats and key == pygame.K_F8 and self.phase == "battle":
             c.win_now()
             return
+        if key == pygame.K_F10 and self.tutorial:
+            self.tutorial.skip()
+            return
+        if key == pygame.K_SPACE and self.tutorial and self.tutorial.wants_ack() and self.phase == "battle":
+            self.tutorial.ack()
+            return
         if key == pygame.K_F9:                      # пиксельный пилот огня и льда ↔ старые эффекты
-            self.say("Огонь и лёд: " + ("пиксельные (пилот)" if self.view.pix.toggle() else "старые эффекты"))
+            self.say("Эффекты огня и льда: " + self.view.pix.toggle())
             return
         if key == pygame.K_F5 and not self.run_mode:
             self.start(self.encounter_index)
@@ -333,7 +364,7 @@ class BattleScene:
             if i < len(squad) and squad[i].alive:
                 self._select(squad[i])
         elif self.phase == "deploy":
-            if key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            if key == pygame.K_SPACE:                # старт боя — Пробел
                 self.begin_battle()
             elif key == pygame.K_ESCAPE:
                 self.picked = None
@@ -376,7 +407,8 @@ class BattleScene:
         if button == 3:
             self.picked = None
             return
-        cell = self.cell_at(*pos)
+        # героя берём с притяжением к фигурке; уже взятого ставим в клетку земли под курсором
+        cell = self.ground_cell(*pos) if self.picked else self.cell_at(*pos)
         if cell is None or button != 1:
             return
         c = self.combat
@@ -403,7 +435,7 @@ class BattleScene:
         self.drag_start = None
         if not dragged:
             return  # это был клик: ждём второй клик по клетке
-        cell = self.cell_at(*pos)
+        cell = self.ground_cell(*pos)           # бросаем в клетку под курсором — фигурки рядом не мешают
         if cell and cell != self.picked.cell and not self.combat.redeploy(self.picked, cell):
             self.say("Ставить можно только в зелёной зоне")
         self.picked = None
@@ -424,6 +456,8 @@ class BattleScene:
         sk = u.skill_defs[sid]
         if sk["target"] == "self":
             ok, msg = self.combat.order_skill(u, sid, u)
+            if ok and self.tutorial:
+                self.tutorial.ordered(sid)
             if not ok:
                 self.say(msg)
             return
@@ -463,19 +497,25 @@ class BattleScene:
                 self.say("Нужна цель-юнит")
                 return
             ok, msg = c.order_skill(self.selected, self.targeting, target)
+            if ok and self.tutorial:
+                self.tutorial.ordered(self.targeting)
             if ok:
                 self.targeting = None
             else:
                 self.say(msg)
             return
 
-        if button == 1 and target_unit and target_unit.team == PLAYER and not target_unit.summon \
-                and not target_unit.obj:
-            self._select(target_unit)
-            return
+        if button == 1:                          # выбор своего — с притяжением к фигурке рядом с курсором
+            mine = self.view.pick_unit(pos, lambda v: v.team == PLAYER and not v.summon and not v.obj)
+            if mine is not None:
+                self._select(mine)
+                return
         u = self.selected
         if not u:
             return
+        hit = self.view.pick_unit(pos, lambda v: u.is_enemy(v), reach=0)   # атака — курсор прямо на враге
+        if hit is not None:
+            target_unit = hit
         if isinstance(target_unit, Unit) and u.is_enemy(target_unit):
             ok, msg = c.order_attack(u, target_unit)
         elif target_unit is None:

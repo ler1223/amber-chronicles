@@ -32,7 +32,8 @@ class Presenter:
             scene.draw_layers(self.world, self.ui, self.units)
             plane = scene.plane() if hasattr(scene, "plane") else None
             glow = scene.glow_layer() if hasattr(scene, "glow_layer") else None
-            self.gl.render(self.world, scene.vfx, self.ui, self.units, plane=plane, glow=glow)
+            lab = scene.lab_frame() if hasattr(scene, "lab_frame") else None
+            self.gl.render(self.world, scene.vfx, self.ui, self.units, plane=plane, glow=glow, lab=lab)
         else:
             scene.draw(self.world)
             self.gl.render(self.world)

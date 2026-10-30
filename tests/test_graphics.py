@@ -227,7 +227,7 @@ def test_battle_draws_and_clicks_sprite():
     rect = next(r for r, u in s.view.sprite_rects if u is archer)
     head = (rect.centerx, rect.y + 6)                 # голова может заходить на клетку выше
     assert s.cell_at(*head) == archer.cell
-    s.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))   # в бой
+    s.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE))   # в бой
     s.paused = False
     for _ in range(240):
         s.update(1 / 30)

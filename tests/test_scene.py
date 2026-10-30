@@ -74,7 +74,7 @@ def test_deploy_click_drag_swap_and_zone():
     for _ in range(30):
         frame(s)
     assert s.combat.time == 0
-    key(s, pygame.K_RETURN)
+    key(s, pygame.K_SPACE)
     assert s.phase == "battle" and s.paused
 
     # переигровка запоминает расстановку
@@ -86,7 +86,7 @@ def test_deploy_click_drag_swap_and_zone():
 
 def test_select_move_attack_and_skill():
     s = BattleScene(DATA, 0)
-    key(s, pygame.K_RETURN)
+    key(s, pygame.K_SPACE)
     frame(s)
     assert s.paused
     war, archer, mage, priest = s.combat.alive(PLAYER)
@@ -140,7 +140,7 @@ def test_restart_and_next_encounter():
 
 def test_draw_route_with_right_mouse():
     s = BattleScene(DATA, 0)
-    key(s, pygame.K_RETURN)
+    key(s, pygame.K_SPACE)
     war = s.combat.alive(PLAYER)[0]
     s._select(war)
     start = war.cell
@@ -157,7 +157,7 @@ def test_draw_route_with_right_mouse():
 
 def test_pick_moving_unit_near_sprite_and_targeting_filter():
     s = BattleScene(DATA, 0)
-    key(s, pygame.K_RETURN)
+    key(s, pygame.K_SPACE)
     frame(s)
     war = s.combat.alive(PLAYER)[0]
     s.combat.order_move(war, (war.cell[0] + 1, war.cell[1]))
@@ -166,7 +166,9 @@ def test_pick_moving_unit_near_sprite_and_targeting_filter():
     rect = next(r for r, u in s.view.sprite_rects if u is war)
     near = (rect.right + 12, rect.centery)             # мимо фигурки, но рядом
     assert s.view.pick_unit(near) is war
-    assert s.combat.unit_at(s.cell_at(*rect.center)) is war
+    s.selected = None
+    s._click(rect.center, 1)                           # клик по фигурке в пути — выбирает героя
+    assert s.selected is war
     foe = s.combat.alive(ENEMY)[0]
     s.selected = s.combat.alive(PLAYER)[2]             # маг: огненный шар — по клетке, ледяной… берём врага
     s.targeting = next(sid for sid in s.selected.skills if s.selected.skill_defs[sid]["target"] == "enemy") \
@@ -179,7 +181,7 @@ def test_pick_moving_unit_near_sprite_and_targeting_filter():
 
 def test_pause_calms_screen_effects():
     s = BattleScene(DATA, 0)
-    key(s, pygame.K_RETURN)
+    key(s, pygame.K_SPACE)
     sc = s.view.vfx.screen
     s.view.vfx.screen_fx(dim=0.6, dim_time=5, bars=1.0, bars_time=5, flash=1.0)
     s.paused = False
@@ -188,3 +190,23 @@ def test_pause_calms_screen_effects():
     for _ in range(30):
         frame(s, 1 / 30)
     assert sc.calm > 0.9 and sc.dim < 0.05 and sc.bars < 0.05
+
+
+def test_move_and_area_cells_ignore_units_unit_skills_snap():
+    """Перемещение и навыки по площади берут клетку земли под курсором; к фигурке липнут только навыки по юниту."""
+    from ui import projection as P
+    s = BattleScene(DATA, 0)
+    s.phase = "battle"
+    s.update(1 / 30)
+    s.draw(pygame.display.get_surface())
+    hero = s.combat.heroes(PLAYER)[0]
+    rect = next(r for r, u in s.view.sprite_rects if u is hero)
+    head = (rect.centerx, rect.top + 4)                     # голова фигурки — над соседней клеткой
+    ground = P.screen_to_cell(*head, s.combat.grid.w, s.combat.grid.h)
+    assert ground != hero.cell
+    s.selected, s.targeting = None, None
+    assert s.cell_at(*head) == ground                      # перемещение — земля под курсором
+    mage = next(u for u in s.combat.heroes(PLAYER) if any(sk["target"] == "ally" for sk in u.skill_defs.values()))
+    s.selected = mage
+    s.targeting = next(k for k, sk in mage.skill_defs.items() if sk["target"] == "ally")
+    assert s.cell_at(*head) == hero.cell                   # навык по союзнику — липнет к фигурке

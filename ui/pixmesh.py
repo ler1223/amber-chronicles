@@ -88,11 +88,13 @@ def place(v, axis, cell, side):
     return np.stack([cx + 0.5 + ly * side, cy + lx, lz], -1)
 
 
-def render(tris, cols, ao, sink=0.0):
+def render(tris, cols, ao, sink=0.0, smooth=False):
     """Треугольники в клетках поля → (картинка, экранная точка левого верхнего угла) или None.
-    sink — насколько модель утоплена в землю (рост, таяние): всё ниже земли отрезается."""
+    sink — насколько модель утоплена в землю (рост, таяние): всё ниже земли отрезается.
+    smooth — без пикселизации (стили ui/fxlab): пиксель 1:1, плавные тона, блик и светлый край граней."""
     if not len(tris):
         return None
+    E = 1 if smooth else globals()["E"]
     w = tris.copy()
     w[..., 2] -= sink
     x, y, z = w[..., 0], w[..., 1], w[..., 2]
@@ -145,6 +147,18 @@ def render(tris, cols, ao, sink=0.0):
     alpha = val >= 0
     if not alpha.any():
         return None
+    if smooth:
+        t = np.clip(val, 0, 1) * (len(ICE12) - 1)
+        i = np.minimum(t.astype(int), len(ICE12) - 2)
+        fr = (t - i)[..., None]
+        rgb = ICE12[i] * (1 - fr) + ICE12[i + 1] * fr
+        edge = alpha & ~(np.roll(alpha, 1, 0) & np.roll(alpha, -1, 0) & np.roll(alpha, 1, 1) & np.roll(alpha, -1, 1))
+        rgb[edge] = rgb[edge] * 0.6 + 255 * 0.4                      # светлая кромка — лёд просвечивает по краю
+        rgba = np.zeros((Hh, W, 4), np.uint8)
+        rgba[..., :3] = np.clip(rgb, 0, 255)
+        rgba[..., 3] = alpha * 255
+        surf = pygame.image.frombuffer(np.ascontiguousarray(rgba).tobytes(), (W, Hh), "RGBA")
+        return surf.copy(), (x0, y0)
     th = np.tile(BAYER, (Hh // 4 + 1, W // 4 + 1))[:Hh, :W]
     idx = np.clip((np.clip(val, 0, 1) * len(ICE12) + th - 0.5).astype(int), 0, len(ICE12) - 1)
     rgba = np.zeros((Hh, W, 4), np.uint8)
@@ -154,7 +168,7 @@ def render(tris, cols, ao, sink=0.0):
     return pygame.transform.scale(surf, (W * E, Hh * E)), (x0 * E, y0 * E)
 
 
-def wall(axis, run, variant, side, sink=0.0):
+def wall(axis, run, variant, side, sink=0.0, smooth=False):
     """Стена-ледник на отрезке клеток run (по порядку вдоль оси). Длиннее 5 — составляется из кусков."""
     d = data()
     parts = []
@@ -165,7 +179,7 @@ def wall(axis, run, variant, side, sink=0.0):
         parts.append((place(tris, axis, run[i], side), cols, ao))
         i += n
     tris = np.concatenate([p[0] for p in parts])
-    return render(tris, np.concatenate([p[1] for p in parts]), np.concatenate([p[2] for p in parts]), sink)
+    return render(tris, np.concatenate([p[1] for p in parts]), np.concatenate([p[2] for p in parts]), sink, smooth)
 
 
 def wall_break(axis, cell, side, variant, frame):

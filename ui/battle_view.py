@@ -16,7 +16,7 @@ from ui import icons as IC
 from ui import projection as P
 from ui.ground import GroundPainter, prop_image
 from ui.marks import MarkLayer
-from ui.pix_battle import PixelPilot
+from ui.fxlab.router import FxRouter
 from ui.props import load_props
 from ui.sprites import DRAWERS, SpriteBank
 from ui.vfx import Light, VfxWorld, resolve_color
@@ -130,7 +130,7 @@ class BattleView:
         self._dim = {}
         self._line = ("pierce_line", (235, 240, 255), 1.0, 0)
         self.gl_camera = False     # рисуем через OpenGL — интерфейс над юнитами следует за камерой
-        self.pix = PixelPilot(self)  # пилот пиксельного стиля: огонь и лёд (art_style.md)
+        self.pix = FxRouter(self)  # стиль эффектов огня и льда: пиксельный или стили ui/fxlab (art_style.md)
 
     # ---------- события симуляции → эффекты ----------
 
@@ -970,6 +970,10 @@ class BattleView:
         self.draw_ground(surf, scene)
         self._draw_world(surf, scene)
 
+    def lab_frame(self):
+        """Для видеокарты: команды стилей эффектов (ui/fxlab) на этот кадр или None."""
+        return self.pix.lab_frame()
+
     def glow_layer(self):
         """Для видеокарты: яркие пиксели пиксельных эффектов — источник свечения (или None)."""
         return self.pix.glow_layer()
@@ -1776,7 +1780,7 @@ class BattleView:
             hot = b.collidepoint(scene.mouse)
             pygame.draw.rect(surf, (60, 140, 80) if hot else (44, 110, 62), b, border_radius=8)
             pygame.draw.rect(surf, (120, 255, 140), b, 2, border_radius=8)
-            T.text(surf, "В БОЙ  (Enter)", b.center, 20, (255, 255, 255), True, center=True, shadow=True)
+            T.text(surf, "В БОЙ  (Пробел)", b.center, 20, (255, 255, 255), True, center=True, shadow=True)
             T.text(surf, "ЛКМ по юниту, затем по клетке", (RIGHT_X, 10), 13, T.TEXT_DIM)
             T.text(surf, "или перетащите · ПКМ/Esc — отмена", (RIGHT_X, 30), 13, T.TEXT_DIM)
             return

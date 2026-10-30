@@ -48,7 +48,7 @@ def test_family_reads_effects_not_names():
 
 
 def _play(case, pixel):
-    SETTINGS["pixel_fx"] = pixel
+    SETTINGS["fx_style"] = "pixel" if pixel else "old"
     cls, path, sid, br = case
     pv = SkillPreview(DATA, pygame.Rect(300, 160, 680, 420))
     pv.show(cls, path, {sid: br} if br else {}, sid)
@@ -69,11 +69,11 @@ def test_fire_and_ice_skills_play_pixel_effects_and_switch_off():
             assert _play(case, True) > 0, case
         assert _play(CASES[0], False) == 0
     finally:
-        SETTINGS["pixel_fx"] = True
+        SETTINGS["fx_style"] = "pixel"
 
 
 def test_battle_with_fire_and_ice_draws_and_f9_toggles():
-    SETTINGS["pixel_fx"] = True
+    SETTINGS["fx_style"] = "pixel"
     i = next(i for i, e in enumerate(DATA.encounters) if e["id"] == "forge_2")
     squad = [{"cls": c, "proto": build_proto(DATA, c)} for c in ("mage", "cryo", "alchemist", "warrior")]
     s = BattleScene(DATA, i, autoplay=True, squad=squad)
@@ -90,13 +90,13 @@ def test_battle_with_fire_and_ice_draws_and_f9_toggles():
     assert drew                                     # горящие клетки и взрывы дали свечение
     try:
         s.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F9, mod=0, unicode=""))
-        assert SETTINGS["pixel_fx"] is False and not s.view.pix.fx.items
+        assert SETTINGS["fx_style"] == "flipbook" and not s.view.pix.pixel.fx.items
         for _ in range(30):
             s.update(1 / 30)
         s.draw_layers(SCREEN, ui, units)
         assert s.glow_layer() is None
     finally:
-        SETTINGS["pixel_fx"] = True
+        SETTINGS["fx_style"] = "pixel"
 
 
 def test_particles_fall_land_and_report_tag():
@@ -116,7 +116,7 @@ def test_particles_fall_land_and_report_tag():
 
 
 def test_fireball_hits_target_then_droplets_ignite_neighbours():
-    SETTINGS["pixel_fx"] = True
+    SETTINGS["fx_style"] = "pixel"
     pv = SkillPreview(DATA, pygame.Rect(300, 160, 680, 420))
     pv.show("mage", None, {}, "fireball")
     pv.caster.attack_timer = pv.caster.atk_cd = 999.0
@@ -211,3 +211,61 @@ def test_flashpoint_burns_surface_as_one_scar():
     assert m is not None
     a = pygame.surfarray.array_alpha(m[0])
     assert 0.15 < (a > 0).mean() < 0.9                       # пятно по форме пожара, а не весь прямоугольник
+
+
+
+
+def test_lab_styles_play_skills_and_render_on_gpu():
+    """Стили лаборатории (флипбуки, шейдеры, меши, симуляция): навыки дают команды кадра, видеокарта их рисует."""
+    from ui.fxlab import LOOKS
+    from ui.present import Presenter
+    pres = Presenter(SCREEN, True, window=False)
+
+    class Adapter:
+        def __init__(self, pv):
+            self.pv = pv
+
+        def draw_layers(self, world, ui, units):
+            self.pv.draw_layers(world, units, ui)
+
+        def plane(self):
+            return self.pv.plane()
+
+        def glow_layer(self):
+            return self.pv.view.glow_layer()
+
+        def lab_frame(self):
+            return self.pv.view.lab_frame()
+
+        @property
+        def vfx(self):
+            return self.pv.vfx
+    try:
+        for style in LOOKS:
+            SETTINGS["fx_style"] = style
+            for cls, path, sid, br in (("mage", None, "fireball", None), ("mage", None, "fireball", ("A", 2)),
+                                       ("cryo", "stormfrost", "blizzard", None), ("cryo", None, "ice_wall", None)):
+                pv = SkillPreview(DATA, pygame.Rect(300, 160, 680, 420), loop=False)
+                pv.show(cls, path, {sid: br} if br else {}, sid)
+                cmds = 0
+                for i in range(300):                      # метеор кастуется 3 сек
+                    pv.update(1 / 60 * 1.5)
+                    if i % 20 == 0:
+                        pres.frame(Adapter(pv))
+                        fr = pv.view.lab_frame()
+                        cmds = max(cmds, sum(len(v) for v in fr.layers.values()) if fr else 0)
+                walls = [u for u in pv.c.units if u.obj and u.obj.get("id") == "ice_wall" and u.alive]
+                assert cmds > 0 or walls, (style, sid)
+    finally:
+        SETTINGS["fx_style"] = "pixel"
+
+
+def test_particle_cap_cuts_array_params():
+    from ui.pixsim import Particles
+    ps = Particles()
+    ps.spawn(ps.CAP - 10, (0.0, 0.0, 0.0), life=5, life_var=0)
+    n = 50
+    rng = np.random.default_rng(0)
+    ps.spawn(n, (rng.random(n), rng.random(n), np.zeros(n)), (rng.random(n), np.zeros(n), 0.5), life=0.6,
+             temp=rng.random(n), size=2.0, life_var=0.2)              # массивы длины n, а места — на 10
+    assert ps.n == ps.CAP

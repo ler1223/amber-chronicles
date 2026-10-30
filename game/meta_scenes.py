@@ -90,12 +90,27 @@ class HeroesScene(MetaScene):
         from ui.skill_preview import SkillPreview
         self.cls = cls or app.profile.squad[0]
         self.preview = None
-        self.windows = self.WINDOWS + ((("stats", "Характеристики"),) if app.profile.mode == "stats" else ())
+        self.windows = self.WINDOWS + ((("stats", "Характеристики"),) if app.profile.uses_stats else ())
         self.window = window
         self.skill_preview = SkillPreview(app.data, self.PREVIEW)
         self.pv = None             # что показывает превью: (навык, ветка, ступень) — ветка None = основа
         self.pv_dirty = True
         self.hint = self.hint.format(unlock=meta.path_unlock_level(app.data))
+        self.help = None
+        self.help_btn = pygame.Rect(self.back.x - 176, self.back.y, 164, 44)
+        if app.profile.mode == "story" and not getattr(app.profile, "help_seen", True):
+            self.open_help()                      # сюжет: при первом заходе — обучение окну героя
+
+    def open_help(self):
+        from game.help_overlay import HERO_PAGES, HelpOverlay
+        pages = [p for p in HERO_PAGES if any(p["window"] == w for w, _ in self.windows)]
+
+        def done():
+            prof = self.app.profile
+            if hasattr(prof, "help_seen") and not prof.help_seen:
+                prof.help_seen = True
+                prof.save()
+        self.help = HelpOverlay(pages, on_page=lambda pg: self.set_window(pg["window"]), on_close=done)
 
     # ---------- окна и превью навыка ----------
 
@@ -170,6 +185,14 @@ class HeroesScene(MetaScene):
         pygame.draw.rect(surf, BRANCH_COLOR, (r.x + 8, r.bottom - 12, int((r.w - 16) * k), 4))
 
     def handle(self, ev):
+        if self.help and self.help.handle(ev):
+            return
+        if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and self.help_btn.collidepoint(ev.pos):
+            self.open_help()
+            return
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_i:
+            self.open_help()
+            return
         if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3 and self.window == "skills":
             for r, action, _ in self.hits:              # ПКМ по ступени — только показать
                 if r.collidepoint(ev.pos) and action and action[0] in ("branch", "show"):
@@ -188,7 +211,8 @@ class HeroesScene(MetaScene):
         """Все герои: сначала отряд, потом нанятые, потом остальные (их можно смотреть, но не настраивать)."""
         prof = self.app.profile
         hired = prof.squad + [c for c in prof.unlocked if c not in prof.squad]
-        return hired + [c for c in self.app.data.classes if c not in hired]
+        pool = prof.all_story_heroes() if prof.mode == "story" else self.app.data.classes   # сюжет — свои 8
+        return hired + [c for c in pool if c not in hired]
 
     @property
     def view_only(self):
@@ -337,6 +361,9 @@ class HeroesScene(MetaScene):
         else:
             self._draw_talents(surf, pygame.Rect(24, 154, 600, 552), pygame.Rect(640, 154, 616, 552))
         self.draw_footer(surf)
+        W.button(surf, self.help_btn, "Справка (I)", self.mouse, accent=(255, 205, 110))
+        if self.help:
+            self.help.draw(surf)
 
     def _draw_stats(self, surf, left, right):
         """Режим героев: уровень, опыт, атрибуты (+ очки), что они дают и как скейлятся навыки."""
