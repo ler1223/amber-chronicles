@@ -95,7 +95,10 @@ def sanitize(setting, sk):
 
 
 def default_setting(sk):
-    return sanitize(copy.deepcopy(sk.get("auto", {"on": False, "conds": []})), sk)
+    """Умолчание — автокаст выключен у всех навыков; условия из данных остаются готовой подсказкой."""
+    st = copy.deepcopy(sk.get("auto", {"on": False, "conds": []}))
+    st["on"] = False
+    return sanitize(st, sk)
 
 
 def settings_for(skill_defs, given=None):

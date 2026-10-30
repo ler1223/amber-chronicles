@@ -310,13 +310,17 @@ class SkillsScene:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
             if self.back.collidepoint(ev.pos):
-                self.app.switch(MapScene(self.app))
+                self._leave()
                 return
             for _, ed in self.editors:
                 if ed.click(ev.pos):
                     return
         elif ev.type == pygame.KEYDOWN and ev.key in (pygame.K_ESCAPE, pygame.K_RETURN):
-            self.app.switch(MapScene(self.app))
+            self._leave()
+
+    def _leave(self):
+        self.app.profile.remember_autocast(self.app.run)
+        self.app.switch(MapScene(self.app))
 
     def update(self, dt):
         pass

@@ -184,6 +184,8 @@ class Screen:
         self.flash_color = (1.0, 1.0, 1.0)
         self.flash_decay = 4.0
         self.dim = 0.0
+        self.calm = 0.0            # пауза: эффекты экрана гаснут, свечение приглушено (0..1)
+        self.calm_target = 0.0
         self.dim_target = 0.0
         self.dim_hold = 0.0
         self.hitstop = 0.0
@@ -800,6 +802,16 @@ class VfxWorld:
         sc = self.screen
         sc.hitstop = max(0.0, sc.hitstop - dt)
         sc.slow_time = max(0.0, sc.slow_time - dt)
+        sc.calm += (sc.calm_target - sc.calm) * min(1.0, dt * 8)
+        if sc.calm > 0.01:                 # на паузе затемнение, полосы, вспышки, зум и тряска уходят сразу
+            k = min(1.0, dt * 8 * sc.calm)
+            sc.dim -= sc.dim * k
+            sc.bars -= sc.bars * k
+            sc.flash -= sc.flash * k
+            sc.aberration -= sc.aberration * k
+            sc.radial -= sc.radial * k
+            sc.zoom += (1.0 - sc.zoom) * k
+            sc.shake, sc.offset = 0.0, (0.0, 0.0)
 
     def update(self, dt):
         if dt <= 0:

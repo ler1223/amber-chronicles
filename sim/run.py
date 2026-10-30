@@ -8,6 +8,7 @@ import copy
 import random
 
 from . import autocast
+from . import stats
 from .build import build_proto, class_skills, rune_fits
 from .data import RARITIES
 from .teams import PLAYER
@@ -33,14 +34,17 @@ class Member:
         self.level = 1
         self.xp = 0
         self.hp = 0
+        self.rpg = copy.deepcopy(b.get("rpg") or stats.new_rpg())   # режим героев: постоянный уровень
 
 
 class Run:
     """region — регион биома (data/biomes.json): короткая карта и страж в конце; без него — полная вылазка
     с боссом. bonus — постоянные бонусы меты {тип: значение}. heroes — билды героев с подготовки."""
 
-    def __init__(self, data, seed=None, region=None, bonus=None, heroes=None, chapter="swamp", difficulty="normal"):
+    def __init__(self, data, seed=None, region=None, bonus=None, heroes=None, chapter="swamp", difficulty="normal",
+                 mode="base"):
         self.data = data
+        self.stats = mode == "stats"      # режим героев: уровень героя и атрибуты вместо уровней вылазки
         self.cfg = data.config["run"]
         self.region = region
         self.chapter = chapter            # глава (data/biomes.json): пул боёв и сила врагов
@@ -52,6 +56,9 @@ class Run:
         self.inventory = []
         builds = heroes or [{"cls": c} for c in data.squad["units"]]
         self.squad = [Member(b["cls"], b) for b in builds]
+        if self.stats:
+            for m in self.squad:
+                m.level, m.xp = m.rpg["level"], m.rpg["xp"]
         for b, m in zip(builds, self.squad):
             for iid in b.get("items", []):
                 m.items[data.items[iid]["slot"]] = iid
@@ -72,8 +79,14 @@ class Run:
     def threat(self):
         return self.region["threat"] if self.region else 1
 
+    def region_level(self):
+        return stats.region_level(self.data, self.chapter, self.region, self.difficulty)
+
     def enemy_scale(self):
-        """Множители HP/урона врагов: угроза региона × сила главы × сложность."""
+        """Множители HP/урона врагов: угроза региона × сила главы × сложность. В режиме героев — уровень региона:
+        бой сам считает каждому врагу его уровень (с титулами)."""
+        if self.stats:
+            return {"level": self.region_level(), "stats": True}
         k = self.data.config["meta"]["threat_scale"]
         lvl = self.threat - 1
         power = self.data.biomes.get(self.chapter, {}).get("power", {})
@@ -85,6 +98,16 @@ class Run:
 
     def extra_mods(self, m):
         """Проценты уровня вылазки, мастерства и лагеря + модификаторы реликвий."""
+        if self.stats:                     # режим героев: всё растёт от атрибутов, лагерь и реликвии — как обычно
+            mods = list(stats.derive(self.data, m.cls, m.rpg)["mods"])
+            for key, stat in (("hp_pct", "hp"), ("power_pct", "power")):
+                if self.bonus.get(key):
+                    mods.append({"stat": stat, "mult": 1 + self.bonus[key]})
+            if self.bonus.get("ap"):
+                mods.append({"stat": "ap_max", "add": self.bonus["ap"]})
+            for rid in self.relics:
+                mods += self.data.relics[rid].get("mods", [])
+            return mods
         ls = self.cfg["level_stats"]
         lvl = m.level - 1
         mastery = 1 + self.data.config["mastery"]["stat_per_level"] * (m.mastery - 1)
@@ -104,6 +127,8 @@ class Run:
         p = build_proto(self.data, m.cls, m.talents, list(m.items.values()), m.branches, self.extra_mods(m),
                         m.path, m.runes)
         p["level"] = m.level
+        if self.stats:
+            stats.apply_to_proto(p, stats.derive(self.data, m.cls, m.rpg))
         return p
 
     def max_hp(self, m):
@@ -147,7 +172,19 @@ class Run:
             m.hp = min(mx, m.hp + int(round(mx * pct)))
 
     def xp_to_next(self, m):
-        return self.cfg["xp_per_level"]
+        return stats.xp_to_next(self.data, m.level) if self.stats else self.cfg["xp_per_level"]
+
+    def stats_xp(self, node_type):
+        """Режим героев: опыт за победу каждому герою (по уровню региона и разнице уровней)."""
+        ups = []
+        lvl = self.region_level()
+        for m in self.squad:
+            gained = stats.battle_xp(self.data, node_type, lvl, m.level)
+            before = m.rpg["level"]
+            self._change_build(m, lambda m=m, g=gained: stats.add_xp(self.data, m.rpg, g))
+            m.level, m.xp = m.rpg["level"], m.rpg["xp"]
+            ups += [m] * (m.rpg["level"] - before)
+        return ups
 
     def gain_xp(self, amount):
         """Опыт всем поровну; уровень сразу даёт статы (без выбора — направление задано на подготовке)."""
@@ -283,14 +320,21 @@ class Run:
         self.battles_won += 1
         if not node["next"]:   # последний узел карты: босс или страж региона
             self.result = "victory"
+            if self.stats:
+                self.stats_xp(node["type"])
             return {"result": "victory", "boss": True}
         self.heal_all(self.cfg["post_battle_heal"] + self.bonus.get("post_battle_heal", 0)
                       + self.relic_value("post_battle_heal"))
         rw = self.cfg["rewards"][node["type"] if node["type"] in self.cfg["rewards"] else "normal"]
         gold = rw["gold"] + self.relic_value("gold_per_battle")
         self.gold += gold
-        ups = self.gain_xp(rw["xp"])
-        return {"result": "victory", "gold": gold, "xp": rw["xp"], "level_ups": ups,
+        if self.stats:
+            xp = stats.battle_xp(self.data, node["type"], self.region_level(), self.squad[0].level)
+            ups = self.stats_xp(node["type"])
+        else:
+            xp = rw["xp"]
+            ups = self.gain_xp(xp)
+        return {"result": "victory", "gold": gold, "xp": xp, "level_ups": ups,
                 "fallen": [m for m, u in zip(self.squad, units) if not u.alive]}
 
     # ---------- награды и торговец ----------

@@ -3,6 +3,8 @@ import math
 
 import pygame
 
+from sim import stats
+
 from sim import meta
 from ui import theme as T
 from ui import widgets as W
@@ -224,7 +226,12 @@ class WorldScene:
         T.text(surf, r["name"], (x, y + rad + 14), 15, T.TEXT if available or captured else T.TEXT_DIM, True,
                center=True)
         sub = "захвачен" if captured else "босс" if r.get("boss") else f"угроза {r['threat']}"
-        T.text(surf, sub, (x, y + rad + 32), 13, CAPTURED if captured else T.TEXT_DIM, center=True)
+        col = CAPTURED if captured else T.TEXT_DIM
+        if prof.mode == "stats":                  # режим героев: уровень региона против уровня отряда
+            lvl = prof.region_level(r["id"])
+            sub = f"ур. {lvl}" + (" · взят" if captured else "")
+            col = stats.level_color(lvl - prof.squad_level())
+        T.text(surf, sub, (x, y + rad + 32), 13, col, True, center=True)
 
     def _draw_panel(self, surf):
         prof, data = self.app.profile, self.app.data
@@ -239,6 +246,8 @@ class WorldScene:
         T.text(surf, r["name"], (x, y), 24, T.TEXT, True)
         y += 34
         kind = "Логово босса" if r.get("boss") else f"Угроза {r['threat']}"
+        if prof.mode == "stats":
+            kind += f" · уровень врагов {prof.region_level(r['id'])} (отряд {prof.squad_level()})"
         T.text(surf, f"{kind}  ·  вылазка из {len(r['layers'])} шагов", (x, y), 15, T.TEXT_DIM)
         y += 22
         key = (r["id"], prof.biome_id, prof.difficulty)

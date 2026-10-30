@@ -63,8 +63,9 @@ class TitleScene(CampBackdrop):
         x = 110
         self.buttons = []
         y = 290
+        other = ("mode", "Основная игра") if prof.mode == "stats" else ("mode", "Режим героев (статы)")
         for key, label in (("continue", "Продолжить" if self.has_progress else "Начать"),
-                           ("new", "Новая игра"), ("settings", "Настройки"), ("quit", "Выход")):
+                           ("new", "Новая игра"), other, ("settings", "Настройки"), ("quit", "Выход")):
             if key == "new" and not self.has_progress:
                 continue
             self.buttons.append((pygame.Rect(x, y, 300, 50), key, label))
@@ -96,6 +97,9 @@ class TitleScene(CampBackdrop):
                 return
             self.app.new_game()
             self.app.to_hub()
+        elif key == "mode":
+            self.app.switch_mode("base" if self.app.profile.mode == "stats" else "stats")
+            self.app.to_title()
         elif key == "settings":
             self.app.switch(SettingsScene(self.app, back=self.app.to_title))
         elif key == "quit":
@@ -104,8 +108,10 @@ class TitleScene(CampBackdrop):
     def draw_ui(self, surf):
         title = self.app.data.config.get("title", "Хроники янтаря")
         T.text(surf, title, (T.SCREEN_W // 2, 130), 64, GOLD, True, center=True, shadow=True)
-        T.text(surf, "тактический бой · вылазки · герои", (T.SCREEN_W // 2, 192), 20, (220, 210, 190), center=True,
-               shadow=True)
+        sub = ("РЕЖИМ ГЕРОЕВ: уровни, атрибуты, скейлы навыков" if self.app.profile.mode == "stats" else
+               "тактический бой · вылазки · герои")
+        T.text(surf, sub, (T.SCREEN_W // 2, 192), 20,
+               (150, 200, 255) if self.app.profile.mode == "stats" else (220, 210, 190), center=True, shadow=True)
         self.panel(surf, pygame.Rect(85, 270, 350, 20 + 62 * len(self.buttons)))
         for r, key, label in self.buttons:
             accent = (255, 120, 100) if key == "new" and self.confirm_new else GOLD

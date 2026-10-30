@@ -3,7 +3,7 @@
 import pygame
 
 from game.title_scene import GOLD, CampBackdrop
-from sim import meta
+from sim import meta, stats
 from ui import theme as T
 from ui import widgets as W
 
@@ -61,6 +61,8 @@ class HubScene(CampBackdrop):
         done = " · пройдена" if prof.biome_done else ""
         info = (f"Глава {prof.biome.get('order', 0) + 1}: {prof.biome['name']} ({diff.lower()}) · захвачено регионов "
                 f"{len(prof.regular_captured())}{done} · вылазок {prof.expeditions}")
+        if prof.mode == "stats":
+            info = f"РЕЖИМ ГЕРОЕВ · уровень отряда {prof.squad_level()} · " + info
         T.text(surf, info, (30, 70), 16, (210, 210, 220), shadow=True)
         self.panel(surf, pygame.Rect(T.SCREEN_W - 376, 104, 362, 64 * len(self.buttons) + 16))
         free = sum(meta.points_free(data, prof.heroes[c]) for c in prof.squad)
@@ -81,6 +83,10 @@ class HubScene(CampBackdrop):
             T.text(surf, f"мастерство {prof.mastery(cls)} · {ROLE.get(c['role'], c['role'])}", (r.x + 10, r.y + 28),
                    13, T.TEXT_DIM)
             pts = meta.points_free(data, h)
+            if prof.mode == "stats":
+                free = stats.points_free(data, h["rpg"])
+                T.text(surf, f"ур. {h['rpg']['level']}" + (f" · очков атрибутов {free}" if free else ""),
+                       (r.x + 10, r.y + 48 if not pts else r.y + 62), 13, (150, 200, 255), True)
             if pts:
                 T.text(surf, f"свободных очков: {pts}", (r.x + 10, r.y + 48), 13, (170, 140, 255), True)
         T.text(surf, "Отряд в вылазке", (24, y - 32), 15, (220, 220, 230), True, shadow=True)

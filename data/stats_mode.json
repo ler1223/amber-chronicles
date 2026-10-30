@@ -1,0 +1,42 @@
+{
+  "_note": "Режим героев: атрибуты, уровни героев, уровни регионов и рост врагов (sim/stats.py). Числа — примерные, баланс доработаем. Прибавки атрибута считаются от стартового значения героя: на 1 уровне герой такой же, как в основной игре.",
+  "attrs": {
+    "str": {"name": "Сила", "short": "СИЛ", "color": [235, 110, 90], "desc": "+2% HP, +2% урона ближних навыков и столкновений за очко"},
+    "agi": {"name": "Ловкость", "short": "ЛОВ", "color": [120, 220, 120], "desc": "+1.2% скорости атак, +0.08 брони, +0.4% крита, +0.3% уклонения, +2% урона стрел за очко"},
+    "int": {"name": "Интеллект", "short": "ИНТ", "color": [120, 170, 255], "desc": "+2% урона заклинаний и реакций, +1.6% лечения и щитов, +1.2% восстановления AP, +1 AP за 15 очков"}
+  },
+  "per_point": {"hp_pct": 0.02, "dmg_pct": 0.02, "heal_pct": 0.016, "atk_speed_pct": 0.012, "armor": 0.08, "crit": 0.004, "dodge": 0.003, "ap_regen_pct": 0.012, "ap_per": 15},
+  "base_crit": 0.05,
+  "crit_mult": 1.75,
+  "max_crit": 0.6,
+  "max_dodge": 0.35,
+  "schools": {"melee": "str", "collision": "str", "ranged": "agi", "spell": "int", "reaction": "int", "heal": "int"},
+  "level_cap": 30,
+  "free_points": 3,
+  "xp": {"next_base": 50, "next_per_level": 20, "battle_base": 28, "battle_per_level": 6, "node_mult": {"battle": 1.0, "elite": 1.6, "guard": 2.5, "boss": 3.0}, "over_level_cut": 0.15, "over_level_free": 3, "min_share": 0.2},
+  "regions": {"per_chapter": 3.5, "per_threat": 1.5, "boss": 3, "difficulty": {"normal": 0, "heroic": 3, "nightmare": 6}},
+  "enemy": {"hp_pct": 0.2, "dmg_pct": 0.13, "armor": 0.1, "titles": [{"name": "ветеран", "levels": 2, "chance": 0.15}, {"name": "чемпион", "levels": 4, "chance": 0.05}], "elite_levels": 2},
+  "classes": {
+    "warrior": {"primary": "str", "start": {"str": 24, "agi": 12, "int": 10}, "gain": {"str": 3.0, "agi": 1.2, "int": 0.8}},
+    "guardian": {"primary": "str", "start": {"str": 25, "agi": 11, "int": 10}, "gain": {"str": 3.0, "agi": 1.1, "int": 0.9}},
+    "ram": {"primary": "str", "start": {"str": 26, "agi": 10, "int": 9}, "gain": {"str": 3.2, "agi": 1.0, "int": 0.8}},
+    "bloodrager": {"primary": "str", "start": {"str": 24, "agi": 15, "int": 8}, "gain": {"str": 3.2, "agi": 1.6, "int": 0.4}},
+    "tactician": {"primary": "str", "start": {"str": 20, "agi": 12, "int": 16}, "gain": {"str": 2.4, "agi": 1.0, "int": 1.8}},
+    "druid": {"primary": "str", "start": {"str": 20, "agi": 14, "int": 16}, "gain": {"str": 2.4, "agi": 1.3, "int": 1.6}},
+    "archer": {"primary": "agi", "start": {"str": 12, "agi": 24, "int": 12}, "gain": {"str": 1.2, "agi": 3.0, "int": 1.0}},
+    "assassin": {"primary": "agi", "start": {"str": 13, "agi": 25, "int": 10}, "gain": {"str": 1.3, "agi": 3.2, "int": 0.8}},
+    "trapper": {"primary": "agi", "start": {"str": 14, "agi": 22, "int": 14}, "gain": {"str": 1.4, "agi": 2.6, "int": 1.2}},
+    "mage": {"primary": "int", "start": {"str": 10, "agi": 12, "int": 25}, "gain": {"str": 0.8, "agi": 1.0, "int": 3.2}},
+    "priest": {"primary": "int", "start": {"str": 14, "agi": 10, "int": 23}, "gain": {"str": 1.4, "agi": 0.8, "int": 2.8}},
+    "shaman": {"primary": "int", "start": {"str": 13, "agi": 12, "int": 23}, "gain": {"str": 1.2, "agi": 1.0, "int": 2.8}},
+    "bard": {"primary": "int", "start": {"str": 12, "agi": 16, "int": 21}, "gain": {"str": 1.0, "agi": 1.6, "int": 2.6}},
+    "alchemist": {"primary": "int", "start": {"str": 14, "agi": 16, "int": 20}, "gain": {"str": 1.2, "agi": 1.8, "int": 2.4}},
+    "cryo": {"primary": "int", "start": {"str": 12, "agi": 11, "int": 24}, "gain": {"str": 1.2, "agi": 0.9, "int": 3.0}},
+    "necro": {"primary": "int", "start": {"str": 12, "agi": 11, "int": 24}, "gain": {"str": 1.1, "agi": 0.9, "int": 3.0}},
+    "chrono": {"primary": "int", "start": {"str": 11, "agi": 13, "int": 24}, "gain": {"str": 1.0, "agi": 1.2, "int": 3.0}},
+    "gravity": {"primary": "int", "start": {"str": 11, "agi": 12, "int": 24}, "gain": {"str": 1.0, "agi": 1.1, "int": 3.0}},
+    "geomancer": {"primary": "int", "start": {"str": 15, "agi": 12, "int": 22}, "gain": {"str": 1.6, "agi": 1.0, "int": 2.6}},
+    "brewer": {"primary": "int", "start": {"str": 12, "agi": 15, "int": 22}, "gain": {"str": 1.0, "agi": 1.6, "int": 2.6}},
+    "binder": {"primary": "int", "start": {"str": 15, "agi": 12, "int": 22}, "gain": {"str": 1.6, "agi": 1.0, "int": 2.6}}
+  }
+}

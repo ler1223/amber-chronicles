@@ -44,9 +44,14 @@ def flat_effects(sk):
 
 
 class SkillPreview:
-    def __init__(self, data, rect):
+    def __init__(self, data, rect, loop=True, zoom=ZOOM):
+        """loop — навык повторяется сам каждые CYCLE сек (окно подготовки героя); без него — один раз, сцена
+        остаётся с последствиями до restart() (галерея эффектов). zoom — пикселей на клетку."""
         self.data = data
         self.rect = rect
+        self.loop = loop
+        self.zoom = zoom
+        self.terrain = {}             # клетка → рельеф поверх карты (галерея: вода, камень, лёд под целью)
         self.view = BattleView(data)
         self.scene = PreviewScene()
         enc = {"id": "preview", "name": "Тренировка", "kind": "normal", "chapter": "_preview",
@@ -90,6 +95,9 @@ class SkillPreview:
         self.caster.ap = self.caster.ap_max
         self.caster.pp = self.caster.pp_max
         self.ally.autocast = {k: {"on": False, "conds": []} for k in self.ally.autocast}
+        for pos, ter in self.terrain.items():
+            if pos in c.grid.cells:
+                c.grid.cells[pos].terrain = ter
         self._prepare(sk)
         self.view.reset(c)
 
@@ -178,7 +186,7 @@ class SkillPreview:
     def update(self, dt):
         if self.proto is None:
             return
-        P.configure(self.rect.center, ZOOM)
+        P.configure(self.rect.center, self.zoom)
         self.t += dt
         c = self.c
         if self.t >= CAST_AT and not self.cast_done:
@@ -194,7 +202,7 @@ class SkillPreview:
         self.view.consume(c.events)
         c.events.clear()
         self.view.update(dt, dt)
-        if self.t >= CYCLE:
+        if self.loop and self.t >= CYCLE:
             self.restart()
 
     def plane(self):
@@ -208,7 +216,7 @@ class SkillPreview:
         """С OpenGL: земля — плоская карта (плоскость кладёт видеокарта), фигурки — в units, надписи — в ui."""
         if self.proto is None:
             return
-        P.configure(self.rect.center, ZOOM)
+        P.configure(self.rect.center, self.zoom)
         v = self.view
         v.gl_camera = True
         v.draw_ground(world, self.scene, warp=False)
@@ -220,7 +228,7 @@ class SkillPreview:
         """Без OpenGL: всё на одну поверхность (её потом закроет интерфейс, кроме окна превью)."""
         if self.proto is None:
             return
-        P.configure(self.rect.center, ZOOM)
+        P.configure(self.rect.center, self.zoom)
         v = self.view
         v.gl_camera = False
         v.draw_ground(surf, self.scene, warp=True)

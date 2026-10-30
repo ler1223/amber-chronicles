@@ -11,10 +11,12 @@ from sim.combat import ENEMY, NEUTRAL, PLAYER
 from sim.grid import PERMANENT, cheb
 from ui import theme as T
 from sim import movement as MV
+from sim import stats as ST
 from ui import icons as IC
 from ui import projection as P
 from ui.ground import GroundPainter, prop_image
 from ui.marks import MarkLayer
+from ui.pix_battle import PixelPilot
 from ui.props import load_props
 from ui.sprites import DRAWERS, SpriteBank
 from ui.vfx import Light, VfxWorld, resolve_color
@@ -128,6 +130,7 @@ class BattleView:
         self._dim = {}
         self._line = ("pierce_line", (235, 240, 255), 1.0, 0)
         self.gl_camera = False     # рисуем через OpenGL — интерфейс над юнитами следует за камерой
+        self.pix = PixelPilot(self)  # пилот пиксельного стиля: огонь и лёд (art_style.md)
 
     # ---------- события симуляции → эффекты ----------
 
@@ -149,6 +152,7 @@ class BattleView:
         self.fallen.clear()
         self.marks.clear()
         self._prop_imgs.clear()
+        self.pix.reset()
 
     def anim(self, u):
         a = self.anims.get(u.id)
@@ -299,6 +303,9 @@ class BattleView:
                 spec, color = lib["attacks"][kind], self.tag_color(e["tag"], ARROW)
             else:
                 spec, color = lib["attacks"]["bolt"], self.tag_color(e["tag"], T.mix(src.color, (255, 255, 255), 0.4))
+            d = self.pix.attack(e, a, b)
+            if d is not None:
+                return d
             ctx = self._ctx(src, dst, color=color)
             return self._launch(spec, ctx, a, b, color, melee=e["kind"] == "melee")
         u = e["unit"]
@@ -324,10 +331,13 @@ class BattleView:
             self.float_text(u, name, (255, 235, 170), 14, ttl=1.0, dy=10)
             for p in cells or []:
                 self.fx.append(Fx("cell", 0.45, pos=p, color=color))
-        if spec.get("release"):
+        if spec.get("release") and not self.pix.own_release(sid):
             self.vfx.play(spec["release"], ctx)
         self._line = (spec.get("line_fx", "pierce_line"), color, scale, tier)   # для события «line» этого навыка
         far = tunit is not None or center != u.cell
+        d = self.pix.skill(u, sk, spec, ctx, color, far, radius, tier, sid)
+        if d is not None:
+            return d
         return self._launch(spec if far else dict(spec, travel=None), ctx, ctx["caster"], ctx["target"], color)
 
     def _launch(self, spec, ctx, a, b, color, melee=False):
@@ -358,6 +368,7 @@ class BattleView:
     def _event(self, e):
         t = e["t"]
         V = self.vfx
+        pix = self.pix.event(e)      # пиксельный пилот нарисовал своё — старый эффект не играем
         if t == "damage":
             u = e["unit"]
             col = T.DMG_TO_PLAYER if u.team == PLAYER else T.DMG_TO_ENEMY
@@ -371,11 +382,11 @@ class BattleView:
             self.float_text(u, s, col, 18 if e["amount"] >= 15 else 15)
             if e["kind"] in ("melee", "ranged", "spell"):
                 self.anim(u).hit = HIT_T
-                if e["tag"]:
+                if e["tag"] and not pix:
                     V.play(f"hit_{e['tag']}", self._ctx(target=u))
-                if e["amount"] >= 30:
+                if e["amount"] >= 30 and not pix:
                     V.play("big_hit", self._ctx(target=u))
-            elif e["kind"] in ("dot", "hazard"):
+            elif e["kind"] in ("dot", "hazard") and not pix:
                 V.emit("burn", *self.unit_pos(u), count=3)
         elif t == "heal" and e["amount"] > 0:
             self.float_text(e["unit"], f"+{e['amount']}", T.HEAL, 16)
@@ -383,7 +394,8 @@ class BattleView:
         elif t == "status":
             tag = self.data.tags[e["tag"]]
             self.float_text(e["unit"], tag["name"], tuple(tag["color"]), 13, ttl=0.8)
-            V.play(f"status_{e['tag']}", self._ctx(target=e["unit"], color=tuple(tag["color"])))
+            if not pix:
+                V.play(f"status_{e['tag']}", self._ctx(target=e["unit"], color=tuple(tag["color"])))
         elif t == "reaction" and e.get("friendly"):     # союзник или среда: теги погасили друг друга
             self.float_text(e["unit"], e["name"], (190, 225, 245), 15, ttl=1.0, dy=10)
             V.play("cleanse_small", self._ctx(target=e["unit"], color=(190, 225, 245)))
@@ -391,7 +403,8 @@ class BattleView:
             u = e["unit"]
             c1, c2 = (self.tag_color(x) for x in e["tags"])
             x, y = self.unit_pos(u)
-            V.play(f"reaction_{e['id']}", self._ctx(target=u, color=T.mix(c1, c2, 0.5)))
+            if not pix:
+                V.play(f"reaction_{e['id']}", self._ctx(target=u, color=T.mix(c1, c2, 0.5)))
             self.fx.append(Fx("text", 1.4, x=x, y0=y - 70, s=e["name"].upper() + "!", color=T.mix(c1, c2, 0.5),
                               size=24))
         elif t == "passive":
@@ -467,7 +480,8 @@ class BattleView:
         elif t == "cell_reaction":
             x, y = T.cell_center(e["pos"])
             self.fx.append(Fx("cell", 0.6, pos=e["pos"], color=self.tag_color(e["tag"])))
-            V.play("cell_burst", self._ctx(center=e["pos"], color=self.tag_color(e["tag"])))
+            if not pix:
+                V.play("cell_burst", self._ctx(center=e["pos"], color=self.tag_color(e["tag"])))
             self.float_text((x, y + 20), e["name"], self.tag_color(e["tag"]), 13, ttl=1.1)
         elif t == "cast_start":
             self._cast_visuals(e["unit"], e["skill"])
@@ -502,7 +516,7 @@ class BattleView:
         elif t == "armor_break":
             self.float_text(e["unit"], "Броня расколота!", (255, 190, 120), 14, ttl=1.0, dy=12)
             V.play("armor_break_fx", self._ctx(target=e["unit"]))
-        elif t == "frost_armor":
+        elif t == "frost_armor" and not pix:
             V.play("frost_armor_fx", self._ctx(target=e["unit"]))
         elif t == "summon":
             u = e["unit"]
@@ -539,7 +553,7 @@ class BattleView:
             u = e["unit"]
             eff = e.get("fx") or {}
             rect = next((r for r, w in self.sprite_rects if w is u), None)
-            if rect is not None:
+            if rect is not None and not pix:
                 V.emit_sprite(self.sprite_of(u), rect)
             self.gone.add(u.id)
             gx, gy = T.cell_feet(u.cell)
@@ -547,15 +561,21 @@ class BattleView:
             cells = [T.cell_feet(p) for p in self._cells_around(u.cell, r)] if r else [(gx, gy)]
             if eff.get("damage"):
                 col = self.tag_color(eff.get("tag"), (255, 150, 60))
-                V.play("mine_blast", {"target": (gx, gy - 26), "target_ground": (gx, gy), "cells": cells,
+                if not pix:
+                    V.play("mine_blast", {"target": (gx, gy - 26), "target_ground": (gx, gy), "cells": cells,
                                       "color": col, "scale": 1.0 + 0.4 * r})
                 self.float_text((gx, gy - 40), "ВЗРЫВ!", col, 22, ttl=1.1)
             else:
                 col = tuple(self.data.config["hazards"][eff["hazard"]]["color"]) if eff.get("hazard") else u.color
-                V.play("cell_burst", {"target": (gx, gy - 20), "target_ground": (gx, gy), "cells": cells,
+                if not pix:
+                    V.play("cell_burst", {"target": (gx, gy - 20), "target_ground": (gx, gy), "cells": cells,
                                       "color": col, "scale": 1.0})
                 if u.obj.get("guard"):
                     self.float_text((gx, gy - 40), "ПОТЕРЯН!", (255, 110, 110), 20, ttl=1.4)
+        elif t == "crit":
+            self.float_text(e["unit"], "КРИТ!", (255, 215, 90), 19, ttl=0.9, dy=22)
+        elif t == "dodge":
+            self.float_text(e["unit"], "уклонился", (170, 230, 255), 14, ttl=0.8, dy=6)
         elif t == "collision":
             u = e["unit"]
             self.float_text(u, f"Удар! -{e['amount']}", (255, 210, 140), 16, ttl=0.9, dy=16)
@@ -617,8 +637,9 @@ class BattleView:
             fx_name, col = {"lava": ("eruption_hit", (255, 120, 40)), "water": ("tide_wave", (90, 160, 255)),
                             "stone": ("land_impact", (180, 170, 150)), "grass": ("nature_bloom", (140, 220, 110))
                             }.get(e["terrain"], ("ice_nova", (190, 230, 255)))
-            V.play(fx_name, {"target": pts[0], "target_ground": pts[0], "cells": pts, "color": col, "scale": 0.7})
-        elif t == "shatter":
+            if not pix:
+                V.play(fx_name, {"target": pts[0], "target_ground": pts[0], "cells": pts, "color": col, "scale": 0.7})
+        elif t == "shatter" and not pix:
             V.play("reaction_shatter", self._ctx(target=e["unit"], color=(190, 230, 255)))
         elif t == "corpse_use":
             gx, gy = T.cell_feet(e["pos"])
@@ -645,7 +666,7 @@ class BattleView:
             self.float_text(e["unit"], "Дозор", (255, 210, 120), 14, ttl=0.9)
         elif t == "watch_fire":
             self.float_text(e["dst"], "ДОЗОР!", (255, 200, 90), 18, ttl=1.0, dy=10)
-        elif t == "detonate":
+        elif t == "detonate" and not pix:
             gx, gy = T.cell_feet(e["pos"])
             V.play("fire_explosion", {"target": (gx, gy - 24), "target_ground": (gx, gy), "cells": [(gx, gy)],
                                       "color": (255, 140, 50), "scale": P.scale_at(e["pos"][1] + 0.5)})
@@ -670,7 +691,8 @@ class BattleView:
             self.float_text(u, f"Финал! нот: {e['notes']}", (255, 190, 235), 18, ttl=1.4, dy=12)
         elif t == "mine":
             gx, gy = T.cell_feet(e["pos"])
-            V.play("mine_blast", {"target": (gx, gy - 26), "target_ground": (gx, gy), "cells": [(gx, gy)],
+            if not pix:
+                V.play("mine_blast", {"target": (gx, gy - 26), "target_ground": (gx, gy), "cells": [(gx, gy)],
                                   "color": (255, 150, 60), "scale": 1.0})
             self.float_text((gx, gy - 30), "Мина!", (255, 150, 90), 15, ttl=0.9)
 
@@ -696,9 +718,11 @@ class BattleView:
         V.add_light({"radius": size * 1.2, "intensity": 0.9, "flicker": 0.15}, feet, color, alive=alive)
         V.emitter("cast_motes", 30, lambda e: self.feet_pos(u), color, alive=alive)
         V.emitter("cast_converge", 22, lambda e: self.unit_pos(u), color, alive=alive)
-        if cast.get("orb"):              # сфера над головой копит силу
+        area = self.pix.cast_area(u, sid, sk, alive)     # Буран: туча над целью — сферы над головой нет
+        if cast.get("orb") and not area:  # сфера над головой копит силу
             head = (lambda: (self.feet_pos(u)[0], self.feet_pos(u)[1] - self.unit_h(u) - 22))
-            V.add_sfx(cast["orb"], head, color, 1 + 0.15 * tier, alive=alive)
+            if not self.pix.cast_orb(u, sk, head, alive, tier):
+                V.add_sfx(cast["orb"], head, color, 1 + 0.15 * tier, alive=alive)
             V.add_sfx({"mode": "d_pinch", "size": 140, "extra": 6}, head, color, 1.0, alive=alive)
         if cast.get("dim") or u.boss:
             V.screen_fx(dim=cast.get("dim", 0.3), dim_time=sk["cast"])
@@ -721,6 +745,8 @@ class BattleView:
         V = self.vfx
         kind, cells = e["kind"], e["cells"]
         pts = [T.cell_feet(p) for p in cells]
+        if self.pix.arena(kind, pts):
+            return
         ctx = lambda p: {"target": (p[0], p[1] - 26), "target_ground": p, "cells": [p], "scale": 1.0,  # noqa: E731
                          "color": ARENA_COLORS.get(kind)}
         if kind == "eruption":
@@ -782,6 +808,7 @@ class BattleView:
             a.toss = max(0.0, a.toss - game_dt)
         if game_dt > 0 and self.combat:
             self._ambient(game_dt)
+        self.pix.update(game_dt)
         self.vfx.real_update(real_dt)
         self.vfx.update(game_dt)
         for name, x, y, size, rot, alpha, flat in self.vfx.marks:
@@ -805,10 +832,13 @@ class BattleView:
     def _ambient(self, dt):
         """Постоянные источники: горящие и ледяные клетки, вода, статусы на юнитах."""
         V = self.vfx
+        pix = self.pix.on
         for pos, cell in self.grid.cells.items():
             if cell.hazard:
                 x, y = T.cell_feet(pos)
-                if cell.hazard == "fire":
+                if cell.hazard in ("fire", "ice") and pix:
+                    pass
+                elif cell.hazard == "fire":
                     for _ in range(self._rate(("hz", pos), 7, dt)):
                         V.emit("flame_fb", x, y - 22)
                     for _ in range(self._rate(("he", pos), 4, dt)):
@@ -840,13 +870,13 @@ class BattleView:
                     V.emit("portal_motes", x, y - 6)
         for u in self.combat.alive():
             x, y = self.unit_pos(u)
-            if "fire" in u.statuses:
+            if "fire" in u.statuses and not pix:
                 for _ in range(self._rate(("burn", u.id), 8, dt)):
                     V.emit("burn", x, y + 4)
             if "water" in u.statuses:
                 for _ in range(self._rate(("wet", u.id), 3, dt)):
                     V.emit("water_drip", x, y)
-            if "ice" in u.statuses:
+            if "ice" in u.statuses and not pix:
                 for _ in range(self._rate(("ice", u.id), 3, dt)):
                     V.emit("frost_sparkle", x, y)
             if "storm" in u.statuses:
@@ -886,12 +916,33 @@ class BattleView:
                 fl.append(Light(self.unit_pos(u), resolve_color((255, 140, 50), None), 70,
                                 0.45 + 0.1 * math.sin(t * 17 + u.id), fadein=0))
 
-    def unit_at_screen(self, pos):
-        """Юнит под курсором по спрайту (передние перекрывают задних)."""
+    def uncam(self, p):
+        """Точка экрана → мир (обратная камера: зум и тряска при касте)."""
+        if not self.gl_camera:
+            return p
+        sc = self.vfx.screen
+        (cx, cy), z, (ox, oy) = sc.center, sc.zoom, sc.offset
+        return cx + (p[0] - ox - cx) / z, cy + (p[1] - oy - cy) / z
+
+    def pick_unit(self, pos, ok=None, reach=30):
+        """Юнит под курсором: попадание в фигурку (передние перекрывают задних), иначе ближайшая фигурка в пределах
+        reach пикселей — не нужно искать клетку, на которую юнит уже перешёл. ok(u) — кого вообще можно выбрать."""
+        x, y = self.uncam(pos)
+        best = None
         for rect, u in reversed(self.sprite_rects):
-            if u.alive and rect.collidepoint(pos):
+            if not u.alive or (ok is not None and not ok(u)):
+                continue
+            if rect.collidepoint(x, y):
                 return u
-        return None
+            dx = max(rect.left - x, 0, x - rect.right)
+            dy = max(rect.top - y, 0, y - rect.bottom)
+            d = (dx * dx + dy * dy) ** 0.5
+            if d < reach and (best is None or d < best[0]):
+                best = (d, u)
+        return best[1] if best else None
+
+    def unit_at_screen(self, pos):
+        return self.pick_unit(pos, reach=0)
 
     # ---------- кадр ----------
 
@@ -918,6 +969,10 @@ class BattleView:
     def draw_world(self, surf, scene):
         self.draw_ground(surf, scene)
         self._draw_world(surf, scene)
+
+    def glow_layer(self):
+        """Для видеокарты: яркие пиксели пиксельных эффектов — источник свечения (или None)."""
+        return self.pix.glow_layer()
 
     def plane(self):
         """Для видеокарты: плоская карта земли и цвет дымки вдали."""
@@ -1137,19 +1192,21 @@ class BattleView:
                     pygame.draw.circle(surf, (blink, 50, 40), (cx, cy - 1), 2)
                     continue
                 alpha = {"fire": 90, "poison": 70, "oil": 85, "briar": 100}.get(cell.hazard, 130)
-                pygame.draw.rect(self.overlay, (*h["color"], alpha), r)
+                if not (cell.hazard in ("fire", "ice") and self.pix.on):   # огонь и лёд — поверхность (ui/pixfire.py)
+                    pygame.draw.rect(self.overlay, (*h["color"], alpha), r)
                 if cell.hazard == "briar":           # терновник: колючие штрихи
                     for i in range(5):
                         hx = r.x + 12 + (pos[0] * 31 + i * 17) % (r.w - 24)
                         hy = r.y + 16 + (pos[1] * 23 + i * 13) % (r.h - 26)
                         pygame.draw.line(surf, (40, 70, 30), (hx, hy + 8), (hx + 4, hy), 2)
                         pygame.draw.line(surf, (40, 70, 30), (hx + 4, hy), (hx + 8, hy + 7), 2)
-                if cell.hazard == "ice":
+                if cell.hazard == "ice" and not self.pix.on:
                     pygame.draw.line(surf, (235, 250, 255), (r.x + 12, r.y + 16), (r.centerx, r.centery), 2)
                     pygame.draw.line(surf, (235, 250, 255), (r.centerx, r.centery), (r.right - 16, r.y + 24), 2)
                     pygame.draw.line(surf, (235, 250, 255), (r.centerx, r.centery), (r.x + 30, r.bottom - 10), 2)
                 if cell.hazard_time != PERMANENT:
                     T.text(surf, f"{cell.hazard_time:.0f}", (r.right - 14, r.y + 4), 12, (255, 255, 255))
+        self.pix.ground(surf, c)                     # пиксельные поверхности и следы — поверх рельефа
         for b in c.corpses:                          # трупы — ресурс некроманта: кости на земле, бледнеют
             r = FR(b["cell"])
             a = int(220 * min(1.0, b["left"] / 4))
@@ -1180,10 +1237,14 @@ class BattleView:
                 continue
             fy = self.feet_pos(u)[1]
             items.append((fy - (40 if u.id in self.fallen else 0), 1, "unit", u))
+        self.pix.begin_frame(self.gl_camera)
+        items += self.pix.world_items(c)
         items.sort(key=lambda it: (it[0], it[1]))
         self.sprite_rects = []
         for _, _, kind, obj in items:
-            if kind == "prop":
+            if kind == "pix":
+                obj[0](surf, *obj[1])
+            elif kind == "prop":
                 self._draw_prop(surf, *obj)
             elif obj.id in self.fallen:
                 self._draw_downed(surf, obj)
@@ -1293,6 +1354,10 @@ class BattleView:
 
     def _draw_object(self, surf, u, scene):
         """Объект поля стоит неподвижно, вздрагивает от удара; источник — красное кольцо, охраняемый — синее."""
+        rect = self.pix.draw_object(surf, u)      # ледяная стена — обрыв ледника (ui/pixglacier.py)
+        if rect is not None:
+            self.sprite_rects.append((rect, u))
+            return
         fx, fy = self.feet_pos(u)
         a = self.anim(u)
         img = self.scaled(self.sprite_of(u, False, a.hit > HIT_T * 0.4), self.depth(u))
@@ -1344,6 +1409,8 @@ class BattleView:
         if u.cast:
             dy -= 3 + math.sin(self.clock * 8) * 1.5
         look = ("sleep" if u.asleep else u.stun_look) if u.stun > 0 else None
+        if look and self.pix.on and self.pix.spells.unit_held(u):
+            look = None                               # заморозка ещё летит — на фигурке её пока нет
         if look == "levitate":                        # невесомость — парит над землёй
             hop += 26 + 4 * math.sin(self.clock * 4 + u.id)
         if look == "stun":                            # оглушён — шатается
@@ -1379,8 +1446,10 @@ class BattleView:
         pygame.draw.ellipse(surf, T.SELECT if selected else team, shadow.inflate(4, 2), 3 if selected else 2)
         if scene.phase == "deploy" and scene.picked is u:
             pygame.draw.ellipse(surf, (120, 255, 140), shadow.inflate(16, 8), 3)
-        if u is self.hover_unit:                      # наведён в списке врагов
-            pygame.draw.ellipse(surf, (255, 255, 255), shadow.inflate(18, 9), 3)
+        if u is self.hover_unit or u is getattr(scene, "pick", None):   # под курсором или в списке врагов
+            col = T.SELECT if getattr(scene, "targeting", None) else (255, 255, 255)
+            pulse = int(3 * math.sin(self.clock * 8))
+            pygame.draw.ellipse(surf, col, shadow.inflate(20 + pulse, 10 + pulse // 2), 3)
         if look:                                      # под контролем — пульсирующее кольцо цвета контроля
             col = IC.CONTROL_COLORS.get(look, (255, 230, 120))
             pulse = int(4 + 3 * math.sin(self.clock * 7))
@@ -1389,7 +1458,8 @@ class BattleView:
         if look == "trap":
             self._draw_trap(surf, fx, fy, dk)
         surf.blit(img, rect)
-        if look:
+        froze = self.pix.on_unit(surf, u, rect, look, dk)
+        if look and not (look == "freeze" and froze):
             self._draw_control(surf, u, look, rect, fx, fy, dk)
         if u.charmed:
             for i in range(2):
@@ -1500,6 +1570,14 @@ class BattleView:
         pygame.draw.rect(surf, (20, 20, 20), (bx - 1, by - 1, bw + 2, 8))
         k = u.hp / u.max_hp
         pygame.draw.rect(surf, T.mix((230, 60, 50), (90, 220, 90), k), (bx, by, bw * k, 6))
+        if self.stats_mode() and u.level:          # режим героев: уровень слева от полоски HP
+            col = (150, 200, 255) if u.team == PLAYER else ST.level_color(u.level - self.squad_level())
+            s = str(u.level)
+            w = T.font(12, True).size(s)[0] + 8
+            box = pygame.Rect(bx - w - 3, by - 5, w, 15)
+            pygame.draw.rect(surf, (16, 16, 22), box, border_radius=4)
+            pygame.draw.rect(surf, col, box, 1, border_radius=4)
+            T.text(surf, s, box.center, 12, col, True, center=True)
         if u.shield:
             sw = min(bw, bw * u.shield / u.max_hp)
             pygame.draw.rect(surf, (235, 240, 255), (bx, by - 3, sw, 2))
@@ -1525,6 +1603,13 @@ class BattleView:
                     pygame.draw.circle(surf, T.mix(color, (0, 0, 0), 0.45), p, pr, 1)
                     if i == cur and regen:
                         pygame.draw.circle(surf, T.mix(color, (0, 0, 0), 0.35), p, 1 + (pr - 2) * timer / regen)
+
+    def stats_mode(self):
+        return bool(self.combat and (self.combat.enemy_scale or {}).get("stats"))
+
+    def squad_level(self):
+        lv = [h.level for h in self.combat.heroes(PLAYER) if h.level]
+        return ST.squad_level(lv) if lv else 1
 
     def gauge_color(self, u):
         return tuple(u.gauge["color"]) if u.gauge else T.PP_COLOR
@@ -1621,6 +1706,14 @@ class BattleView:
                 lines.append((m, (255, 190, 120)))
         elif u:
             lines.append((f"{u.name}", T.TEAM_PLAYER if u.team == PLAYER else T.TEAM_ENEMY))
+            if self.stats_mode() and u.level:
+                lines.append((f"Уровень {u.level}" + (f" — {u.title}" if u.title else ""),
+                              (150, 200, 255) if u.team == PLAYER else ST.level_color(u.level - self.squad_level())))
+                if u.proto.get("attrs"):
+                    a = u.proto["attrs"]
+                    lines.append((f"Сила {a['str']:.0f} · Ловкость {a['agi']:.0f} · Интеллект {a['int']:.0f} · "
+                                  f"крит {u.proto['crit'] * 100:.0f}% · уклон {u.proto['dodge'] * 100:.0f}%",
+                                  (190, 210, 240)))
             lines.append((f"HP {u.hp}/{u.max_hp}  броня {u.total_armor()}  атака {u.atk_damage} (дал. {u.atk_range})",
                           T.TEXT))
             if u.atk_tag:
@@ -1725,7 +1818,9 @@ class BattleView:
             pygame.draw.circle(surf, u.color, (r.x + 11, r.centery), 9)
             pygame.draw.circle(surf, (240, 200, 80) if u.boss else T.TEAM_ENEMY, (r.x + 11, r.centery), 9, 2)
             T.text(surf, u.label, (r.x + 11, r.centery), 11, (255, 255, 255), True, center=True, shadow=True)
-            T.text(surf, fit(u.name, 13, 110), (r.x + 25, r.y + 3), 13, T.TEXT)
+            name = f"[{u.level}] {u.name}" if self.stats_mode() and u.level else u.name
+            T.text(surf, fit(name, 13, 110), (r.x + 25, r.y + 3), 13,
+                   ST.level_color(u.level - self.squad_level()) if self.stats_mode() and u.level else T.TEXT)
             bx, bw = r.x + 140, 54
             pygame.draw.rect(surf, (15, 15, 15), (bx, r.y + 8, bw, 6))
             pygame.draw.rect(surf, T.mix((230, 60, 50), (90, 220, 90), max(0, u.hp) / u.max_hp),

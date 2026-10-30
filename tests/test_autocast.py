@@ -41,6 +41,8 @@ def test_heal_autocast_waits_for_threshold():
     for u in (war, archer, mage):
         for st in u.autocast.values():
             st["on"] = False
+    for st in priest.autocast.values():      # по умолчанию автокаст выключен — включаем с условием из данных
+        st["on"] = True
     war.hp = int(war.max_hp * 0.85)          # Обет жреца — от 75% HP
     steps(c, 20)
     assert not skill_events(c, priest)
@@ -113,7 +115,23 @@ def test_branch_at_prep_resets_autocast():
     run = prof.start_run("reeds", 1)
     m = run.squad[2]
     st = run.autocast_for(m)["fireball"]
-    assert st["on"] and run.proto(m)["skill_defs"]["fireball"]["target"] == "enemy"
+    assert not st["on"] and run.proto(m)["skill_defs"]["fireball"]["target"] == "enemy"   # умолчание новой ветки
+
+
+def test_autocast_off_by_default_and_kept_between_runs(tmp_path):
+    prof = Profile(DATA, path=str(tmp_path / "p.json"))
+    run = prof.start_run("reeds", 1)
+    m = run.squad[0]
+    sts = run.autocast_for(m)
+    assert sts and not any(st["on"] for st in sts.values())
+    sid = next(iter(sts))
+    sts[sid]["on"] = True
+    prof.remember_autocast(run)                       # вылазку бросили — настройка уже в профиле
+    again = Profile(DATA, path=str(tmp_path / "p.json"))
+    assert again.heroes[m.cls]["autocast"][sid]["on"]
+    run2 = again.start_run("reeds", 2)
+    m2 = next(x for x in run2.squad if x.cls == m.cls)
+    assert run2.autocast_for(m2)[sid]["on"]
 
 
 def test_chain_line_thorns_transfer_execute():

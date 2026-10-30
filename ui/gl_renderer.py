@@ -60,8 +60,9 @@ uniform sampler2D u_tex;
 uniform sampler2D u_light;
 uniform vec2 u_screen;
 uniform float u_dim;
+uniform float u_alpha;
 void main() {
-    vec4 c = texture(u_tex, v_uv);
+    vec4 c = texture(u_tex, v_uv) * u_alpha;
     vec3 L = texture(u_light, gl_FragCoord.xy / u_screen).rgb;
     L = L / (1.0 + L);                              // насыщение: десять вспышек не выжигают поле добела
     vec3 rgb = c.rgb * (1.0 - u_dim) * (1.0 + L * 1.1) + L * 0.04;
@@ -141,9 +142,10 @@ PARTICLE_FS = """
 in vec2 v_uv; in vec4 v_color;
 out vec4 f;
 uniform sampler2D u_atlas;
+uniform float u_fx;
 void main() {
     vec4 t = texture(u_atlas, v_uv);                    // атлас с предумноженной альфой
-    f = vec4(t.rgb * v_color.rgb * v_color.a, t.a * v_color.a);
+    f = vec4(t.rgb * v_color.rgb * v_color.a, t.a * v_color.a) * u_fx;
 }
 """
 
@@ -182,6 +184,7 @@ SFX_FS = """
 #version 330
 in vec2 v_lc; in vec4 v_color; in vec4 v_p; in vec2 v_q; in float v_rot;
 out vec4 f;
+uniform float u_fx;
 """ + COMMON_FS + """
 void main() {
     vec2 lc = v_lc;
@@ -272,7 +275,7 @@ void main() {
         col = whiten(col, exp(-r * r * 6.0));
     }
     float A = clamp(I, 0.0, 4.0) * v_color.a;
-    f = vec4(col * A, clamp(A, 0.0, 1.0));
+    f = vec4(col * A, clamp(A, 0.0, 1.0)) * u_fx;
 }
 """
 
@@ -319,6 +322,7 @@ RIBBON_FS = """
 #version 330
 in vec2 v_uv; in vec4 v_color; in vec4 v_p;
 out vec4 f;
+uniform float u_fx;
 """ + COMMON_FS + """
 void main() {
     float u = v_uv.x, v = v_uv.y;
@@ -357,7 +361,7 @@ void main() {
         col = whiten(col, core * 0.7);
     }
     float A = max(I, 0.0) * v_color.a;
-    f = vec4(col * A, clamp(A, 0.0, 1.0));
+    f = vec4(col * A, clamp(A, 0.0, 1.0)) * u_fx;
 }
 """
 
@@ -511,6 +515,7 @@ class GLRenderer:
         # буферы
         self.tex_ground = ctx.texture((self.w, self.h), 4)
         self.tex_units = ctx.texture((self.w, self.h), 4)
+        self.tex_glow = ctx.texture((self.w, self.h), 4)     # яркие пиксели пиксельных эффектов (ui/pixfx.py)
         self.tex_ui = ctx.texture((self.w, self.h), 4)
         self.scene = ctx.texture((self.w, self.h), 4, dtype="f2")
         self.fbo_scene = ctx.framebuffer([self.scene])
@@ -575,13 +580,18 @@ class GLRenderer:
         prog["u_cam"] = (float(cx), float(cy), float(zoom))
         prog["u_shake"] = (float(ox), float(oy))
 
-    def _instances(self, rows, tex, blend, sc):
+    def _fx(self, sc):
+        """Яркость эффектов: на паузе приглушаются, чтобы было видно поле и фигурки."""
+        return 1.0 - 0.6 * (sc.calm if sc else 0.0)
+
+    def _instances(self, rows, tex, blend, sc, solid=False):
         n = min(len(rows), self.cap)
         if not n:
             return
         self.ctx.blend_func = blend
         tex.use(0)
         self.prog_p["u_atlas"] = 0
+        self.prog_p["u_fx"] = 1.0 if solid else self._fx(sc)
         self._cam(self.prog_p, sc)
         self.inst.write(rows[:n].tobytes())
         self.vao_p.render(moderngl.TRIANGLE_STRIP, instances=n)
@@ -594,6 +604,8 @@ class GLRenderer:
         p = self.prog_dist if distort else self.prog_sfx
         self.noise.use(1)
         p["u_noise"] = 1
+        if not distort:
+            p["u_fx"] = self._fx(sc)
         self._cam(p, sc)
         self.sfx_buf.write(rows[:n].tobytes())
         (self.vao_dist if distort else self.vao_sfx).render(moderngl.TRIANGLE_STRIP, instances=n)
@@ -605,17 +617,19 @@ class GLRenderer:
         self.ctx.blend_func = blend
         self.noise.use(1)
         self.prog_rib["u_noise"] = 1
+        self.prog_rib["u_fx"] = self._fx(sc)
         self._cam(self.prog_rib, sc)
         self.rib_buf.write(verts[:n].tobytes())
         self.vao_rib.render(moderngl.TRIANGLES, vertices=n)
 
-    def _layer(self, tex, sc, blend):
+    def _layer(self, tex, sc, blend, alpha=1.0):
         self.ctx.blend_func = blend
         tex.use(0)
         self.lightmap.use(2)
         p = self.prog_layer
         p["u_tex"], p["u_light"] = 0, 2
-        p["u_dim"] = sc.dim * 0.65 if sc else 0.0
+        p["u_alpha"] = alpha
+        p["u_dim"] = sc.dim * 0.45 if sc else 0.0
         self._cam(p, sc)
         self.vao["layer"].render(moderngl.TRIANGLE_STRIP)
 
@@ -634,7 +648,7 @@ class GLRenderer:
         self.lightmap.use(2)
         p = self.prog_plane
         p["u_flat"], p["u_light"] = 0, 2
-        p["u_dim"] = sc.dim * 0.65 if sc else 0.0
+        p["u_dim"] = sc.dim * 0.45 if sc else 0.0
         p["u_flipv"] = 0.0
         self._cam(p, sc)
         sp = P.shader_params()
@@ -643,9 +657,9 @@ class GLRenderer:
         p["u_fog"] = tuple(float(v) for v in fog)
         self.vao_plane.render(moderngl.TRIANGLE_STRIP)
 
-    def render(self, world, vfx=None, ui=None, units=None, plane=None):
+    def render(self, world, vfx=None, ui=None, units=None, plane=None, glow=None):
         """world — земля (или весь мир, если units нет), units — прозрачный слой юнитов, ui — интерфейс.
-        plane — (плоская карта, цвет дымки): земля HD-2D вместо world."""
+        plane — (плоская карта, цвет дымки): земля HD-2D вместо world. glow — яркие пиксели эффектов для bloom."""
         ctx = self.ctx
         sc = vfx.screen if vfx else None
         add = (moderngl.ONE, moderngl.ONE)
@@ -653,6 +667,8 @@ class GLRenderer:
             self._upload(self.tex_ground, world)
         if units is not None:
             self._upload(self.tex_units, units)
+        if glow is not None:
+            self._upload(self.tex_glow, glow)
         groups = vfx.batches(self.uvs) if vfx else {g: np.zeros((0, FLOATS), np.float32) for g in GROUPS}
         sfx = vfx.sfx_rows() if vfx else {}
         ribs = vfx.ribbon_verts() if vfx else {}
@@ -686,10 +702,14 @@ class GLRenderer:
             self._ribbons(ribs["alpha"], self.premul, sc)
             self._sfx(sfx["air_alpha"], self.premul, sc)
             if self.props_tex is not None:
-                self._instances(props, self.props_tex, self.premul, sc)
+                self._instances(props, self.props_tex, self.premul, sc, solid=True)
             self._sfx(sfx["air_add"], add, sc)
             self._ribbons(ribs["add"], add, sc)
             self._instances(groups["air_add"], self.atlas, add, sc)
+        # 3б. фигурки просвечивают сквозь эффекты: слой юнитов ещё раз, полупрозрачно (где эффекта нет —
+        #     кадр не меняется: тот же цвет поверх того же цвета)
+        if units is not None and vfx is not None:
+            self._layer(self.tex_units, sc, self.premul, 0.35 + 0.45 * sc.calm)
         # 4. источник bloom: все светящиеся эффекты ещё раз
         self.fbo_light.use()
         self.fbo_light.clear()
@@ -699,6 +719,8 @@ class GLRenderer:
             self._sfx(sfx["air_add"], add, sc)
             self._ribbons(ribs["add"], add, sc)
             self._instances(groups["air_add"], self.atlas, add, sc)
+        if glow is not None:                  # пиксельные эффекты светятся только двумя верхними цветами палитры
+            self._layer(self.tex_glow, sc, add, 0.95 * self._fx(sc))
         # 5. искажение (половинное разрешение)
         self.fbo_dist.use()
         self.fbo_dist.clear()
@@ -743,7 +765,7 @@ class GLRenderer:
         p = self.prog_combine
         p["u_scene"], p["u_b1"], p["u_b2"], p["u_b3"], p["u_dist"] = 0, 1, 2, 3, 4
         p["u_screen"] = (float(self.w), float(self.h))
-        p["u_bloom"] = self.bloom * SETTINGS["bloom"]
+        p["u_bloom"] = self.bloom * SETTINGS["bloom"] * self._fx(sc)
         p["u_flipv"] = 0.0
         flash = (np.array(sc.flash_color) * sc.flash * FLASH_K) if sc and sc.flash > 0 else np.zeros(3)
         p["u_flash"] = tuple(float(v) for v in flash)

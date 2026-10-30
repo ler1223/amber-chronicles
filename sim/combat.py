@@ -7,6 +7,7 @@ import random
 from . import autocast
 from . import conditions as C
 from . import movement as M
+from . import stats as S
 from .rules import Rules
 from .ai import TeamAI
 from .grid import PERMANENT, Grid, cheb, sign
@@ -38,6 +39,7 @@ class Combat:
         self.result = None
         self._skill = None
         self._intercepting = False
+        self._basic = False       # идёт обычная атака (режим героев: скейл от основного атрибута)
         self.enraged = 0          # ступень ярости затянутого боя
         self.traps = {}           # id ловчего -> клетки его капканов
         self.corpses = []         # трупы врагов: {"cell", "left", "name"} — ресурс некроманта
@@ -66,10 +68,7 @@ class Combat:
         foes += self._difficulty_adds(difficulty, {p for _, p in foes})
         for etype, pos in foes:
             u = self._spawn(ENEMY, etype, data.enemies[etype], pos)
-            u.max_hp = u.hp = int(round(u.max_hp * scale.get("hp", 1.0)))
-            u.atk_damage = int(round(u.atk_damage * scale.get("damage", 1.0)))
-            if u.frost_armor:
-                u.shield, u.shield_time = u.frost_armor["shield"], 1e9
+            self._scale_enemy(u, scale)
         self._apply_affixes(self.diff.get("affixes", 0))
         hideable = [u for u in self.alive(ENEMY) if not u.boss]
         for u in self.rng.sample(hideable, min(len(hideable), self.enc.get("fog", 0))):
@@ -104,6 +103,30 @@ class Combat:
         self.ais = [TeamAI(self, t) for t in ai_teams]
         # отряд игрока применяет навыки по настройкам автокаста; в демо-режиме — все навыки без условий
         self.autocaster = autocast.AutoCaster(self, PLAYER, force=PLAYER in ai_teams)
+
+    def _scale_enemy(self, u, scale):
+        """Сила врага: множители угрозы (основа) или уровень региона с титулом (режим героев)."""
+        if scale.get("stats"):
+            lvl = scale["level"]
+            if u.elite or u.boss:
+                lvl += self.data.stats_mode["enemy"]["elite_levels"]
+            else:
+                t = S.roll_title(self.data, self.rng)
+                if t:
+                    lvl += t["levels"]
+                    u.title = t["name"]
+                    u.name = f"{u.name} ({t['name']})"
+            u.level = lvl
+            k = S.enemy_mults(self.data, lvl)
+            u.power *= k["power"]
+            u.armor += int(round(k["armor"]))
+        else:
+            k = scale
+        u.max_hp = u.hp = int(round(u.max_hp * k.get("hp", 1.0)))
+        u.atk_damage = int(round(u.atk_damage * k.get("damage", 1.0)))
+        u.base.update(atk_damage=u.atk_damage, armor=u.armor)
+        if u.frost_armor:
+            u.shield, u.shield_time = u.frost_armor["shield"], 1e9
 
     def _fit_positions(self, wanted, spawns, n):
         """Расстановка игрока на этой карте: занятая или непроходимая клетка — ближайшая свободная клетка высадки."""
@@ -474,13 +497,8 @@ class Combat:
         cell = self.free_near(pos, near)
         if cell is None:
             return None
-        scale = self.enemy_scale or {}
         u = self._spawn(ENEMY, etype, self.data.enemies[etype], cell)
-        u.max_hp = u.hp = int(round(u.max_hp * scale.get("hp", 1.0)))
-        u.atk_damage = int(round(u.atk_damage * scale.get("damage", 1.0)))
-        u.base["atk_damage"] = u.atk_damage
-        if u.frost_armor:
-            u.shield, u.shield_time = u.frost_armor["shield"], 1e9
+        self._scale_enemy(u, self.enemy_scale or {})
         u.ai_timer = 0.3
         self.emit("spawn", unit=u)
         return u
@@ -1041,7 +1059,11 @@ class Combat:
             self._use_passive(u, f"урон ×{p['mult']:g}", t)
             amount *= p["mult"]
         self.emit("attack", src=u, dst=t, kind=kind, tag=tag)
-        dealt = self.damage(t, amount, u, tag, kind)
+        self._basic = True
+        try:
+            dealt = self.damage(t, amount, u, tag, kind)
+        finally:
+            self._basic = False
         if u.lifesteal and dealt and u.alive:
             self.heal(u, int(round(dealt * u.lifesteal)))
         u.ambush = 1.0
@@ -1182,7 +1204,7 @@ class Combat:
             if t == "damage":
                 self._hit(caster, v, eff)
             elif t == "heal":
-                amount = int(round(eff["amount"] * caster.power))
+                amount = int(round(eff["amount"] * caster.power * caster.proto.get("scale", {}).get("heal", 1.0)))
                 real = self.heal(v, amount)
                 if real > 0 and v is not caster:
                     self.gain(caster, "heal_given")
@@ -1192,7 +1214,7 @@ class Combat:
                     v.shield_time = max(v.shield_time, 6.0)
                     self.emit("shield", unit=v, amount=excess)
             elif t == "shield":
-                amount = int(round(eff["amount"] * caster.power))
+                amount = int(round(eff["amount"] * caster.power * caster.proto.get("scale", {}).get("heal", 1.0)))
                 v.shield, v.shield_time = amount, eff["duration"]
                 self.emit("shield", unit=v, amount=amount)
             elif t == "buff":
@@ -1481,6 +1503,18 @@ class Combat:
         """Полный конвейер удара. kind: melee/ranged/spell — прямой удар; dot/hazard/reaction/collision — без брони
         и пассивок."""
         if not target.alive:
+            return 0
+        sc = attacker.proto.get("scale") if attacker is not None and not self._intercepting else None
+        if sc:                                 # режим героев: урон растёт от атрибута своего вида
+            school = "basic" if self._basic else (kind if kind in self.data.stats_mode["schools"] else None)
+            amount *= sc.get(school, 1.0) if school else 1.0
+            if kind in DIRECT and attacker.proto.get("crit") and self.rng.random() < attacker.proto["crit"]:
+                amount *= attacker.proto.get("crit_mult", 1.75)
+                self.emit("crit", unit=target, src=attacker)
+        dg = target.proto.get("dodge")
+        if dg and kind in ("melee", "ranged") and attacker is not None and not self._intercepting \
+                and self.rng.random() < dg:
+            self.emit("dodge", unit=target)
             return 0
         if target.obj:
             return self._hit_object(target, amount, attacker, tag)

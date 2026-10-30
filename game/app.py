@@ -7,6 +7,14 @@ from game.world_scene import WorldScene
 from sim.profile import Profile
 
 
+def stats_path(base):
+    """Профиль режима героев рядом с основным: profile.json → stats.json, sandbox.json → sandbox_stats.json."""
+    import os
+    name = os.path.basename(base)
+    name = "stats.json" if name == "profile.json" else name.replace(".json", "") + "_stats.json"
+    return os.path.join(os.path.dirname(os.path.abspath(base)), name)
+
+
 class App:
     """profile — sim.profile.Profile; по умолчанию профиль в памяти (без сохранения).
     seed — сид первой вылазки, следующие берут seed + номер вылазки."""
@@ -49,11 +57,33 @@ class App:
 
     def new_game(self):
         path = self.profile.path
-        self.profile = Profile(self.data, None)
+        self.profile = Profile(self.data, None, mode=self.profile.mode)
         self.profile.path = path
         self.profile.save()
 
+    def mode_path(self, mode):
+        """Режим героев хранится отдельно (save/stats.json рядом с основным профилем) — основа не трогается."""
+        base = getattr(self, "_base_path", None) or self.profile.path
+        if self.profile.mode == "base":
+            self._base_path = base = self.profile.path
+        if mode == "base" or base is None:
+            return base
+        return stats_path(base)
+
+    def switch_mode(self, mode):
+        """Основная игра ⇄ режим героев: свой профиль у каждого, прогресс не смешивается."""
+        if mode == self.profile.mode:
+            return
+        path = self.mode_path(mode)
+        sandbox = self.profile.sandbox
+        prof = Profile(self.data, path, sandbox=sandbox, mode=mode)
+        prof.mode = mode
+        prof.path = path
+        self.profile = prof
+        self.run = None
+
     def to_world(self):
+        self.profile.remember_autocast(self.run)    # вылазку бросили — настройки автокаста не теряются
         self.run = None
         self.switch(WorldScene(self))
 
@@ -78,6 +108,7 @@ class App:
 
     def battle_done(self, combat, formation):
         summary = self.run.finish_battle(combat, formation)
+        self.profile.remember_autocast(self.run)
         if self.run.result:
             end = self.profile.finish_run(self.run)
 

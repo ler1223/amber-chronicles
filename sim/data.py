@@ -32,7 +32,8 @@ class GameData:
         self.summons = load("summons.json")
         self.objects = load("objects.json")
         self.synergy = load("synergy.json")
-        self.rules = load("rules.json")           # правила взаимодействий по тегам (sim/rules.py)
+        self.rules = load("rules.json")
+        self.stats_mode = load("stats_mode.json")  # режим героев: атрибуты и уровни (sim/stats.py)           # правила взаимодействий по тегам (sim/rules.py)
         tr = load("traits.json")                  # особенности юнитов: плавает, тяжёлый, недвижим…
         self.traits_def = tr["defs"]
         for group in (self.classes, self.enemies, self.summons):

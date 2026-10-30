@@ -1,7 +1,7 @@
 """Экраны меты между вылазками: подготовка героев (путь, ветки, таланты, снаряжение) и лагерь (янтарь)."""
 import pygame
 
-from sim import meta
+from sim import meta, stats
 from sim.build import class_skills
 from sim.run import RARITY_NAMES, SLOT_NAMES, Run
 from ui import projection as P
@@ -90,6 +90,7 @@ class HeroesScene(MetaScene):
         from ui.skill_preview import SkillPreview
         self.cls = cls or app.profile.squad[0]
         self.preview = None
+        self.windows = self.WINDOWS + ((("stats", "Характеристики"),) if app.profile.mode == "stats" else ())
         self.window = window
         self.skill_preview = SkillPreview(app.data, self.PREVIEW)
         self.pv = None             # что показывает превью: (навык, ветка, ступень) — ветка None = основа
@@ -203,8 +204,10 @@ class HeroesScene(MetaScene):
             self.cls = units[(units.index(self.cls) + 1) % len(units)]
             self.preview = self.pv = None
             self.pv_dirty = True
-        elif k in (pygame.K_F1, pygame.K_F2, pygame.K_F3):
-            self.set_window(self.WINDOWS[(pygame.K_F1, pygame.K_F2, pygame.K_F3).index(k)][0])
+        elif k in (pygame.K_F1, pygame.K_F2, pygame.K_F3, pygame.K_F4):
+            i = (pygame.K_F1, pygame.K_F2, pygame.K_F3, pygame.K_F4).index(k)
+            if i < len(self.windows):
+                self.set_window(self.windows[i][0])
 
     def act(self, action):
         data, prof, hero = self.app.data, self.app.profile, self.hero
@@ -222,7 +225,7 @@ class HeroesScene(MetaScene):
             self.pv_dirty = True
             self.preview = None
             return
-        if self.view_only and kind in ("path", "branch", "talent", "loadout"):
+        if self.view_only and kind in ("path", "branch", "talent", "loadout", "attr", "attr_reset"):
             if kind == "branch":
                 self.show_skill(*action[1:])
             why = prof.hero_lock_reason(self.cls) or "Герой ещё не открыт"
@@ -241,6 +244,13 @@ class HeroesScene(MetaScene):
             ok = meta.toggle_talent(data, self.cls, hero, action[1])
             if not ok:
                 self.say("Не хватает очков мастерства")
+        elif kind == "attr":
+            ok = prof.add_point(self.cls, action[1], action[2])
+            if not ok:
+                self.say("Нет свободных очков атрибутов — они даются за уровень героя (3 за уровень)")
+        elif kind == "attr_reset":
+            prof.reset_points(self.cls)
+            self.say("Очки атрибутов возвращены — распределите заново")
         elif kind == "loadout":
             ok = prof.toggle_loadout(self.cls, action[1])
             if not ok:
@@ -259,8 +269,9 @@ class HeroesScene(MetaScene):
             bonus = {k: v for k, v in prof.bonuses().items() if k != "start_relics"}
             h = prof.heroes[self.cls]
             build = {"cls": self.cls, "path": h["path"], "branches": h["branches"], "talents": h["talents"],
-                     "mastery": prof.mastery(self.cls), "autocast": h["autocast"], "items": list(h["loadout"])}
-            run = Run(self.app.data, 0, None, bonus, [build])
+                     "mastery": prof.mastery(self.cls), "autocast": h["autocast"], "items": list(h["loadout"]),
+                     "rpg": h["rpg"]}
+            run = Run(self.app.data, 0, None, bonus, [build], mode=prof.mode)
             self.preview = run.proto(run.squad[0])
         return self.preview
 
@@ -306,7 +317,7 @@ class HeroesScene(MetaScene):
                                                      f" — {prof.hero_lock_reason(cls) or 'ещё не открыт'}"
                                                      ", можно смотреть")
             self.hit(r, ("hero", cls), tip)
-        for i, (wid, title) in enumerate(self.WINDOWS):
+        for i, (wid, title) in enumerate(self.windows):
             r = pygame.Rect(24 + i * 250, 116, 240, 32)
             on = wid == self.window
             pygame.draw.rect(surf, (52, 56, 68) if on else T.PANEL, r, border_top_left_radius=8,
@@ -321,9 +332,85 @@ class HeroesScene(MetaScene):
         elif self.window == "skills":
             self._draw_skills(surf, pygame.Rect(24, 154, 548, 552))
             self._draw_skill_info(surf, pygame.Rect(588, 544, 668, 162))
+        elif self.window == "stats":
+            self._draw_stats(surf, pygame.Rect(24, 154, 600, 552), pygame.Rect(640, 154, 616, 552))
         else:
             self._draw_talents(surf, pygame.Rect(24, 154, 600, 552), pygame.Rect(640, 154, 616, 552))
         self.draw_footer(surf)
+
+    def _draw_stats(self, surf, left, right):
+        """Режим героев: уровень, опыт, атрибуты (+ очки), что они дают и как скейлятся навыки."""
+        data, hero = self.app.data, self.hero
+        rpg = hero["rpg"]
+        der = stats.derive(data, self.cls, rpg)
+        k = data.stats_mode
+        p = self.proto()
+        for r in (left, right):
+            pygame.draw.rect(surf, T.PANEL, r, border_radius=10)
+        x, y = left.x + 16, left.y + 12
+        lvl, cap = rpg["level"], k["level_cap"]
+        T.text(surf, f"Уровень {lvl}" + (" (максимум)" if lvl >= cap else ""), (x, y), 24, (150, 200, 255), True)
+        if lvl < cap:
+            need = stats.xp_to_next(data, lvl)
+            W.bar(surf, pygame.Rect(x + 190, y + 10, left.w - 230, 10), rpg["xp"] / need, W.XP)
+            T.text(surf, f"опыт {rpg['xp']}/{need}", (x + 190, y + 24), 12, T.TEXT_DIM)
+        y += 52
+        free = stats.points_free(data, rpg)
+        T.text(surf, f"Свободных очков: {free}", (x, y), 17, TALENT_COLOR if free else T.TEXT_DIM, True)
+        rb = pygame.Rect(left.right - 186, y - 4, 170, 28)
+        W.button(surf, rb, "Сбросить очки", self.mouse, accent=(200, 160, 120))
+        self.hit(rb, ("attr_reset",), "Вернуть все вложенные очки (бесплатно)")
+        y += 36
+        c = k["classes"][self.cls]
+        for a in stats.ATTRS:
+            ad = k["attrs"][a]
+            r = pygame.Rect(x - 4, y, left.w - 24, 104)
+            prim = a == c["primary"]
+            pygame.draw.rect(surf, (36, 38, 46), r, border_radius=8)
+            pygame.draw.rect(surf, tuple(ad["color"]) if prim else T.PANEL_EDGE, r, 2 if prim else 1,
+                             border_radius=8)
+            T.text(surf, ad["name"] + ("  · основной" if prim else ""), (r.x + 12, r.y + 8), 18, tuple(ad["color"]),
+                   True)
+            T.text(surf, f"{der['attrs'][a]:.0f}", (r.x + 230, r.y + 4), 26, T.TEXT, True)
+            T.text(surf, f"старт {c['start'][a]} · +{c['gain'][a]:g} за уровень · вложено {rpg['points'][a]}",
+                   (r.x + 12, r.y + 34), 13, T.TEXT_DIM)
+            for i, line in enumerate(T.wrap(ad["desc"], 13, r.w - 150)[:2]):
+                T.text(surf, line, (r.x + 12, r.y + 54 + i * 17), 13, (200, 205, 220))
+            for j, n in enumerate((1, 5)):
+                b = pygame.Rect(r.right - 120 + j * 58, r.y + 10, 52, 34)
+                W.button(surf, b, f"+{n}", self.mouse, free >= n, accent=tuple(ad["color"]))
+                self.hit(b, ("attr", a, n), f"Вложить {n} в «{ad['name']}»")
+            y += 112
+        # что получилось
+        x, y = right.x + 16, right.y + 12
+        T.text(surf, "Характеристики", (x, y), 20, T.TEXT, True)
+        y += 34
+        rows = [("Здоровье", f"{p['hp']}"), ("Броня", f"{p['armor']:g}"),
+                ("Атака", f"{p['attack']['damage']} × {der['scale']['basic']:.2f} (от основного атрибута)"),
+                ("Атака раз в", f"{p['attack']['cooldown']:.2f} с"), ("AP", f"{p['ap_max']}"),
+                ("AP восстанавливается", f"1 за {p['ap_regen']:.2f} с"),
+                ("Крит", f"{der['crit'] * 100:.1f}% (урон ×{der['crit_mult']:g})"),
+                ("Уклонение", f"{der['dodge'] * 100:.1f}% от атак оружием")]
+        for name, val in rows:
+            T.text(surf, name, (x, y), 15, T.TEXT_DIM)
+            T.text(surf, val, (x + 230, y), 15, T.TEXT, True)
+            y += 24
+        y += 12
+        T.text(surf, "Скейлы навыков", (x, y), 18, BRANCH_COLOR, True)
+        y += 28
+        names = {"melee": "Ближние навыки (Сила)", "collision": "Столкновения (Сила)", "ranged": "Стрелы (Ловкость)",
+                 "spell": "Заклинания (Интеллект)", "reaction": "Реакции стихий (Интеллект)",
+                 "heal": "Лечение и щиты (Интеллект)"}
+        for school, name in names.items():
+            v = der["scale"].get(school, 1.0)
+            T.text(surf, name, (x, y), 15, T.TEXT_DIM)
+            T.text(surf, f"×{v:.2f}", (x + 300, y), 15, (150, 240, 160) if v > 1.001 else T.TEXT, True)
+            y += 22
+        y += 10
+        for line in T.wrap("Прибавки считаются от стартовых атрибутов героя: на 1 уровне он такой же, как в основной "
+                           "игре. Враги регионов тоже растут уровнями — ниже уровнем фармятся легко.", 13, right.w - 32):
+            T.text(surf, line, (x, y), 13, T.TEXT_DIM)
+            y += 17
 
     def _draw_skill_info(self, surf, rect):
         """Под превью: что именно показано — цена, дальность, описание ступени."""
@@ -339,6 +426,19 @@ class HeroesScene(MetaScene):
             ([f"каст {sk['cast']:g}с"] if sk["cast"] else []) + ([f"дал. {sk['range']}"] if sk["range"] else []) + \
             ([f"радиус {sk['radius']}"] if sk.get("radius") else []) + ([f"кд {sk['cooldown']:g}с"] if sk["cooldown"] else [])
         T.text(surf, " · ".join(bits), (x, y + 26), 14, T.AP_COLOR)
+        sc = self.proto().get("scale")
+        if sc:                                    # режим героев: от чего растёт навык
+            schools = []
+            for e in sk["effects"] + [x for e in sk["effects"] if e["type"] == "delay" for x in e["effects"]]:
+                if e["type"] in ("heal", "shield"):
+                    schools.append("heal")
+                elif e.get("amount") is not None:
+                    schools.append(e.get("kind", "melee" if e["type"] == "push" else "spell"))
+            attr = {"melee": "Сила", "collision": "Сила", "ranged": "Ловкость", "spell": "Интеллект",
+                    "reaction": "Интеллект", "heal": "Интеллект"}
+            parts = [f"{attr.get(s, '?')} ×{sc.get(s, 1.0):.2f}" for s in dict.fromkeys(schools) if s in attr]
+            if parts:
+                T.text(surf, "Скейл: " + ", ".join(parts), (x + 330, y + 26), 14, (150, 200, 255), True)
         y += 48
         text = sk["desc"]
         if b:

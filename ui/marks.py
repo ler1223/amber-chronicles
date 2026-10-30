@@ -137,3 +137,8 @@ class MarkLayer:
         else:
             self.surf.blit(img, (x - img.get_width() / 2, y - img.get_height() / 2))
         self.count += 1
+
+    def stamp_surface(self, img, x, y):
+        """Готовая картинка (пиксельная подпалина, иней) центром в точку (x, y) плоской карты."""
+        self.surf.blit(img, (round(x - img.get_width() / 2), round(y - img.get_height() / 2)))
+        self.count += 1

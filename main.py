@@ -9,6 +9,7 @@ python main.py --autoplay       — отрядом в боях управляе�
 python main.py --battle 1 --autoplay --screenshot out.png --seconds 6
                                 — без окна: прокрутить и сохранить кадр
 python main.py --cpu            — без OpenGL (эффекты упрощённо, без свечения)
+python main.py --stats          — режим героев: уровни, атрибуты, скейлы (свой профиль save/stats.json)
 python main.py --sandbox        — песочница: открыто всё (свой профиль save/sandbox.json, настоящий не трогается);
                                   в бою F7 — полные AP, перезарядки и шкалы отряду, F8 — мгновенная победа
 """
@@ -22,6 +23,7 @@ parser.add_argument("--autoplay", action="store_true")
 parser.add_argument("--profile", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "save", "profile.json"))
 parser.add_argument("--new-profile", action="store_true")
 parser.add_argument("--sandbox", action="store_true")
+parser.add_argument("--stats", action="store_true")
 parser.add_argument("--cpu", action="store_true")
 parser.add_argument("--screenshot")
 parser.add_argument("--seconds", type=float, default=3.0)
@@ -68,9 +70,15 @@ def main():
         path = None if args.screenshot else args.profile
         if args.sandbox and not args.screenshot:
             path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save", "sandbox.json")
-        profile = Profile(data, None if args.new_profile else path, sandbox=args.sandbox)
+        base_path = path
+        if args.stats and path:            # режим героев — свой профиль save/stats.json
+            from game.app import stats_path
+            path = stats_path(path)
+        profile = Profile(data, None if args.new_profile else path, sandbox=args.sandbox,
+                          mode="stats" if args.stats else "base")
         profile.path = path
         holder = App(data, args.seed, args.autoplay, profile, start="world" if args.screenshot else "title")
+        holder._base_path = base_path
 
     if args.screenshot:
         frames = int(args.seconds * 60)

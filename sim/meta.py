@@ -8,7 +8,8 @@ from .build import class_skills
 
 
 def new_hero():
-    return {"xp": 0, "path": None, "branches": {}, "talents": [], "autocast": {}, "loadout": [], "bonus_points": 0}
+    return {"xp": 0, "path": None, "branches": {}, "talents": [], "autocast": {}, "loadout": [], "bonus_points": 0,
+            "rpg": {"level": 1, "xp": 0, "points": {"str": 0, "agi": 0, "int": 0}}}    # режим героев
 
 
 def mastery_level(data, xp):

@@ -153,3 +153,38 @@ def test_draw_route_with_right_mouse():
     frame(s)                                           # предпросмотр маршрута рисуется
     mouse(s, pygame.MOUSEBUTTONUP, T.cell_center(cells[-1]), button=3)
     assert war.order["type"] == "path" and war.order["cells"] == cells and s.route is None
+
+
+def test_pick_moving_unit_near_sprite_and_targeting_filter():
+    s = BattleScene(DATA, 0)
+    key(s, pygame.K_RETURN)
+    frame(s)
+    war = s.combat.alive(PLAYER)[0]
+    s.combat.order_move(war, (war.cell[0] + 1, war.cell[1]))
+    s.combat.step()                                    # логически уже на новой клетке, фигурка — в пути
+    frame(s)
+    rect = next(r for r, u in s.view.sprite_rects if u is war)
+    near = (rect.right + 12, rect.centery)             # мимо фигурки, но рядом
+    assert s.view.pick_unit(near) is war
+    assert s.combat.unit_at(s.cell_at(*rect.center)) is war
+    foe = s.combat.alive(ENEMY)[0]
+    s.selected = s.combat.alive(PLAYER)[2]             # маг: огненный шар — по клетке, ледяной… берём врага
+    s.targeting = next(sid for sid in s.selected.skills if s.selected.skill_defs[sid]["target"] == "enemy") \
+        if any(s.selected.skill_defs[x]["target"] == "enemy" for x in s.selected.skills) else None
+    if s.targeting:
+        fr = next(r for r, u in s.view.sprite_rects if u is foe)
+        assert s.view.pick_unit(fr.center, s.pick_filter()) is foe
+        assert s.view.pick_unit(rect.center, s.pick_filter()) is not war
+
+
+def test_pause_calms_screen_effects():
+    s = BattleScene(DATA, 0)
+    key(s, pygame.K_RETURN)
+    sc = s.view.vfx.screen
+    s.view.vfx.screen_fx(dim=0.6, dim_time=5, bars=1.0, bars_time=5, flash=1.0)
+    s.paused = False
+    frame(s, 1 / 30)
+    s.paused = True
+    for _ in range(30):
+        frame(s, 1 / 30)
+    assert sc.calm > 0.9 and sc.dim < 0.05 and sc.bars < 0.05

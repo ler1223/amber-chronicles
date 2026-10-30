@@ -7,17 +7,18 @@ import copy
 import json
 import os
 
-from . import meta
+from . import meta, stats
 from .run import Run
 
-VERSION = 4
+VERSION = 5                 # v5: автокаст по умолчанию выключен — в старых сохранениях выключаем один раз
 
 
 class Profile:
-    def __init__(self, data, path=None, sandbox=False):
+    def __init__(self, data, path=None, sandbox=False, mode="base"):
         """sandbox — песочница: открыто всё (герои, главы, сложности, регионы, лагерь, арсенал), очков с запасом."""
         self.data = data
         self.sandbox = sandbox
+        self.mode = mode           # "base" — основная игра, "stats" — режим героев (атрибуты, уровни, sim/stats.py)
         self.cfg = data.config["meta"]
         self.path = path
         self.biome_id = self.cfg["biome"]          # выбранная глава
@@ -57,8 +58,9 @@ class Profile:
     def _load(self):
         with open(self.path, encoding="utf-8") as f:
             d = json.load(f)
-        if d.get("version") not in (1, 2, 3, VERSION) or d.get("biome") not in self.data.biomes:
+        if d.get("version") not in (1, 2, 3, 4, VERSION) or d.get("biome") not in self.data.biomes:
             return  # чужой формат — начинаем заново
+        self.mode = d.get("mode", self.mode)
         self.biome_id = d["biome"]
         if d.get("difficulty") in self.data.config["difficulties"]:
             self.difficulty = d["difficulty"]
@@ -85,6 +87,9 @@ class Profile:
             if cls in self.heroes:
                 hero = meta.new_hero()
                 hero.update({k: v for k, v in h.items() if k in hero})
+                if d.get("version", 1) < 5:          # v4 → v5: включённые умолчания выключаются
+                    for st in hero.get("autocast", {}).values():
+                        st["on"] = False
                 self._sanitize_hero(cls, hero)
                 self.heroes[cls] = hero
         self.arsenal = [i for i in d.get("arsenal", []) if i in self.data.items]
@@ -119,7 +124,7 @@ class Profile:
              "amber": self.amber, "expeditions": self.expeditions, "victories": self.victories,
              "heroes": self.heroes, "arsenal": self.arsenal, "camp": self.camp, "unlocked": self.unlocked,
              "squad": self.squad, "formation": self.formation, "presets": self.presets,
-             "seen_heroes": self.seen_heroes}
+             "seen_heroes": self.seen_heroes, "mode": self.mode}
         tmp = self.path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(d, f, ensure_ascii=False, indent=1)
@@ -264,6 +269,29 @@ class Profile:
         self.unlocked += new
         return new
 
+    # ---------- режим героев: атрибуты ----------
+
+    def add_point(self, cls, attr, n=1):
+        """Вложить свободное очко в атрибут. False — очков нет."""
+        rpg = self.heroes[cls]["rpg"]
+        if stats.points_free(self.data, rpg) < n:
+            return False
+        rpg["points"][attr] = rpg["points"].get(attr, 0) + n
+        self.save()
+        return True
+
+    def reset_points(self, cls):
+        self.heroes[cls]["rpg"]["points"] = {a: 0 for a in stats.ATTRS}
+        self.save()
+
+    def squad_level(self):
+        return stats.squad_level([self.heroes[c]["rpg"]["level"] for c in self.squad])
+
+    def region_level(self, rid, chapter=None, diff=None):
+        cid = chapter or self.biome_id
+        reg = next(r for r in self.data.biomes[cid]["regions"] if r["id"] == rid)
+        return stats.region_level(self.data, cid, reg, diff or self.difficulty)
+
     def hero_available(self, cls):
         """Можно ли нанять: базовые — всегда, остальные — когда открыта их глава (data/hero_unlocks.json)."""
         cid = self.data.hero_chapter.get(cls)
@@ -356,7 +384,8 @@ class Profile:
             h = self.heroes[cls]
             out.append({"cls": cls, "path": h["path"], "branches": copy.deepcopy(h["branches"]),
                         "talents": list(h["talents"]), "mastery": self.mastery(cls),
-                        "autocast": copy.deepcopy(h["autocast"]), "items": list(h["loadout"])})
+                        "autocast": copy.deepcopy(h["autocast"]), "items": list(h["loadout"]),
+                        "rpg": copy.deepcopy(h["rpg"])})
         return out
 
     # ---------- вылазка ----------
@@ -365,7 +394,7 @@ class Profile:
         if rid not in self.available():
             raise ValueError("регион недоступен")
         run = Run(self.data, seed, self.region(rid), self.bonuses(), self.hero_builds(), self.biome_id,
-                  self.difficulty)
+                  self.difficulty, mode=self.mode)
         run.region_id = rid
         run.formation = self.formation_positions()        # расстановка с экрана «Отряд» — в первый бой
         return run
@@ -496,6 +525,15 @@ class Profile:
             self.arsenal.append(iid)
             self.save()
 
+    def remember_autocast(self, run):
+        """Настройки автокаста из вылазки — сразу в героев и на диск: переживают и выход из вылазки."""
+        if run is None:
+            return
+        for m in run.squad:
+            if m.cls in self.heroes:
+                self.heroes[m.cls]["autocast"] = copy.deepcopy(m.autocast)
+        self.save()
+
     def finish_run(self, run):
         """Записывает итог вылазки в профиль и сохраняет. Возвращает сводку для экрана итогов."""
         rid = run.region_id
@@ -523,6 +561,8 @@ class Profile:
             before = self.mastery(m.cls)
             h["xp"] += xp
             h["autocast"] = copy.deepcopy(m.autocast)
+            if self.mode == "stats":           # уровень и опыт героя — навсегда
+                h["rpg"] = copy.deepcopy(m.rpg)
             mastery[m.cls] = (before, self.mastery(m.cls))
         trophies = self.trophy_options(run) if run.result == "victory" else []
         self.sync_heroes()                 # победа над боссом открыла главу — её герои уже в лагере

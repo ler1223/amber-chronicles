@@ -63,6 +63,7 @@ class BattleScene:
         self.toast = None
         self.picked = None       # юнит, взятый для перестановки
         self.route = None        # маршрут, который игрок рисует правой кнопкой: [клетки]
+        self.pick = None         # юнит под курсором (подсвечен кольцом)
         self.drag_start = None
         self.editor = None       # открытый редактор автокаста: {"unit", "idx", "editor", "rect"}
         squad = self.combat.fighters(PLAYER)
@@ -96,6 +97,8 @@ class BattleScene:
         return s * (self.cfg["slowmo_factor"] if self.slowmo else 1.0) * self.view.vfx.screen.time_k()
 
     def update(self, real_dt):
+        # пауза (и расстановка): эффекты экрана гаснут, свечение приглушено — видно поле и фигурки
+        self.view.vfx.screen.calm_target = 1.0 if (self.paused or self.phase != "battle") else 0.0
         game_dt = min(real_dt, 0.1) * self.time_scale
         self.acc += game_dt
         steps = 0
@@ -127,6 +130,9 @@ class BattleScene:
         """Земля HD-2D для видеокарты: плоская карта и цвет дымки."""
         return self.view.plane()
 
+    def glow_layer(self):
+        return self.view.glow_layer()
+
     @property
     def vfx(self):
         return self.view.vfx
@@ -136,17 +142,31 @@ class BattleScene:
 
     # ---------- ввод ----------
 
+    def pick_filter(self):
+        """Кого можно выбрать сейчас: при прицеливании навыком — только подходящие цели."""
+        u = self.selected
+        if not self.targeting or not u:
+            return None
+        kind = u.skill_defs[self.targeting]["target"]
+        if kind == "enemy":
+            return lambda v: u.is_enemy(v) and (not v.obj or v.obj.get("source"))
+        if kind == "ally":
+            return lambda v: not u.is_enemy(v) and not v.obj
+        return None
+
     def cell_at(self, mx, my):
-        # в виде 3/4 голова юнита заходит на клетку выше — сначала ищем спрайт под курсором
-        u = self.view.unit_at_screen((mx, my))
+        # сначала фигурка под курсором или рядом с ним (юнит мог уже перейти на соседнюю клетку), потом земля
+        u = self.view.pick_unit((mx, my), self.pick_filter())
         if u is not None:
             return u.cell
-        return P.screen_to_cell(mx, my, self.combat.grid.w, self.combat.grid.h)
+        wx, wy = self.view.uncam((mx, my))
+        return P.screen_to_cell(wx, wy, self.combat.grid.w, self.combat.grid.h)
 
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
             self.hover_cell = self.cell_at(*ev.pos)
+            self.pick = self.view.pick_unit(ev.pos, self.pick_filter()) if self.phase == "battle" else None
             if self.route is not None and getattr(ev, "buttons", (0, 0, 0))[2]:
                 self._extend_route(self.hover_cell)
         elif ev.type == pygame.MOUSEWHEEL:
@@ -294,6 +314,9 @@ class BattleScene:
             return
         if self.cheats and key == pygame.K_F8 and self.phase == "battle":
             c.win_now()
+            return
+        if key == pygame.K_F9:                      # пиксельный пилот огня и льда ↔ старые эффекты
+            self.say("Огонь и лёд: " + ("пиксельные (пилот)" if self.view.pix.toggle() else "старые эффекты"))
             return
         if key == pygame.K_F5 and not self.run_mode:
             self.start(self.encounter_index)
