@@ -14,10 +14,13 @@ OPTIONS = [
     ("hitstop", "Стоп-кадр на ударах", [False, True], ["выкл", "вкл"]),
     ("flash", "Вспышки и аберрация", [0.0, 0.5, 1.0], ["выкл", "слабые", "обычные"]),
     ("zoom", "Зум камеры", [False, True], ["выкл", "вкл"]),
+    ("window", "Окно (F11 — полный экран)", ["auto", "1280x800", "1600x1000", "1920x1200", "fullscreen"],
+     ["по экрану", "1280×800", "1600×1000", "1920×1200", "полный экран"]),
     ("fx_style", "Стиль эффектов огня и льда (F9 в бою)", ["old", "pixel", "flipbook", "shader", "mesh", "fluid"],
      ["старые", "пиксельные", "флипбуки Blender", "шейдеры", "меш-эффекты", "симуляция"]),
 ]
-DEFAULTS = {"bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "fx_style": "pixel"}
+DEFAULTS = {"bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "window": "auto",
+            "fx_style": "pixel"}
 STYLES = OPTIONS[-1][2]
 
 

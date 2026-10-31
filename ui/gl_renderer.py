@@ -17,6 +17,7 @@ except ImportError:          # без moderngl остаётся CPU-путь
 
 from ui.props import build_prop_atlas, load_props
 from ui.settings import SETTINGS
+from ui import theme as T
 from ui.vfx import FLOATS, GROUPS, RIB_FLOATS, SFX_FLOATS
 from ui.vfx_textures import INDEX, build_atlas, make_noise
 
@@ -444,7 +445,8 @@ UI_FS = """
 in vec2 v_uv;
 out vec4 f;
 uniform sampler2D u_tex;
-void main() { f = texture(u_tex, v_uv); }
+uniform vec4 u_tint;         // 1 — как есть; темнее — подложка в полях вокруг кадра
+void main() { f = texture(u_tex, v_uv) * u_tint; }
 """
 
 
@@ -455,6 +457,7 @@ class GLRenderer:
         self.w, self.h = size
         self.ctx = moderngl.create_context() if window else moderngl.create_standalone_context()
         self.window = window
+        self.window_size = None          # фактический размер окна (ctx.screen.size кэшируется при создании контекста)
         self.bloom, self.threshold = bloom, threshold
         ctx = self.ctx
         self.premul = (moderngl.ONE, moderngl.ONE_MINUS_SRC_ALPHA)
@@ -466,6 +469,7 @@ class GLRenderer:
         self.prog_blur = prog(vertex_shader=FULLSCREEN_VS, fragment_shader=BLUR_FS)
         self.prog_combine = prog(vertex_shader=FULLSCREEN_VS, fragment_shader=COMBINE_FS)
         self.prog_ui = prog(vertex_shader=FULLSCREEN_VS, fragment_shader=UI_FS)
+        self.prog_ui["u_tint"] = (1.0, 1.0, 1.0, 1.0)
         self.prog_plane = prog(vertex_shader=FULLSCREEN_VS, fragment_shader=PLANE_FS)
         self.vao_plane = ctx.vertex_array(self.prog_plane, [(self.quad, "2f", "in_pos")])
         self.tex_plane = None
@@ -537,9 +541,11 @@ class GLRenderer:
         # пустышка: после кадра отвязываем ею слоты текстур — иначе текстура, в которую потом пишем,
         # остаётся привязанной к слоту чтения, и драйвер пропускает запись (петля обратной связи)
         self.dummy = ctx.texture((1, 1), 4, bytes(4))
-        if not window:
-            self.out = ctx.texture((self.w, self.h), 4)
-            self.fbo_out = ctx.framebuffer([self.out])
+        # кадр всегда собирается в буфер 1280×800; в окно он выводится растянутым под его размер (view)
+        self.out = ctx.texture((self.w, self.h), 4)
+        self.out.filter = (moderngl.LINEAR, moderngl.LINEAR)
+        self.fbo_out = ctx.framebuffer([self.out])
+        self.view = None           # (x, y, ширина, высота) кадра в окне; None — окно ровно 1280×800
 
     # ---------- загрузка поверхностей ----------
 
@@ -768,7 +774,7 @@ class GLRenderer:
                 self.vao["blur"].render(moderngl.TRIANGLE_STRIP)
             src = a
         # 7. сборка: сцена с искажением + bloom + вспышка, аберрация, размытие, полосы кадра
-        target = self.fbo_out if not self.window else ctx.screen
+        target = self.fbo_out
         target.use()
         target.clear()
         ctx.viewport = (0, 0, self.w, self.h)
@@ -800,6 +806,22 @@ class GLRenderer:
             self.prog_ui["u_flipv"] = 1.0
             self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
             ctx.disable(moderngl.BLEND)
+        if self.window:                        # 9. в окно: кадр растянут с сохранением пропорций, поля — цвета фона
+            ctx.screen.use()
+            sw, sh = self.window_size or ctx.screen.size
+            ctx.viewport = (0, 0, sw, sh)
+            ctx.screen.clear(T.BG[0] / 255, T.BG[1] / 255, T.BG[2] / 255, 1.0)
+            x, y, w, h = self.view or (0, 0, self.w, self.h)
+            self.out.use(0)
+            self.prog_ui["u_tex"] = 0
+            self.prog_ui["u_flipv"] = 0.0
+            if (x, y, w, h) != (0, 0, sw, sh):
+                # поля: приглушённый растянутый кадр — на ультрашироком экране не пусто, а «эмбиент»
+                self.prog_ui["u_tint"] = (0.26, 0.28, 0.34, 1.0)
+                self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
+            self.prog_ui["u_tint"] = (1.0, 1.0, 1.0, 1.0)
+            ctx.viewport = (x, sh - y - h, w, h)
+            self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
         for unit in range(5):
             self.dummy.use(unit)
 

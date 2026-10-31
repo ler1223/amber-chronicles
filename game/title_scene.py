@@ -158,6 +158,10 @@ class SettingsScene(CampBackdrop):
                 if r.collidepoint(ev.pos):
                     S.cycle(key)
                     S.save()
+                    if key == "window":
+                        from ui import display
+                        if display.CURRENT:
+                            display.CURRENT.apply()
                     if key in ("shake", "flash", "hitstop", "zoom"):   # сразу показать, как это выглядит
                         self.camp.poke()
                         self.vfx.screen_fx(shake=8, flash=0.2, hitstop=0.08, zoom=1.04, center=self.camp.fire,

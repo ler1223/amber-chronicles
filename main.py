@@ -1,6 +1,7 @@
 """Запуск прототипа.
 
-python main.py                  — игра: карта биома (профиль в save/profile.json), вылазки, бои
+python main.py                  — игра: карта биома (профиль в save/profile.json), вылазки, бои;
+                                  окно тянется мышью, F11 / Alt+Enter — полный экран, размер — в настройках
 python main.py --seed 42        — вылазки с конкретными картами
 python main.py --new-profile    — начать мету заново (старый профиль перезаписывается)
 python main.py --profile p.json — другой файл профиля
@@ -55,12 +56,17 @@ def main():
     settings.load()
     pygame.display.set_caption("Хроники янтаря — прототип")
     use_gl = not args.cpu
-    flags = pygame.OPENGL | pygame.DOUBLEBUF if use_gl and not args.screenshot else 0
-    screen = pygame.display.set_mode((T.SCREEN_W, T.SCREEN_H), flags, vsync=1 if flags else 0)
-    presenter = Presenter(screen, use_gl, window=not args.screenshot)
-    if use_gl and not presenter.gl and flags:        # окно OpenGL не взлетело — обычное окно
+    disp = None
+    if args.screenshot:
         screen = pygame.display.set_mode((T.SCREEN_W, T.SCREEN_H))
-        presenter = Presenter(screen, False)
+        presenter = Presenter(screen, use_gl, window=False)
+    else:                                            # окно тянется, кадр 1280×800 растягивается под него
+        from ui.display import Display
+        disp = Display(use_gl)
+        presenter = Presenter(disp.screen, use_gl, window=True)
+        if use_gl and not presenter.gl:              # окно OpenGL не взлетело — обычное окно
+            disp = Display(False)
+            presenter = Presenter(disp.screen, False)
     clock = pygame.time.Clock()
     data = GameData()
     if args.battle is not None:
@@ -95,8 +101,13 @@ def main():
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
                 running = False
+            elif ev.type == pygame.KEYDOWN and (ev.key == pygame.K_F11 or
+                                                (ev.key == pygame.K_RETURN and ev.mod & pygame.KMOD_ALT)):
+                disp.toggle_fullscreen()
+            elif ev.type in (pygame.VIDEORESIZE, pygame.WINDOWRESIZED, pygame.WINDOWSIZECHANGED):
+                pass                                 # кадр сам растянется под новый размер
             else:
-                holder.scene.handle(ev)
+                holder.scene.handle(disp.to_logical(ev))
         holder.scene.update(dt)
         if getattr(holder, "quit", False):
             running = False
