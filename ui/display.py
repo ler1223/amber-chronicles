@@ -1,12 +1,13 @@
-"""Окно и масштабирование: игра рисует кадр 1280×800 (логический экран), он растягивается под окно с сохранением
-пропорций — по краям остаются поля с приглушённым кадром. Окно можно тянуть мышью; F11 или Alt+Enter — полный
-экран; стартовый размер — в настройках («Окно»). Координаты мыши из событий переводятся обратно в логический
-экран, поэтому сцены про масштаб ничего не знают.
+"""Окно и масштабирование: логический холст подстраивается под окно (ui/layout.py) — на ультрашироком
+экране он шире 1280, поэтому интерфейс занимает всю ширину, а не стоит колонной с полями. Окно можно
+тянуть мышью; F11 или Alt+Enter — полный экран; стартовый размер — в настройках («Окно»). Координаты
+мыши из событий переводятся обратно в логический холст, поэтому сцены про масштаб ничего не знают.
 """
 import warnings
 
 import pygame
 
+from ui import layout
 from ui import theme as T
 from ui.settings import SETTINGS
 
@@ -15,11 +16,17 @@ MIN_W, MIN_H = 960, 600          # меньше — интерфейс стан�
 CURRENT = None
 
 
-def fit(window_w, window_h, logical_w=T.SCREEN_W, logical_h=T.SCREEN_H):
+def fit(window_w, window_h, logical_w=None, logical_h=None):
     """Прямоугольник кадра на окне: (x, y, w, h) — по центру, пропорции сохранены."""
+    logical_w = T.SCREEN_W if logical_w is None else logical_w
+    logical_h = T.SCREEN_H if logical_h is None else logical_h
     w, h = max(1, int(window_w)), max(1, int(window_h))
     k = min(w / logical_w, h / logical_h)
-    vw, vh = max(1, int(logical_w * k)), max(1, int(logical_h * k))
+    vw, vh = max(1, int(round(logical_w * k))), max(1, int(round(logical_h * k)))
+    if vw >= w - 1:                    # округление не должно оставлять полоску в 1 px
+        vw = w
+    if vh >= h - 1:
+        vh = h
     return (w - vw) // 2, (h - vh) // 2, vw, vh
 
 
@@ -34,6 +41,8 @@ class Display:
             self.window = pygame.Window.from_display_module()
         self._clamp_minimum()
         self.full = False
+        self.on_resize = None            # main ставит сюда presenter.resize + app.relayout
+        self._sync()                     # холст = окно по высоте 800
         if SETTINGS.get("window") == "fullscreen":
             self.toggle_fullscreen()
         CURRENT = self
@@ -53,15 +62,16 @@ class Display:
             pass
 
     def _wanted(self):
-        """Стартовый размер окна: пресет из настроек или 85% рабочего стола с пропорциями игры."""
+        """Стартовый размер окна: пресет из настроек или 85% рабочего стола (пропорции — как у экрана)."""
         mode = SETTINGS.get("window", "auto")
         if mode in SIZES:
             return SIZES[mode]
         dw, dh = self._desktop()
-        base = min(dw * 0.85 / T.SCREEN_W, dh * 0.85 / T.SCREEN_H)
-        # не меньше 960×600 (если экран позволяет) и не больше 2× логического кадра
-        k = max(min(MIN_W / T.SCREEN_W, base), min(base, 2.0))
-        return int(T.SCREEN_W * k), int(T.SCREEN_H * k)
+        w, h = int(dw * 0.85), int(dh * 0.85)
+        if w < MIN_W or h < MIN_H:               # маленький экран: вписать, но не раздувать
+            k = min(w / MIN_W, h / MIN_H)
+            w, h = int(w / k), int(h / k)
+        return max(MIN_W, w), max(MIN_H, h)
 
     def size(self):
         try:
@@ -72,10 +82,25 @@ class Display:
 
     def view(self):
         """Где на окне кадр игры: (x, y, ширина, высота) — по центру, с сохранением пропорций."""
-        return fit(*self.size())
+        return fit(*self.size(), T.SCREEN_W, T.SCREEN_H)
+
+    def sync(self):
+        """Окно изменилось: пересчитать логический холст и сообщить презентеру/сцене."""
+        w, h = self.size()
+        lw, lh = layout.logical_size(w, h)
+        if (lw, lh) == (T.SCREEN_W, T.SCREEN_H):
+            return False
+        T.SCREEN_W, T.SCREEN_H = lw, lh
+        cb = getattr(self, "on_resize", None)
+        if cb:
+            cb()
+        return True
+
+    def _sync(self):
+        return self.sync()
 
     def to_logical(self, ev):
-        """Событие мыши в координатах логического экрана 1280×800."""
+        """Событие мыши в координатах логического холста."""
         if ev.type not in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
             return ev
         x, y, vw, vh = self.view()
@@ -96,6 +121,7 @@ class Display:
             self.window.size = self._wanted()
             self.window.position = pygame.WINDOWPOS_CENTERED
             self._clamp_minimum()
+        self._sync()
 
     def toggle_fullscreen(self):
         """Полный экран без рамки (desktop fullscreen) и обратно — с восстановлением размера окна."""
@@ -107,3 +133,4 @@ class Display:
             self.full = not self.full
         except pygame.error:
             pass
+        self._sync()

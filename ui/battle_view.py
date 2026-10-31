@@ -153,6 +153,18 @@ class BattleView:
         self.marks.clear()
         self._prop_imgs.clear()
         self.pix.reset()
+        self.relayout()
+
+    def relayout(self):
+        """Ширина холста изменилась: доска по центру свободной части, панель — у правого края."""
+        global RIGHT_X
+        T.GRID_X, RIGHT_X = T.battle_rects()
+        P.configure((T.GRID_X + T.GRID_W // 2, 362), P.PX_PER_CELL)
+        cx = T.GRID_X + T.GRID_W // 2
+        self.vfx.screen.center = (float(cx), 360.0)
+        self.vfx.screen.radial_center = (float(cx), 360.0)
+        self._cpu_tex = None
+        self._ground = None
 
     def anim(self, u):
         a = self.anims.get(u.id)

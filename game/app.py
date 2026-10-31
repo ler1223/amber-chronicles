@@ -32,6 +32,23 @@ class App:
 
     def switch(self, scene):
         self.scene = scene
+        self._relayout_scene(scene)
+
+    def _relayout_scene(self, scene):
+        """Сцена-колонка (stage) живёт в координатах 1280×800 — пересчитываем её под этот размер."""
+        from ui import theme as T
+        if not hasattr(scene, "relayout"):
+            return
+        if getattr(scene, "stage", False):
+            with T.design():
+                scene.relayout()
+        else:
+            scene.relayout()
+
+    def relayout(self):
+        """Окно изменилось: пересчитать раскладку текущей сцены."""
+        if self.scene is not None:
+            self._relayout_scene(self.scene)
 
     def campfire(self):
         """Один костёр на меню и лагерь — огонь не начинается заново при переходе."""

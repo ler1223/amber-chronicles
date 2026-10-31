@@ -15,6 +15,12 @@ class HubScene(CampBackdrop):
     def __init__(self, app):
         super().__init__(app)
         self.camp.set_heroes(app.profile.squad)
+        self.keys = {pygame.K_m: "map", pygame.K_RETURN: "map", pygame.K_o: "roster", pygame.K_h: "heroes",
+                     pygame.K_l: "camp", pygame.K_ESCAPE: "menu"}
+        self.relayout()
+
+    def relayout(self):
+        super().relayout()
         x, y = T.SCREEN_W - 360, 120
         self.buttons = []
         for key, label, hot in (("map", "В поход: карта главы", "M"), ("roster", "Отряд и расстановка", "O"),
@@ -22,8 +28,7 @@ class HubScene(CampBackdrop):
                                 ("menu", "Главное меню", "Esc")):
             self.buttons.append((pygame.Rect(x, y, 330, 52), key, f"{label}  ({hot})"))
             y += 64
-        self.keys = {pygame.K_m: "map", pygame.K_RETURN: "map", pygame.K_o: "roster", pygame.K_h: "heroes",
-                     pygame.K_l: "camp", pygame.K_ESCAPE: "menu"}
+        self.panel_rect = pygame.Rect(T.SCREEN_W - 376, 104, 362, 64 * len(self.buttons) + 16)
 
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
@@ -54,7 +59,8 @@ class HubScene(CampBackdrop):
 
     def draw_ui(self, surf):
         prof, data = self.app.profile, self.app.data
-        T.text(surf, "Лагерь", (28, 18), 40, GOLD, True, shadow=True)
+        ox = T.content_ox()
+        T.text(surf, "Лагерь", (ox + 28, 18), 40, GOLD, True, shadow=True)
         amber = f"Янтарь: {prof.amber}"
         T.text(surf, amber, (T.SCREEN_W - 30 - T.font(24, True).size(amber)[0], 24), 24, AMBER, True, shadow=True)
         diff = data.config["difficulties"][prof.difficulty]["name"]
@@ -63,18 +69,18 @@ class HubScene(CampBackdrop):
                 f"{len(prof.regular_captured())}{done} · вылазок {prof.expeditions}")
         if prof.mode == "stats":
             info = f"РЕЖИМ ГЕРОЕВ · уровень отряда {prof.squad_level()} · " + info
-        T.text(surf, info, (30, 70), 16, (210, 210, 220), shadow=True)
-        self.panel(surf, pygame.Rect(T.SCREEN_W - 376, 104, 362, 64 * len(self.buttons) + 16))
+        T.text(surf, info, (ox + 30, 70), 16, (210, 210, 220), shadow=True)
+        self.panel(surf, self.panel_rect)
         free = sum(meta.points_free(data, prof.heroes[c]) for c in prof.squad)
         for r, key, label in self.buttons:
             text = label + (f" · очков {free}" if key == "heroes" and free else "")
             W.button(surf, r, text, self.mouse, accent=GOLD if key == "map" else (170, 160, 210))
         # отряд — карточки внизу
         y = T.SCREEN_H - 112
-        self.panel(surf, pygame.Rect(16, y - 12, 4 * 222 + 12, 104), 150)
+        self.panel(surf, pygame.Rect(ox + 16, y - 12, 4 * 222 + 12, 104), 150)
         for i, cls in enumerate(prof.squad):
             h = prof.heroes[cls]
-            r = pygame.Rect(24 + i * 222, y, 210, 80)
+            r = pygame.Rect(ox + 24 + i * 222, y, 210, 80)
             c = data.classes[cls]
             pygame.draw.rect(surf, (36, 38, 46), r, border_radius=8)
             pygame.draw.rect(surf, tuple(c["color"]), r, 2, border_radius=8)
@@ -89,7 +95,7 @@ class HubScene(CampBackdrop):
                        (r.x + 10, r.y + 48 if not pts else r.y + 62), 13, (150, 200, 255), True)
             if pts:
                 T.text(surf, f"свободных очков: {pts}", (r.x + 10, r.y + 48), 13, (170, 140, 255), True)
-        T.text(surf, "Отряд в вылазке", (24, y - 32), 15, (220, 220, 230), True, shadow=True)
+        T.text(surf, "Отряд в вылазке", (ox + 24, y - 32), 15, (220, 220, 230), True, shadow=True)
         self.draw_toast(surf, T.SCREEN_H - 140)
 
 

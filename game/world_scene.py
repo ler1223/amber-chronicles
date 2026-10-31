@@ -27,6 +27,10 @@ class WorldScene:
         self._layout()
 
     def _layout(self):
+        global MAP_RECT, PANEL_RECT
+        # карта тянется по ширине, панель прижата к правому краю
+        MAP_RECT = pygame.Rect(24, 132, max(600, T.SCREEN_W - 440), 524)
+        PANEL_RECT = pygame.Rect(T.SCREEN_W - 396, 132, 372, 524)
         prof = self.app.profile
         self.pos = {}
         for r in prof.biome["regions"]:
@@ -43,6 +47,12 @@ class WorldScene:
         self.chapter_rects = [(pygame.Rect(24 + i * (cw + 8), 60, cw, 30), cid) for i, cid in enumerate(chapters)]
         order = self.app.data.config["difficulty_order"]
         self.diff_rects = [(pygame.Rect(PANEL_RECT.x + i * 126, 60, 118, 30), d) for i, d in enumerate(order)]
+
+    def relayout(self):
+        sel = getattr(self, "selected", None)
+        self._layout()
+        if sel in self.pos:
+            self.selected = sel
 
     def _pick_chapter(self, cid, diff=None):
         prof = self.app.profile

@@ -33,6 +33,13 @@ def test_fit_keeps_aspect_and_centers():
     assert display.fit(0, 0)[2] >= 1 and display.fit(0, 0)[3] >= 1
 
 
+def test_fit_fills_window_when_aspect_matches():
+    # адаптивный холст 1911×800 и окно 2924×1224 (2.3889): округление не оставляет полоску в 1 px
+    assert display.fit(2924, 1224, 1911, 800) == (0, 0, 2924, 1224)
+    assert display.fit(3440, 1440, 1911, 800) == (0, 0, 3440, 1440)
+    assert display.fit(1600, 900, 1422, 800) == (0, 0, 1600, 900)
+
+
 def test_mouse_maps_from_window_to_frame():
     d = object.__new__(display.Display)
     d.window = _Win((1920, 1080))
@@ -64,15 +71,75 @@ def test_wanted_size_fits_small_desktop(monkeypatch):
     monkeypatch.setattr(pygame.display, "get_desktop_sizes", lambda: [(1366, 768)])
     w, h = d._wanted()
     assert w <= 1366 and h <= 768
-    assert (w, h) == (int(T.SCREEN_W * (768 * 0.85 / T.SCREEN_H)),
-                      int(T.SCREEN_H * (768 * 0.85 / T.SCREEN_H)))
+    assert (w, h) == (int(1366 * 0.85), int(768 * 0.85))   # 85% рабочего стола, пропорции экрана
 
 
-def test_wanted_size_is_bounded_on_huge_desktop(monkeypatch):
+def test_wanted_size_fills_most_of_huge_desktop(monkeypatch):
     d = object.__new__(display.Display)
     monkeypatch.setitem(display.SETTINGS, "window", "auto")
     monkeypatch.setattr(pygame.display, "get_desktop_sizes", lambda: [(3840, 2160)])
-    assert d._wanted() == (2560, 1600)      # не больше 2× логического кадра
+    assert d._wanted() == (int(3840 * 0.85), int(2160 * 0.85))
+
+
+def test_logical_size_follows_window_aspect():
+    assert display.layout.logical_size(1280, 800) == (1280, 800)       # 16:10 — базовый холст
+    assert display.layout.logical_size(1920, 1080) == (1422, 800)      # 16:9 — шире
+    assert display.layout.logical_size(3440, 1440) == (1911, 800)      # 21:9 — ультраширокий
+    assert display.layout.logical_size(1024, 768) == (1280, 800)       # уже 16:10 — поля
+    assert display.layout.logical_size(5120, 1440) == (2844, 800)      # 32:9
+    assert display.layout.logical_size(10000, 1000) == (3200, 800)     # дальше — предел
+
+
+def test_content_ox_centers_design_column():
+    assert display.layout.content_ox(1280) == 0
+    assert display.layout.content_ox(1911) == 315
+    assert display.layout.content_ox(960) == 0
+
+
+def test_battle_rects_pin_panel_to_right():
+    assert display.layout.battle_rects(1280) == (24, 924)
+    grid_x, right_x = display.layout.battle_rects(1911)
+    assert right_x == 1911 - 356
+    assert grid_x == (right_x - 880) // 2
+
+
+def test_sync_recomputes_canvas_and_notifies():
+    d = object.__new__(display.Display)
+    d.window = _Win((3440, 1440))
+    calls = []
+    d.on_resize = lambda: calls.append(1)
+    assert d.sync()
+    assert (T.SCREEN_W, T.SCREEN_H) == (1911, 800)
+    assert calls == [1]
+    assert not d.sync()                     # тот же размер — без лишней перекладки
+    assert calls == [1]
+
+
+def test_stage_scene_is_composited_centered():
+    pygame.init()
+    T.SCREEN_W, T.SCREEN_H = 1911, 800
+    screen = pygame.display.set_mode((1911, 800))
+    d = object.__new__(display.Display)
+    d.window = _Win((1911, 800))
+    old, display.CURRENT = display.CURRENT, d
+
+    class StageScene:
+        stage = True
+
+        def draw(self, surf):
+            assert (T.SCREEN_W, T.SCREEN_H) == (1280, 800)   # сцена рисуется в дизайн-колонке
+            surf.fill((200, 10, 10))
+
+    try:
+        pres = Presenter(screen, use_gl=False, window=True)
+        pres.frame(StageScene())
+        ox = (1911 - 1280) // 2
+        assert screen.get_at((10, 10))[:3] == T.BG
+        assert screen.get_at((ox + 10, 10))[:3] == (200, 10, 10)
+        assert screen.get_at((ox + 1280 + 5, 10))[:3] == T.BG
+    finally:
+        display.CURRENT = old
+        pygame.display.set_mode((T.SCREEN_W, T.SCREEN_H))
 
 
 def test_settings_have_window_mode():

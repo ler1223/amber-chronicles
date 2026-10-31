@@ -1,9 +1,35 @@
 """Цвета, шрифты, раскладка экрана."""
+from contextlib import contextmanager
+
 import pygame
 
-from ui import projection
+from ui import layout, projection
 
-SCREEN_W, SCREEN_H = 1280, 800
+SCREEN_W, SCREEN_H = layout.BASE_W, layout.BASE_H
+
+
+def content_ox():
+    """Левый край центральной колонки 1280 (для экранов, которые остаются колонкой)."""
+    return layout.content_ox(SCREEN_W)
+
+
+def battle_rects():
+    """(GRID_X, RIGHT_X) для текущей ширины холста."""
+    return layout.battle_rects(SCREEN_W)
+
+
+@contextmanager
+def design(width=layout.BASE_W, height=layout.BASE_H):
+    """Временно вернуть координаты проектирования 1280×800 (сцены-«колонки» рисуются в этот размер)."""
+    global SCREEN_W, SCREEN_H
+    old = (SCREEN_W, SCREEN_H)
+    SCREEN_W, SCREEN_H = width, height
+    try:
+        yield
+    finally:
+        SCREEN_W, SCREEN_H = old
+
+
 # вид 3/4: клетка сплюснута по вертикали, юниты стоят «ногами» чуть ниже центра клетки
 CELL_W, CELL_H = 88, 72
 CELL = CELL_W

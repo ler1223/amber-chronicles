@@ -60,9 +60,10 @@ class NewAlliesScene(MetaScene):
         surf.fill(T.BG)
         cid = self.entries[0][0]
         b = data.biomes[cid]
-        T.text(surf, "Новые союзники", (24, 14), 32, GOLD, True)
+        ox = T.content_ox()
+        T.text(surf, "Новые союзники", (ox + 24, 14), 32, GOLD, True)
         T.text(surf, f"Глава {b.get('order', 0) + 1} «{b['name']}»: эти герои отвечают на её угрозы — и уже в лагере",
-               (24, 56), 17, T.TEXT_DIM)
+               (ox + 24, 56), 17, T.TEXT_DIM)
         n = len(self.entries)
         cw = min(600, (T.SCREEN_W - 48 - (n - 1) * 16) // max(1, n))
         x = (T.SCREEN_W - (n * cw + (n - 1) * 16)) // 2

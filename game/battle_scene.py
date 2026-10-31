@@ -75,6 +75,9 @@ class BattleScene:
         if self.run_mode and self.combat.result:
             self.on_finish(self.combat, self.positions.get(self.encounter_index))
 
+    def relayout(self):
+        self.view.relayout()
+
     def begin_battle(self):
         self.positions[self.encounter_index] = self.combat.positions()
         self.phase = "battle"

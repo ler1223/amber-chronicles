@@ -21,9 +21,9 @@ CAMP_SMOKE = {"shape": "fb_smoke", "blend": "alpha", "count": 1, "spawn": 10, "s
 
 
 class Campfire:
-    def __init__(self, data, fire=(640, 600), horizon=380):
+    def __init__(self, data, fire=None, horizon=380):
         self.data = data
-        self.fire = fire
+        self.fire = fire or (T.SCREEN_W // 2, 600)
         self.horizon = horizon
         self.props = load_props()
         self.vfx = VfxWorld(props={n: i for i, n in enumerate(self.props)})
@@ -40,6 +40,11 @@ class Campfire:
 
     def set_heroes(self, classes):
         self.heroes = [(c, tuple(self.data.classes[c]["color"])) for c in classes]
+
+    def relayout(self):
+        """Окно стало шире/уже: костёр по центру, фон перерисовать."""
+        self.fire = (T.SCREEN_W // 2, 600)
+        self._bg = None
 
     def _rate(self, key, per_sec, dt):
         a = self.acc.get(key, 0.0) + per_sec * dt
@@ -84,12 +89,13 @@ class Campfire:
             k = yy / hz
             s.fill(T.mix((10, 12, 26), (34, 30, 52), k), (0, yy, T.SCREEN_W, 1))
         rng = random.Random(9)
-        for _ in range(140):                                  # звёзды
+        for _ in range(int(140 * T.SCREEN_W / 1280)):         # звёзды
             sx, sy = rng.randrange(T.SCREEN_W), rng.randrange(int(hz * 0.85))
             c = rng.randint(120, 230)
             s.set_at((sx, sy), (c, c, min(255, c + 20)))
-        pygame.draw.circle(s, (230, 230, 210), (760, 70), 26)   # луна
-        pygame.draw.circle(s, T.mix((10, 12, 26), (34, 30, 52), 0.2), (772, 62), 24)
+        mx = T.SCREEN_W - 520                              # луна над правой частью поляны
+        pygame.draw.circle(s, (230, 230, 210), (mx, 70), 26)
+        pygame.draw.circle(s, T.mix((10, 12, 26), (34, 30, 52), 0.2), (mx + 12, 62), 24)
         for layer, (col, base, amp) in enumerate((((22, 30, 34), hz - 70, 60), ((16, 22, 24), hz - 30, 40))):
             pts = [(0, hz + 10)]                              # лес: два ряда силуэтов елей
             x = 0
@@ -102,7 +108,7 @@ class Campfire:
         for yy in range(hz, T.SCREEN_H):                      # поляна
             k = (yy - hz) / (T.SCREEN_H - hz)
             s.fill(T.mix((26, 34, 26), (40, 52, 36), k), (0, yy, T.SCREEN_W, 1))
-        for _ in range(500):
+        for _ in range(int(500 * T.SCREEN_W / 1280)):
             gx, gy = rng.randrange(T.SCREEN_W), rng.randrange(hz + 5, T.SCREEN_H)
             s.fill(T.mix((40, 56, 38), (70, 90, 60), rng.random()), (gx, gy, 2, 3))
         fx, fy = self.fire

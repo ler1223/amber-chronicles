@@ -29,6 +29,10 @@ class CampBackdrop:
     def say(self, text):
         self.toast = (text, 2.5)
 
+    def relayout(self):
+        """Окно изменилось: костёр по центру, фон перерисовать; подклассы пересчитывают кнопки."""
+        self.camp.relayout()
+
     def draw(self, surf):
         self.camp.draw_cpu(surf)
         self.draw_ui(surf)
@@ -60,13 +64,18 @@ class TitleScene(CampBackdrop):
         self.camp.set_heroes(prof.squad)
         self.has_progress = bool(prof.expeditions or prof.amber or prof.captured or len(prof.unlocked) > 4)
         self.confirm_new = False
-        x = 110
+        if prof.mode == "story":
+            self.has_progress = bool(prof.done or prof.expeditions)
+        self.relayout()
+
+    def relayout(self):
+        super().relayout()
+        prof = self.app.profile
+        x = T.content_ox() + 110
         self.buttons = []
         y = 290
         other = ("mode", "Основная игра") if prof.mode != "base" else ("mode", "Режим героев (статы)")
         story = ("story", "Сюжет: новое начало") if prof.mode != "story" else None
-        if prof.mode == "story":
-            self.has_progress = bool(prof.done or prof.expeditions)
         for key, label in tuple(x for x in (("continue", "Продолжить" if self.has_progress else "Начать"),
                                             ("new", "Новая игра"), story, other, ("settings", "Настройки"),
                                             ("quit", "Выход")) if x):
@@ -74,6 +83,7 @@ class TitleScene(CampBackdrop):
                 continue
             self.buttons.append((pygame.Rect(x, y, 300, 50), key, label))
             y += 62
+        self.panel_rect = pygame.Rect(T.content_ox() + 85, 270, 350, 20 + 62 * len(self.buttons))
 
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
@@ -120,7 +130,7 @@ class TitleScene(CampBackdrop):
             self.app.profile.mode, "тактический бой · вылазки · герои")
         T.text(surf, sub, (T.SCREEN_W // 2, 192), 20,
                (150, 200, 255) if self.app.profile.mode == "stats" else (220, 210, 190), center=True, shadow=True)
-        self.panel(surf, pygame.Rect(85, 270, 350, 20 + 62 * len(self.buttons)))
+        self.panel(surf, self.panel_rect)
         for r, key, label in self.buttons:
             accent = (255, 120, 100) if key == "new" and self.confirm_new else GOLD
             W.button(surf, r, label, self.mouse, accent=accent)
@@ -128,8 +138,8 @@ class TitleScene(CampBackdrop):
         if self.has_progress:
             info = (f"Янтарь {prof.amber} · регионов захвачено {len(prof.captured)} · "
                     f"героев {len(prof.unlocked)} из {len(self.app.data.classes)}")
-            T.text(surf, info, (260, 300 + 62 * len(self.buttons)), 15, (200, 200, 210), center=True,
-                   shadow=True)
+            T.text(surf, info, (T.content_ox() + 260, 300 + 62 * len(self.buttons)), 15, (200, 200, 210),
+                   center=True, shadow=True)
         self.draw_toast(surf, T.SCREEN_H - 40)
         T.text(surf, "Enter — продолжить · Esc — выход", (T.SCREEN_W // 2, T.SCREEN_H - 18), 13, T.TEXT_DIM,
                center=True)
@@ -139,6 +149,10 @@ class SettingsScene(CampBackdrop):
     def __init__(self, app, back):
         super().__init__(app)
         self.back_fn = back
+        self.relayout()
+
+    def relayout(self):
+        super().relayout()
         self.rows = []
         y = 230
         for key, name, _, _ in S.OPTIONS:

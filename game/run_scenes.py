@@ -138,6 +138,9 @@ class MapScene:
                 return nid
         return None
 
+    def relayout(self):
+        self._layout()
+
     def handle(self, ev):
         run = self.app.run
         if ev.type == pygame.MOUSEMOTION:
@@ -303,6 +306,9 @@ class SkillsScene:
         self.proto = proto
         self.editors = [(sid, AutocastEditor(proto["skill_defs"][sid], self.settings[sid], app.data.tags))
                         for sid in proto["skills"]]
+        self.back = pygame.Rect(T.SCREEN_W // 2 - 110, T.SCREEN_H - 62, 220, 44)
+
+    def relayout(self):
         self.back = pygame.Rect(T.SCREEN_W // 2 - 110, T.SCREEN_H - 62, 220, 44)
 
     def handle(self, ev):

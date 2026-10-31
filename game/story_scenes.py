@@ -77,7 +77,8 @@ class DialogScene(CampBackdrop):
         line = self.lines[self.i]
         who = line.get("who", "narrator")
         ch = self.story["characters"].get(who, {"name": who, "color": (220, 220, 220)})
-        r = pygame.Rect(60, T.SCREEN_H - 230, T.SCREEN_W - 120, 190)
+        r = pygame.Rect(0, T.SCREEN_H - 230, min(T.SCREEN_W - 120, 1160), 190)
+        r.centerx = T.SCREEN_W // 2
         self.panel(surf, r, 215)
         x = r.x + 24
         if who != "narrator":
@@ -105,19 +106,25 @@ class StoryHub(CampBackdrop):
         prof = app.profile
         self.camp.set_heroes(prof.squad)
         self.exp = prof.current()
+        self.keys = {pygame.K_RETURN: "go", pygame.K_o: "roster", pygame.K_h: "heroes", pygame.K_t: "shop",
+                     pygame.K_k: "forge", pygame.K_ESCAPE: "menu"}
+        self.relayout()
+
+    def relayout(self):
+        super().relayout()
+        prof = self.app.profile
         x, y = T.SCREEN_W - 380, 130
         self.buttons = []
         go = f"В путь: {self.exp['name']}" if self.exp else "Продолжение следует…"
         from sim import stats
-        free = sum(stats.points_free(app.data, prof.heroes[c]["rpg"]) for c in prof.unlocked)
+        free = sum(stats.points_free(self.app.data, prof.heroes[c]["rpg"]) for c in prof.unlocked)
         heroes = "Подготовка героев  (H)" + (f" · очков {free}" if free else "")
         for key, label in (("go", go), ("roster", "Отряд и расстановка  (O)"), ("heroes", heroes),
                            ("shop", "Торговец  (T)"), ("forge", "Кузница: улучшения лагеря  (K)"),
                            ("menu", "Главное меню  (Esc)")):
             self.buttons.append((pygame.Rect(x, y, 350, 52), key, label))
             y += 62
-        self.keys = {pygame.K_RETURN: "go", pygame.K_o: "roster", pygame.K_h: "heroes", pygame.K_t: "shop",
-                     pygame.K_k: "forge", pygame.K_ESCAPE: "menu"}
+        self.panel_rect = pygame.Rect(T.SCREEN_W - 396, 114, 382, 62 * len(self.buttons) + 16)
 
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
@@ -151,29 +158,30 @@ class StoryHub(CampBackdrop):
 
     def draw_ui(self, surf):
         prof = self.app.profile
-        T.text(surf, "Лагерь", (28, 18), 40, GOLD, True, shadow=True)
+        ox = T.content_ox()
+        T.text(surf, "Лагерь", (ox + 28, 18), 40, GOLD, True, shadow=True)
         amber = f"Янтарь: {prof.amber}"
         T.text(surf, amber, (T.SCREEN_W - 30 - T.font(24, True).size(amber)[0], 24), 24, AMBER, True, shadow=True)
         if self.exp:
-            T.text(surf, self.exp["chapter_name"], (30, 74), 22, (225, 215, 190), True, shadow=True)
+            T.text(surf, self.exp["chapter_name"], (ox + 30, 74), 22, (225, 215, 190), True, shadow=True)
             n = len(self.exp["battles"])
             join = self.exp.get("join")
             sub = f"Следующая вылазка: «{self.exp['name']}» — {n} боя подряд, враги ур. {self.exp.get('level', 1)}"
             if join:
                 sub += f" · присоединится {prof.character(join)['name']}"
-            T.text(surf, sub, (30, 106), 17, (200, 196, 185), shadow=True)
-        self.panel(surf, pygame.Rect(T.SCREEN_W - 396, 114, 382, 62 * len(self.buttons) + 16))
+            T.text(surf, sub, (ox + 30, 106), 17, (200, 196, 185), shadow=True)
+        self.panel(surf, self.panel_rect)
         for r, key, label in self.buttons:
             W.button(surf, r, label, self.mouse, enabled=key != "go" or self.exp is not None,
                      accent=GOLD if key == "go" else (170, 160, 210))
         y = T.SCREEN_H - 120
-        self.panel(surf, pygame.Rect(16, y - 12, 6 * 150 + 12, 100), 150)
+        self.panel(surf, pygame.Rect(ox + 16, y - 12, 6 * 150 + 12, 100), 150)
         for i, c in enumerate(prof.squad):
             lvl = prof.level(c)
-            T.text(surf, prof.character(c)["name"], (28 + i * 150, y), 17, tuple(prof.character(c)["color"]), True)
-            T.text(surf, f"{self.app.data.classes[c]['name']} · ур. {lvl}", (28 + i * 150, y + 24), 14, T.TEXT_DIM)
+            T.text(surf, prof.character(c)["name"], (ox + 28 + i * 150, y), 17, tuple(prof.character(c)["color"]), True)
+            T.text(surf, f"{self.app.data.classes[c]['name']} · ур. {lvl}", (ox + 28 + i * 150, y + 24), 14, T.TEXT_DIM)
         T.text(surf, f"В отряде {len(prof.squad)} из {prof.squad_size()} · союзников {len(prof.unlocked)}",
-               (28, y + 56), 14, T.TEXT_DIM)
+               (ox + 28, y + 56), 14, T.TEXT_DIM)
         self.draw_toast(surf, T.SCREEN_H - 150)
 
 
@@ -184,6 +192,12 @@ class StoryShop(CampBackdrop):
         super().__init__(app)
         self.rects = []
         self.back = pygame.Rect(T.SCREEN_W // 2 - 110, T.SCREEN_H - 64, 220, 46)
+        self.ox = T.content_ox()
+
+    def relayout(self):
+        super().relayout()
+        self.back = pygame.Rect(T.SCREEN_W // 2 - 110, T.SCREEN_H - 64, 220, 46)
+        self.ox = T.content_ox()
 
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
@@ -204,15 +218,15 @@ class StoryShop(CampBackdrop):
 
     def draw_ui(self, surf):
         prof = self.app.profile
-        T.text(surf, "Торговец", (28, 18), 40, GOLD, True, shadow=True)
+        T.text(surf, "Торговец", (self.ox + 28, 18), 40, GOLD, True, shadow=True)
         amber = f"Янтарь: {prof.amber}"
         T.text(surf, amber, (T.SCREEN_W - 30 - T.font(24, True).size(amber)[0], 24), 24, AMBER, True, shadow=True)
-        T.text(surf, "Купленное остаётся в арсенале навсегда. Надеть — «Подготовка героев».", (30, 76), 16,
+        T.text(surf, "Купленное остаётся в арсенале навсегда. Надеть — «Подготовка героев».", (self.ox + 30, 76), 16,
                T.TEXT_DIM, shadow=True)
         self.rects = []
         stock = prof.shop_stock()[:15]
         for k, (iid, it) in enumerate(stock):
-            r = pygame.Rect(30 + (k % 3) * 410, 110 + (k // 3) * 112, 396, 100)
+            r = pygame.Rect(self.ox + 30 + (k % 3) * 410, 110 + (k // 3) * 112, 396, 100)
             self.rects.append((r, iid))
             self.panel(surf, r, 200 if r.collidepoint(self.mouse) else 160)
             price = it.get("price", 50)
@@ -223,7 +237,7 @@ class StoryShop(CampBackdrop):
             for j, ln in enumerate(T.wrap(it.get("desc", ""), 14, r.w - 28)[:3]):
                 T.text(surf, ln, (r.x + 14, r.y + 38 + 18 * j), 14, T.TEXT_DIM)
         if not stock:
-            T.text(surf, "Всё раскуплено. Загляните после следующей главы.", (30, 120), 18, T.TEXT_DIM)
+            T.text(surf, "Всё раскуплено. Загляните после следующей главы.", (self.ox + 30, 120), 18, T.TEXT_DIM)
         W.button(surf, self.back, "Назад в лагерь", self.mouse)
         self.draw_toast(surf, T.SCREEN_H - 90)
 
@@ -234,6 +248,10 @@ class BetweenScene(CampBackdrop):
     def __init__(self, app, summary, then):
         super().__init__(app)
         self.summary, self.then = summary, then
+        self.relayout()
+
+    def relayout(self):
+        super().relayout()
         self.btn = pygame.Rect(T.SCREEN_W // 2 - 140, T.SCREEN_H - 120, 280, 54)
 
     def handle(self, ev):

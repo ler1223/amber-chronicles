@@ -516,7 +516,15 @@ class GLRenderer:
             patlas, self.prop_uvs, self.prop_dims, _ = build_prop_atlas(props)
             self.props_tex = ctx.texture((patlas.shape[1], patlas.shape[0]), 4, np.ascontiguousarray(patlas).tobytes())
             self.props_tex.filter = (moderngl.NEAREST, moderngl.NEAREST)
-        # буферы
+        # пустышка: после кадра отвязываем ею слоты текстур — иначе текстура, в которую потом пишем,
+        # остаётся привязанной к слоту чтения, и драйвер пропускает запись (петля обратной связи)
+        self.dummy = ctx.texture((1, 1), 4, bytes(4))
+        self._alloc_targets()
+        self.view = None           # (x, y, ширина, высота) кадра в окне; None — окно ровно с холст
+
+    def _alloc_targets(self):
+        """Текстуры/FBO под текущий размер логического холста (создаются и при resize)."""
+        ctx = self.ctx
         self.tex_ground = ctx.texture((self.w, self.h), 4)
         self.tex_units = ctx.texture((self.w, self.h), 4)
         self.tex_glow = ctx.texture((self.w, self.h), 4)     # яркие пиксели пиксельных эффектов (ui/pixfx.py)
@@ -533,19 +541,43 @@ class GLRenderer:
         self.fbo_dist = ctx.framebuffer([self.dist])
         self.levels = []
         for k in (2, 4, 8):
-            size = (self.w // k, self.h // k)
+            size = (max(1, self.w // k), max(1, self.h // k))
             a, b = ctx.texture(size, 4, dtype="f2"), ctx.texture(size, 4, dtype="f2")
             for t in (a, b):
                 t.repeat_x = t.repeat_y = False
             self.levels.append((a, b, ctx.framebuffer([a]), ctx.framebuffer([b]), size))
-        # пустышка: после кадра отвязываем ею слоты текстур — иначе текстура, в которую потом пишем,
-        # остаётся привязанной к слоту чтения, и драйвер пропускает запись (петля обратной связи)
-        self.dummy = ctx.texture((1, 1), 4, bytes(4))
-        # кадр всегда собирается в буфер 1280×800; в окно он выводится растянутым под его размер (view)
+        # кадр собирается в буфер логического холста; в окно он выводится под его размер (view)
         self.out = ctx.texture((self.w, self.h), 4)
         self.out.filter = (moderngl.LINEAR, moderngl.LINEAR)
         self.fbo_out = ctx.framebuffer([self.out])
-        self.view = None           # (x, y, ширина, высота) кадра в окне; None — окно ровно 1280×800
+        # маленькая копия кадра для размытого фона в полях (без читаемого интерфейса)
+        bw, bh = max(1, self.w // 10), max(1, self.h // 10)
+        self.bg_tex = ctx.texture((bw, bh), 4)
+        self.bg_tex.filter = (moderngl.LINEAR, moderngl.LINEAR)
+        self.fbo_bg = ctx.framebuffer([self.bg_tex])
+
+    def resize(self, w, h):
+        """Холст стал другим (окно потянули/полный экран): пересоздать буферы."""
+        w, h = max(1, int(w)), max(1, int(h))
+        if (w, h) == (self.w, self.h):
+            return
+        old = [self.tex_ground, self.tex_units, self.tex_glow, self.tex_ui, self.scene, self.fbo_scene,
+               self.light, self.fbo_light, self.lightmap, self.fbo_lightmap, self.dist, self.fbo_dist,
+               self.out, self.fbo_out, self.bg_tex, self.fbo_bg]
+        for item in old:
+            try:
+                item.release()
+            except Exception:
+                pass
+        for a, b, fa, fb, _ in self.levels:
+            for item in (a, b, fa, fb):
+                try:
+                    item.release()
+                except Exception:
+                    pass
+        self.levels = []
+        self.w, self.h = w, h
+        self._alloc_targets()
 
     # ---------- загрузка поверхностей ----------
 
@@ -806,19 +838,32 @@ class GLRenderer:
             self.prog_ui["u_flipv"] = 1.0
             self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
             ctx.disable(moderngl.BLEND)
-        if self.window:                        # 9. в окно: кадр растянут с сохранением пропорций, поля — цвета фона
-            ctx.screen.use()
+        if self.window:                        # 9. в окно: кадр по центру, поля — размытый фон (без «призраков» UI)
             sw, sh = self.window_size or ctx.screen.size
-            ctx.viewport = (0, 0, sw, sh)
-            ctx.screen.clear(T.BG[0] / 255, T.BG[1] / 255, T.BG[2] / 255, 1.0)
             x, y, w, h = self.view or (0, 0, self.w, self.h)
+            ctx.disable(moderngl.BLEND)
+            if (x, y, w, h) != (0, 0, sw, sh):
+                # маленькая копия кадра → растянуть на всё окно: мягкий фон вместо чёрных полос
+                self.fbo_bg.use()
+                ctx.viewport = (0, 0, *self.bg_tex.size)
+                self.out.use(0)
+                self.prog_ui["u_tex"] = 0
+                self.prog_ui["u_flipv"] = 0.0
+                self.prog_ui["u_tint"] = (1.0, 1.0, 1.0, 1.0)
+                self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
+                ctx.screen.use()
+                ctx.viewport = (0, 0, sw, sh)
+                ctx.screen.clear(T.BG[0] / 255, T.BG[1] / 255, T.BG[2] / 255, 1.0)
+                self.bg_tex.use(0)
+                self.prog_ui["u_tint"] = (0.55, 0.56, 0.62, 1.0)
+                self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
+            else:
+                ctx.screen.use()
+                ctx.viewport = (0, 0, sw, sh)
+                ctx.screen.clear(T.BG[0] / 255, T.BG[1] / 255, T.BG[2] / 255, 1.0)
             self.out.use(0)
             self.prog_ui["u_tex"] = 0
             self.prog_ui["u_flipv"] = 0.0
-            if (x, y, w, h) != (0, 0, sw, sh):
-                # поля: приглушённый растянутый кадр — на ультрашироком экране не пусто, а «эмбиент»
-                self.prog_ui["u_tint"] = (0.26, 0.28, 0.34, 1.0)
-                self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
             self.prog_ui["u_tint"] = (1.0, 1.0, 1.0, 1.0)
             ctx.viewport = (x, sh - y - h, w, h)
             self.vao["ui"].render(moderngl.TRIANGLE_STRIP)

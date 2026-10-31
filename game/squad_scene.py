@@ -46,6 +46,18 @@ class SquadScene(MetaScene):
         self.drag = None            # {"cls", "from": "board"|"roster", "start": pos}
         self.portraits = []         # (rect, cls)
         self.last_click = (None, 0.0)
+        self._layout()
+
+    def _layout(self):
+        global INFO, SYN, ROSTER
+        # поле расстановки фиксированное, информационные панели тянутся по ширине окна
+        INFO = pygame.Rect(510, 64, max(300, T.SCREEN_W - 534), 236)
+        SYN = pygame.Rect(510, 310, max(300, T.SCREEN_W - 534), 206)
+        ROSTER = pygame.Rect(24, 526, max(600, T.SCREEN_W - 48), 194)
+
+    def relayout(self):
+        super().relayout()
+        self._layout()
 
     # ---------- ввод ----------
 
@@ -317,8 +329,8 @@ class SquadScene(MetaScene):
                (x + 12, ROSTER.y + 12), 12, T.TEXT_DIM)
         heroes = [c for c in data.classes if self.filter == "all" or data.classes[c]["role"] == self.filter]
         self.portraits = []
-        per_row = 11
         tw, th = 104, 74
+        per_row = max(1, ROSTER.w // (tw + 6))       # шире окно — больше героев в ряду
         for i, cls in enumerate(heroes):
             r = pygame.Rect(ROSTER.x + 12 + (i % per_row) * (tw + 6), ROSTER.y + 40 + (i // per_row) * (th + 4), tw, th)
             self.portraits.append((r, cls))

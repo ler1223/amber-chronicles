@@ -50,6 +50,10 @@ class Sandbox:
     def __init__(self, data):
         self.scene = BattleScene(data, args.battle, autoplay=args.autoplay)
 
+    def relayout(self):
+        if hasattr(self.scene, "relayout"):
+            self.scene.relayout()
+
 
 def main():
     pygame.init()
@@ -95,6 +99,13 @@ def main():
         pygame.quit()
         return
 
+    def on_resize():
+        presenter.resize()
+        if hasattr(holder, "relayout"):
+            holder.relayout()
+
+    disp.on_resize = on_resize
+
     running = True
     while running:
         dt = clock.tick(60) / 1000.0
@@ -105,9 +116,19 @@ def main():
                                                 (ev.key == pygame.K_RETURN and ev.mod & pygame.KMOD_ALT)):
                 disp.toggle_fullscreen()
             elif ev.type in (pygame.VIDEORESIZE, pygame.WINDOWRESIZED, pygame.WINDOWSIZECHANGED):
-                pass                                 # кадр сам растянется под новый размер
+                disp.sync()                      # пересчитать холст: ширина сцен следует за окном
             else:
-                holder.scene.handle(disp.to_logical(ev))
+                ev = disp.to_logical(ev)
+                scene = holder.scene
+                if getattr(scene, "stage", False):   # сцена-колонка 1280: сдвигаем мышь в её координаты
+                    ox = T.content_ox()
+                    d = dict(ev.dict)
+                    if "pos" in d:
+                        d["pos"] = (d["pos"][0] - ox, d["pos"][1])
+                    if "rel" in d:
+                        d["rel"] = (d["rel"][0], d["rel"][1])
+                    ev = pygame.event.Event(ev.type, d)
+                scene.handle(ev)
         holder.scene.update(dt)
         if getattr(holder, "quit", False):
             running = False

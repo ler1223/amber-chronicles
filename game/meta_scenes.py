@@ -26,6 +26,9 @@ class MetaScene:
         self.back = pygame.Rect(T.SCREEN_W - 220, T.SCREEN_H - 66, 196, 44)
         self.on_back = None        # куда «Назад»: по умолчанию — в лагерь
 
+    def relayout(self):
+        self.back = pygame.Rect(T.SCREEN_W - 220, T.SCREEN_H - 66, 196, 44)
+
     def go_back(self):
         (self.on_back or self.app.to_hub)()
 
@@ -84,6 +87,7 @@ class HeroesScene(MetaScene):
 
     WINDOWS = (("overview", "Обзор и путь"), ("skills", "Способности"), ("talents", "Таланты и снаряжение"))
     PREVIEW = pygame.Rect(588, 154, 668, 380)
+    stage = True                 # сложная фиксированная вёрстка: рисуется колонкой 1280 и ставится по центру
 
     def __init__(self, app, cls=None, window="overview"):
         super().__init__(app)
@@ -100,6 +104,10 @@ class HeroesScene(MetaScene):
         self.help_btn = pygame.Rect(self.back.x - 176, self.back.y, 164, 44)
         if app.profile.mode == "story" and not getattr(app.profile, "help_seen", True):
             self.open_help()                      # сюжет: при первом заходе — обучение окну героя
+
+    def relayout(self):
+        super().relayout()
+        self.help_btn = pygame.Rect(self.back.x - 176, self.back.y, 164, 44)
 
     def open_help(self):
         from game.help_overlay import HERO_PAGES, HelpOverlay
