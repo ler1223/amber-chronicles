@@ -134,9 +134,12 @@ def test_stage_scene_is_composited_centered():
         pres = Presenter(screen, use_gl=False, window=True)
         pres.frame(StageScene())
         ox = (1911 - 1280) // 2
-        assert screen.get_at((10, 10))[:3] == T.BG
+        left = screen.get_at((10, 10))[:3]
+        right = screen.get_at((ox + 1280 + 5, 10))[:3]
+        assert left != (200, 10, 10) and max(left) < 80      # поля — размытая копия сцены
+        assert right != (200, 10, 10) and max(right) < 80
+        assert left != T.BG and right != T.BG
         assert screen.get_at((ox + 10, 10))[:3] == (200, 10, 10)
-        assert screen.get_at((ox + 1280 + 5, 10))[:3] == T.BG
     finally:
         display.CURRENT = old
         pygame.display.set_mode((T.SCREEN_W, T.SCREEN_H))

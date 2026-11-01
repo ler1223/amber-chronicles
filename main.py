@@ -120,7 +120,9 @@ def main():
             else:
                 ev = disp.to_logical(ev)
                 scene = holder.scene
-                if getattr(scene, "stage", False):   # сцена-колонка 1280: сдвигаем мышь в её координаты
+                if getattr(scene, "stage", False) and ev.type in (
+                        pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
+                    # сцена-колонка 1280: сдвигаем мышь в её координаты
                     ox = T.content_ox()
                     d = dict(ev.dict)
                     if "pos" in d:

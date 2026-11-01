@@ -3,7 +3,8 @@
 Сцена с эффектами (бой) умеет draw_layers(земля, интерфейс, юниты) и отдаёт vfx; остальные экраны — просто draw(surf).
 Логический холст подстраивается под окно (ui/layout.py): на ультрашироком экране он шире 1280, и сцены рисуют
 интерфейс по всей ширине. Экраны со сложной фиксированной вёрсткой помечены stage = True: они рисуются в
-координатах 1280×800 и ставятся по центру, а поля заливаются фоном (без чёрных полос и «призрачного» меню).
+координатах 1280×800 и ставятся по центру, а поля заполняются размытой копией сцены (без чёрных полос и
+«призрачного» меню).
 """
 import pygame
 
@@ -26,6 +27,8 @@ class Presenter:
                 self.gl = None
         self.world = self.ui = self.units = self.canvas = None
         self.stage = None
+        self._stage_amb = None
+        self._stage_tick = 0
         self._alloc()
 
     # ---------- поверхности ----------
@@ -38,6 +41,8 @@ class Presenter:
         else:
             self.canvas = pygame.Surface(self.size)
         self.stage = pygame.Surface((L.BASE_W, L.BASE_H))
+        self._stage_amb = None
+        self._stage_tick = 0
 
     def resize(self):
         """Логический холст изменился (окно потянули/полный экран): новые поверхности и FBO."""
@@ -58,10 +63,19 @@ class Presenter:
 
     def _ambient(self, canvas, w, h):
         """Размытая приглушённая копия кадра — фон в полях, без читаемых «призраков» интерфейса."""
-        small = pygame.transform.smoothscale(canvas, (max(1, w // 10), max(1, h // 10)))
+        small = pygame.transform.smoothscale(canvas, (max(1, w // 18), max(1, h // 18)))
         amb = pygame.transform.smoothscale(small, (w, h))
-        amb.fill((70, 72, 82), special_flags=pygame.BLEND_RGB_MULT)
+        amb.fill((56, 58, 68), special_flags=pygame.BLEND_RGB_MULT)
         return amb
+
+    def _stage_background(self):
+        """Мягкий фон в полях stage-экрана: размытая копия сцены, обновляется не каждый кадр."""
+        size = (T.SCREEN_W, T.SCREEN_H)
+        self._stage_tick += 1
+        if (self._stage_amb is None or self._stage_amb.get_size() != size
+                or self._stage_tick % 30 == 0):
+            self._stage_amb = self._ambient(self.stage, *size)
+        return self._stage_amb
 
     # ---------- кадр ----------
 
@@ -75,8 +89,9 @@ class Presenter:
             with T.design():
                 scene.draw(self.stage)
             ox = T.content_ox()
+            bg = self._stage_background()
             if self.gl:
-                self.world.fill(T.BG)
+                self.world.blit(bg, (0, 0))
                 self.world.blit(self.stage, (ox, 0))
                 if disp is not None:
                     self.gl.view = disp.view()
@@ -86,10 +101,10 @@ class Presenter:
             screen = pygame.display.get_surface() or self.screen
             self.screen = screen
             if disp is None or disp.view() == (0, 0, T.SCREEN_W, T.SCREEN_H):
-                screen.fill(T.BG)
+                screen.blit(bg, (0, 0))
                 screen.blit(self.stage, (ox, 0))
                 return
-            self.canvas.fill(T.BG)
+            self.canvas.blit(bg, (0, 0))
             self.canvas.blit(self.stage, (ox, 0))
             self._blit_cpu(screen, disp)
             return
