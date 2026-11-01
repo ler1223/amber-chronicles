@@ -102,6 +102,30 @@ def test_tutorial_waits_for_player_actions(tmp_path):
     assert t.step["until"] == "order"
 
 
+def test_story_continues_to_nine_chapters(tmp_path):
+    prof = StoryProfile(story_data(DATA), str(tmp_path / "story.json"))
+    chapters = prof.story["chapters"]
+    assert [c["id"] for c in chapters] == [
+        "swamp", "forge", "crypt", "pass", "steppe", "tomb", "fae", "sunken", "citadel"]
+    exps = prof.expeditions_list()
+    assert len(exps) == 28
+    assert all(not e.get("join") for e in exps[7:])          # новые герои — только в первых двух главах
+    known = {e["id"] for e in prof.data.encounters}
+    for exp in exps:
+        for b in exp["battles"]:
+            assert b["encounter"] in known
+        for line in exp.get("intro", []) + exp.get("outro", []):
+            assert line["who"] in prof.story["characters"]
+    last = exps[-1]
+    assert last["battles"][-1]["encounter"] == "citadel_9"
+    assert next(e for e in prof.data.encounters if e["id"] == "citadel_9")["kind"] == "boss"
+
+    prof.done = [e["id"] for e in exps[:7]]
+    run = prof.start_chain(1)
+    assert run.region_id == "crypt_gate" and run.enemy_scale()["level"] == 7
+    assert len(run.nodes) == 3
+
+
 def test_shop_buys_into_arsenal(tmp_path):
     prof = StoryProfile(story_data(DATA), str(tmp_path / "story.json"))
     prof.amber = 500
