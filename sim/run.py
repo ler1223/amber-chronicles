@@ -321,7 +321,9 @@ class Run:
         if not node["next"]:   # последний узел карты: босс или страж региона
             self.result = "victory"
             if self.stats:
-                self.stats_xp(node["type"])
+                xp = stats.battle_xp(self.data, node["type"], self.region_level(), self.squad[0].level)
+                ups = self.stats_xp(node["type"])
+                return {"result": "victory", "boss": True, "xp": xp, "level_ups": ups}
             return {"result": "victory", "boss": True}
         self.heal_all(self.cfg["post_battle_heal"] + self.bonus.get("post_battle_heal", 0)
                       + self.relic_value("post_battle_heal"))

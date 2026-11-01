@@ -138,6 +138,22 @@ def test_story_uses_hero_levels_and_weak_slimes(tmp_path):
     assert prof.level("priest") == 4
 
 
+def test_story_chain_reports_xp_and_level_ups(tmp_path):
+    from sim import stats
+    prof = StoryProfile(story_data(DATA), str(tmp_path / "story.json"))
+    run = prof.start_chain(1)
+    for m in run.squad:
+        stats.add_xp(prof.data, m.rpg, 10_000)
+        m.level = m.rpg["level"]
+    run.result = "victory"
+    run.battles_won = 1
+    run.story_xp = 140
+    end = prof.finish_chain(run)
+    assert end["hero_xp"] == 140
+    assert {c for c, _, _ in end["level_ups"]} == {m.cls for m in run.squad}
+    assert all(old < new for _, old, new in end["level_ups"])
+
+
 def test_hero_window_help_opens_once_in_story(tmp_path):
     from game.meta_scenes import HeroesScene
     app = App(DATA, seed=1)

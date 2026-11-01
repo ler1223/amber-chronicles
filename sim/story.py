@@ -150,14 +150,19 @@ class StoryProfile(Profile):
             if run.region_id not in self.done:
                 self.done.append(run.region_id)
         xp = self.mastery_xp_for(run)
+        level_ups = []
         for m in run.squad:
             h = self.heroes[m.cls]
+            old = h["rpg"]["level"]
             h["xp"] += xp
             h["autocast"] = copy.deepcopy(m.autocast)
-            self.heroes[m.cls]["rpg"] = copy.deepcopy(m.rpg)
+            h["rpg"] = copy.deepcopy(m.rpg)
+            if m.rpg["level"] > old:
+                level_ups.append((m.cls, old, m.rpg["level"]))
         trophies = self.trophies(run) if win else []
         self.save()
         return {"amber": amber, "mastery_xp": xp, "trophies": trophies, "result": run.result,
+                "level_ups": level_ups, "hero_xp": getattr(run, "story_xp", 0),
                 "captured": False, "bonus": None, "biome_done": False, "mastery": {}, "opened": []}
 
     def trophies(self, run):

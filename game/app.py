@@ -180,12 +180,13 @@ class App:
     def _story_battle_done(self, combat, formation):
         from game.story_scenes import BetweenScene, DialogScene
         run, prof = self.run, self.profile
-        run.finish_battle(combat, formation)
+        summary = run.finish_battle(combat, formation)
+        run.story_xp = getattr(run, "story_xp", 0) + int(summary.get("xp", 0))
         prof.remember_autocast(run)
         if not run.result:                        # передышка сюжета: перевязали раны
             run.heal_all(prof.story.get("heal_between", 0.0))
             nxt = run.nodes[run.node]["next"][0]
-            self.switch(BetweenScene(self, None, lambda: self._story_battle(nxt)))
+            self.switch(BetweenScene(self, summary, lambda: self._story_battle(nxt)))
             return
         end = prof.finish_chain(run)
         if run.result != "victory":
@@ -195,6 +196,16 @@ class App:
             return
         lines = list(run.story.get("outro", [])) + [
             {"who": "narrator", "text": f"Вылазка пройдена. Янтарь: +{end['amber']}."}]
+        if end.get("hero_xp"):
+            lines.append({"who": "narrator", "text": f"Опыт героев: +{end['hero_xp']} каждому."})
+        if end.get("level_ups"):
+            from sim import stats
+            ups = ", ".join(f"{prof.character(c)['name']} {a}→{b}" for c, a, b in end["level_ups"])
+            lines.append({"who": "narrator", "text": f"Новые уровни: {ups}."})
+            free = sum(stats.points_free(prof.data, prof.heroes[c]["rpg"]) for c in prof.squad)
+            if free:
+                lines.append({"who": "narrator", "text": f"Свободных очков характеристик: {free} — "
+                                                         "потратить в «Подготовке героев»."})
 
         def trophies():
             if end["trophies"]:

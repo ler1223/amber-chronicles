@@ -166,7 +166,8 @@ class StoryHub(CampBackdrop):
             T.text(surf, self.exp["chapter_name"], (ox + 30, 74), 22, (225, 215, 190), True, shadow=True)
             n = len(self.exp["battles"])
             join = self.exp.get("join")
-            sub = f"Следующая вылазка: «{self.exp['name']}» — {n} боя подряд, враги ур. {self.exp.get('level', 1)}"
+            sub = (f"Следующая вылазка: «{self.exp['name']}» — {n} боя подряд, "
+                   f"враги ур. {self.exp.get('level', 1)} · отряд ур. {prof.squad_level()}")
             if join:
                 sub += f" · присоединится {prof.character(join)['name']}"
             T.text(surf, sub, (ox + 30, 106), 17, (200, 196, 185), shadow=True)
@@ -176,10 +177,18 @@ class StoryHub(CampBackdrop):
                      accent=GOLD if key == "go" else (170, 160, 210))
         y = T.SCREEN_H - 120
         self.panel(surf, pygame.Rect(ox + 16, y - 12, 6 * 150 + 12, 100), 150)
+        from sim import stats
         for i, c in enumerate(prof.squad):
             lvl = prof.level(c)
-            T.text(surf, prof.character(c)["name"], (ox + 28 + i * 150, y), 17, tuple(prof.character(c)["color"]), True)
-            T.text(surf, f"{self.app.data.classes[c]['name']} · ур. {lvl}", (ox + 28 + i * 150, y + 24), 14, T.TEXT_DIM)
+            x = ox + 28 + i * 150
+            T.text(surf, prof.character(c)["name"], (x, y), 17, tuple(prof.character(c)["color"]), True)
+            T.text(surf, f"{self.app.data.classes[c]['name']} · ур. {lvl}", (x, y + 24), 14, T.TEXT_DIM)
+            rpg = prof.heroes[c]["rpg"]
+            cap = stats.cfg(self.app.data)["level_cap"]
+            need = stats.xp_to_next(self.app.data, lvl)
+            frac = 1.0 if lvl >= cap else min(1.0, rpg["xp"] / max(1, need))
+            pygame.draw.rect(surf, (30, 30, 34), (x, y + 44, 110, 5), border_radius=2)
+            pygame.draw.rect(surf, (110, 170, 255), (x, y + 44, int(110 * frac), 5), border_radius=2)
         T.text(surf, f"В отряде {len(prof.squad)} из {prof.squad_size()} · союзников {len(prof.unlocked)}",
                (ox + 28, y + 56), 14, T.TEXT_DIM)
         self.draw_toast(surf, T.SCREEN_H - 150)
@@ -268,7 +277,9 @@ class BetweenScene(CampBackdrop):
                shadow=True)
         T.text(surf, "Короткая передышка: раны перевязаны, можно перестроиться перед следующим боем.",
                (T.SCREEN_W // 2, 116), 17, (210, 205, 190), center=True, shadow=True)
-        r = pygame.Rect(T.SCREEN_W // 2 - 380, 160, 760, 64 + 34 * len(run.squad))
+        summary = self.summary or {}
+        extra = 58 if summary.get("xp") or summary.get("level_ups") else 0
+        r = pygame.Rect(T.SCREEN_W // 2 - 380, 160, 760, 64 + 34 * len(run.squad) + extra)
         self.panel(surf, r)
         prof = self.app.profile
         for i, m in enumerate(run.squad):
@@ -281,4 +292,17 @@ class BetweenScene(CampBackdrop):
             pygame.draw.rect(surf, (110, 210, 120), (r.right - w - 30, y + 4, int(w * m.hp / max(1, mx)), 14),
                              border_radius=4)
             T.text(surf, f"{m.hp}/{mx}", (r.right - w - 110, y), 15, T.TEXT_DIM)
+        if extra:
+            from sim import stats
+            y = r.y + 24 + 34 * len(run.squad) + 4
+            if summary.get("xp"):
+                T.text(surf, f"Опыт: +{summary['xp']} каждому", (r.x + 24, y), 15, (150, 210, 255), True)
+                y += 20
+            if summary.get("level_ups"):
+                names = ", ".join(dict.fromkeys(prof.character(m.cls)["name"] for m in summary["level_ups"]))
+                T.text(surf, f"Новый уровень: {names}", (r.x + 24, y), 15, GOLD, True)
+                free = sum(stats.points_free(self.app.data, m.rpg) for m in run.squad)
+                if free:
+                    T.text(surf, f"Свободных очков: {free} — в «Подготовке героев»", (r.x + 24, y + 20), 14,
+                           T.TEXT_DIM)
         W.button(surf, self.btn, "Следующий бой  (Пробел)", self.mouse, accent=GOLD)
