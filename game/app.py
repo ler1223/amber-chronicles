@@ -189,23 +189,29 @@ class App:
             self.switch(BetweenScene(self, summary, lambda: self._story_battle(nxt)))
             return
         end = prof.finish_chain(run)
+
+        def progress_lines():
+            """Опыт и новые уровни — и при победе, и при отступлении: прокачка уже сохранена."""
+            out = []
+            if end.get("hero_xp"):
+                out.append({"who": "narrator", "text": f"Опыт героев: +{end['hero_xp']} каждому."})
+            if end.get("level_ups"):
+                from sim import stats
+                ups = ", ".join(f"{prof.character(c)['name']} {a}→{b}" for c, a, b in end["level_ups"])
+                out.append({"who": "narrator", "text": f"Новые уровни: {ups}."})
+                free = sum(stats.points_free(prof.data, prof.heroes[c]["rpg"]) for c in prof.squad)
+                if free:
+                    out.append({"who": "narrator", "text": f"Свободных очков характеристик: {free} — "
+                                                             "потратить в «Подготовке героев»."})
+            return out
+
         if run.result != "victory":
             lines = [{"who": "narrator", "text": "Отряд отступил к лагерю. Раны заживут — попробуйте ещё раз."},
-                     {"who": "narrator", "text": f"Добыто янтаря: {end['amber']}."}]
+                     {"who": "narrator", "text": f"Добыто янтаря: {end['amber']}."}] + progress_lines()
             self.switch(DialogScene(self, lines, self.to_hub))
             return
         lines = list(run.story.get("outro", [])) + [
-            {"who": "narrator", "text": f"Вылазка пройдена. Янтарь: +{end['amber']}."}]
-        if end.get("hero_xp"):
-            lines.append({"who": "narrator", "text": f"Опыт героев: +{end['hero_xp']} каждому."})
-        if end.get("level_ups"):
-            from sim import stats
-            ups = ", ".join(f"{prof.character(c)['name']} {a}→{b}" for c, a, b in end["level_ups"])
-            lines.append({"who": "narrator", "text": f"Новые уровни: {ups}."})
-            free = sum(stats.points_free(prof.data, prof.heroes[c]["rpg"]) for c in prof.squad)
-            if free:
-                lines.append({"who": "narrator", "text": f"Свободных очков характеристик: {free} — "
-                                                         "потратить в «Подготовке героев»."})
+            {"who": "narrator", "text": f"Вылазка пройдена. Янтарь: +{end['amber']}."}] + progress_lines()
 
         def trophies():
             if end["trophies"]:
