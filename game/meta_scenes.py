@@ -86,8 +86,7 @@ class HeroesScene(MetaScene):
             "{unlock}. 1–4 — герой.")
 
     WINDOWS = (("overview", "Обзор и путь"), ("skills", "Способности"), ("talents", "Таланты и снаряжение"))
-    PREVIEW = pygame.Rect(588, 154, 668, 380)
-    stage = True                 # сложная фиксированная вёрстка: рисуется колонкой 1280 и ставится по центру
+    PREVIEW = pygame.Rect(588, 154, 668, 380)   # базовый размер; на широком окне превью растёт
 
     def __init__(self, app, cls=None, window="overview"):
         super().__init__(app)
@@ -96,18 +95,43 @@ class HeroesScene(MetaScene):
         self.preview = None
         self.windows = self.WINDOWS + ((("stats", "Характеристики"),) if app.profile.uses_stats else ())
         self.window = window
-        self.skill_preview = SkillPreview(app.data, self.PREVIEW)
+        self.preview_rect = self.PREVIEW.copy()
+        self.skill_preview = SkillPreview(app.data, self.preview_rect)
         self.pv = None             # что показывает превью: (навык, ветка, ступень) — ветка None = основа
         self.pv_dirty = True
         self.hint = self.hint.format(unlock=meta.path_unlock_level(app.data))
         self.help = None
         self.help_btn = pygame.Rect(self.back.x - 176, self.back.y, 164, 44)
+        self._layout()
         if app.profile.mode == "story" and not getattr(app.profile, "help_seen", True):
             self.open_help()                      # сюжет: при первом заходе — обучение окну героя
+
+    def _layout(self):
+        """Колонки под текущую ширину: на широком окне панели и превью растут, а не остаются колонкой 1280."""
+        w = T.SCREEN_W
+        content_w = w - 48
+        if self.window == "skills":
+            left_w = max(548, min(820, int(content_w * 0.42)))
+        elif self.window in ("stats", "talents"):
+            left_w = max(600, min(760, int(content_w * 0.40)))
+        else:
+            left_w = max(520, min(700, int(content_w * 0.35)))
+        self.left_rect = pygame.Rect(24, 154, left_w, 552)
+        right_x = self.left_rect.right + 16
+        right_w = max(300, w - 24 - right_x)
+        self.right_rect = pygame.Rect(right_x, 154, right_w, 552)
+        if self.window == "skills":
+            self.preview_rect = pygame.Rect(right_x, 154, right_w, 380)
+            self.info_rect = pygame.Rect(right_x, 544, right_w, 162)
+        else:
+            self.preview_rect = self.PREVIEW.copy()
+            self.info_rect = pygame.Rect(588, 544, 668, 162)
+        self.skill_preview.rect = self.preview_rect
 
     def relayout(self):
         super().relayout()
         self.help_btn = pygame.Rect(self.back.x - 176, self.back.y, 164, 44)
+        self._layout()
 
     def open_help(self):
         from game.help_overlay import HERO_PAGES, HelpOverlay
@@ -127,6 +151,7 @@ class HeroesScene(MetaScene):
         if w != "skills":
             P.reset()
         self.pv_dirty = True
+        self._layout()
 
     def show_skill(self, sid, b=None, t=None):
         self.pv = (sid, b, t)
@@ -148,6 +173,7 @@ class HeroesScene(MetaScene):
     def update(self, dt):
         super().update(dt)
         if self.window == "skills":
+            self._layout()
             self._sync_preview()
             self.skill_preview.update(dt)
 
@@ -160,21 +186,23 @@ class HeroesScene(MetaScene):
 
     def draw_layers(self, world, ui, units):
         """С OpenGL: интерфейс — непрозрачный слой с окном-дыркой, в которой виден бой превью."""
+        self._layout()
         world.fill(T.BG)
         units.fill((0, 0, 0, 0))
         self._draw_menu(ui)
         if self.window == "skills" and self.skill_preview.proto:
-            ui.fill((0, 0, 0, 0), self.PREVIEW)
+            ui.fill((0, 0, 0, 0), self.preview_rect)
             self.skill_preview.draw_layers(world, units, ui)
             self._draw_preview_frame(ui)
 
     def draw(self, surf):
         """Без OpenGL: превью под интерфейсом, интерфейс с дыркой поверх."""
+        self._layout()
         if self.window == "skills" and self.skill_preview.proto:
             self.skill_preview.draw_cpu(surf)
             layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
             self._draw_menu(layer)
-            layer.fill((0, 0, 0, 0), self.PREVIEW)
+            layer.fill((0, 0, 0, 0), self.preview_rect)
             surf.blit(layer, (0, 0))
             self.skill_preview._draw_overlay(surf)
             self._draw_preview_frame(surf)
@@ -182,7 +210,7 @@ class HeroesScene(MetaScene):
             self._draw_menu(surf)
 
     def _draw_preview_frame(self, surf):
-        r = self.PREVIEW
+        r = self.preview_rect
         pygame.draw.rect(surf, BRANCH_COLOR, r.inflate(4, 4), 2, border_radius=6)
         title = self.skill_preview.title
         box = pygame.Rect(r.x + 8, r.y + 8, T.font(15, True).size(title)[0] + 16, 24)
@@ -309,6 +337,7 @@ class HeroesScene(MetaScene):
 
     def _draw_menu(self, surf):
         data, prof, hero = self.app.data, self.app.profile, self.hero
+        self._layout()
         self.hits = []
         surf.fill(T.BG)
         T.text(surf, "Подготовка героев", (24, 14), 30, T.TEXT, True)
@@ -359,15 +388,15 @@ class HeroesScene(MetaScene):
             T.text(surf, f"{title}  (F{i + 1})", r.center, 15, T.TEXT if on else T.TEXT_DIM, on, center=True)
             self.hit(r, ("window", wid), None)
         if self.window == "overview":
-            self._draw_hero(surf, pygame.Rect(24, 154, 520, 552))
-            self._draw_paths(surf, pygame.Rect(560, 154, 696, 552))
+            self._draw_hero(surf, self.left_rect)
+            self._draw_paths(surf, self.right_rect)
         elif self.window == "skills":
-            self._draw_skills(surf, pygame.Rect(24, 154, 548, 552))
-            self._draw_skill_info(surf, pygame.Rect(588, 544, 668, 162))
+            self._draw_skills(surf, self.left_rect)
+            self._draw_skill_info(surf, self.info_rect)
         elif self.window == "stats":
-            self._draw_stats(surf, pygame.Rect(24, 154, 600, 552), pygame.Rect(640, 154, 616, 552))
+            self._draw_stats(surf, self.left_rect, self.right_rect)
         else:
-            self._draw_talents(surf, pygame.Rect(24, 154, 600, 552), pygame.Rect(640, 154, 616, 552))
+            self._draw_talents(surf, self.left_rect, self.right_rect)
         self.draw_footer(surf)
         W.button(surf, self.help_btn, "Справка (I)", self.mouse, accent=(255, 205, 110))
         if self.help:

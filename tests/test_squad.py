@@ -133,6 +133,37 @@ def test_view_only_hero_cannot_be_changed():
     P.reset()
 
 
+def test_heroes_layout_reflows_on_wide():
+    from game.meta_scenes import HeroesScene
+    prof = Profile(DATA, None, sandbox=True)
+    app = App(DATA, 1, profile=prof, start="hub")
+    T.SCREEN_W, T.SCREEN_H = 1911, 800
+    s = HeroesScene(app, "warrior", "overview")
+    assert not getattr(s, "stage", False)
+    surf = pygame.Surface((1911, 800))
+    s.draw(surf)
+    assert s.left_rect == pygame.Rect(24, 154, 652, 552)
+    assert s.right_rect.right == 1887
+
+    tab = next(r for r, a, _ in s.hits if a == ("window", "skills"))
+    s.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=tab.center, button=1))
+    s.update(1 / 60)
+    s.draw(surf)
+    assert s.window == "skills"
+    assert s.preview_rect == pygame.Rect(822, 154, 1065, 380)
+    assert s.info_rect.right == 1887
+
+    show = next(r for r, a, _ in s.hits if a and a[0] == "show")
+    sid = next(a[1] for _, a, _ in s.hits if a and a[0] == "show")
+    s.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=show.center, button=1))
+    assert s.pv and s.pv[0] == sid
+
+    T.SCREEN_W = 1280
+    s.relayout()
+    assert s.left_rect == pygame.Rect(24, 154, 548, 552)
+    assert s.preview_rect == pygame.Rect(588, 154, 668, 380)
+
+
 def test_big_board_battle_and_formation_scaling():
     from sim.combat import Combat
     i = next(i for i, e in enumerate(DATA.encounters) if len(e["map"][0]) == 14)
