@@ -25,6 +25,8 @@ class Member:
         b = build or {}
         self.cls = cls
         self.path = b.get("path")
+        self.skills = list(b.get("skills", []))       # сюжет: явный набор навыков из пула
+        self.doctrine = b.get("doctrine")              # сюжет: пассивная доктрина
         self.branches = {sid: tuple(v) for sid, v in b.get("branches", {}).items()}
         self.talents = list(b.get("talents", []))
         self.mastery = b.get("mastery", 1)
@@ -44,6 +46,7 @@ class Run:
     def __init__(self, data, seed=None, region=None, bonus=None, heroes=None, chapter="swamp", difficulty="normal",
                  mode="base"):
         self.data = data
+        self.story = mode == "story"              # сюжет: явный пул навыков вместо пути
         self.stats = mode in ("stats", "story")   # режим героев и сюжет: уровень героя и атрибуты навсегда
         self.cfg = data.config["run"]
         self.region = region
@@ -125,7 +128,7 @@ class Run:
 
     def proto(self, m):
         p = build_proto(self.data, m.cls, m.talents, list(m.items.values()), m.branches, self.extra_mods(m),
-                        m.path, m.runes)
+                        m.path, m.runes, skills=m.skills if self.story else None, doctrine=m.doctrine)
         p["level"] = m.level
         if self.stats:
             stats.apply_to_proto(p, stats.derive(self.data, m.cls, m.rpg))
@@ -253,9 +256,12 @@ class Run:
     def rune_targets(self, m):
         """Навыки героя, которые можно усилить руной: свои (класс, путь, таланты), не от предметов."""
         p = self.proto(m)
-        own = class_skills(self.data, m.cls, m.path)
-        own += [mm["new_skill"] for t in m.talents for mm in self.data.talents[t]["mods"] if "new_skill" in mm]
-        return [(sid, p["skill_defs"][sid]) for sid in own if sid in p["skill_defs"]]
+        if self.story:
+            own = list(m.skills)
+        else:
+            own = class_skills(self.data, m.cls, m.path)
+            own += [mm["new_skill"] for t in m.talents for mm in self.data.talents[t]["mods"] if "new_skill" in mm]
+        return [(sid, p["skill_defs"][sid]) for sid in dict.fromkeys(own) if sid in p["skill_defs"]]
 
     def rune_offers(self, n):
         cand = []

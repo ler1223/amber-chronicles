@@ -26,6 +26,7 @@ class GameData:
         self.branches = load("branches.json")
         self.biomes = load("biomes.json")
         self.paths = load("paths.json")
+        self.story_progression = load("story_progression.json")   # сюжет: пул навыков, слоты, доктрины
         self.runes = load("runes.json")
         self.relics = load("relics.json")
         self.camp = load("camp.json")
@@ -105,6 +106,25 @@ class GameData:
             for sid in path["replace"].values():
                 if sid not in self.branches:
                     raise ValueError(f"путь {pid}: у навыка {sid} нет веток")
+        sp = self.story_progression
+        if int(sp.get("slots", 0)) < 1:
+            raise ValueError("сюжет: нужно хотя бы одно место под навык")
+        for cid, sc in sp.get("classes", {}).items():
+            if cid not in self.classes:
+                raise ValueError(f"сюжет: неизвестный класс {cid}")
+            pool = sc.get("skills", [])
+            if len(pool) != len({e["id"] for e in pool}):
+                raise ValueError(f"сюжет/{cid}: повтор навыка в пуле")
+            for e in pool:
+                if e["id"] not in self.skills or e["id"] not in self.branches:
+                    raise ValueError(f"сюжет/{cid}: неизвестный навык {e['id']} или нет веток")
+                if int(e.get("level", 0)) < 1:
+                    raise ValueError(f"сюжет/{cid}: уровень навыка {e['id']} должен быть >= 1")
+            for d in sc.get("doctrines", []):
+                if d["id"] not in self.paths or self.paths[d["id"]]["class"] != cid:
+                    raise ValueError(f"сюжет/{cid}: неизвестная доктрина {d['id']}")
+                if int(d.get("level", 0)) < 1:
+                    raise ValueError(f"сюжет/{cid}: уровень доктрины {d['id']} должен быть >= 1")
         for sid, br in self.branches.items():
             if sid not in self.skills:
                 raise ValueError(f"ветки: неизвестный навык {sid}")

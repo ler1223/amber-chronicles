@@ -390,6 +390,7 @@ class Profile:
             out.append({"cls": cls, "path": h["path"], "branches": copy.deepcopy(h["branches"]),
                         "talents": list(h["talents"]), "mastery": self.mastery(cls),
                         "autocast": copy.deepcopy(h["autocast"]), "items": list(h["loadout"]),
+                        "skills": list(h.get("skill_loadout", [])), "doctrine": h.get("doctrine"),
                         "rpg": copy.deepcopy(h["rpg"])})
         return out
 

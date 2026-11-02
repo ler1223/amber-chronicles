@@ -22,7 +22,7 @@ from ui.sprites import DRAWERS, SpriteBank
 from ui.vfx import Light, VfxWorld, resolve_color
 from ui.vfx_textures import make_textures
 
-SKILL_KEYS = "QWERT"
+SKILL_KEYS = "QWERTYUIOP"
 RIGHT_X = 924
 BOTTOM_Y = 608
 PANEL_Y = 64
@@ -2084,17 +2084,17 @@ class BattleView:
                 y += 16
 
         cx = panel.x + 262
-        n = max(4, min(5, len(u.skills)))
+        n = max(1, len(u.skills))
         compact = n > 4
-        cw = (panel.right - cx - 10 - (n - 1) * 8) // n
-        for i, sid in enumerate(u.skills[:5]):
+        cw = max(48, (panel.right - cx - 10 - (n - 1) * 8) // n)
+        for i, sid in enumerate(u.skills):
             sk = u.skill_defs[sid]
             r = pygame.Rect(cx + i * (cw + 8), panel.y + 10, cw, panel.h - 20)
             self.skill_rects.append((r, i))
             active = scene.targeting == sid
             pygame.draw.rect(surf, (44, 48, 58) if not active else (70, 64, 36), r, border_radius=8)
             pygame.draw.rect(surf, T.SELECT if active else T.PANEL_EDGE, r, 2, border_radius=8)
-            T.text(surf, SKILL_KEYS[i], (r.x + 10, r.y + 6), 20, T.SELECT, True)
+            T.text(surf, SKILL_KEYS[i] if i < len(SKILL_KEYS) else str(i + 1), (r.x + 10, r.y + 6), 20, T.SELECT, True)
             for j, line in enumerate(T.wrap(sk["name"], 15, cw - 40, True)[:2]):
                 T.text(surf, line, (r.x + 34, r.y + 8 + j * 18), 15, T.TEXT, True)
             ap_col = T.AP_COLOR if u.ap >= sk["ap"] else (255, 100, 100)

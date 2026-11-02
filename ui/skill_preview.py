@@ -69,9 +69,9 @@ class SkillPreview:
 
     # ---------- что показываем ----------
 
-    def show(self, cls, path, branches, sid, title=""):
-        """Герой cls на пути path со ступенями branches (только этого навыка) применяет навык sid."""
-        self.proto = build_proto(self.data, cls, branches=branches, path=path)
+    def show(self, cls, path, branches, sid, title="", skills=None, doctrine=None):
+        """Герой cls с выбранным навыком sid. path — старый режим; skills/doctrine — сюжетный."""
+        self.proto = build_proto(self.data, cls, branches=branches, path=path, skills=skills, doctrine=doctrine)
         self.cls, self.sid, self.title = cls, sid, title
         self.restart()
 

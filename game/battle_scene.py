@@ -14,7 +14,7 @@ from ui import projection as P
 from ui.autocast_editor import AutocastEditor, adjust_first_value
 from ui.battle_view import BattleView
 
-SKILL_KEYS = {pygame.K_q: 0, pygame.K_w: 1, pygame.K_e: 2, pygame.K_r: 3, pygame.K_t: 4}
+SKILL_KEYS = {getattr(pygame, "K_" + c.lower()): i for i, c in enumerate("QWERTYUIOP")}
 SPEED_KEYS = {pygame.K_F1: 0, pygame.K_F2: 1, pygame.K_F3: 2}
 DRAG_DIST = 12
 

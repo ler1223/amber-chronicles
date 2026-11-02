@@ -14,6 +14,7 @@ import json
 import os
 import random
 
+from sim import story_meta
 from sim.profile import Profile
 from sim.run import Run
 
@@ -55,7 +56,13 @@ class StoryProfile(Profile):
         if sandbox:
             self.joined = [c for c in self.all_story_heroes()]
         self.sync_heroes()
+        for cls, hero in self.heroes.items():
+            self._sanitize_hero(cls, hero)
         self.squad = [c for c in self.squad if c in self.unlocked][:self.squad_size()] or self.unlocked[:self.squad_size()]
+
+    def _sanitize_hero(self, cls, hero):
+        """Сюжет: вместо пути — пул навыков, слоты и доктрина (sim/story_meta.py)."""
+        story_meta.sanitize_hero(self.data, cls, hero)
 
     # ---------- сюжет ----------
 
@@ -107,6 +114,7 @@ class StoryProfile(Profile):
             lv = [self.level(c) for c in self.unlocked]
             rpg = self.heroes[join]["rpg"]
             rpg["level"] = max(rpg["level"], int(round(sum(lv) / len(lv))) if lv else 1)
+            story_meta.auto_fill(self.data, join, self.heroes[join])
             self.joined.append(join)
             self.sync_heroes()
         cap = self.squad_size()
@@ -158,6 +166,7 @@ class StoryProfile(Profile):
             h["xp"] += xp
             h["autocast"] = copy.deepcopy(m.autocast)
             h["rpg"] = copy.deepcopy(m.rpg)
+            story_meta.auto_fill(self.data, m.cls, h)
             if m.rpg["level"] > old:
                 level_ups.append((m.cls, old, m.rpg["level"]))
         trophies = self.trophies(run) if win else []

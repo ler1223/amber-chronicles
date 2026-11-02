@@ -1,7 +1,7 @@
 """Экраны меты между вылазками: подготовка героев (путь, ветки, таланты, снаряжение) и лагерь (янтарь)."""
 import pygame
 
-from sim import meta, stats
+from sim import meta, stats, story_meta
 from sim.build import class_skills
 from sim.run import RARITY_NAMES, SLOT_NAMES, Run
 from ui import projection as P
@@ -92,14 +92,23 @@ class HeroesScene(MetaScene):
         super().__init__(app)
         from ui.skill_preview import SkillPreview
         self.cls = cls or app.profile.squad[0]
+        self.story = app.profile.mode == "story"
         self.preview = None
-        self.windows = self.WINDOWS + ((("stats", "Характеристики"),) if app.profile.uses_stats else ())
+        base_windows = ((("overview", "Обзор и доктрина"), ("skills", "Способности"),
+                         ("talents", "Таланты и снаряжение")) if self.story else self.WINDOWS)
+        self.windows = base_windows + ((("stats", "Характеристики"),) if app.profile.uses_stats else ())
         self.window = window
         self.preview_rect = self.PREVIEW.copy()
         self.skill_preview = SkillPreview(app.data, self.preview_rect)
         self.pv = None             # что показывает превью: (навык, ветка, ступень) — ветка None = основа
         self.pv_dirty = True
-        self.hint = self.hint.format(unlock=meta.path_unlock_level(app.data))
+        self.slot_sel = 0          # сюжет: выбранный слот навыка
+        if self.story:
+            self.hint = (f"Уровень героя открывает навыки, в бой берутся {story_meta.slots(app.data)} слота. "
+                         f"Доктрина — пассивка вместо подкласса, открывается на уровне "
+                         f"{story_meta.doctrine_unlock_level(app.data, self.cls)}. 1–4 — герой.")
+        else:
+            self.hint = self.hint.format(unlock=meta.path_unlock_level(app.data))
         self.help = None
         self.help_btn = pygame.Rect(self.back.x - 176, self.back.y, 164, 44)
         self._layout()
@@ -134,8 +143,9 @@ class HeroesScene(MetaScene):
         self._layout()
 
     def open_help(self):
-        from game.help_overlay import HERO_PAGES, HelpOverlay
-        pages = [p for p in HERO_PAGES if any(p["window"] == w for w, _ in self.windows)]
+        from game.help_overlay import HERO_PAGES, STORY_HERO_PAGES, HelpOverlay
+        source = STORY_HERO_PAGES if self.story else HERO_PAGES
+        pages = [p for p in source if any(p["window"] == w for w, _ in self.windows)]
 
         def done():
             prof = self.app.profile
@@ -159,6 +169,20 @@ class HeroesScene(MetaScene):
 
     def _sync_preview(self):
         data, hero = self.app.data, self.hero
+        if self.story:
+            skills = story_meta.all_skills(data, self.cls)
+            if self.pv is None or self.pv[0] not in skills:
+                load = hero.get("skill_loadout", [])
+                sid = load[self.slot_sel] if self.slot_sel < len(load) else skills[0]
+                self.pv = (sid, None, None)
+            if not self.pv_dirty:
+                return
+            self.pv_dirty = False
+            sid, b, t = self.pv
+            branches = {sid: [b, t]} if b else {}
+            name = data.skills[sid]["name"] + (f" · {data.branches[sid][b]['tiers'][t - 1]['name']}" if b else "")
+            self.skill_preview.show(self.cls, None, branches, sid, name, skills=[sid], doctrine=hero.get("doctrine"))
+            return
         skills = class_skills(data, self.cls, hero["path"])
         if self.pv is None or self.pv[0] not in skills:
             self.pv = (skills[0], None, None)
@@ -230,8 +254,18 @@ class HeroesScene(MetaScene):
             self.open_help()
             return
         if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3 and self.window == "skills":
-            for r, action, _ in self.hits:              # ПКМ по ступени — только показать
-                if r.collidepoint(ev.pos) and action and action[0] in ("branch", "show"):
+            for r, action, _ in self.hits:              # ПКМ по ступени/навыку — только показать
+                if not (r.collidepoint(ev.pos) and action):
+                    continue
+                if action[0] == "pool":
+                    self.show_skill(action[1], None, None)
+                    return
+                if action[0] == "slot":
+                    load = self.hero.get("skill_loadout", [])
+                    if action[1] < len(load):
+                        self.show_skill(load[action[1]], None, None)
+                    return
+                if action[0] in ("branch", "show"):
                     self.show_skill(*action[1:])
                     return
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_SPACE and self.window == "skills":
@@ -258,10 +292,12 @@ class HeroesScene(MetaScene):
         units = self.roster()
         if pygame.K_1 <= k < pygame.K_1 + min(9, len(units)):
             self.cls = units[k - pygame.K_1]
+            self.slot_sel = 0
             self.preview = self.pv = None
             self.pv_dirty = True
         elif k == pygame.K_TAB:
             self.cls = units[(units.index(self.cls) + 1) % len(units)]
+            self.slot_sel = 0
             self.preview = self.pv = None
             self.pv_dirty = True
         elif k in (pygame.K_F1, pygame.K_F2, pygame.K_F3, pygame.K_F4):
@@ -281,16 +317,44 @@ class HeroesScene(MetaScene):
             return
         if kind == "hero":
             self.cls = action[1]
+            self.slot_sel = 0
             self.pv = None
             self.pv_dirty = True
             self.preview = None
             return
-        if self.view_only and kind in ("path", "branch", "talent", "loadout", "attr", "attr_reset"):
+        if self.view_only and kind in ("path", "branch", "talent", "loadout", "attr", "attr_reset",
+                                       "doctrine", "pool", "slot", "unequip"):
             if kind == "branch":
                 self.show_skill(*action[1:])
             why = prof.hero_lock_reason(self.cls) or "Герой ещё не открыт"
             self.say(f"{why} — пока можно только посмотреть")
             return
+        elif self.story and kind == "doctrine":
+            ok = story_meta.set_doctrine(data, self.cls, hero, action[1])
+            if not ok:
+                self.say(f"Доктрина откроется на уровне {story_meta.doctrine_unlock_level(data, self.cls)}")
+        elif self.story and kind == "slot":
+            load = hero.get("skill_loadout", [])
+            self.slot_sel = min(action[1], len(load))       # пустые слоты в конце: выбираем первый пустой
+            if self.slot_sel < len(load):
+                self.show_skill(load[self.slot_sel])
+            else:
+                self.pv = None
+                self.pv_dirty = True
+            return
+        elif self.story and kind == "pool":
+            ok = story_meta.equip(data, self.cls, hero, action[1], self.slot_sel)
+            if ok:
+                self.show_skill(action[1])
+            else:
+                self.say(f"Навык откроется на уровне {story_meta.skill_level(data, self.cls, action[1])}")
+        elif self.story and kind == "unequip":
+            ok = story_meta.unequip(data, self.cls, hero, action[1])
+            if ok:
+                self.pv = None
+                self.pv_dirty = True
+            else:
+                self.say("Слот пуст или это последний навык — герой не может остаться без навыка")
         elif kind == "path":
             ok = meta.set_path(data, self.cls, hero, action[1])
             if not ok:
@@ -330,6 +394,7 @@ class HeroesScene(MetaScene):
             h = prof.heroes[self.cls]
             build = {"cls": self.cls, "path": h["path"], "branches": h["branches"], "talents": h["talents"],
                      "mastery": prof.mastery(self.cls), "autocast": h["autocast"], "items": list(h["loadout"]),
+                     "skills": list(h.get("skill_loadout", [])), "doctrine": h.get("doctrine"),
                      "rpg": h["rpg"]}
             run = Run(self.app.data, 0, None, bonus, [build], mode=prof.mode)
             self.preview = run.proto(run.squad[0])
@@ -361,13 +426,16 @@ class HeroesScene(MetaScene):
             h = prof.heroes[cls]
             name = data.classes[cls]["name"]
             hired = cls in prof.unlocked
-            if h["path"] and bw > 150:
+            if self.story and h.get("doctrine") and bw > 150:
+                name += f" · {data.paths[h['doctrine']]['name']}"
+            elif h["path"] and bw > 150:
                 name += f" · {data.paths[h['path']]['name']}"
             if rows == 1:
                 T.text(surf, f"{i + 1}. {name}" if i < 9 else name, (r.x + 8, r.y + 3), 14 if bw < 150 else 15,
                        T.TEXT, True)
-                T.text(surf, f"мастер. {prof.mastery(cls)} · очков {meta.points_free(data, h)}", (r.x + 8, r.y + 21),
-                       12, T.TEXT_DIM)
+                sub = (f"ур. {prof.level(cls)} · очков {meta.points_free(data, h)}" if self.story else
+                       f"мастер. {prof.mastery(cls)} · очков {meta.points_free(data, h)}")
+                T.text(surf, sub, (r.x + 8, r.y + 21), 12, T.TEXT_DIM)
             else:
                 label = data.classes[cls]["name"]
                 while T.font(12, True).size(label)[0] > bw - 10 and len(label) > 3:
@@ -389,10 +457,17 @@ class HeroesScene(MetaScene):
             self.hit(r, ("window", wid), None)
         if self.window == "overview":
             self._draw_hero(surf, self.left_rect)
-            self._draw_paths(surf, self.right_rect)
+            if self.story:
+                self._draw_doctrines(surf, self.right_rect)
+            else:
+                self._draw_paths(surf, self.right_rect)
         elif self.window == "skills":
-            self._draw_skills(surf, self.left_rect)
-            self._draw_skill_info(surf, self.info_rect)
+            if self.story:
+                self._draw_story_skills(surf, self.left_rect)
+                self._draw_story_skill_info(surf, self.info_rect)
+            else:
+                self._draw_skills(surf, self.left_rect)
+                self._draw_skill_info(surf, self.info_rect)
         elif self.window == "stats":
             self._draw_stats(surf, self.left_rect, self.right_rect)
         else:
@@ -521,17 +596,26 @@ class HeroesScene(MetaScene):
         pygame.draw.circle(surf, tuple(p["color"]), (x + 20, y + 20), 20)
         T.text(surf, p["label"], (x + 20, y + 20), 20, (255, 255, 255), True, center=True, shadow=True)
         T.text(surf, data.classes[self.cls]["name"], (x + 50, y), 22, T.TEXT, True)
-        lvl = prof.mastery(self.cls)
-        T.text(surf, f"Мастерство {lvl}", (x + 50, y + 28), 15, W.XP, True)
-        prog = meta.mastery_progress(data, hero["xp"])
-        if prog:
-            W.bar(surf, pygame.Rect(x + 170, y + 34, rect.w - 200, 8), prog[0] / prog[1], W.XP)
-            T.text(surf, f"{prog[0]}/{prog[1]}", (rect.right - 70, y + 44), 12, T.TEXT_DIM)
+        if self.story:
+            lvl = prof.level(self.cls)
+            T.text(surf, f"Уровень {lvl}", (x + 50, y + 28), 15, W.XP, True)
+            need = stats.xp_to_next(data, lvl)
+            W.bar(surf, pygame.Rect(x + 170, y + 34, rect.w - 200, 8), min(1.0, hero["rpg"]["xp"] / need), W.XP)
+            T.text(surf, f"{hero['rpg']['xp']}/{need}", (rect.right - 70, y + 44), 12, T.TEXT_DIM)
+        else:
+            lvl = prof.mastery(self.cls)
+            T.text(surf, f"Мастерство {lvl}", (x + 50, y + 28), 15, W.XP, True)
+            prog = meta.mastery_progress(data, hero["xp"])
+            if prog:
+                W.bar(surf, pygame.Rect(x + 170, y + 34, rect.w - 200, 8), prog[0] / prog[1], W.XP)
+                T.text(surf, f"{prog[0]}/{prog[1]}", (rect.right - 70, y + 44), 12, T.TEXT_DIM)
         y += 64
         stat = data.config["mastery"]["stat_per_level"]
         g = p.get("gauge") or {"name": "PP", "desc": ""}
         lines = [f"HP {p['hp']} · броня {p['armor']} · атака {p['attack']['damage']}",
                  f"AP {p['ap_max']} · {g['name']} {p['pp_max']} · сила навыков ×{p['power']:.2f}",
+                 (f"Уровень героя: +{round((stats.derive(data, self.cls, hero['rpg'])['scale']['basic'] - 1) * 100)}% "
+                  f"к обычной атаке · мастерство {prof.mastery(self.cls)}") if self.story else
                  f"Мастерство даёт +{round(stat * (lvl - 1) * 100)}% HP и урона"]
         for s in lines:
             T.text(surf, s, (x, y), 15, T.TEXT)
@@ -591,6 +675,136 @@ class HeroesScene(MetaScene):
             self.hit(r, ("path", pid), tip)
             y += 160
 
+    def _draw_doctrines(self, surf, rect):
+        """Сюжет: бывшие подклассы — только пассивки. Навыки выбираются отдельно в «Способностях»."""
+        data, prof, hero = self.app.data, self.app.profile, self.hero
+        pygame.draw.rect(surf, T.PANEL, rect, border_radius=10)
+        x, y = rect.x + 14, rect.y + 12
+        lvl = prof.level(self.cls)
+        T.text(surf, "Доктрина", (x, y), 17, PATH_COLOR, True)
+        y += 30
+        base = data.classes[self.cls]
+        options = [(None, f"Основа: {base['name']}",
+                    f"Пассив «{base['passive']['name']}»: {base['passive']['desc']}.")]
+        for d in story_meta.doctrine_entries(data, self.cls):
+            pd = data.paths[d["id"]]
+            pa = pd["passive"]
+            options.append((d["id"], pd["name"], f"Пассив «{pa['name']}»: {pa['desc']}. Навыки не меняет."))
+        for pid, title, desc in options:
+            r = pygame.Rect(x, y, rect.w - 28, 150)
+            sel = hero.get("doctrine") == pid
+            locked = pid is not None and lvl < story_meta.doctrine_level(data, self.cls, pid)
+            pygame.draw.rect(surf, (52, 56, 68) if sel else (36, 38, 46), r, border_radius=8)
+            pygame.draw.rect(surf, PATH_COLOR if sel else T.PANEL_EDGE, r, 2, border_radius=8)
+            T.text(surf, title + ("  (выбрана)" if sel else ""), (r.x + 10, r.y + 6), 16,
+                   T.TEXT_DIM if locked else T.TEXT, True)
+            for i, line in enumerate(T.wrap(desc, 14, r.w - 20)[:6]):
+                T.text(surf, line, (r.x + 10, r.y + 30 + i * 18), 14, T.TEXT_DIM if locked else (200, 205, 220))
+            if locked:
+                T.text(surf, f"уровень {story_meta.doctrine_level(data, self.cls, pid)}",
+                       (r.right - 100, r.y + 8), 13, BAD)
+            tip = None
+            if pid:
+                pa = data.paths[pid]["passive"]
+                tip = f"{data.paths[pid]['name']}: пассив «{pa['name']}» — {pa['desc']}."
+            self.hit(r, ("doctrine", pid), tip)
+            y += 160
+
+    def _draw_story_skills(self, surf, rect):
+        """Сюжет: три слота и пул из пяти навыков; закрытые навыки видны, но не выбираются."""
+        data, hero = self.app.data, self.hero
+        pygame.draw.rect(surf, T.PANEL, rect, border_radius=10)
+        x = rect.x + 14
+        y = rect.y + 10
+        T.text(surf, "Навыки: слоты и пул", (x, y), 17, BRANCH_COLOR, True)
+        y += 30
+        load = list(hero.get("skill_loadout", []))
+        nslots = story_meta.slots(data)
+        self.slot_sel = max(0, min(self.slot_sel, nslots - 1))
+        slot_w = max(64, (rect.w - 28 - (nslots - 1) * 8) // nslots)
+        for i in range(nslots):
+            r = pygame.Rect(x + i * (slot_w + 8), y, slot_w, 54)
+            sel = i == self.slot_sel
+            sid = load[i] if i < len(load) else None
+            pygame.draw.rect(surf, (52, 56, 68) if sel else (36, 38, 46), r, border_radius=7)
+            pygame.draw.rect(surf, BRANCH_COLOR if sel else T.PANEL_EDGE, r, 2 if sel else 1, border_radius=7)
+            T.text(surf, f"Слот {i + 1}", (r.x + 8, r.y + 4), 12, T.TEXT_DIM)
+            if sid:
+                T.text(surf, data.skills[sid]["name"], (r.x + 8, r.y + 20), 14, T.TEXT, True)
+                T.text(surf, f"AP {data.skills[sid]['ap']}", (r.x + 8, r.y + 38), 11, T.AP_COLOR)
+                clear = pygame.Rect(r.right - 22, r.y + 3, 18, 18)
+                T.text(surf, "×", clear.center, 15, BAD, True, center=True)
+                self.hit(clear, ("unequip", i), "Убрать навык из слота")
+            else:
+                T.text(surf, "пусто", (r.x + 8, r.y + 24), 13, T.TEXT_DIM)
+            self.hit(r, ("slot", i), "Выбрать слот для навыка из пула")
+        y += 66
+        T.text(surf, "Пул навыков", (x, y), 15, T.TEXT_DIM, True)
+        y += 22
+        lvl = self.app.profile.level(self.cls)
+        for e in story_meta.entries(data, self.cls):
+            sid = e["id"]
+            sk = data.skills[sid]
+            unlocked = story_meta.is_unlocked(data, self.cls, sid, lvl)
+            equipped = sid in load
+            r = pygame.Rect(x, y, rect.w - 28, 50)
+            pygame.draw.rect(surf, (46, 50, 60) if equipped else (36, 38, 46), r, border_radius=6)
+            pygame.draw.rect(surf, BRANCH_COLOR if equipped else (T.PANEL_EDGE if unlocked else (70, 60, 60)),
+                             r, 1, border_radius=6)
+            T.text(surf, sk["name"], (r.x + 8, r.y + 4), 15, T.TEXT if unlocked else T.TEXT_DIM, True)
+            T.text(surf, f"AP {sk['ap']} · {T.wrap(sk['desc'], 12, r.w - 150)[0]}", (r.x + 8, r.y + 24), 12,
+                   T.TEXT_DIM if unlocked else (120, 110, 110))
+            mark = ("в слоте" if equipped else "взять") if unlocked else f"уровень {e['level']}"
+            T.text(surf, mark, (r.right - 8 - T.font(12).size(mark)[0], r.y + 5), 12,
+                   (150, 240, 160) if equipped else (T.TEXT_DIM if unlocked else BAD))
+            self.hit(r, ("pool", sid), f"{sk['name']}: {sk['desc']}")
+            y += 56
+
+    def _draw_story_skill_info(self, surf, rect):
+        """Под превью сюжета: описание и ветки выбранного навыка из слота."""
+        data, hero = self.app.data, self.hero
+        pygame.draw.rect(surf, T.PANEL, rect, border_radius=10)
+        if not self.skill_preview.proto:
+            return
+        sid, b, t = self.pv
+        sk = self.skill_preview.proto["skill_defs"][sid]
+        x, y = rect.x + 14, rect.y + 8
+        T.text(surf, self.skill_preview.title, (x, y), 17, BRANCH_COLOR, True)
+        bits = [f"AP {sk['ap']}"] + ([f"{sk['hp_cost']} HP"] if sk.get("hp_cost") else []) + \
+            ([f"каст {sk['cast']:g}с"] if sk["cast"] else []) + ([f"дал. {sk['range']}"] if sk["range"] else []) + \
+            ([f"радиус {sk['radius']}"] if sk.get("radius") else []) + ([f"кд {sk['cooldown']:g}с"] if sk["cooldown"] else [])
+        T.text(surf, " · ".join(bits), (x, y + 22), 13, T.AP_COLOR)
+        text = sk["desc"]
+        if b:
+            text = f"{data.branches[sid][b]['tiers'][t - 1]['desc']} — {text}"
+        for i, line in enumerate(T.wrap(text, 13, rect.w - 28)[:2]):
+            T.text(surf, line, (x, y + 42 + i * 16), 13, T.TEXT)
+        load = hero.get("skill_loadout", [])
+        if sid not in load:
+            T.text(surf, "Поставьте навык в слот, чтобы брать его ветки", (x, y + 82), 12, T.TEXT_DIM)
+            return
+        T.text(surf, "Ветки навыка из выбранного слота", (x, y + 82), 12, BRANCH_COLOR, True)
+        cur = hero["branches"].get(sid)
+        free = meta.points_free(data, hero)
+        for col, br in enumerate(("A", "B")):
+            bx = x + col * (rect.w - 28) // 2
+            bw = (rect.w - 28) // 2 - 8
+            T.text(surf, f"{br}: {data.branches[sid][br]['name']}", (bx, y + 98), 12,
+                   T.TEXT_DIM if cur and cur[0] != br else BRANCH_COLOR, True)
+            for tier, td in enumerate(data.branches[sid][br]["tiers"], 1):
+                r = pygame.Rect(bx, y + 110 + (tier - 1) * 22, bw, 20)
+                taken = cur is not None and cur[0] == br and cur[1] >= tier
+                cost = tier - (cur[1] if cur and cur[0] == br else 0)
+                affordable = taken or cost <= free + (cur[1] if cur and cur[0] != br else 0)
+                pygame.draw.rect(surf, T.mix(BRANCH_COLOR, (30, 30, 34), 0.55) if taken else (36, 38, 46),
+                                 r, border_radius=5)
+                pygame.draw.rect(surf, BRANCH_COLOR if taken else (T.PANEL_EDGE if affordable else (90, 50, 50)),
+                                 r, 1, border_radius=5)
+                T.text(surf, f"{tier}. {td['name']}", (r.x + 6, r.y + 3), 11, T.TEXT, taken)
+                T.text(surf, "взята" if taken else f"{max(cost, 1)} очк.", (r.right - 44, r.y + 4), 10,
+                       (150, 240, 160) if taken else T.TEXT_DIM)
+                self.hit(r, ("branch", sid, br, tier), f"{td['name']}: {td['desc']}")
+
     def _draw_skills(self, surf, rect):
         data, hero = self.app.data, self.hero
         pygame.draw.rect(surf, T.PANEL, rect, border_radius=10)
@@ -647,7 +861,8 @@ class HeroesScene(MetaScene):
         T.text(surf, "Таланты", (x, y), 17, TALENT_COLOR, True)
         y += 28
         free = meta.points_free(data, hero)
-        for tid in meta.talent_options(data, self.cls, hero):
+        options = story_meta.talent_options(data, self.cls, hero) if self.story else meta.talent_options(data, self.cls, hero)
+        for tid in options:
             t = data.talents[tid]
             r = pygame.Rect(x, y, rect.w - 28, 26)
             on = tid in hero["talents"]

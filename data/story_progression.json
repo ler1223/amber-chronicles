@@ -1,0 +1,721 @@
+{
+ "_note": "Сюжетный режим: пул навыков класса, слоты и доктрины. Уровни — уровень героя (sim/stats.py).",
+ "slots": 3,
+ "doctrine_unlock": 4,
+ "classes": {
+  "warrior": {
+   "skills": [
+    {
+     "id": "power_strike",
+     "level": 1
+    },
+    {
+     "id": "taunt",
+     "level": 2
+    },
+    {
+     "id": "guard_ally",
+     "level": 3
+    },
+    {
+     "id": "whirlwind",
+     "level": 5
+    },
+    {
+     "id": "consecrate",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "berserker",
+     "level": 4
+    },
+    {
+     "id": "paladin",
+     "level": 4
+    }
+   ]
+  },
+  "archer": {
+   "skills": [
+    {
+     "id": "aimed_shot",
+     "level": 1
+    },
+    {
+     "id": "volley",
+     "level": 2
+    },
+    {
+     "id": "overwatch",
+     "level": 3
+    },
+    {
+     "id": "spike_trap",
+     "level": 5
+    },
+    {
+     "id": "headshot",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "ranger",
+     "level": 4
+    },
+    {
+     "id": "sniper",
+     "level": 4
+    }
+   ]
+  },
+  "mage": {
+   "skills": [
+    {
+     "id": "fireball",
+     "level": 1
+    },
+    {
+     "id": "fan_flames",
+     "level": 2
+    },
+    {
+     "id": "flashpoint",
+     "level": 3
+    },
+    {
+     "id": "curse",
+     "level": 5
+    },
+    {
+     "id": "cinder_field",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "warlock",
+     "level": 4
+    },
+    {
+     "id": "igniter",
+     "level": 4
+    }
+   ]
+  },
+  "priest": {
+   "skills": [
+    {
+     "id": "vow",
+     "level": 1
+    },
+    {
+     "id": "holy_water",
+     "level": 2
+    },
+    {
+     "id": "purify",
+     "level": 3
+    },
+    {
+     "id": "judgment",
+     "level": 5
+    },
+    {
+     "id": "revive",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "inquisitor",
+     "level": 4
+    },
+    {
+     "id": "lifekeeper",
+     "level": 4
+    }
+   ]
+  },
+  "assassin": {
+   "skills": [
+    {
+     "id": "shadow_step",
+     "level": 1
+    },
+    {
+     "id": "venom_blade",
+     "level": 2
+    },
+    {
+     "id": "vanish",
+     "level": 3
+    },
+    {
+     "id": "shadow_mark",
+     "level": 5
+    },
+    {
+     "id": "riposte",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "shadow",
+     "level": 4
+    },
+    {
+     "id": "duelist",
+     "level": 4
+    }
+   ]
+  },
+  "druid": {
+   "skills": [
+    {
+     "id": "bear_form",
+     "level": 1
+    },
+    {
+     "id": "entangle",
+     "level": 2
+    },
+    {
+     "id": "rejuvenate",
+     "level": 3
+    },
+    {
+     "id": "wolf_form",
+     "level": 5
+    },
+    {
+     "id": "spirit_tree",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "wild",
+     "level": 4
+    },
+    {
+     "id": "grove",
+     "level": 4
+    }
+   ]
+  },
+  "guardian": {
+   "skills": [
+    {
+     "id": "lunge",
+     "level": 1
+    },
+    {
+     "id": "hook",
+     "level": 2
+    },
+    {
+     "id": "shield_wall",
+     "level": 3
+    },
+    {
+     "id": "brace",
+     "level": 5
+    },
+    {
+     "id": "jump_strike",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "sentinel",
+     "level": 4
+    },
+    {
+     "id": "dragoon",
+     "level": 4
+    }
+   ]
+  },
+  "shaman": {
+   "skills": [
+    {
+     "id": "chain_lightning",
+     "level": 1
+    },
+    {
+     "id": "storm_totem",
+     "level": 2
+    },
+    {
+     "id": "healing_totem",
+     "level": 3
+    },
+    {
+     "id": "thunderstorm",
+     "level": 5
+    },
+    {
+     "id": "spirit_link",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "thunderlord",
+     "level": 4
+    },
+    {
+     "id": "spiritwalker",
+     "level": 4
+    }
+   ]
+  },
+  "bard": {
+   "skills": [
+    {
+     "id": "rhythm",
+     "level": 1
+    },
+    {
+     "id": "lullaby",
+     "level": 2
+    },
+    {
+     "id": "inspire",
+     "level": 3
+    },
+    {
+     "id": "sonic_blast",
+     "level": 5
+    },
+    {
+     "id": "serenade",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "skald",
+     "level": 4
+    },
+    {
+     "id": "minstrel",
+     "level": 4
+    }
+   ]
+  },
+  "alchemist": {
+   "skills": [
+    {
+     "id": "powder_keg",
+     "level": 1
+    },
+    {
+     "id": "oil_flask",
+     "level": 2
+    },
+    {
+     "id": "fuse",
+     "level": 3
+    },
+    {
+     "id": "mine",
+     "level": 5
+    },
+    {
+     "id": "poison_cloud",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "demolitionist",
+     "level": 4
+    },
+    {
+     "id": "poisoner",
+     "level": 4
+    }
+   ]
+  },
+  "ram": {
+   "skills": [
+    {
+     "id": "kick",
+     "level": 1
+    },
+    {
+     "id": "rush",
+     "level": 2
+    },
+    {
+     "id": "quake",
+     "level": 3
+    },
+    {
+     "id": "toss",
+     "level": 5
+    },
+    {
+     "id": "fault_line",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "thrower",
+     "level": 4
+    },
+    {
+     "id": "breaker",
+     "level": 4
+    }
+   ]
+  },
+  "trapper": {
+   "skills": [
+    {
+     "id": "snare",
+     "level": 1
+    },
+    {
+     "id": "lure",
+     "level": 2
+    },
+    {
+     "id": "hunter_mark",
+     "level": 3
+    },
+    {
+     "id": "bear_trap",
+     "level": 5
+    },
+    {
+     "id": "hunting_horn",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "trapmaster",
+     "level": 4
+    },
+    {
+     "id": "beater",
+     "level": 4
+    }
+   ]
+  },
+  "cryo": {
+   "skills": [
+    {
+     "id": "ice_wall",
+     "level": 1
+    },
+    {
+     "id": "rink",
+     "level": 2
+    },
+    {
+     "id": "shatter",
+     "level": 3
+    },
+    {
+     "id": "frost_guard",
+     "level": 5
+    },
+    {
+     "id": "blizzard",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "iceguard",
+     "level": 4
+    },
+    {
+     "id": "stormfrost",
+     "level": 4
+    }
+   ]
+  },
+  "necro": {
+   "skills": [
+    {
+     "id": "corpse_blast",
+     "level": 1
+    },
+    {
+     "id": "raise_dead",
+     "level": 2
+    },
+    {
+     "id": "devour",
+     "level": 3
+    },
+    {
+     "id": "corpse_cloud",
+     "level": 5
+    },
+    {
+     "id": "bone_wall",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "plaguebearer",
+     "level": 4
+    },
+    {
+     "id": "bonelord",
+     "level": 4
+    }
+   ]
+  },
+  "chrono": {
+   "skills": [
+    {
+     "id": "rewind",
+     "level": 1
+    },
+    {
+     "id": "haste",
+     "level": 2
+    },
+    {
+     "id": "stasis",
+     "level": 3
+    },
+    {
+     "id": "slow_field",
+     "level": 5
+    },
+    {
+     "id": "rewind_foe",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "momentkeeper",
+     "level": 4
+    },
+    {
+     "id": "fateweaver",
+     "level": 4
+    }
+   ]
+  },
+  "gravity": {
+   "skills": [
+    {
+     "id": "singularity",
+     "level": 1
+    },
+    {
+     "id": "swap",
+     "level": 2
+    },
+    {
+     "id": "levitate",
+     "level": 3
+    },
+    {
+     "id": "collapse",
+     "level": 5
+    },
+    {
+     "id": "repulse",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "collapser",
+     "level": 4
+    },
+    {
+     "id": "orbiter",
+     "level": 4
+    }
+   ]
+  },
+  "geomancer": {
+   "skills": [
+    {
+     "id": "earth_power",
+     "level": 1
+    },
+    {
+     "id": "reshape",
+     "level": 2
+    },
+    {
+     "id": "rockfall",
+     "level": 3
+    },
+    {
+     "id": "lava_vent",
+     "level": 5
+    },
+    {
+     "id": "spring",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "lavalord",
+     "level": 4
+    },
+    {
+     "id": "springkeeper",
+     "level": 4
+    }
+   ]
+  },
+  "brewer": {
+   "skills": [
+    {
+     "id": "coat",
+     "level": 1
+    },
+    {
+     "id": "flask",
+     "level": 2
+    },
+    {
+     "id": "reagent",
+     "level": 3
+    },
+    {
+     "id": "toxic_flask",
+     "level": 5
+    },
+    {
+     "id": "volatile_mix",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "toxicologist",
+     "level": 4
+    },
+    {
+     "id": "blaster",
+     "level": 4
+    }
+   ]
+  },
+  "bloodrager": {
+   "skills": [
+    {
+     "id": "blood_strike",
+     "level": 1
+    },
+    {
+     "id": "bloodlet",
+     "level": 2
+    },
+    {
+     "id": "trance",
+     "level": 3
+    },
+    {
+     "id": "cleave",
+     "level": 5
+    },
+    {
+     "id": "undying_rage",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "butcher",
+     "level": 4
+    },
+    {
+     "id": "frenzied",
+     "level": 4
+    }
+   ]
+  },
+  "tactician": {
+   "skills": [
+    {
+     "id": "forward",
+     "level": 1
+    },
+    {
+     "id": "regroup",
+     "level": 2
+    },
+    {
+     "id": "focus",
+     "level": 3
+    },
+    {
+     "id": "all_out",
+     "level": 5
+    },
+    {
+     "id": "ambush_order",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "warlord",
+     "level": 4
+    },
+    {
+     "id": "strategist",
+     "level": 4
+    }
+   ]
+  },
+  "binder": {
+   "skills": [
+    {
+     "id": "tether",
+     "level": 1
+    },
+    {
+     "id": "merge",
+     "level": 2
+    },
+    {
+     "id": "life_transfer",
+     "level": 3
+    },
+    {
+     "id": "soul_shield",
+     "level": 5
+    },
+    {
+     "id": "share_pain",
+     "level": 7
+    }
+   ],
+   "doctrines": [
+    {
+     "id": "soulguard",
+     "level": 4
+    },
+    {
+     "id": "empath",
+     "level": 4
+    }
+   ]
+  }
+ }
+}

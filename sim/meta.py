@@ -9,6 +9,7 @@ from .build import class_skills
 
 def new_hero():
     return {"xp": 0, "path": None, "branches": {}, "talents": [], "autocast": {}, "loadout": [], "bonus_points": 0,
+            "skill_loadout": [], "doctrine": None,          # сюжетный режим: пул навыков и пассивная доктрина
             "rpg": {"level": 1, "xp": 0, "points": {"str": 0, "agi": 0, "int": 0}}}    # режим героев
 
 
@@ -61,7 +62,9 @@ def hero_skills(data, cls, hero):
 
 
 def passive_kind(data, cls, hero):
-    return (data.paths[hero["path"]]["passive"] if hero["path"] else data.classes[cls]["passive"])["kind"]
+    """Вид пассивки: в сюжете — доктрина, в остальных режимах — путь."""
+    pid = hero.get("doctrine") or hero.get("path")
+    return (data.paths[pid]["passive"] if pid else data.classes[cls]["passive"])["kind"]
 
 
 def set_path(data, cls, hero, path):

@@ -34,10 +34,14 @@ def class_skills(data, cls_id, path=None):
     return [repl.get(sid, sid) for sid in data.classes[cls_id]["skills"]]
 
 
-def build_proto(data, cls_id, talents=(), items=(), branches=None, extra_mods=(), path=None, runes=None):
+def build_proto(data, cls_id, talents=(), items=(), branches=None, extra_mods=(), path=None, runes=None,
+                skills=None, doctrine=None):
     """branches: {skill_id: (ветка "A"|"B", ступень 1|2)}; runes: {skill_id: [rune_id, ...]};
     items — список id надетых предметов; extra_mods — проценты уровня, мастерства, лагеря, реликвий
-    (применяются последними, поэтому умножают уже итоговые значения)."""
+    (применяются последними, поэтому умножают уже итоговые значения).
+
+    path — старый режим: подкласс заменяет навыки. skills — сюжетный режим: явный набор навыков из пула.
+    doctrine — сюжетный режим: пассивная доктрина вместо подкласса (её replace не применяется)."""
     p = copy.deepcopy(data.classes[cls_id])
     p.setdefault("power", 1.0)
     mods = []
@@ -46,6 +50,13 @@ def build_proto(data, cls_id, talents=(), items=(), branches=None, extra_mods=()
         p["skills"] = class_skills(data, cls_id, path)
         p["passive"] = copy.deepcopy(pd["passive"])
         p["path"] = path
+        mods += pd["mods"]
+    elif skills is not None:
+        p["skills"] = [sid for sid in skills if sid in data.skills]
+    if doctrine:
+        pd = data.paths[doctrine]
+        p["passive"] = copy.deepcopy(pd["passive"])
+        p["doctrine"] = doctrine
         mods += pd["mods"]
     p["skill_defs"] = {sid: copy.deepcopy(data.skills[sid]) for sid in p["skills"]}
     mods += [m for tid in talents for m in data.talents[tid]["mods"]]
