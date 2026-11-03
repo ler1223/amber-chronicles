@@ -70,6 +70,10 @@ class BattleScene:
         self.editor = None       # открытый редактор автокаста: {"unit", "idx", "editor", "rect"}
         squad = self.combat.fighters(PLAYER)
         self.selected = squad[0] if squad else None
+        self.selected_units = [self.selected] if self.selected else []
+        self.box_start = None
+        self.box_current = None
+        self.box_active = False
 
     def finish(self):
         if self.run_mode and self.combat.result:
@@ -84,12 +88,22 @@ class BattleScene:
         self.picked = None
         self.drag_start = None
         self.paused = True
+        self.combat.assign_initial_targets(PLAYER)
         self.say("Бой начался. Space — снять паузу")
 
     @property
     def dragging(self):
         return (self.picked is not None and self.drag_start is not None
                 and math.dist(self.mouse, self.drag_start) > DRAG_DIST)
+
+    @property
+    def box_rect(self):
+        """Прямоугольник выделения в экранных координатах (или None)."""
+        if not self.box_active or self.box_start is None or self.box_current is None:
+            return None
+        x0, y0 = self.box_start
+        x1, y1 = self.box_current
+        return pygame.Rect(min(x0, x1), min(y0, y1), abs(x1 - x0), abs(y1 - y0))
 
     # ---------- время ----------
 
@@ -123,8 +137,15 @@ class BattleScene:
             if self.toast[1] <= 0:
                 self.toast = None
         if self.selected and not self.selected.alive:
-            self.selected = None
+            self.selected_units = [u for u in self.selected_units if u.alive]
+            self.selected = self.selected_units[0] if self.selected_units else None
             self.targeting = None
+        elif self.selected:
+            self.selected_units = [u for u in self.selected_units if u.alive]
+            if self.selected not in self.selected_units:
+                self.selected_units.insert(0, self.selected)
+        elif self.selected_units:
+            self.selected_units = []
         if self.combat.result:
             self.targeting = None
 
@@ -192,6 +213,8 @@ class BattleScene:
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
+            if self.box_active:
+                self.box_current = ev.pos
             self.hover_cell = self.ground_cell(*ev.pos) if self.picked else self.cell_at(*ev.pos)
             self.pick = (self.view.pick_unit(ev.pos, self.pick_filter()) if self.unit_target()
                          else self.view.pick_unit(ev.pos, reach=0)) if self.phase == "battle" else None
@@ -207,11 +230,15 @@ class BattleScene:
                 self._deploy_click(ev.pos, ev.button)
             elif ev.button == 3 and pygame.key.get_mods() & pygame.KMOD_SHIFT and self._waypoint(ev.pos):
                 pass
+            elif ev.button == 1 and self._begin_box_select(ev.pos):
+                pass
             else:
                 self._click(ev.pos, ev.button)
                 self._start_route(ev.pos, ev.button)
         elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 3 and self.route is not None:
             self._finish_route()
+        elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and self.phase == "battle":
+            self._box_release(ev.pos)
         elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and self.phase == "deploy":
             self._deploy_release(ev.pos)
         elif ev.type == pygame.KEYDOWN:
@@ -224,6 +251,8 @@ class BattleScene:
         u = self.selected
         cell = self.cell_at(*pos)
         if button != 3 or not u or cell is None or not u.order or u.order["type"] != "move":
+            return
+        if len(self._selected_team()) > 1:
             return
         self.route = [cell]
 
@@ -385,12 +414,23 @@ class BattleScene:
                 self.targeting = None
             else:
                 self.selected = None
+                self.selected_units = []
         elif key in SKILL_KEYS:
             self._skill_key(SKILL_KEYS[key])
 
     def _select(self, u):
         self.selected = u
+        self.selected_units = [u] if u is not None else []
         self.targeting = None
+
+    def _selected_team(self):
+        """Выделенные живые герои. Основной выбранный всегда входит в список."""
+        if self.selected is None or not self.selected.alive:
+            return []
+        units = [u for u in self.selected_units if u.alive]
+        if self.selected not in units:
+            units.insert(0, self.selected)
+        return units
 
     def _squad_click(self, pos):
         for r, u in self.view.squad_rects:
@@ -398,6 +438,113 @@ class BattleScene:
                 self._select(u)
                 return True
         return False
+
+    # ---------- выделение рамкой ----------
+
+    def _ui_hit(self, pos):
+        """Курсор над интерфейсом — рамку выделения там не начинаем."""
+        if self.view.start_button and self.view.start_button.collidepoint(pos):
+            return True
+        for rects in (self.view.skill_rects, self.view.auto_rects,
+                      self.view.squad_rects, self.view.enemy_rects):
+            if any(r.collidepoint(pos) for r, _ in rects):
+                return True
+        ed = self.editor
+        return bool(ed and ed.get("rect") and ed["rect"].collidepoint(pos))
+
+    def _begin_box_select(self, pos):
+        if self.phase != "battle" or self.targeting or self.combat.result or self._ui_hit(pos):
+            return False
+        # Клик по фигурке (своей или врагу) — обычное действие, а не рамка.
+        if self.view.pick_unit(pos, lambda v: v.team == PLAYER and not v.summon and not v.obj) is not None:
+            return False
+        if self.view.pick_unit(pos, reach=0) is not None:
+            return False
+        if self.ground_cell(*pos) is None:
+            return False
+        self.box_start = pos
+        self.box_current = pos
+        self.box_active = True
+        return True
+
+    def _box_release(self, pos):
+        if not self.box_active:
+            return
+        start = self.box_start
+        self.box_active = False
+        self.box_start = None
+        self.box_current = None
+        if start is not None and math.dist(start, pos) > DRAG_DIST:
+            self._select_box(start, pos)
+        else:
+            self._click(pos, 1)
+
+    def _select_box(self, a, b):
+        rect = pygame.Rect(min(a[0], b[0]), min(a[1], b[1]), abs(b[0] - a[0]), abs(b[1] - a[1]))
+        seen = set()
+        units = []
+        for r, u in self.view.sprite_rects:
+            if (u.team == PLAYER and u.alive and not u.summon and not u.obj
+                    and r.colliderect(rect) and u.id not in seen):
+                units.append(u)
+                seen.add(u.id)
+        order = {u.id: i for i, u in enumerate(self.combat.heroes(PLAYER))}
+        units.sort(key=lambda u: order.get(u.id, 999))
+        self.selected_units = units
+        self.selected = units[0] if units else None
+        self.targeting = None
+
+    # ---------- приказы выделенной группе ----------
+
+    def _order_selected_attack(self, target):
+        units = self._selected_team()
+        if not units or target is None or not target.alive:
+            return
+        for u in units:
+            ok, msg = self.combat.order_attack(u, target)
+            if not ok and u is self.selected:
+                self.say(msg)
+
+    def _order_selected_move(self, cell):
+        units = self._selected_team()
+        if not units or cell is None:
+            return
+        if len(units) == 1:
+            ok, msg = self.combat.order_move(units[0], cell)
+            if not ok:
+                self.say(msg)
+            return
+        for u, target in self._group_targets(units, cell).items():
+            ok, msg = self.combat.order_move(u, target)
+            if not ok and u is self.selected:
+                self.say(msg)
+
+    def _group_targets(self, units, cell):
+        """Свободные клетки вокруг точки приказа: отряд идёт группой, а не в одну клетку."""
+        c = self.combat
+        blocked = {v.cell for v in c.units if v.alive and v not in units}
+        candidates = []
+        seen = set()
+        for radius in range(0, 10):
+            for p in c.grid.in_radius(cell, radius):
+                if p in seen:
+                    continue
+                seen.add(p)
+                if c.grid.passable(p) and p not in blocked:
+                    candidates.append(p)
+            if len(candidates) >= len(units):
+                break
+        result = {}
+        remaining = candidates[:]
+        for u in sorted(units, key=lambda v: (abs(v.cell[0] - cell[0]) + abs(v.cell[1] - cell[1]), v.id)):
+            if not remaining:
+                result[u] = cell
+                continue
+            p = min(remaining, key=lambda q: (abs(q[0] - u.cell[0]) + abs(q[1] - u.cell[1]),
+                                               abs(q[0] - cell[0]) + abs(q[1] - cell[1])))
+            result[u] = p
+            remaining.remove(p)
+        return result
 
     # ---------- расстановка ----------
 
@@ -423,7 +570,8 @@ class BattleScene:
             elif self.picked is u:
                 self.picked = None
             else:
-                self.selected = self.picked = u
+                self._select(u)
+                self.picked = u
                 self.drag_start = pos
             return
         if self.picked:
@@ -476,9 +624,7 @@ class BattleScene:
         for r, foe in self.view.enemy_rects:            # строка в списке врагов — атаковать его
             if r.collidepoint(pos):
                 if self.selected and foe.alive:
-                    ok, msg = self.combat.order_attack(self.selected, foe)
-                    if not ok:
-                        self.say(msg)
+                    self._order_selected_attack(foe)
                 return
         for r, idx in self.view.skill_rects:
             if r.collidepoint(pos) and button == 1:
@@ -520,10 +666,8 @@ class BattleScene:
         if hit is not None:
             target_unit = hit
         if isinstance(target_unit, Unit) and u.is_enemy(target_unit):
-            ok, msg = c.order_attack(u, target_unit)
+            self._order_selected_attack(target_unit)
         elif target_unit is None:
-            ok, msg = c.order_move(u, cell)
+            self._order_selected_move(cell)
         else:
             return
-        if not ok:
-            self.say(msg)

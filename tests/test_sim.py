@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sim.combat import ENEMY, PLAYER, Combat  # noqa: E402
 from sim.data import GameData  # noqa: E402
+from sim.grid import cheb  # noqa: E402
 
 DATA = GameData()
 
@@ -13,6 +14,16 @@ DATA = GameData()
 def make(enc=0, ai_teams=(ENEMY,)):
     c = Combat(DATA, enc, ai_teams=ai_teams)
     return c, c.alive(PLAYER), c.alive(ENEMY)
+
+
+def test_initial_targets_pick_nearest_enemy():
+    c, squad, foes = make()
+    c.assign_initial_targets(PLAYER)
+    for u in squad:
+        assert u.order and u.order["type"] == "attack"
+        nearest = min(foes, key=lambda f: (cheb(u.cell, f.cell), f.hp))
+        assert u.order["target"] is nearest
+        assert u.last_target is nearest
 
 
 def run(c, seconds):

@@ -67,6 +67,7 @@ class Tutorial:
             return sc.selected is not None and (not arg or sc.selected.proto_id == arg)
         if kind == "order":
             return any(u.order and u.order.get("type") in ("move", "path", "attack")
+                       and not u.order.get("initial")
                        for u in c.units if u.team == PLAYER and u.alive)
         if kind == "skill":
             return (arg in self.seen_skills) if arg else bool(self.seen_skills)

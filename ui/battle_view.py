@@ -1107,6 +1107,7 @@ class BattleView:
             img = self.sprite_of(scene.picked)
             surf.blit(img, (scene.mouse[0] - img.get_width() / 2, scene.mouse[1] - img.get_height() * 0.6))
         self._draw_fx(surf)
+        self._draw_box_select(surf, scene)
         if not scene.dragging:
             self._draw_hover(surf, scene)
         self._draw_top(surf, scene)
@@ -1265,7 +1266,8 @@ class BattleView:
             elif obj.id in self.fallen:
                 self._draw_downed(surf, obj)
             else:      # живой — или только что павший, чья смерть ещё «в полёте» снаряда
-                self._draw_unit(surf, obj, obj is scene.selected, scene)
+                selected = obj is scene.selected or obj in getattr(scene, "selected_units", ())
+                self._draw_unit(surf, obj, selected, scene)
 
     def _draw_prop(self, surf, x, y, k, kind, col, gy):
         """Укрытие, дерево или декор: билборд у ног (x, y), масштаб k; вдали — тонет в дымке, как и земля."""
@@ -1691,6 +1693,15 @@ class BattleView:
                 col = f.color if k < 0.7 else T.mix(f.color, (0, 0, 0), (k - 0.7) / 0.3 * 0.8)
                 T.text(surf, f.s, self.cam((f.x, y)), f.size, col, True, center=True, shadow=True)
 
+    def _draw_box_select(self, surf, scene):
+        rect = getattr(scene, "box_rect", None)
+        if rect is None or rect.w < 2 or rect.h < 2:
+            return
+        shade = pygame.Surface(rect.size, pygame.SRCALPHA)
+        shade.fill((90, 190, 255, 38))
+        surf.blit(shade, rect.topleft)
+        pygame.draw.rect(surf, (150, 225, 255), rect, 1)
+
     def _draw_hover(self, surf, scene):
         pos = scene.hover_cell
         if not pos:
@@ -1807,6 +1818,7 @@ class BattleView:
             T.text(surf, "ЗАМЕДЛЕНИЕ", (T.GRID_X + 590, 18), 22, (150, 210, 255), True)
         T.text(surf, "Space пауза · Shift замедл. · F1–F3 скорость", (RIGHT_X, 10), 13, T.TEXT_DIM)
         T.text(surf, "Q–T навыки · вести ПКМ — маршрут · Shift+ПКМ — точка", (RIGHT_X, 30), 13, T.TEXT_DIM)
+        T.text(surf, "ЛКМ с зажатой — рамка выделения · ПКМ — приказ группе", (RIGHT_X, 50), 13, T.TEXT_DIM)
 
     def _side_panel(self, surf):
         panel = pygame.Rect(RIGHT_X, PANEL_Y, T.SCREEN_W - RIGHT_X - 16, T.SCREEN_H - PANEL_Y - 16)
@@ -2000,7 +2012,7 @@ class BattleView:
         for i, u in enumerate(c.heroes(PLAYER)):
             r = pygame.Rect(panel.x + 6, y, panel.w - 12, 46)
             self.squad_rects.append((r, u))
-            if u is scene.selected:
+            if u is scene.selected or u in getattr(scene, "selected_units", ()):
                 pygame.draw.rect(surf, (52, 56, 68), r, border_radius=6)
             col = u.color if u.alive else (70, 70, 70)
             pygame.draw.circle(surf, col, (r.x + 22, r.centery), 15)
@@ -2083,6 +2095,11 @@ class BattleView:
                 T.text(surf, line, (x, y), 13, gc if ready else T.TEXT_DIM)
                 y += 16
 
+        card_layer = None
+        card_surf = surf
+        if scene.paused and not scene.combat.result:
+            card_layer = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
+            card_surf = card_layer
         cx = panel.x + 262
         n = max(1, len(u.skills))
         compact = n > 4
@@ -2092,14 +2109,14 @@ class BattleView:
             r = pygame.Rect(cx + i * (cw + 8), panel.y + 10, cw, panel.h - 20)
             self.skill_rects.append((r, i))
             active = scene.targeting == sid
-            pygame.draw.rect(surf, (44, 48, 58) if not active else (70, 64, 36), r, border_radius=8)
-            pygame.draw.rect(surf, T.SELECT if active else T.PANEL_EDGE, r, 2, border_radius=8)
-            T.text(surf, SKILL_KEYS[i] if i < len(SKILL_KEYS) else str(i + 1), (r.x + 10, r.y + 6), 20, T.SELECT, True)
+            pygame.draw.rect(card_surf, (44, 48, 58) if not active else (70, 64, 36), r, border_radius=8)
+            pygame.draw.rect(card_surf, T.SELECT if active else T.PANEL_EDGE, r, 2, border_radius=8)
+            T.text(card_surf, SKILL_KEYS[i] if i < len(SKILL_KEYS) else str(i + 1), (r.x + 10, r.y + 6), 20, T.SELECT, True)
             for j, line in enumerate(T.wrap(sk["name"], 15, cw - 40, True)[:2]):
-                T.text(surf, line, (r.x + 34, r.y + 8 + j * 18), 15, T.TEXT, True)
+                T.text(card_surf, line, (r.x + 34, r.y + 8 + j * 18), 15, T.TEXT, True)
             ap_col = T.AP_COLOR if u.ap >= sk["ap"] else (255, 100, 100)
             info_y = r.y + 46
-            T.text(surf, f"AP {sk['ap']}", (r.x + 10, info_y), 14, ap_col, True)
+            T.text(card_surf, f"AP {sk['ap']}", (r.x + 10, info_y), 14, ap_col, True)
             extra = []
             if sk["cast"]:
                 extra.append(f"каст {sk['cast']:g}с")
@@ -2108,36 +2125,39 @@ class BattleView:
             if sk["cooldown"]:
                 extra.append(f"кд {sk['cooldown']:g}с")
             if compact:
-                T.text(surf, " · ".join(extra), (r.x + 10, info_y + 18), 12, T.TEXT_DIM)
+                T.text(card_surf, " · ".join(extra), (r.x + 10, info_y + 18), 12, T.TEXT_DIM)
                 info_y += 16
             else:
-                T.text(surf, " · ".join(extra), (r.x + 56, info_y + 1), 13, T.TEXT_DIM)
+                T.text(card_surf, " · ".join(extra), (r.x + 56, info_y + 1), 13, T.TEXT_DIM)
             max_lines = (r.bottom - info_y - 50) // 16
             for j, line in enumerate(T.wrap(sk["desc"], 13, cw - 18)[:max_lines]):
-                T.text(surf, line, (r.x + 10, info_y + 22 + j * 16), 13, T.TEXT)
+                T.text(card_surf, line, (r.x + 10, info_y + 22 + j * 16), 13, T.TEXT)
             for eff in sk["effects"]:
                 if eff.get("tag"):
-                    pygame.draw.circle(surf, self.tag_color(eff["tag"]), (r.right - 14, r.y + 16), 7)
+                    pygame.draw.circle(card_surf, self.tag_color(eff["tag"]), (r.right - 14, r.y + 16), 7)
                     break
             if sk.get("branch"):
                 b, tier = sk["branch"]
-                T.text(surf, f"{b}{tier}", (r.right - 14, r.y + 34), 12, (255, 150, 90), True, center=True)
+                T.text(card_surf, f"{b}{tier}", (r.right - 14, r.y + 34), 12, (255, 150, 90), True, center=True)
             cd = u.cooldowns.get(sid, 0)
             if cd > 0:
                 shade = pygame.Surface(r.size, pygame.SRCALPHA)
                 shade.fill((0, 0, 0, 150))
-                surf.blit(shade, r)
-                T.text(surf, f"{cd:.1f}с", r.center, 24, T.TEXT, True, center=True)
+                card_surf.blit(shade, r)
+                T.text(card_surf, f"{cd:.1f}с", r.center, 24, T.TEXT, True, center=True)
             st = u.autocast.get(sid)
             if st is not None:
                 strip = pygame.Rect(r.x + 4, r.bottom - 26, r.w - 8, 22)
                 self.auto_rects.append((strip, i))
                 on = st["on"]
-                pygame.draw.rect(surf, (36, 78, 48) if on else (40, 42, 50), strip, border_radius=5)
+                pygame.draw.rect(card_surf, (36, 78, 48) if on else (40, 42, 50), strip, border_radius=5)
                 if strip.collidepoint(scene.mouse):
-                    pygame.draw.rect(surf, (110, 220, 130) if on else T.PANEL_EDGE, strip, 1, border_radius=5)
+                    pygame.draw.rect(card_surf, (110, 220, 130) if on else T.PANEL_EDGE, strip, 1, border_radius=5)
                 label = fit(AC.setting_label(st, self.data.tags), 12, strip.w - 10)
-                T.text(surf, label, strip.center, 12, (200, 255, 210) if on else T.TEXT_DIM, on, center=True)
+                T.text(card_surf, label, strip.center, 12, (200, 255, 210) if on else T.TEXT_DIM, on, center=True)
+        if card_layer is not None:
+            card_layer.set_alpha(150)
+            surf.blit(card_layer, (0, 0))
         ed = scene.editor
         if ed and ed["unit"] is u:
             for r, i in self.skill_rects:

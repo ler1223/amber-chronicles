@@ -127,6 +127,37 @@ def test_select_move_attack_and_skill():
     assert any(f for f in s.view.log)
 
 
+def test_box_select_and_group_move():
+    s = BattleScene(DATA, 0)
+    key(s, pygame.K_SPACE)
+    frame(s)
+    heroes = s.combat.heroes(PLAYER)
+    rects = [next(r for r, u in s.view.sprite_rects if u is hero) for hero in heroes]
+    left = min(r.left for r in rects)
+    top = min(r.top for r in rects)
+    right = max(r.right for r in rects)
+    bottom = max(r.bottom for r in rects)
+
+    starts = [T.cell_center(cell) for cell in s.combat.grid.cells
+              if s.ground_cell(*T.cell_center(cell)) is not None
+              and s.view.pick_unit(T.cell_center(cell), reach=0) is None
+              and not s._ui_hit(T.cell_center(cell))]
+    assert starts
+    start = max(starts, key=lambda p: p[0] - p[1])       # верхний правый свободный угол
+    end = (left - 8, bottom + 8)
+    mouse(s, pygame.MOUSEBUTTONDOWN, start)
+    mouse(s, pygame.MOUSEMOTION, end)
+    assert s.box_active
+    mouse(s, pygame.MOUSEBUTTONUP, end)
+    assert set(s.selected_units) == set(heroes)
+
+    dest = next(cell for cell in s.combat.grid.cells
+                if cell not in {u.cell for u in heroes} and s.combat.unit_at(cell) is None
+                and s.combat.grid.passable(cell))
+    mouse(s, pygame.MOUSEBUTTONDOWN, T.cell_center(dest), button=3)
+    assert all(u.order and u.order["type"] == "move" for u in s.selected_units)
+
+
 def test_restart_and_next_encounter():
     s = BattleScene(DATA, 0, autoplay=True)
     for _ in range(60 * 60):

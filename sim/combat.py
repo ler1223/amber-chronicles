@@ -323,6 +323,16 @@ class Combat:
         u.order = {"type": "attack", "target": target}
         return True, ""
 
+    def assign_initial_targets(self, team=PLAYER):
+        """В начале боя сразу выбрать ближайшего врага, чтобы отряд не стоял без приказа.
+        Игрок по-прежнему может перехватить управление любым приказом."""
+        for u in self.heroes(team):
+            if u.alive:
+                self._retarget(u)
+                if u.order and u.order.get("type") == "attack":
+                    u.order["initial"] = True
+                    u.last_target = u.order["target"]
+
     def check_skill(self, u, sid, target):
         sk = u.skill_defs[sid]
         if not u.alive or sid not in u.skills:
