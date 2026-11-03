@@ -110,9 +110,14 @@ class FireField:
         alpha = np.clip((edge - 0.45) * 5, 0, 1) * (0.55 + 0.35 * depth)
         return bake(np.clip(heat, 0, 1), "scorch", alpha), inside, depth
 
-    def draw(self, flat):
+    def draw(self, flat, dim=1.0):
         if self.img is not None:
-            flat.blit(*self.img)
+            surf, pos = self.img
+            if dim < 1.0:
+                surf.set_alpha(int(255 * dim))
+            flat.blit(surf, pos)
+            if dim < 1.0:
+                surf.set_alpha(255)
 
     def sample(self, n, rng):
         """n случайных точек горящей площади (клетки поля) — откуда поднимаются языки пламени."""

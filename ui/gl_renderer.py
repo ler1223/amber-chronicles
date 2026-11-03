@@ -619,8 +619,8 @@ class GLRenderer:
         prog["u_shake"] = (float(ox), float(oy))
 
     def _fx(self, sc):
-        """Яркость эффектов: на паузе приглушаются, чтобы было видно поле и фигурки."""
-        return 1.0 - 0.6 * (sc.calm if sc else 0.0)
+        """Яркость и прозрачность эффектов: на паузе гаснут, чтобы было видно поле и фигурки."""
+        return sc.fx_alpha() if sc else 1.0
 
     def _instances(self, rows, tex, blend, sc, solid=False):
         n = min(len(rows), self.cap)
@@ -749,7 +749,7 @@ class GLRenderer:
             self._ribbons(ribs["alpha"], self.premul, sc)
             self._sfx(sfx["air_alpha"], self.premul, sc)
             if self.props_tex is not None:
-                self._instances(props, self.props_tex, self.premul, sc, solid=True)
+                self._instances(props, self.props_tex, self.premul, sc)
             self._sfx(sfx["air_add"], add, sc)
             self._ribbons(ribs["add"], add, sc)
             self._instances(groups["air_add"], self.atlas, add, sc)

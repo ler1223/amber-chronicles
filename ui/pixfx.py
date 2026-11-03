@@ -246,13 +246,13 @@ class PixFx:
         return self.blit(surf, glow, fx.name, fx.var, self.frame(fx), x, y, k, fx.anchor, int(fx.opacity() * dim),
                          fx.flip, fx.rot)
 
-    def draw_ground(self, flat):
+    def draw_ground(self, flat, dim=1.0):
         """Наземные эффекты на плоской карте (pos — точка плоской карты)."""
         for fx in self.items:
             if fx.ground and fx.age >= 0:
                 img = getattr(fx, "img", None) or self.lib.img(fx.name, fx.var, self.frame(fx), GROUND_PX * fx.scale)
                 x, y = fx.point()
-                a = fx.opacity()
+                a = int(fx.opacity() * dim)
                 if a < 255:
                     img.set_alpha(a)
                 flat.blit(img, (round(x - img.get_width() / 2), round(y - img.get_height() / 2)))

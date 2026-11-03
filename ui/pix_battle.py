@@ -761,7 +761,12 @@ class PixelPilot:
         img, (x, y) = hit
         if any(self.view.anim(q).hit > 0 for q in units):        # удар: стена вздрагивает
             x += math.sin(self.view.clock * 90) * 1.5
+        alpha = int(255 * self._dim())                          # пауза: стена не закрывает фигурки
+        if alpha < 255:
+            img.set_alpha(alpha)
         surf.blit(img, (round(x), round(y)))
+        if alpha < 255:
+            img.set_alpha(255)
         r = pygame.Rect(round(x), round(y), img.get_width(), img.get_height())
         self._wall_rects[tuple(run)] = r
         return r
@@ -867,15 +872,16 @@ class PixelPilot:
         return self.glow
 
     def _dim(self):
-        return 1.0 - 0.45 * self.view.vfx.screen.calm   # пауза: эффекты прозрачнее, поле видно
+        return self.view.vfx.screen.fx_alpha()          # пауза: эффекты прозрачнее, поле видно
 
     def ground(self, flat, c):
         """Плоская карта: горящая поверхность, иней на ледяных клетках, наземные экземпляры."""
         if not self.on:
             return
-        self.ice.draw(flat)                    # ледяные клетки — одна корка, а не иней на каждой клетке
-        self.fire.draw(flat)
-        self.fx.draw_ground(flat)
+        dim = self._dim()
+        self.ice.draw(flat, dim)               # ледяные клетки — одна корка, а не иней на каждой клетке
+        self.fire.draw(flat, dim)
+        self.fx.draw_ground(flat, dim)
 
     def world_items(self, c):
         """Что встаёт в общий порядок глубины с юнитами: пламя горящих клеток и воздушные экземпляры."""

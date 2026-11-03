@@ -221,6 +221,7 @@ def test_pause_calms_screen_effects():
     for _ in range(30):
         frame(s, 1 / 30)
     assert sc.calm > 0.9 and sc.dim < 0.05 and sc.bars < 0.05
+    assert sc.fx_alpha() < 0.3                 # полевые эффекты на паузе почти прозрачны
 
 
 def test_move_and_area_cells_ignore_units_unit_skills_snap():

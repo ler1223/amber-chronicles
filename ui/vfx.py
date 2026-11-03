@@ -203,6 +203,10 @@ class Screen:
             return 0.0
         return self.slow_k if self.slow_time > 0 else 1.0
 
+    def fx_alpha(self):
+        """Прозрачность полевых эффектов: на паузе 0.25, чтобы читались фигурки всех юнитов."""
+        return 1.0 - 0.75 * self.calm
+
 
 class VfxWorld:
     def __init__(self, presets=None, effects=None, seed=7, props=None):
@@ -1171,21 +1175,25 @@ class VfxWorld:
         import pygame
         from ui.vfx_textures import NAMES, cpu_ids
         groups = self.batches(cpu_ids())
+        dim = self.screen.fx_alpha()
         if props:
             for p in self.props:
                 img = props.get(p.name)
                 if img is None:
                     continue
                 img = pygame.transform.rotozoom(img, -math.degrees(p.rot), p.scale)
+                if dim < 1.0:
+                    img.set_alpha(int(255 * dim))
                 surf.blit(img, (p.x - img.get_width() / 2 + offset[0], p.y - img.get_height() / 2 + offset[1]))
         for gname in GROUPS:
             rows, add = groups[gname], gname.endswith("add")
             for r in rows[:limit]:
                 w, h = int(r[2] * 2), int(r[3] * 2 * r[5])
-                if w < 1 or h < 1 or r[9] <= 0.02:
+                a = r[9] * dim
+                if w < 1 or h < 1 or a <= 0.02:
                     continue
                 col = tuple(int(min(1.0, c) * 255) // 32 * 32 for c in r[6:9])
-                lvl = int(r[9] * 8)
+                lvl = int(a * 8)
                 key = (int(r[10]), min(w, 400) // 4, min(h, 400) // 4, col, lvl, int(math.degrees(r[4])) // 30 % 12)
                 img = cache.get(key)
                 if img is None:
