@@ -17,12 +17,19 @@ python tools/import_sprite.py картинка.png assets/sprites/forge_lord.png
 нарезать его целиком:
 
 ```
-python tools/import_sheet.py assets/art_src/sheet_ch12.png assets/sprites --preview preview.png
+python tools/import_sheet.py assets/art_src/sheet_ch12.png assets/sprites --set ch12 --preview preview.png
 ```
 
 Порядок персонажей на листе — как в списке ниже (ряды сверху вниз, в ряду слева направо). Каждый вырезается по
 своему контуру, уменьшается в общем масштабе (рост относительно друг друга сохраняется), палитра урезается,
 добавляется контур; элита — холст 40×40 (в игре 80 px), боссы — 48×48 (96 px).
+
+Запросы на остальные листы (герои 2, Склеп и Перевалы, Степь и Гробницы, Лес фей и Затонувший город, Небесная
+цитадель, объекты поля, два листа окружения) — в `prompts_more.md`. Каждый лист режется своим набором:
+
+```
+python tools/import_sheet.py assets/art_src/sheet_crypt_pass.png --set crypt_pass --preview preview.png
+```
 
 ---
 
@@ -187,3 +194,36 @@ glowing-hot whip of chain, leather and iron armor.
 [стиль, но 48x48 grid] The forge lord: towering figure in black iron armor with molten lava pouring through the
 joints, a crown of anvil horns, wielding a giant hammer with amber stones melted into its head.
 ```
+
+---
+
+## Остальные листы (`prompts_more.md`)
+
+Готовые запросы на все следующие листы — в `prompts_more.md` (блок на каждый лист: скопировать целиком в тот же
+чат, где делали первый лист). Исходники лежат в `assets/art_src/`, порядок фигур на листе — строго как в запросе:
+
+| Лист | `--set` | Фигур | Куда ляжет |
+|---|---|---|---|
+| Герои 2 + призывы | `heroes2` | 20 | `assets/sprites` |
+| Остатки гл. 1–2, Склеп, Перевалы | `crypt_pass` | 21 | `assets/sprites` |
+| Степь, Гробницы | `steppe_tomb` | 17 | `assets/sprites` |
+| Лес фей, Затонувший город | `fae_sunken` | 17 | `assets/sprites` |
+| Небесная цитадель | `citadel` | 9 | `assets/sprites` |
+| Объекты поля | `objects` | 21 | `assets/sprites` |
+| Окружение 1 (болото, кузни, склеп, перевалы) | `env1` | 18 | `assets/sprites/env` |
+| Окружение 2 (степь, гробницы, лес фей, город, цитадель) | `env2` | 20 | `assets/sprites/env` |
+
+```
+python tools/import_sheet.py assets/art_src/sheet_heroes2.png --set heroes2 --preview preview.png
+python tools/import_sheet.py assets/art_src/sheet_env1.png --set env1 --preview preview.png
+```
+
+Окружение не держит общий масштаб: каждый предмет вписывается в свой холст по виду (`tree` 32×46, `pine` 28×48,
+`block` 36×34, `log` 34×18, `rock` 24×18, `column` 20×46, `bush` 24×16, `mushroom` 22×26, `tombstone` 16×20,
+`deadtree` 28×40). Имена — `env/<материал>_<вид>.png`: `grass` (болото), `ash` (кузни), `dirt` (склеп), `snow`
+(перевалы), `dry` (степь), `sand` (гробницы), `moss` (лес фей), `wet` (затонувший город), `marble` (цитадель).
+
+## Экспедиция (`prompts_expedition.md`)
+
+Новые враги болота, иконки вещей и даров, иллюстрации событий, актов, таверны, лагеря и торговца — в
+`prompts_expedition.md`.

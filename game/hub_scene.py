@@ -82,7 +82,7 @@ class HubScene(CampBackdrop):
             h = prof.heroes[cls]
             r = pygame.Rect(ox + 24 + i * 222, y, 210, 80)
             c = data.classes[cls]
-            pygame.draw.rect(surf, (36, 38, 46), r, border_radius=8)
+            pygame.draw.rect(surf, (46, 35, 26), r, border_radius=8)
             pygame.draw.rect(surf, tuple(c["color"]), r, 2, border_radius=8)
             T.text(surf, c["name"] + (f" · {data.paths[h['path']]['name']}" if h["path"] else ""), (r.x + 10, r.y + 6),
                    15, T.TEXT, True)

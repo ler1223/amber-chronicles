@@ -10,6 +10,9 @@ from . import movement as M
 from . import stats as S
 from .rules import Rules
 from .ai import TeamAI
+from . import kit
+from . import passives as PS
+from . import mutators as MU
 from .grid import PERMANENT, Grid, cheb, sign
 from .unit import Unit
 from .teams import ENEMY, NEUTRAL, PLAYER
@@ -43,7 +46,9 @@ class Combat:
         self.enraged = 0          # ступень ярости затянутого боя
         self.traps = {}           # id ловчего -> клетки его капканов
         self.corpses = []         # трупы врагов: {"cell", "left", "name"} — ресурс некроманта
+        self.zones = []           # зоны механик классов (sim/kit.py): эффект раз в every сек
         self.delayed = []         # отложенные эффекты: {"left", "total", "caster", "effects", "center", "tunit"}
+        self.hit_timing = self.HIT_TIMING and bool(data.config.get("hit"))   # урон — при попадании, не при касте
         self.rng = random.Random(seed)
         self.fx = fx or {}
         self._reactions = {frozenset(r["tags"]): r for r in data.reactions["unit"]}
@@ -62,6 +67,11 @@ class Combat:
             if m.get("hp") is not None:
                 u.hp = max(1, min(u.max_hp, m["hp"]))
             u.autocast = autocast.settings_for(u.skill_defs, m.get("autocast"))
+            u.ap = int(round(u.ap_max * m["proto"].get("start_ap", 1.0)))   # экспедиция и сюжет: с половиной AP
+            if (u.passive or {}).get("start"):
+                u.pp = min(u.pp_max, u.passive["start"])
+            if (u.passive or {}).get("no_ap"):        # хрономант: вместо AP — шкала Времени
+                u.ap_max = u.ap = 0
             if self.fx.get("start_shield"):
                 u.shield, u.shield_time = self.fx["start_shield"], 30.0
         scale = enemy_scale or {}
@@ -73,6 +83,17 @@ class Combat:
             u = self._spawn(ENEMY, etype, data.enemies[etype], pos)
             self._scale_enemy(u, scale)
         self._apply_affixes(self.diff.get("affixes", 0))
+        for etype in scale.get("extra_adds", []):     # последствия событий: засада, подмога боссу
+            if etype in data.enemies:
+                MU.spawn_add(self, etype, scale)
+        for gtype in scale.get("guests", []):         # союзники-гости из событий
+            self._spawn_guest(gtype, scale)
+        self.tier = None
+        if scale.get("tier"):                  # сложность похода: подкрепление, механики врагов, фазы боссов
+            self.enemy_scale = scale
+            MU.apply(self, scale["tier"], scale)
+        if scale.get("solo"):                  # одиночка: врагов меньше — главари и первые по списку
+            self._solo_trim(scale["solo"])
         hideable = [u for u in self.alive(ENEMY) if not u.boss]
         for u in self.rng.sample(hideable, min(len(hideable), self.enc.get("fog", 0))):
             u.hidden = True
@@ -95,11 +116,12 @@ class Combat:
         self.tides = []           # [время отлива, клетки]
         self.arena = []
         order = self.cfg["difficulty_order"]
-        for ev in self.chapter.get("events", []):
+        scale_ = enemy_scale or {}
+        for ev in self.chapter.get("events", []) + scale_.get("arena_extra", []):   # + опасности акта похода
             if order.index(ev.get("min_diff", "normal")) > order.index(difficulty):
                 continue
             ev = dict(ev)
-            ev["rate"] = self.diff.get("event_rate", 1.0)
+            ev["rate"] = self.diff.get("event_rate", 1.0) / scale_.get("arena_rate", 1.0)   # Жар — чаще
             ev["timer"] = ev.get("first", 6.0) * ev["rate"]
             ev["pending"] = None
             self.arena.append(ev)
@@ -125,6 +147,9 @@ class Combat:
             u.armor += int(round(k["armor"]))
         else:
             k = scale
+            u.power *= k.get("power", 1.0)          # экспедиция: сила навыков врагов растёт вместе с актом
+            if scale.get("level"):
+                u.level = scale["level"]
         mod = (scale.get("mods") or {}).get(u.proto_id, {})    # сюжет: отдельные враги слабее (слизни в начале)
         u.max_hp = u.hp = max(1, int(round(u.max_hp * k.get("hp", 1.0) * mod.get("hp", 1.0))))
         u.atk_damage = int(round(u.atk_damage * k.get("damage", 1.0) * mod.get("damage", 1.0)))
@@ -166,6 +191,21 @@ class Combat:
             p = cells.pop(self.rng.randrange(len(cells)))
             out.append((self.rng.choice(pool), p))
         return out
+
+    def _spawn_guest(self, etype, scale):
+        """Союзник из события: враг этой главы сражается за отряд (сам выбирает цели)."""
+        if etype not in self.data.enemies:
+            return None
+        zone = [p for p, c in sorted(self.grid.cells.items()) if c.passable and self.is_free(p)
+                and p[0] <= self.enc.get("deploy_max_x", self.cfg["deploy_max_x"])]
+        if not zone:
+            return None
+        u = self._spawn(PLAYER, etype, self.data.enemies[etype], zone[len(zone) // 2])
+        self._scale_enemy(u, scale)
+        u.summon = True
+        u.name = f"{u.name} (союзник)"
+        self.emit("summon", unit=u, owner=None)
+        return u
 
     def _apply_affixes(self, n):
         """Кошмар: часть врагов получает модификатор (свирепый, каменный, вампирский...)."""
@@ -292,10 +332,57 @@ class Combat:
 
     # ---------- приказы ----------
 
-    def order_move(self, u, pos):
+    # ---------- очередь приказов (Shift) ----------
+
+    def queue_order(self, u, o):
+        """В конец очереди героя: {"type": "move", "cell"} | {"type": "attack", "target"} |
+        {"type": "skill", "skill", "target"}. Пустая очередь и нет приказа — начинается сразу."""
+        if not u.alive:
+            return False, ""
+        if (u.order is None or self._order_done(u)) and u.cast is None and not u.queue:
+            return self._start_queued(u, o)
+        u.queue.append(o)
+        return True, ""
+
+    def _order_done(self, u):
+        o = u.order
+        if o is None:
+            return True
+        t = o.get("target")
+        return o["type"] in ("attack", "skill") and isinstance(t, Unit) and not t.alive
+
+    def _start_queued(self, u, o):
+        if o["type"] == "move":
+            return self.order_move(u, o["cell"], keep_queue=True)
+        if o["type"] == "attack":
+            return self.order_attack(u, o["target"], keep_queue=True)
+        sid, target = o["skill"], o["target"]
+        sk = u.skill_defs.get(sid)
+        if sk is None:
+            return False, "Нет такого навыка"
+        if sk["target"] == "self":
+            target = u
+        elif sk["target"] == "cell" and isinstance(target, Unit):
+            target = target.cell
+        ok, msg = self.check_skill(u, sid, target)
+        if not ok and msg not in ("Не хватает AP", "Перезарядка"):
+            return False, msg
+        self._cancel_cast(u)                  # навык в очереди ждёт AP и перезарядку сам
+        u.order = {"type": "skill", "skill": sid, "target": target, "then": None, "auto": False, "queued": True}
+        return True, ""
+
+    def _advance_queue(self, u):
+        while u.queue and self._order_done(u) and u.cast is None:
+            ok, _ = self._start_queued(u, u.queue.pop(0))
+            if ok:
+                return
+
+    def order_move(self, u, pos, keep_queue=False):
         pos = tuple(pos)
         if not u.alive or u.static or not self.grid.passable(pos):
             return False, "Туда нельзя"
+        if not keep_queue:
+            u.queue.clear()
         self._cancel_cast(u)
         u.order = {"type": "move", "cell": pos}
         u.last_target = None  # игрок вывел юнита из боя — старую цель забываем
@@ -316,9 +403,11 @@ class Combat:
         u.last_target = None
         return True, ""
 
-    def order_attack(self, u, target):
+    def order_attack(self, u, target, keep_queue=False):
         if not u.alive or not target.alive or not u.is_enemy(target):
             return False, "Нельзя атаковать"
+        if not keep_queue:
+            u.queue.clear()
         self._cancel_cast(u)
         u.order = {"type": "attack", "target": target}
         return True, ""
@@ -332,6 +421,9 @@ class Combat:
                 if u.order and u.order.get("type") == "attack":
                     u.order["initial"] = True
                     u.last_target = u.order["target"]
+        for u in self.units:                   # союзники-гости тоже сразу в бой
+            if u.alive and u.team == team and u.summon and u.owner is None and not u.obj:
+                self._retarget(u)
 
     def check_skill(self, u, sid, target):
         sk = u.skill_defs[sid]
@@ -344,6 +436,11 @@ class Combat:
         # AP тратятся только на старте каста, но с нехваткой лучше сразу сказать
         if u.ap + (u.cast["ap"] if u.cast else 0) < sk["ap"]:
             return False, "Не хватает AP"
+        if "silence" in u.buffs:              # безмолвие: навыки недоступны, пока длится
+            return False, "Безмолвие"
+        why = kit.check(self, u, sk, target)   # шкала класса, облик, тень, метка, тотемы, знамя
+        if why:
+            return False, why
         kind = sk["target"]
         if kind == "self":
             return True, ""
@@ -360,8 +457,10 @@ class Combat:
             return False, "Клетка занята"
         return True, ""
 
-    def order_skill(self, u, sid, target, auto=False):
+    def order_skill(self, u, sid, target, auto=False, keep_queue=False):
         sk = u.skill_defs[sid]
+        if not auto and not keep_queue:
+            u.queue.clear()
         if sk["target"] == "self":
             target = u
         elif sk["target"] == "cell" and isinstance(target, Unit):
@@ -407,6 +506,10 @@ class Combat:
         if self.intermission > 0:
             self._intermission_step(dt)
             return
+        if self.time == 0.0:                  # первый шаг боя: правила «в начале боя» (предметы, благословения)
+            for u in list(self.units):
+                if u.alive and u.proto.get("rules"):
+                    self.rules.fire("start", {"start", u.team}, unit=u, source=u)
         self.time += dt
         for c in self.grid.cells.values():
             if c.hazard and c.hazard_time != PERMANENT:
@@ -437,6 +540,9 @@ class Combat:
                 else:
                     self._update_unit(u, dt)
         self._delayed_update(dt)
+        kit.tick_zones(self, dt)
+        if self.tier:
+            MU.tick(self, dt)
         self._corpse_update(dt)
         self._enrage_update()
         self._objective_update(dt)
@@ -554,6 +660,15 @@ class Combat:
         if mine and not foes:
             self.hold = min(ob["time"], self.hold + dt)
 
+    def _solo_trim(self, s):
+        """Бой одного героя: босс и элита остаются, остальных — сколько велено (у босса свита меньше)."""
+        foes = [u for u in self.units if u.team == ENEMY and not u.obj]
+        leaders = [u for u in foes if u.boss or u.elite]
+        rest = [u for u in foes if u not in leaders]
+        keep = (s["boss_keep"] if any(u.boss for u in leaders) else max(0, s["keep"] - len(leaders)))
+        drop = set(id(u) for u in rest[keep:])
+        self.units = [u for u in self.units if id(u) not in drop]
+
     def _phases_update(self):
         """Фазы босса: на пороге HP — подкрепление и всплеск событий поля."""
         if not self.phases:
@@ -565,7 +680,10 @@ class Combat:
             ph = self.phases.pop(0)
             self.emit("phase", unit=boss, name=ph.get("name", ""))
             self.log(f"{boss.name}: {ph.get('name', 'новая фаза')}!", (255, 150, 90))
-            for e in ph.get("spawn", []):
+            spawns = ph.get("spawn", [])
+            if (self.enemy_scale or {}).get("solo"):
+                spawns = spawns[:self.enemy_scale["solo"]["phase_max"]]
+            for e in spawns:
                 self.spawn_enemy(e["type"], e["pos"])
             if ph.get("shield"):
                 boss.shield, boss.shield_time = int(boss.max_hp * ph["shield"]), 8.0
@@ -591,6 +709,9 @@ class Combat:
             if u.life <= 0:
                 self._kill(u, expire=True)
                 return
+        if u.airborne > 0:                   # в прыжке: не ходит и не бьёт, пока не приземлится
+            u.airborne -= dt
+            return
         if u.charm_time > 0:
             u.charm_time -= dt
             if u.charm_time <= 0:
@@ -671,6 +792,10 @@ class Combat:
             u.buffs[stat][1] -= dt
             if u.buffs[stat][1] <= 0:
                 del u.buffs[stat]
+        if u.marks:
+            kit.tick_marks(self, u, dt)
+        if u.passive and u.passive.get("core"):
+            PS.tick(self, u, dt)
         if "regen" in u.buffs:
             u.regen_acc += dt
             if u.regen_acc >= 1.0:
@@ -681,6 +806,7 @@ class Combat:
 
         self._cell_effects(u, dt)
         dps = sum(self.tags[t].get("dps", 0) for t in u.statuses if not self.immune(u, t))
+        dps += u.buff("bleed", 0) if "bleed" in u.buffs else 0     # кровотечение: урон в секунду, пока длится
         if dps:
             u.dot_acc += dt
             if u.dot_acc >= 1.0:
@@ -723,7 +849,9 @@ class Combat:
     # ---------- личные шкалы ----------
 
     def gain(self, u, event, n=1):
-        """Шкала героя растёт от события его фишки (gauge.gain в classes.json)."""
+        """Шкала героя растёт от события его фишки (gauge.gain в classes.json); заодно копится условие ультимейта."""
+        if u is not None and u.alive:
+            u.ult_count[event] = u.ult_count.get(event, 0) + n
         g = u.gauge if u is not None and u.alive else None
         if not g or u.pp >= u.pp_max:
             return
@@ -808,8 +936,8 @@ class Combat:
                     owner = c.hazard_owner
                     c.hazard, c.hazard_owner = None, None
                     self.emit("mine", pos=c.pos, unit=u, kind=h.get("look", "mine"))
-                    self.damage(u, tr["damage"], owner if owner is not None and owner.alive else None,
-                                tr.get("tag"), "reaction")
+                    self.damage(u, tr["damage"] * getattr(c, "mine_mult", 1.0),
+                                owner if owner is not None and owner.alive else None, tr.get("tag"), "reaction")
                     if tr.get("stun") and u.alive:
                         self.apply_stun(u, tr["stun"], tr.get("look", "trap"))
                     if tr.get("expose") and u.alive:
@@ -836,6 +964,8 @@ class Combat:
     # ---------- исполнение приказов ----------
 
     def _execute_order(self, u):
+        if u.queue:                           # приказ выполнен — следующий из очереди
+            self._advance_queue(u)
         o = u.order
         if o is None and u.last_target is not None and not u.last_target.alive:
             # юнит дрался сам (без приказа) и добил цель — не стоит, а идёт к следующей
@@ -1063,8 +1193,13 @@ class Combat:
     def _basic_attack(self, u, t):
         if u.attack_timer > 0:
             return
+        if PS.kind(u) == "commander":         # тактик сам не бьёт: приказывает союзнику ударить цель
+            u.attack_timer = u.atk_cd * u.buff("atk_speed", 1.0)
+            u.last_target = t
+            kit.command(self, u, t)
+            return
         kind = u.atk_kind or ("melee" if u.atk_range <= 1 else "ranged")
-        u.attack_timer = u.atk_cd * u.slow_mult(self.tags) * u.buff("atk_speed", 1.0)
+        u.attack_timer = u.atk_cd * u.slow_mult(self.tags) * u.buff("atk_speed", 1.0) * PS.atk_cd_mult(self, u)
         u.last_target = t
         tag = u.buff("atk_tag", None) or u.atk_tag          # ядовитый клинок и т.п. — тег на время
         amount = u.atk_damage * u.buff("atk_mult", 1.0) * self._reveal(u) * self.blood_mult(u)
@@ -1072,14 +1207,33 @@ class Combat:
         if p and p["kind"] == "backstab" and u.pp >= p["pp"] and self.exposed(t, u):
             self._use_passive(u, f"урон ×{p['mult']:g}", t)
             amount *= p["mult"]
-        self.emit("attack", src=u, dst=t, kind=kind, tag=tag)
-        self._basic = True
-        try:
-            dealt = self.damage(t, amount, u, tag, kind)
-        finally:
-            self._basic = False
-        if u.lifesteal and dealt and u.alive:
-            self.heal(u, int(round(dealt * u.lifesteal)))
+        h = self.cfg.get("hit") if self.hit_timing else None
+        flight = 0.0
+        if h:
+            if kind == "melee":
+                flight = h["attack_melee"]
+            else:
+                sp = h["attack_speed"]
+                speed = sp.get(u.proto_id) or sp.get("ranged" if u.role == "ranged" else "spell", 10.0)
+                flight = round(min(h["max"], max(0.06, cheb(u.cell, t.cell) / speed)), 2)
+        self.emit("attack", src=u, dst=t, kind=kind, tag=tag, hit=flight)
+
+        def land():
+            if not t.alive:
+                return
+            self._basic = True
+            try:
+                dealt = self.damage(t, amount, u, tag, kind)
+            finally:
+                self._basic = False
+            if dealt and (u.quiver or "all_arrows" in u.buffs):
+                kit.basic_rider(self, u, t)
+            if u.lifesteal and dealt and u.alive:
+                self.heal(u, int(round(dealt * u.lifesteal)))
+        if flight > 0:
+            self.delayed.append({"left": flight, "total": flight, "fn": land, "tunit": None})
+        else:
+            land()
         u.ambush = 1.0
 
     def _start_cast(self, u, sid, target):
@@ -1108,6 +1262,42 @@ class Combat:
                   "auto": auto}
         self.emit("cast_start", unit=u, skill=sid)
 
+    HIT_TIMING = True
+
+    # мгновенные навыки: двигают самого героя или ставят что-то на поле — никакого полёта
+    INSTANT = {"teleport", "leap_to", "rush", "swap", "form", "stealth", "place_object", "wall", "trap", "watch",
+               "song", "toss", "gather", "regroup", "merge", "tether", "terrain_cast", "focus", "rewind", "delay",
+               "fuse", "extra_attack", "detonate", "spread_fire", "guard", "summon", "revive", "corpse"}
+
+    def hit_delay(self, u, sid, sk, center, tunit):
+        """Через сколько секунд навык попадает (config.hit, tools/hit_timing.py): снаряд летит, метеор падает,
+        площадь вспыхивает после метки. 0 — сразу (рывки, призывы, постройки)."""
+        h = self.cfg.get("hit")
+        if not h or not self.hit_timing:
+            return 0.0
+        types = {e["type"] for e in sk["effects"]}
+        table = h["skills"]
+        br = sk.get("branch")
+        e = table.get(f"{sid}:{br[0]}") if br else None
+        e = e or table.get(sid) or {"mode": "rule"}
+        mode = e["mode"]
+        if mode == "time" and types & {"teleport", "leap_to"}:      # прыжок: в воздухе до приземления
+            u.airborne = e["time"]
+            return e["time"]
+        if types & self.INSTANT or mode == "instant":
+            return 0.0
+        dist = cheb(u.cell, tuple(center))
+        if mode == "fly":
+            return round(min(h["max"], max(e.get("min", h["min"]), max(1, dist) / e["speed"])), 2)
+        if mode in ("fall", "time"):
+            return e["time"]
+        if sk["target"] == "self" or dist <= 1:
+            hits = types & {"damage", "stun", "knockback", "push", "pull", "line", "chain", "status", "sleep"}
+            return h["swing"] if hits else 0.0
+        if sk["target"] == "ally":
+            return h["ally"]
+        return h["area"]
+
     def _resolve_skill(self, u, sid, target, auto=False):
         sk = u.skill_defs[sid]
         if sk["target"] == "self":
@@ -1119,20 +1309,36 @@ class Combat:
             center, tunit = target.cell, target
         else:
             center, tunit = tuple(target), None
-        self.emit("skill", unit=u, skill=sid, center=center, target=tunit, auto=auto)
+        hit = self.hit_delay(u, sid, sk, center, tunit)
+        spent = kit.spend(self, u, sk)
+        u.uses[sid] = u.uses.get(sid, 0) + 1
+        if not sk.get("ult"):
+            self.gain(u, "skill")
+        self.emit("skill", unit=u, skill=sid, center=center, target=tunit, auto=auto, hit=hit)
         for a in self.units:             # ноты барда: навык союзника рядом
             if a is not u and a.alive and a.gauge and a.team == u.team and cheb(a.cell, u.cell) <= 3:
                 self.gain(a, "ally_skill")
             if a is not u and a.alive and a.song and a.team == u.team and cheb(a.cell, u.cell) <= a.song["radius"]:
                 a.song["notes"] += 1
                 self.emit("note", unit=a, src=u)
+        self.rules.fire("cast", {"cast", sid} | {e["kind"] for e in sk["effects"] if e.get("kind")}, unit=u, source=u)
         suffix = " (авто)" if auto else ""
         self.log(f"{u.name}: {sk['name']}{suffix}", (230, 230, 160) if u.team == PLAYER else (230, 170, 160))
         if autocast.hits_enemies(sk):
             self._reveal(u)
-        self._skill = sid                     # вид контроля зависит от навыка (корни, сеть, лёд — config.control_looks)
-        self.apply_effects(u, sk["effects"], center, tunit)
-        self._skill = None
+        effects = sk["effects"]
+        pm = PS.powder_mult(self, u, sk)
+        if pm is not None:                    # заряд с Порохом — ×2, без — ×0.6
+            effects = [dict(e, _powder=pm) for e in effects]
+        if spent or u.ambush > 1.0:           # потраченная шкала и удар из тени — в эффекты (урон по прилёте)
+            effects = [dict(e, _spent=spent, _shadow=u.ambush) for e in effects]
+        if hit > 0:                           # эффекты — по прилёте (_delayed_update)
+            self.delayed.append({"left": hit, "total": hit, "caster": u, "effects": effects,
+                                 "center": tuple(center), "tunit": tunit, "name": sk["name"], "skill": sid})
+        else:
+            self._skill = sid                 # вид контроля зависит от навыка (корни, сеть, лёд — config.control_looks)
+            self.apply_effects(u, effects, center, tunit)
+            self._skill = None
         u.ambush = 1.0
         p = u.passive
         if p and p["kind"] == "encore" and u.pp >= p["pp"] and sk["ap"] >= p.get("min_ap", 3):
@@ -1145,7 +1351,13 @@ class Combat:
         for eff in effects:
             t = eff["type"]
             if eff.get("at") == "caster":
-                self._apply_one(caster, eff, caster.cell, None)
+                if t in kit.TYPES:
+                    kit.special(self, caster, eff, caster.cell, caster)
+                else:
+                    self._apply_one(caster, eff, caster.cell, None)
+                continue
+            if t in kit.TYPES:
+                kit.special(self, caster, eff, center, tunit)
                 continue
             if t in ("delay", "rush", "toss", "fuse", "place_object", "watch", "detonate", "song", "trap", "wall",
                      "terrain", "shatter", "corpse", "rewind", "stasis", "spread_fire", "gather", "swap",
@@ -1155,8 +1367,11 @@ class Combat:
                 continue
             if t == "teleport":
                 if not self.is_free(center, exclude=caster):
-                    self.emit("fizzle", unit=caster, skill=None)
-                    return
+                    spot = self.free_near(center, 1) if caster.airborne <= 0.05 else None
+                    if spot is None or spot == caster.cell:      # клетку заняли, пока летел — рядом
+                        self.emit("fizzle", unit=caster, skill=None)
+                        return
+                    center = spot
                 self._place(caster, center, 0.12)
                 continue
             if t == "leap_to":
@@ -1202,6 +1417,8 @@ class Combat:
                     if eff["hazard"] != "fire" or c.hazard != "oil":
                         c.hazard, c.hazard_time = eff["hazard"], eff["duration"]
                     c.hazard_team = caster.team
+                    if eff["hazard"] == "mine":
+                        c.hazard_owner, c.mine_mult = caster, eff.get("_powder", 1.0)
                     if eff["hazard"] == "fire":
                         self._cell_tag(p, "fire")        # огонь по маслу — вспышка
             return
@@ -1215,13 +1432,22 @@ class Combat:
         for v in self._select(caster, center, r, eff.get("affects", default), tunit):
             if v.obj and t not in ("damage", "knockback", "heal", "shield", "push", "pull"):
                 continue                       # бочку не оглушить и не усилить
+            if eff.get("if_mark") and eff["if_mark"] not in v.marks:
+                continue                       # только по меченым (вызов, холод, бомба)
+            if eff.get("if_held") and not kit.held(v):
+                continue
             if t == "damage":
                 self._hit(caster, v, eff)
             elif t == "heal":
-                amount = int(round(eff["amount"] * caster.power * caster.proto.get("scale", {}).get("heal", 1.0)))
-                real = self.heal(v, amount)
+                if eff.get("pct"):                 # лечение в процентах от HP цели
+                    amount = int(round(v.max_hp * eff["pct"] * PS.heal_mult(self, caster)))
+                else:
+                    amount = int(round(eff["amount"] * caster.power * caster.proto.get("scale", {}).get("heal", 1.0)
+                                       * PS.heal_mult(self, caster)))
+                real = self.heal(v, amount, caster)
                 if real > 0 and v is not caster:
                     self.gain(caster, "heal_given")
+                    PS.on_heal_given(self, caster)
                 excess = amount - real
                 if eff.get("overheal_shield") and excess > 0 and v.alive:
                     v.shield += excess
@@ -1285,7 +1511,8 @@ class Combat:
 
     def _hit(self, caster, v, eff):
         """Урон навыка: казнь, удар в спину, вампиризм, бафф/дебафф на цель."""
-        amount = eff["amount"] * caster.power * caster.ambush * self.blood_mult(caster)
+        amount = eff["amount"] * caster.power * max(caster.ambush, eff.get("_shadow", 1.0)) * self.blood_mult(caster)
+        amount *= kit.hit_mult(self, caster, v, eff)
         bs = eff.get("backstab")
         if bs and self.exposed(v, caster):
             amount *= bs
@@ -1304,6 +1531,7 @@ class Combat:
         ob = eff.get("on_hit_buff")
         if ob and v.alive:
             self.add_buff(v, ob["stat"], ob["value"], ob["duration"])
+        kit.after_hit(self, caster, v, eff, dealt)
         return dealt
 
     def blood_mult(self, u):
@@ -1314,6 +1542,8 @@ class Combat:
     def add_buff(self, u, stat, value, duration):
         fresh = u.buffs.get(stat, [None])[0] != value     # продление того же баффа (аура знамени) — без надписи
         u.buffs[stat] = [value, duration]
+        if stat == "silence" and u.cast is not None:      # безмолвие сбивает каст
+            self._interrupt(u)
         u.buff_total[stat] = duration         # для таймера на значке
         self.emit("buff", unit=u, stat=stat, value=value, fresh=fresh)
 
@@ -1345,6 +1575,10 @@ class Combat:
         for old in mine[:max(0, len(mine) - limit + 1)]:
             self._kill(old, expire=True)
         u = self._spawn(caster.team, eff["unit"], proto, cell)
+        sm = PS.summon_mult(caster)
+        if sm != 1.0:                          # души некроманта: призванные крепче и сильнее
+            u.max_hp = u.hp = int(round(u.max_hp * sm))
+            u.atk_damage = int(round(u.atk_damage * sm))
         u.owner = caster
         u.life = eff.get("duration", proto.get("life", 10))
         k = caster.power * eff.get("power", 1.0)
@@ -1399,21 +1633,37 @@ class Combat:
         u.atk_kind = f.get("atk_kind", u.atk_kind)
         u.max_hp += f.get("hp_add", 0)
         u.hp = max(1, min(u.max_hp, u.hp + f.get("hp_add", 0) - old_hp_add))
+        old_form = getattr(u, "_last_form", None)
+        u._last_form = form
         self.emit("form", unit=u, form=form)
+        self.gain(u, "form")
+        PS.on_form(self, u, old_form, form)
         self.log(f"{u.name}: {f.get('name', 'человеческий облик')}", (200, 230, 160))
 
     def _zone_of_control(self, u, prev):
         """Копейщик бьёт врага, шагнувшего к нему в соседнюю клетку, и тормозит его."""
         for z in self.units:
             p = z.passive
+            free = "zoc_free" in z.buffs     # стойка: удар без траты шкалы
             if (not z.alive or not p or p["kind"] != "zoc" or not z.is_enemy(u) or z.stun > 0 or z.cast
-                    or z.pp < p["pp"]):
+                    or (z.pp < p["pp"] and not free)):
                 continue
-            reach = p.get("range", 1)
-            if cheb(u.cell, z.cell) <= reach < cheb(prev, z.cell):
-                self._use_passive(z, f"удар по {u.name}", u)
+            reach = p.get("range", 1) + int(z.buff("zoc_range", 0))
+            if cheb(u.cell, z.cell) <= reach < cheb(prev, z.cell) or (
+                    "zoc_free" in z.buffs and cheb(u.cell, z.cell) <= reach and cheb(prev, z.cell) <= reach
+                    and z.buff("zoc_free", 0) >= 2):
+                self.gain(z, "zoc_hit")
+                if free:
+                    self.emit("passive", unit=z, name=p["name"], kind=p["kind"], detail=f"удар по {u.name}", other=u)
+                else:
+                    self._use_passive(z, f"удар по {u.name}", u)
+                if z.buff("zoc_free", 0) >= 3:      # неприступная стена: и оглушает
+                    self.apply_stun(u, 1.0)
                 self.emit("attack", src=z, dst=u, kind="melee", tag=z.atk_tag)
-                self.damage(u, z.atk_damage * p.get("mult", 1.0), z, z.atk_tag, "melee")
+                zm, zstun = PS.zoc_mult(z)
+                self.damage(u, z.atk_damage * p.get("mult", 1.0) * zm, z, z.atk_tag, "melee")
+                if zstun and u.alive:                 # окопался до конца — копьё оглушает
+                    self.apply_stun(u, 1.0)
                 u.wait = max(u.wait, p.get("halt", 0.6))
                 return
 
@@ -1525,13 +1775,27 @@ class Combat:
             if kind in DIRECT and attacker.proto.get("crit") and self.rng.random() < attacker.proto["crit"]:
                 amount *= attacker.proto.get("crit_mult", 1.75)
                 self.emit("crit", unit=target, src=attacker)
+                self.rules.fire("crit", {kind, tag} - {None}, unit=target, source=attacker)
+        vs = attacker.proto.get("dmg_vs") if attacker is not None and not self._intercepting else None
+        if vs:                                 # дар или вещь героя: урон по горящим / мокрым / замёрзшим…
+            have = C.unit_tags(self, target)
+            for tg, k in vs.items():
+                if tg in have:
+                    amount *= k
+        if attacker is not None and not self._intercepting and not target.obj:
+            amount *= PS.out_mult(self, attacker, target, kind, tag, self._basic)
         dg = target.proto.get("dodge")
         if dg and kind in ("melee", "ranged") and attacker is not None and not self._intercepting \
                 and self.rng.random() < dg:
             self.emit("dodge", unit=target)
+            self.rules.fire("dodge", {kind}, unit=target, source=attacker)
             return 0
         if target.obj:
             return self._hit_object(target, amount, attacker, tag)
+        if attacker is not None and (target.marks or attacker.marks):
+            amount *= kit.duel_mult(self, target, attacker)
+            if any(m["src"] is attacker for mid, m in target.marks.items() if mid in ("challenge", "duel")):
+                self.gain(attacker, "duel_hit")
         b = target.tethered_by
         if b is not None and b.alive and b is not target and b.merged <= 0 and kind not in ("hp_cost",) \
                 and not self._intercepting:
@@ -1544,6 +1808,7 @@ class Combat:
             finally:
                 self._intercepting = False
             self.emit("link", src=target, dst=b, color=(255, 170, 170))
+            PS.on_tether(self, b, half)
         if target.stasis > 0:                 # вне времени — удары не доходят
             self.emit("damage", unit=target, amount=0, absorbed=0, kind="stasis", tag=None, cover=False, blocked=None)
             return 0
@@ -1576,6 +1841,7 @@ class Combat:
                 amount *= self.cfg["cover"][cover]
                 covered = True
         amount *= target.buff("dmg_taken", 1.0) * target.buff("exposed", 1.0)
+        amount *= PS.in_mult(self, target, attacker, kind)
         if tag == "fire" and target.frost_armor and target.shield > 0:
             target.shield = 0                      # огонь раскалывает ледяную броню
             amount *= 1.5
@@ -1601,6 +1867,15 @@ class Combat:
             target.hp = 1
         self.emit("damage", unit=target, amount=amount, absorbed=absorbed, kind=kind, tag=tag, cover=covered,
                   blocked=blocked)
+        PS.after_damage(self, attacker, target, amount + absorbed, kind, tag, self._basic)
+        src = self.credit(attacker)            # статистика боя: призыв и гость считаются за хозяина
+        if src is not None and src.team != target.team:
+            src.tally["dealt"] += amount + absorbed
+            target.last_hit_by = src
+        target.tally["taken"] += amount
+        target.tally["absorbed"] += absorbed
+        if attacker is not None and attacker.mutator:
+            MU.on_hit(self, attacker, target, amount + absorbed, kind)
         thorns = target.buff("thorns", 0)
         if thorns and kind == "melee" and attacker is not None and attacker.alive:
             self.emit("thorns", unit=target, dst=attacker)
@@ -1618,6 +1893,7 @@ class Combat:
                 attacker.ap = min(attacker.ap_max, attacker.ap + self.fx["kill_ap"])
             self.gain(attacker, "kill")
             self._kill(target, tag=tag)
+            kit.on_kill(self, attacker, target)
         return amount
 
     # ---------- объекты поля ----------
@@ -1657,6 +1933,7 @@ class Combat:
                 return
             o = self.spawn_object(eff["object"], center)
             o.owner = caster
+            o.blast_mult = eff.get("_powder", 1.0)
             self.emit("summon", unit=o, owner=caster)
         elif t == "fuse":                  # фитиль: свои бочки в радиусе взорвутся через delay сек
             for o in self.units:
@@ -1671,8 +1948,9 @@ class Combat:
             self._toss(caster, eff, center)
         elif t in ("gather", "swap", "levitate", "collapse"):
             self._gravity(caster, eff, tuple(center), tunit)
-        elif t == "terrain_cast":          # геомант: навык по клетке под ногами
-            ground = self.grid.get(caster.cell).terrain
+        elif t == "terrain_cast":          # геомант: навык по клетке под целью (родник, жерло, перековка — под врагом)
+            cell = tunit.cell if tunit is not None else tuple(center)
+            ground = self.grid.get(cell).terrain if self.grid.get(cell) else "grass"
             effects = eff["by"].get(ground) or eff["by"].get("default", [])
             if ground != caster.last_ground:
                 caster.last_ground = ground
@@ -1687,9 +1965,15 @@ class Combat:
                 self.emit("fizzle", unit=caster, skill=None)
                 return
             self.emit("reagent", unit=tunit, tags=tags)
+            rk, keep = 1.0, False
+            if PS.kind(caster) == "recipe":
+                rk = 1 + PS.core(caster)["reagent"] * caster.pp
+                keep = caster.pp >= caster.pp_max > 0
+            eff = dict(eff, per_tag=eff["per_tag"] * rk)
             if eff.get("explode"):
                 for tag in tags:
-                    tunit.statuses.pop(tag, None)
+                    if not keep:
+                        tunit.statuses.pop(tag, None)
                     for v in self.units_in_radius(tunit.cell, eff.get("radius", 1)):
                         if caster.is_enemy(v):
                             self.damage(v, eff["per_tag"] * caster.power, caster, None, "spell")
@@ -1702,7 +1986,7 @@ class Combat:
                 foes = [f for f in self.foes_of(tunit) if cheb(f.cell, tunit.cell) <= self.reach(tunit)]
                 if foes:
                     t2 = tunit.last_target if tunit.last_target in foes else min(foes, key=lambda f: f.hp)
-                    for _ in range(eff.get("count", 1)):
+                    for _ in range(eff.get("count", 1) + (eff.get("banner_count", 1) if kit.banner_near(self, tunit) else 0)):
                         tunit.attack_timer = 0.0
                         self._basic_attack(tunit, t2)
                     self.emit("order", unit=tunit, src=caster, name="Вперёд!")
@@ -1725,6 +2009,9 @@ class Combat:
             a.order = None
             src = a.cell
             self._place(a, center, 0.12)
+            if eff.get("banner_shield") and kit.banner_near(self, a):
+                a.shield, a.shield_time = max(a.shield, int(eff["banner_shield"] * caster.power)), 6.0
+                self.emit("shield", unit=a, amount=a.shield)
             self.emit("order", unit=a, src=caster, name="Перестроение")
             self.gain(caster, "order")
             self.emit("rewind", unit=a, src=src, dst=center)
@@ -1734,15 +2021,17 @@ class Combat:
             for a in self.fighters(caster.team):
                 if a is not caster and not a.static and cheb(a.cell, tunit.cell) <= eff.get("reach", 6):
                     self.order_attack(a, tunit)
+                    if eff.get("banner_ap") and kit.banner_near(self, a):
+                        a.ap = min(a.ap_max, a.ap + eff["banner_ap"])
             self.add_buff(tunit, "dmg_taken", eff.get("mult", 1.2), eff.get("duration", 5))
             self.emit("order", unit=tunit, src=caster, name="Фокус!")
             self.gain(caster, "order")
         elif t == "tether":                # привязь: делит урон союзника пополам
             if tunit is None or tunit is caster:
                 return
-            for v in self.units:
-                if v.tethered_by is caster:
-                    v.tethered_by = None
+            mine = [v for v in self.units if v.tethered_by is caster and v is not tunit]
+            for v in mine[:max(0, len(mine) - eff.get("limit", 1) + 1)]:
+                v.tethered_by = None
             tunit.tethered_by, tunit.tether_time = caster, eff["duration"]
             if eff.get("regen"):
                 self.add_buff(tunit, "regen", eff["regen"], eff["duration"])
@@ -1765,7 +2054,7 @@ class Combat:
             caster.hp -= cost
             self.emit("damage", unit=caster, amount=cost, absorbed=0, kind="hp_cost", tag=None, cover=False,
                       blocked=None)
-            self.heal(tunit, int(round(eff["amount"] * caster.power)))
+            self.heal(tunit, int(round(eff["amount"] * caster.power)), caster)
             self.emit("link", src=caster, dst=tunit, color=(255, 170, 170))
         elif t == "spread_fire":           # раздуть: огонь с горящих клеток и врагов перекидывается на соседей
             r = eff.get("radius", 2)
@@ -1822,6 +2111,13 @@ class Combat:
                     if v is not o and caster.is_enemy(v) and not v.obj:
                         self.damage(v, eff["amount"] * caster.power, caster, eff.get("tag", "ice"), "spell")
                 self.break_object(o)
+            if eff.get("frozen"):              # и замёрзшие враги раскалываются
+                for v in list(self.units):
+                    if v.alive and not v.obj and caster.is_enemy(v) and cheb(v.cell, caster.cell) <= eff.get("radius", 6) \
+                            and (("cold" in v.marks) or (v.stun > 0 and v.stun_look == "freeze")):
+                        n = kit.consume_mark(self, v, "cold") if "cold" in v.marks else 3
+                        self.emit("shatter", unit=v)
+                        self.damage(v, eff["frozen"] * (1 + 0.35 * n) * caster.power, caster, "ice", "spell")
         elif t == "corpse":                # некромант: труп у точки — взорвать, поднять, пожрать, облако, стена
             self._corpse(caster, eff, tuple(center))
         elif t == "rewind":                # откат хрономанта: клетка и HP, какие были N сек назад
@@ -1849,6 +2145,7 @@ class Combat:
                 moved, _ = M.forced_move(self, v, eff.get("cells", 2), M.toward(center, 0), caster, "gather")
                 if moved and not v.obj:
                     self.gain(caster, "pulled")
+                    PS.on_pulled(self, caster)
                 if eff.get("amount") and not v.obj:
                     self.damage(v, eff["amount"] * caster.power, caster, eff.get("tag"), "spell")
         elif t == "swap":                  # обмен: гравитомант и цель меняются местами
@@ -1876,7 +2173,8 @@ class Combat:
             foes = [v for v in self.units_in_radius(center, eff.get("radius", 2)) if caster.is_enemy(v) and not v.obj]
             self.emit("gather", center=center, src=caster, radius=eff.get("radius", 2))
             for v in foes:
-                self.damage(v, (eff["amount"] + eff["per_unit"] * len(foes)) * caster.power, caster, None, "spell")
+                self.damage(v, (eff["amount"] + eff["per_unit"] * len(foes)) * caster.power
+                            * (1 + eff.get("per_gauge", 0) * eff.get("_spent", 0)), caster, None, "spell")
 
     def _place_trap(self, caster, eff, center):
         off = eff.get("offset")
@@ -1916,6 +2214,13 @@ class Combat:
             self.emit("fizzle", unit=caster, skill=None)
 
     def _corpse(self, caster, eff, center):
+        if eff["do"] == "make":            # создать труп из своей крови
+            if self.grid.get(center) is None or not self.grid.get(center).passable:
+                self.emit("fizzle", unit=caster, skill=None)
+                return
+            self.corpses.append({"cell": tuple(center), "left": self.cfg.get("corpse_time", 14.0), "name": "кости"})
+            self.emit("corpse_make", pos=tuple(center), src=caster)
+            return
         r = eff.get("pick", 1)
         near = [b for b in self.corpses if cheb(b["cell"], center) <= r]
         if eff["do"] == "devour":
@@ -1928,6 +2233,7 @@ class Combat:
         for b in near:
             self.corpses.remove(b)
             self.gain(caster, "corpse")
+            PS.on_corpse(self, caster)
             self.emit("corpse_use", pos=b["cell"], src=caster, do=eff["do"])
             p = b["cell"]
             if eff["do"] == "blast":
@@ -1999,7 +2305,21 @@ class Combat:
             if d["left"] > 0:
                 continue
             self.delayed.remove(d)
+            if d.get("fn"):                   # выстрел обычной атакой долетел
+                d["fn"]()
+                continue
             tu, caster = d["tunit"], d["caster"]
+            if d.get("skill"):                # навык долетел: цель-юнит — где она сейчас; погибла — в её клетку
+                center = tu.cell if tu is not None else d["center"]
+                if tu is not None and not tu.alive:
+                    tu = None
+                self.emit("skill_hit", unit=caster, skill=d["skill"], center=center, target=tu)
+                self._skill = d["skill"]
+                try:
+                    self.apply_effects(caster, d["effects"], center, tu)
+                finally:
+                    self._skill = None
+                continue
             if tu is not None and not tu.alive:
                 continue
             center = tu.cell if tu is not None else d["center"]
@@ -2012,15 +2332,16 @@ class Combat:
 
     def pending_on(self, u):
         """Отложенные эффекты, которые придут на юнита: [(имя, осталось, всего)]."""
-        return [(d["name"], d["left"], d["total"]) for d in self.delayed if d["tunit"] is u]
+        return [(d["name"], d["left"], d["total"]) for d in self.delayed
+                if d.get("tunit") is u and not d.get("skill") and not d.get("fn")]
 
     def _detonate(self, caster, eff, center):
-        r, amount = eff.get("radius", 6), eff["amount"]
+        r, amount = eff.get("radius", 6), eff["amount"] * (1 + eff.get("per_gauge", 0) * eff.get("_spent", 0))
         cells = [p for p in self.grid.in_radius(caster.cell, r) if self.grid.get(p).hazard == "fire"]
         hit = set()
         for p in cells:
             self.emit("detonate", pos=p, src=caster)
-            if not eff.get("keep_fire"):
+            if not eff.get("keep_fire") and "inferno" not in caster.buffs:     # инферно: огонь остаётся
                 self.grid.get(p).hazard = None
             for v in self.units_in_radius(p, eff.get("blast", 0)):
                 if v not in hit and caster.is_enemy(v):
@@ -2029,7 +2350,7 @@ class Combat:
         for v in self.units_in_radius(caster.cell, r):
             if v.alive and "fire" in v.statuses and caster.is_enemy(v) and v not in hit:
                 hit.add(v)
-                if not eff.get("keep_fire"):
+                if not eff.get("keep_fire") and "inferno" not in caster.buffs:
                     del v.statuses["fire"]
                 self.emit("detonate", pos=v.cell, src=caster)
                 self.damage(v, amount * eff.get("burning_mult", 1.5) * caster.power, caster, None, "spell")
@@ -2103,6 +2424,16 @@ class Combat:
         notes = s["notes"]
         self.emit("finale", unit=u, notes=notes, radius=s["radius"])
         self.log(f"{u.name}: финал песни — нот {notes}", (255, 190, 230))
+        for e in s["finale"]:                   # финал по врагам: урон и сон растут с нотами
+            if e["type"] in ("damage", "sleep"):
+                for v in self._select(u, u.cell, s["radius"], "enemies", None):
+                    if v.obj and e["type"] == "sleep":
+                        continue
+                    if e["type"] == "damage":
+                        self.damage(v, (e.get("amount", 0) + e.get("per_note", 0) * notes) * u.power, u, None, "spell")
+                    else:
+                        self.apply_stun(v, e.get("duration", 2) + e.get("per_note", 0) * notes, "sleep")
+                        v.asleep = v.alive
         for v in self._select(u, u.cell, s["radius"], "allies", None):
             if v.obj:
                 continue
@@ -2157,16 +2488,28 @@ class Combat:
                 if v is not o:
                     if v.obj:
                         v.igniter = o.igniter
-                    self.damage(v, eff["damage"], src, eff.get("tag"), "reaction")
+                    self.damage(v, eff["damage"] * getattr(o, "blast_mult", 1.0), src, eff.get("tag"), "reaction")
 
     def _collide(self, u, other, left, pusher=None):
         """Удар при толчке о стену, юнит или объект: урон растёт с непройденными клетками, тот, в кого врезались,
         получает половину. Бочка с порохом от удара взрывается."""
         col = self.cfg["collision"]
         dmg = col["base"] + col["per_cell"] * (left - 1)
+        if pusher is not None:
+            dmg = PS.collision(self, pusher, dmg)
         self.emit("collision", unit=u, other=other, amount=dmg)
         self.gain(pusher, "collision")
         self.rules.fire("collision", {"collision"}, unit=u, other=other, source=pusher)
+        if pusher is not None and "collide_stun" in pusher.buffs and u.alive and not u.obj:
+            self.apply_stun(u, pusher.buff("collide_stun", 1.0))      # прибит к преграде
+        if pusher is not None and "billiard" in pusher.buffs and other is not None and other.alive \
+                and not other.obj and not getattr(other, "_billiard", False):
+            dmg *= pusher.buff("billiard", 1.5)            # бильярд: тот, в кого врезались, летит дальше
+            other._billiard = True
+            try:
+                self.knockback(u.cell, other, max(1, left), pusher)
+            finally:
+                other._billiard = False
         for v, k in ((u, 1.0), (other, 0.5)):
             if v is None or not v.alive:
                 continue
@@ -2189,7 +2532,13 @@ class Combat:
             self._use_passive(target, f"{p['damage']} урона: {attacker.name}", attacker)
             self.damage(attacker, p["damage"], target, p.get("tag"), "reaction")
 
-    def heal(self, u, amount):
+    def credit(self, u):
+        """Кому засчитать урон и лечение: призыв — хозяину, остальное — самому юниту."""
+        while u is not None and u.summon and getattr(u, "owner", None) is not None and u.owner is not u:
+            u = u.owner
+        return u
+
+    def heal(self, u, amount, src=None):
         if not u.alive:
             return 0
         if "trance" in u.buffs and amount > 0:   # кровавый транс: лечение превращается в ярость
@@ -2202,6 +2551,10 @@ class Combat:
         amount = int(round(amount * u.buff("heal_taken", 1.0)))    # проклятие склепа
         real = min(amount, u.max_hp - u.hp)
         u.hp += real
+        u.tally["healed_in"] += real
+        who = self.credit(src if src is not None else u)
+        if who is not None:
+            who.tally["healed"] += real
         self.emit("heal", unit=u, amount=real)
         return real
 
@@ -2212,10 +2565,16 @@ class Combat:
         dur = self.cfg["status_duration"]
         if "immune" in u.buffs or u.obj:
             return 0
+        if attacker is not None and attacker.is_enemy(u):
+            PS.on_status(self, u, tag, attacker)
         if hostile is None:
             hostile = attacker is None or attacker.is_enemy(u)
         if tag in u.statuses:
             u.statuses[tag] = dur
+            return 0
+        if "stable" in u.buffs:               # стабилизатор зельевара: теги копятся, не реагируя
+            u.statuses[tag] = dur
+            self.emit("status", unit=u, tag=tag)
             return 0
         for other in list(u.statuses):
             r = self._reactions.get(frozenset((tag, other)))
@@ -2245,6 +2604,8 @@ class Combat:
             return 0
         u.reaction_cd[r["id"]] = self.cfg["reaction_cooldown"]
         mult = self.fx.get("reaction_mult", 1.0) if attacker is not None and attacker.team == PLAYER else 1.0
+        if attacker is not None:            # дар героя: его реакции сильнее
+            mult *= attacker.proto.get("reaction_mult", 1.0)
         p = attacker.passive if attacker is not None else None
         if p and p["kind"] == "catalyst" and attacker.alive and attacker.pp >= p["pp"]:
             self._use_passive(attacker, f"реакция ×{p['mult']:g}", u)
@@ -2340,6 +2701,12 @@ class Combat:
     def _kill(self, u, expire=False, tag=None):
         u.alive = False
         u.hp = 0
+        if not expire and not u.obj and u.last_hit_by is not None and u.last_hit_by.team != u.team:
+            u.last_hit_by.tally["kills"] += 1
+        if not expire and not u.obj:
+            PS.on_death(self, u)
+            if u.mutator and not (u.undying and not u.risen):
+                MU.on_death(self, u)
         u.cast = None
         u.order = None
         rises = u.undying and not u.risen and tag not in u.undying.get("unless", ["fire"])
@@ -2422,8 +2789,20 @@ class Combat:
             rows = self.rng.sample(range(self.grid.h), min(ev.get("rows", 2), self.grid.h))
             cells = [p for p, c in self.grid.cells.items() if p[1] in rows and c.passable
                      and c.terrain not in ("lava", "chasm")]
-        elif kind == "wind":
+        elif kind == "wind" or kind == "bellows":
             direction = self.rng.choice([(1, 0), (-1, 0)])
+        elif kind == "ladle":                  # ковш: льёт расплав вдоль самого людного ряда (и враги там стоят)
+            rows = {}
+            for u in self.alive():
+                if not u.obj:
+                    rows[u.cell[1]] = rows.get(u.cell[1], 0) + 1
+            if rows:
+                y = max(rows, key=lambda r: (rows[r], self.rng.random()))
+                xs = sorted(u.cell[0] for u in self.alive() if u.cell[1] == y and not u.obj)
+                mid = xs[len(xs) // 2]
+                n = ev.get("length", 5)
+                x0 = max(0, min(self.grid.w - n, mid - n // 2))
+                cells = [(x, y) for x in range(x0, x0 + n) if self.grid.get((x, y)) and self.grid.get((x, y)).passable]
         ev["cells"], ev["dir"] = cells, direction
         ev["pending"] = ev.get("warn", 1.5)
         self.emit("arena_warn", kind=kind, cells=cells, dir=direction, delay=ev["pending"], name=ev.get("name", kind))
@@ -2432,6 +2811,28 @@ class Combat:
         kind, cells = ev["type"], ev.get("cells", [])
         dmg = ev.get("damage", 0) * self.diff.get("event_dmg", 1.0)
         self.emit("arena_hit", kind=kind, cells=cells, dir=ev.get("dir"))
+        if kind == "ladle":                    # расплав: урон всем на ряду и огонь на клетках
+            for p in cells:
+                v = self.unit_at(p)
+                if v and not v.static and v.alive:
+                    self.damage(v, dmg, None, "fire", "reaction")
+                c = self.grid.get(p)
+                if c.terrain not in ("water", "chasm"):
+                    c.hazard, c.hazard_time, c.hazard_team = "fire", ev.get("burn", 5), None
+            return
+        if kind == "bellows":                  # меха: толкают всех и раздувают огонь по ветру
+            dx, dy = ev["dir"]
+            units = sorted([u for u in self.alive() if M.movable(self, u) and not u.flying],
+                           key=lambda u: -u.cell[0] * dx)
+            for u in units:
+                self.knockback((u.cell[0] - dx, u.cell[1] - dy), u, ev.get("push", 1), kind="wind")
+            fires = [p for p, c in self.grid.cells.items() if c.hazard == "fire"]
+            for (x, y) in fires:
+                q = (x + dx, y + dy)
+                c = self.grid.get(q)
+                if c and c.passable and c.terrain not in ("water", "chasm") and not c.hazard:
+                    c.hazard, c.hazard_time, c.hazard_team = "fire", 4, None
+            return
         if kind in ("eruption", "lightning", "avalanche"):
             tag = {"eruption": "fire", "lightning": "storm", "avalanche": "ice"}[kind]
             for p in cells:
@@ -2461,6 +2862,22 @@ class Combat:
                     c.base_terrain, c.terrain = c.terrain, "water"
                 c.hazard = None
             self.tides.append([self.time + ev.get("duration", 6), cells])
+
+    def battle_stats(self, team=PLAYER):
+        """Итог боя для экрана статистики: по героям (и гостям) — урон, полученный урон, поглощено щитом, лечение,
+        убийства, применения навыков; общее — время, убито врагов."""
+        rows = []
+        for u in self.units:
+            if u.team != team or u.obj or (u.summon and u.owner is not None):
+                continue
+            t = dict(u.tally)
+            t.update(name=u.name, cls=u.proto_id, alive=u.alive, hp=u.hp, max_hp=u.max_hp, guest=u.summon,
+                     uses={sid: n for sid, n in sorted(u.uses.items(), key=lambda kv: -kv[1])},
+                     skill_names={sid: u.skill_defs[sid]["name"] for sid in u.uses if sid in u.skill_defs})
+            rows.append(t)
+        foes = [u for u in self.units if u.team != team and not u.obj]
+        return {"time": round(self.time, 1), "rows": rows, "killed": sum(1 for u in foes if not u.alive),
+                "foes": len(foes), "result": self.result}
 
     def _check_end(self):
         ob = self.objective or {}

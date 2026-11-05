@@ -11,10 +11,13 @@ import numpy as np
 from ui import projection as P
 from ui.pixfx_sim import BAYER, PAL
 
-PALS = ["fire", "ice", "dust", "steam", "scorch", "water", "storm", "poison"]
+PALS = ["fire", "ice", "dust", "steam", "scorch", "water", "storm", "poison", "steel", "stone", "rage", "light",
+        "shadow", "nature", "time", "gravity", "sound", "bone", "blood", "spirit", "gas", "cloud", "petal", "glass",
+        "brass", "soul", "oil"]
 PAL_ID = {n: i for i, n in enumerate(PALS)}
 PAL_RGB = np.array([PAL[n] for n in PALS], np.uint8)          # [палитра, 6, 3]
-GLOW_PALS = {PAL_ID["fire"], PAL_ID["ice"], PAL_ID["storm"]}
+GLOW_PALS = {PAL_ID[n] for n in ("fire", "ice", "storm", "light", "rage", "time", "gravity", "sound", "spirit",
+                                   "shadow", "soul", "glass")}
 PX = 2
 
 # что делает частица на земле
@@ -34,7 +37,8 @@ def project_many(x, y, z):
 
 
 class Particles:
-    CAP = 6000
+    CAP = 60000            # с OpenGL частицы рисует видеокарта (ui/gl_renderer.py, PIX_*); без неё — прореживание
+    CPU_DRAW = 7000        # без OpenGL рисуем не больше стольких (равномерная выборка, а не обрезка новых)
 
     def __init__(self, seed=5):
         self.rng = np.random.default_rng(seed)
@@ -137,13 +141,17 @@ class Particles:
 
     # ---------- отрисовка ----------
 
-    def prepare(self, dim=1.0):
-        """Экранные квадраты на этот кадр: (x, y, сторона, цвет, светится, глубина) для живых частиц."""
+    def prepare(self, dim=1.0, gpu=False):
+        """Экранные квадраты на этот кадр: (x, y, сторона, цвет, светится, глубина) для живых частиц.
+        gpu=False (рисует pygame) — при перегрузке берём равномерную выборку частиц, а не первые."""
         n = self.n
         self._frame = None
         if not n:
             return 0
         s = slice(0, n)
+        if not gpu and n > self.CPU_DRAW:
+            s = np.linspace(0, n - 1, self.CPU_DRAW).astype(int)
+            n = len(s)
         sx, sy, k = project_many(self.x[s], self.y[s], self.z[s])
         _, gy, _ = project_many(self.x[s], self.y[s], np.zeros(n, np.float32))
         side = np.maximum(1, np.round(PX * k * self.size[s])).astype(int)
@@ -170,6 +178,32 @@ class Particles:
         self._frame = (qx[keep] * side[keep], qy[keep] * side[keep], side[keep], cols[keep], glow[keep], gy[keep],
                        tall[keep], st[keep] > 0, x0[keep], y0[keep])
         return len(keep)
+
+    def gpu_rows(self):
+        """Квадраты кадра одним массивом для видеокарты: x, y, ширина, высота (пиксели экрана), r, g, b (0..1),
+        светится (0/1), глубина (экранная y точки земли под частицей — для перекрытия фигурками).
+        Штрих искры разворачивается в цепочку квадратов вдоль пути, язык пламени — в высокий столбик."""
+        if self._frame is None:
+            return np.zeros((0, 9), np.float32)
+        x, y, side, cols, gl, gy, tall, streak, x0, y0 = self._frame
+        w = side.astype(np.float32)
+        plain = ~streak
+        h = w * (1 + tall)
+        rows = [np.column_stack([x[plain], y[plain] - h[plain] + w[plain], w[plain], h[plain],
+                                 cols[plain] / 255.0, gl[plain], gy[plain]])]
+        si = np.nonzero(streak)[0]
+        if len(si):
+            ax, ay, bx, by, ws = x0[si], y0[si], x[si].astype(np.float32), y[si].astype(np.float32), w[si]
+            n = np.maximum(1, (np.maximum(np.abs(bx - ax), np.abs(by - ay)) / ws).astype(int))
+            n = np.minimum(n, 24)
+            rep = np.repeat(np.arange(len(si)), n + 1)
+            start = np.repeat(np.cumsum(n + 1) - (n + 1), n + 1)
+            t = (np.arange(len(rep)) - start) / np.repeat(n, n + 1)
+            wr = ws[rep]
+            px = np.floor((ax[rep] + (bx[rep] - ax[rep]) * t) / wr) * wr
+            py = np.floor((ay[rep] + (by[rep] - ay[rep]) * t) / wr) * wr
+            rows.append(np.column_stack([px, py, wr, wr, cols[si][rep] / 255.0, gl[si][rep], gy[si][rep]]))
+        return np.ascontiguousarray(np.concatenate(rows).astype(np.float32))
 
     def buckets(self, step=24):
         """Группы частиц по глубине (экранная y точки земли под ними) — встают в общий порядок с юнитами."""

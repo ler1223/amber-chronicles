@@ -1,5 +1,5 @@
 {
- "_note": "Сюжетный режим: пул навыков класса, слоты и доктрины. Уровни — уровень героя (sim/stats.py).",
+ "_note": "Сюжетный режим: пул навыков класса, слоты и доктрины. Уровни — уровень героя (sim/stats.py). core — хотя бы один из этих навыков нужен герою (таверна экспедиции всегда его даёт); requires — навык работает, только если в наборе есть один из перечисленных; ult — ультимейт: не занимает слот, всегда четвёртый (клавиша R).",
  "slots": 3,
  "doctrine_unlock": 4,
  "classes": {
@@ -10,20 +10,33 @@
      "level": 1
     },
     {
-     "id": "taunt",
+     "id": "challenge",
      "level": 2
     },
     {
-     "id": "guard_ally",
+     "id": "riposte",
      "level": 3
     },
     {
-     "id": "whirlwind",
+     "id": "feint",
      "level": 5
     },
     {
-     "id": "consecrate",
+     "id": "retarget",
      "level": 7
+    },
+    {
+     "id": "duel_execute",
+     "level": 9
+    },
+    {
+     "id": "duel",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "disarm",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -35,7 +48,17 @@
      "id": "paladin",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "challenge"
+   ],
+   "requires": {
+    "duel_execute": [
+     "challenge",
+     "retarget",
+     "disarm"
+    ]
+   }
   },
   "archer": {
    "skills": [
@@ -44,20 +67,33 @@
      "level": 1
     },
     {
-     "id": "volley",
+     "id": "quiver_fire",
      "level": 2
     },
     {
-     "id": "overwatch",
+     "id": "quiver_frost",
      "level": 3
     },
     {
-     "id": "spike_trap",
+     "id": "volley",
      "level": 5
     },
     {
-     "id": "headshot",
+     "id": "quiver_barbed",
      "level": 7
+    },
+    {
+     "id": "quiver_blunt",
+     "level": 9
+    },
+    {
+     "id": "all_arrows",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "headshot",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -69,7 +105,14 @@
      "id": "sniper",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "quiver_fire",
+    "quiver_frost",
+    "quiver_barbed",
+    "quiver_blunt"
+   ],
+   "requires": {}
   },
   "mage": {
    "skills": [
@@ -78,20 +121,33 @@
      "level": 1
     },
     {
-     "id": "fan_flames",
+     "id": "ignite",
      "level": 2
     },
     {
-     "id": "flashpoint",
+     "id": "fan_flames",
      "level": 3
     },
     {
-     "id": "curse",
+     "id": "cinder_field",
      "level": 5
     },
     {
-     "id": "cinder_field",
+     "id": "flashpoint",
      "level": 7
+    },
+    {
+     "id": "fire_lance",
+     "level": 9
+    },
+    {
+     "id": "inferno",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "consume_fire",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -103,12 +159,42 @@
      "id": "igniter",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "fireball",
+    "ignite"
+   ],
+   "requires": {
+    "flashpoint": [
+     "fireball",
+     "ignite",
+     "cinder_field",
+     "fire_lance"
+    ],
+    "fan_flames": [
+     "fireball",
+     "ignite",
+     "cinder_field",
+     "fire_lance"
+    ],
+    "consume_fire": [
+     "fireball",
+     "ignite",
+     "cinder_field",
+     "fire_lance"
+    ],
+    "inferno": [
+     "fireball",
+     "ignite",
+     "cinder_field",
+     "fire_lance"
+    ]
+   }
   },
   "priest": {
    "skills": [
     {
-     "id": "vow",
+     "id": "heal",
      "level": 1
     },
     {
@@ -116,16 +202,29 @@
      "level": 2
     },
     {
-     "id": "purify",
+     "id": "vow",
      "level": 3
     },
     {
-     "id": "judgment",
+     "id": "purify",
      "level": 5
     },
     {
-     "id": "revive",
+     "id": "judgment",
      "level": 7
+    },
+    {
+     "id": "sanctuary",
+     "level": 9
+    },
+    {
+     "id": "divine_light",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "revive",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -137,7 +236,29 @@
      "id": "lifekeeper",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "heal",
+    "vow",
+    "holy_water"
+   ],
+   "requires": {
+    "judgment": [
+     "heal",
+     "vow",
+     "holy_water"
+    ],
+    "sanctuary": [
+     "heal",
+     "vow",
+     "holy_water"
+    ],
+    "revive": [
+     "heal",
+     "vow",
+     "holy_water"
+    ]
+   }
   },
   "assassin": {
    "skills": [
@@ -146,20 +267,33 @@
      "level": 1
     },
     {
-     "id": "venom_blade",
+     "id": "vanish",
      "level": 2
     },
     {
-     "id": "vanish",
+     "id": "backstab",
      "level": 3
     },
     {
-     "id": "shadow_mark",
+     "id": "smoke_bomb",
      "level": 5
     },
     {
-     "id": "riposte",
+     "id": "shadow_mark",
      "level": 7
+    },
+    {
+     "id": "garrote",
+     "level": 9
+    },
+    {
+     "id": "shadow_dance",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "shadow_double",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -171,7 +305,19 @@
      "id": "duelist",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "vanish",
+    "smoke_bomb",
+    "shadow_double"
+   ],
+   "requires": {
+    "garrote": [
+     "vanish",
+     "smoke_bomb",
+     "shadow_double"
+    ]
+   }
   },
   "druid": {
    "skills": [
@@ -180,20 +326,33 @@
      "level": 1
     },
     {
-     "id": "entangle",
+     "id": "rejuvenate",
      "level": 2
     },
     {
-     "id": "rejuvenate",
+     "id": "wolf_form",
      "level": 3
     },
     {
-     "id": "wolf_form",
+     "id": "maul",
      "level": 5
     },
     {
-     "id": "spirit_tree",
+     "id": "pounce",
      "level": 7
+    },
+    {
+     "id": "entangle",
+     "level": 9
+    },
+    {
+     "id": "wild_fury",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "bear_roar",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -205,7 +364,22 @@
      "id": "grove",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "bear_form",
+    "wolf_form"
+   ],
+   "requires": {
+    "maul": [
+     "bear_form"
+    ],
+    "bear_roar": [
+     "bear_form"
+    ],
+    "pounce": [
+     "wolf_form"
+    ]
+   }
   },
   "guardian": {
    "skills": [
@@ -222,12 +396,25 @@
      "level": 3
     },
     {
-     "id": "brace",
+     "id": "sentinel",
      "level": 5
     },
     {
-     "id": "jump_strike",
+     "id": "long_spear",
      "level": 7
+    },
+    {
+     "id": "brace",
+     "level": 9
+    },
+    {
+     "id": "bastion",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "spear_sweep",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -239,29 +426,48 @@
      "id": "dragoon",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "sentinel",
+    "long_spear",
+    "hook"
+   ],
+   "requires": {}
   },
   "shaman": {
    "skills": [
     {
-     "id": "chain_lightning",
+     "id": "storm_totem",
      "level": 1
     },
     {
-     "id": "storm_totem",
+     "id": "healing_totem",
      "level": 2
     },
     {
-     "id": "healing_totem",
+     "id": "ward_totem",
      "level": 3
     },
     {
-     "id": "thunderstorm",
+     "id": "totem_pulse",
      "level": 5
     },
     {
-     "id": "spirit_link",
+     "id": "totem_move",
      "level": 7
+    },
+    {
+     "id": "totem_link",
+     "level": 9
+    },
+    {
+     "id": "spirit_circle",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "chain_lightning",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -273,29 +479,69 @@
      "id": "spiritwalker",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "storm_totem",
+    "healing_totem",
+    "ward_totem"
+   ],
+   "requires": {
+    "totem_pulse": [
+     "storm_totem",
+     "healing_totem",
+     "ward_totem"
+    ],
+    "totem_move": [
+     "storm_totem",
+     "healing_totem",
+     "ward_totem"
+    ],
+    "totem_link": [
+     "storm_totem",
+     "healing_totem",
+     "ward_totem"
+    ],
+    "spirit_circle": [
+     "storm_totem",
+     "healing_totem",
+     "ward_totem"
+    ]
+   }
   },
   "bard": {
    "skills": [
     {
-     "id": "rhythm",
+     "id": "mel_life",
      "level": 1
     },
     {
-     "id": "lullaby",
+     "id": "mel_march",
      "level": 2
     },
     {
-     "id": "inspire",
+     "id": "mel_wave",
      "level": 3
     },
     {
-     "id": "sonic_blast",
+     "id": "mel_lullaby",
      "level": 5
     },
     {
-     "id": "serenade",
+     "id": "mel_discord",
      "level": 7
+    },
+    {
+     "id": "mel_encore",
+     "level": 9
+    },
+    {
+     "id": "finale",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "mel_serenade",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -307,6 +553,13 @@
      "id": "minstrel",
      "level": 4
     }
+   ],
+   "core": [],
+   "requires": {},
+   "notes": [
+    "note_do",
+    "note_mi",
+    "note_sol"
    ]
   },
   "alchemist": {
@@ -316,7 +569,7 @@
      "level": 1
     },
     {
-     "id": "oil_flask",
+     "id": "mine",
      "level": 2
     },
     {
@@ -324,12 +577,25 @@
      "level": 3
     },
     {
-     "id": "mine",
+     "id": "sticky_bomb",
      "level": 5
     },
     {
-     "id": "poison_cloud",
+     "id": "kick_barrel",
      "level": 7
+    },
+    {
+     "id": "oil_flask",
+     "level": 9
+    },
+    {
+     "id": "big_bang",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "detonator",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -341,7 +607,30 @@
      "id": "poisoner",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "powder_keg",
+    "mine",
+    "sticky_bomb"
+   ],
+   "requires": {
+    "fuse": [
+     "powder_keg"
+    ],
+    "kick_barrel": [
+     "powder_keg"
+    ],
+    "detonator": [
+     "powder_keg",
+     "mine",
+     "sticky_bomb"
+    ],
+    "big_bang": [
+     "powder_keg",
+     "mine",
+     "sticky_bomb"
+    ]
+   }
   },
   "ram": {
    "skills": [
@@ -364,6 +653,19 @@
     {
      "id": "fault_line",
      "level": 7
+    },
+    {
+     "id": "pin_wall",
+     "level": 9
+    },
+    {
+     "id": "billiard",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "wallbreaker",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -375,7 +677,13 @@
      "id": "breaker",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "kick",
+    "rush",
+    "toss"
+   ],
+   "requires": {}
   },
   "trapper": {
    "skills": [
@@ -388,7 +696,7 @@
      "level": 2
     },
     {
-     "id": "hunter_mark",
+     "id": "hunting_horn",
      "level": 3
     },
     {
@@ -396,8 +704,21 @@
      "level": 5
     },
     {
-     "id": "hunting_horn",
+     "id": "hunter_mark",
      "level": 7
+    },
+    {
+     "id": "slug_shot",
+     "level": 9
+    },
+    {
+     "id": "big_hunt",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "caltrops",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -409,7 +730,21 @@
      "id": "beater",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "snare",
+    "bear_trap"
+   ],
+   "requires": {
+    "slug_shot": [
+     "snare",
+     "bear_trap"
+    ],
+    "big_hunt": [
+     "snare",
+     "bear_trap"
+    ]
+   }
   },
   "cryo": {
    "skills": [
@@ -422,16 +757,29 @@
      "level": 2
     },
     {
-     "id": "shatter",
+     "id": "ice_shard",
      "level": 3
     },
     {
-     "id": "frost_guard",
+     "id": "shatter",
      "level": 5
     },
     {
-     "id": "blizzard",
+     "id": "ice_pillar",
      "level": 7
+    },
+    {
+     "id": "frost_guard",
+     "level": 9
+    },
+    {
+     "id": "absolute_zero",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "blizzard",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -443,7 +791,19 @@
      "id": "stormfrost",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "ice_shard",
+    "ice_wall",
+    "ice_pillar"
+   ],
+   "requires": {
+    "shatter": [
+     "ice_wall",
+     "ice_pillar",
+     "ice_shard"
+    ]
+   }
   },
   "necro": {
    "skills": [
@@ -466,6 +826,19 @@
     {
      "id": "bone_wall",
      "level": 7
+    },
+    {
+     "id": "blood_bones",
+     "level": 9
+    },
+    {
+     "id": "last_call",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "rot",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -477,29 +850,47 @@
      "id": "bonelord",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "corpse_blast",
+    "raise_dead"
+   ],
+   "requires": {}
   },
   "chrono": {
    "skills": [
     {
-     "id": "rewind",
+     "id": "haste",
      "level": 1
     },
     {
-     "id": "haste",
+     "id": "rewind",
      "level": 2
     },
     {
-     "id": "stasis",
+     "id": "slow_field",
      "level": 3
     },
     {
-     "id": "slow_field",
+     "id": "stasis",
      "level": 5
     },
     {
      "id": "rewind_foe",
      "level": 7
+    },
+    {
+     "id": "time_theft",
+     "level": 9
+    },
+    {
+     "id": "time_stop",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "time_loop",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -511,7 +902,13 @@
      "id": "fateweaver",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "haste",
+    "time_theft",
+    "slow_field"
+   ],
+   "requires": {}
   },
   "gravity": {
    "skills": [
@@ -520,20 +917,33 @@
      "level": 1
     },
     {
-     "id": "swap",
+     "id": "collapse",
      "level": 2
     },
     {
-     "id": "levitate",
+     "id": "swap",
      "level": 3
     },
     {
-     "id": "collapse",
+     "id": "crush",
      "level": 5
     },
     {
-     "id": "repulse",
+     "id": "gravity_well",
      "level": 7
+    },
+    {
+     "id": "heavy",
+     "level": 9
+    },
+    {
+     "id": "black_hole",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "attract",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -545,7 +955,14 @@
      "id": "orbiter",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "singularity",
+    "gravity_well",
+    "attract",
+    "heavy"
+   ],
+   "requires": {}
   },
   "geomancer": {
    "skills": [
@@ -568,6 +985,19 @@
     {
      "id": "spring",
      "level": 7
+    },
+    {
+     "id": "earth_wave",
+     "level": 9
+    },
+    {
+     "id": "plate_shift",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "stone_skin",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -579,16 +1009,21 @@
      "id": "springkeeper",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "earth_power",
+    "earth_wave"
+   ],
+   "requires": {}
   },
   "brewer": {
    "skills": [
     {
-     "id": "coat",
+     "id": "flask",
      "level": 1
     },
     {
-     "id": "flask",
+     "id": "toxic_flask",
      "level": 2
     },
     {
@@ -596,12 +1031,25 @@
      "level": 3
     },
     {
-     "id": "toxic_flask",
+     "id": "coat",
      "level": 5
     },
     {
      "id": "volatile_mix",
      "level": 7
+    },
+    {
+     "id": "spark_flask",
+     "level": 9
+    },
+    {
+     "id": "philosopher_stone",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "stabilizer",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -613,7 +1061,30 @@
      "id": "blaster",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "flask",
+    "toxic_flask",
+    "spark_flask"
+   ],
+   "requires": {
+    "reagent": [
+     "flask",
+     "toxic_flask",
+     "spark_flask",
+     "coat"
+    ],
+    "volatile_mix": [
+     "flask",
+     "toxic_flask",
+     "spark_flask"
+    ],
+    "stabilizer": [
+     "flask",
+     "toxic_flask",
+     "spark_flask"
+    ]
+   }
   },
   "bloodrager": {
    "skills": [
@@ -626,16 +1097,29 @@
      "level": 2
     },
     {
-     "id": "trance",
+     "id": "cleave",
      "level": 3
     },
     {
-     "id": "cleave",
+     "id": "rupture",
      "level": 5
     },
     {
-     "id": "undying_rage",
+     "id": "trance",
      "level": 7
+    },
+    {
+     "id": "feast",
+     "level": 9
+    },
+    {
+     "id": "blood_moon",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "undying_rage",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -647,7 +1131,17 @@
      "id": "frenzied",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "rupture",
+    "cleave"
+   ],
+   "requires": {
+    "feast": [
+     "rupture",
+     "cleave"
+    ]
+   }
   },
   "tactician": {
    "skills": [
@@ -656,20 +1150,33 @@
      "level": 1
     },
     {
-     "id": "regroup",
+     "id": "plant_banner",
      "level": 2
     },
     {
-     "id": "focus",
+     "id": "regroup",
      "level": 3
     },
     {
-     "id": "all_out",
+     "id": "focus",
      "level": 5
     },
     {
-     "id": "ambush_order",
+     "id": "all_out",
      "level": 7
+    },
+    {
+     "id": "move_banner",
+     "level": 9
+    },
+    {
+     "id": "grand_plan",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "shield_formation",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -681,7 +1188,17 @@
      "id": "strategist",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "plant_banner",
+    "forward",
+    "focus"
+   ],
+   "requires": {
+    "move_banner": [
+     "plant_banner"
+    ]
+   }
   },
   "binder": {
    "skills": [
@@ -690,11 +1207,11 @@
      "level": 1
     },
     {
-     "id": "merge",
+     "id": "life_transfer",
      "level": 2
     },
     {
-     "id": "life_transfer",
+     "id": "merge",
      "level": 3
     },
     {
@@ -702,8 +1219,21 @@
      "level": 5
     },
     {
-     "id": "share_pain",
+     "id": "soul_web",
      "level": 7
+    },
+    {
+     "id": "shared_life",
+     "level": 9
+    },
+    {
+     "id": "bond_of_souls",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "cut_threads",
+     "level": 12
     }
    ],
    "doctrines": [
@@ -715,7 +1245,25 @@
      "id": "empath",
      "level": 4
     }
-   ]
+   ],
+   "core": [
+    "tether",
+    "soul_web"
+   ],
+   "requires": {
+    "merge": [
+     "tether",
+     "soul_web"
+    ],
+    "shared_life": [
+     "tether",
+     "soul_web"
+    ],
+    "cut_threads": [
+     "tether",
+     "soul_web"
+    ]
+   }
   }
  }
 }

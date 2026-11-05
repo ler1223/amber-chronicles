@@ -38,11 +38,15 @@ GRID_W, GRID_H = 10 * CELL_W, 6 * CELL_H
 FEET_DY = 14
 UNIT_R = 24
 
-BG = (18, 20, 24)
-PANEL = (30, 33, 40)
-PANEL_EDGE = (58, 62, 74)
-TEXT = (225, 228, 235)
-TEXT_DIM = (140, 146, 160)
+# стиль «янтарь и тёмное дерево»: тёплые тёмные панели, янтарная кайма, светлый тёплый текст
+BG = (18, 16, 15)
+PANEL = (40, 31, 24)
+PANEL_DARK = (28, 21, 16)
+PANEL_EDGE = (112, 82, 46)
+AMBER = (232, 170, 72)
+AMBER_DIM = (150, 106, 50)
+TEXT = (240, 232, 216)
+TEXT_DIM = (176, 160, 136)
 GRID_LINE = (20, 24, 22)
 
 TEAM_PLAYER = (90, 180, 255)
@@ -137,3 +141,46 @@ def cell_feet(pos):
 
 def mix(a, b, t):
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
+
+
+def hero_tint(color):
+    """Худ героя в цвете его класса: кайма (accent), приглушённая кайма (dim), заливка (fill) и заливка выбора (hot).
+    Тёмные цвета классов (ассасин, некромант) высветляются, чтобы кайма читалась на тёмном дереве."""
+    c = tuple(int(v) for v in color[:3])
+    lum = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
+    acc = mix(c, (255, 255, 255), min(0.5, (165 - lum) / 220)) if lum < 165 else c
+    return {"accent": acc, "dim": mix(acc, PANEL, 0.5), "fill": mix(PANEL, c, 0.14), "hot": mix(PANEL, c, 0.32)}
+
+
+def frame(surf, rect, alpha=238, accent=None, corners=True, radius=7, fill=None, corner=None):
+    """Панель «тёмное дерево»: заливка с тёмным низом, тёмный контур, кайма (по умолчанию янтарная) и ромбики в
+    углах (corner — их цвет, у панелей героя — цвет класса)."""
+    rect = pygame.Rect(rect)
+    if rect.w < 4 or rect.h < 4:
+        return rect
+    accent = accent or AMBER_DIM
+    box = pygame.Surface(rect.size, pygame.SRCALPHA)
+    top = fill or PANEL
+    pygame.draw.rect(box, (*top, alpha), box.get_rect(), border_radius=radius)
+    low = pygame.Rect(0, rect.h // 2, rect.w, rect.h - rect.h // 2)
+    pygame.draw.rect(box, (*mix(top, (0, 0, 0), 0.25), alpha), low,
+                     border_bottom_left_radius=radius, border_bottom_right_radius=radius)
+    pygame.draw.rect(box, (10, 7, 5, 230), box.get_rect(), 1, border_radius=radius)
+    pygame.draw.rect(box, (*accent, 220), box.get_rect().inflate(-2, -2), 1, border_radius=max(1, radius - 1))
+    surf.blit(box, rect)
+    if corners and rect.w > 24 and rect.h > 24:
+        for cx, cy in ((rect.x + 3, rect.y + 3), (rect.right - 4, rect.y + 3),
+                       (rect.x + 3, rect.bottom - 4), (rect.right - 4, rect.bottom - 4)):
+            pygame.draw.polygon(surf, corner or AMBER, [(cx, cy - 3), (cx + 3, cy), (cx, cy + 3), (cx - 3, cy)])
+    return rect
+
+
+def badge(surf, s, center, size=15, color=None, bg=None, r=None):
+    """Круглая плашка с буквой клавиши (Q, W, E, R) или числом."""
+    color = color or (30, 20, 10)
+    bg = bg or AMBER
+    r = r or size * 0.75
+    pygame.draw.circle(surf, (12, 8, 6), center, r + 1)
+    pygame.draw.circle(surf, bg, center, r)
+    pygame.draw.circle(surf, mix(bg, (255, 255, 255), 0.35), center, r, 1)
+    text(surf, s, center, size, color, True, center=True)

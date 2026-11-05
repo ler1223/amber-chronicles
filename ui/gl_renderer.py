@@ -42,6 +42,50 @@ void main() {
 }
 """
 
+PIX_VS = """
+#version 330
+in vec2 in_corner;
+in vec4 i_rect;             // x, y, ширина, высота (пиксели экрана, верх-лево)
+in vec4 i_color;            // r, g, b, светится
+in float i_depth;           // экранная y точки земли под частицей
+out vec3 v_color;
+out float v_glow;
+out float v_depth;
+out vec2 v_px;              // позиция без камеры — для выборки карты глубины (она тоже без камеры)
+""" + CAMERA + """
+void main() {
+    vec2 uv = in_corner * 0.5 + 0.5;
+    vec2 p = i_rect.xy + vec2(uv.x, 1.0 - uv.y) * i_rect.zw;
+    v_px = p;
+    v_color = i_color.rgb;
+    v_glow = i_color.a;
+    v_depth = i_depth;
+    gl_Position = ndc(cam(p));
+}
+"""
+
+PIX_FS = """
+#version 330
+in vec3 v_color;
+in float v_glow;
+in float v_depth;
+in vec2 v_px;
+out vec4 f;
+uniform sampler2D u_depth;  // глубина фигурок по силуэтам (из pygame: первая строка — верх)
+uniform vec2 u_screen;
+uniform float u_fx;
+uniform float u_glow_only;
+void main() {
+    vec4 d = texture(u_depth, v_px / u_screen);
+    if (d.a > 0.5) {
+        float unit = (d.r * 255.0 * 256.0 + d.g * 255.0) / 16.0;
+        if (unit > v_depth + 3.0) discard;      // фигурка ближе к камере — частица за ней
+    }
+    if (u_glow_only > 0.5 && v_glow < 0.5) discard;
+    f = vec4(v_color * u_fx, u_fx);
+}
+"""
+
 LAYER_VS = """
 #version 330
 in vec2 in_pos;
@@ -485,6 +529,12 @@ class GLRenderer:
             (corners, "2f", "in_corner"),
             (self.inst, "2f 2f 1f 1f 4f 4f/i", "i_pos", "i_half", "i_rot", "i_ys", "i_color", "i_uv"),
         ])
+        # пиксельные частицы (ui/pixsim.py): квадраты одним вызовом, перекрытие фигурками — по карте глубины
+        self.prog_pix = prog(vertex_shader=PIX_VS, fragment_shader=PIX_FS)
+        self.pix_cap = 160000
+        self.pix_buf = ctx.buffer(reserve=self.pix_cap * 9 * 4, dynamic=True)
+        self.vao_pix = ctx.vertex_array(self.prog_pix, [
+            (corners, "2f", "in_corner"), (self.pix_buf, "4f 4f 1f/i", "i_rect", "i_color", "i_depth")])
         # шейдерные эффекты и искажение
         self.sfx_cap = 2000
         self.sfx_buf = ctx.buffer(reserve=self.sfx_cap * SFX_FLOATS * 4, dynamic=True)
@@ -529,6 +579,8 @@ class GLRenderer:
         self.tex_units = ctx.texture((self.w, self.h), 4)
         self.tex_glow = ctx.texture((self.w, self.h), 4)     # яркие пиксели пиксельных эффектов (ui/pixfx.py)
         self.tex_ui = ctx.texture((self.w, self.h), 4)
+        self.tex_depth = ctx.texture((self.w, self.h), 4)    # глубина фигурок для пиксельных частиц
+        self.tex_depth.filter = (moderngl.NEAREST, moderngl.NEAREST)
         self.scene = ctx.texture((self.w, self.h), 4, dtype="f2")
         self.fbo_scene = ctx.framebuffer([self.scene])
         # свет: только аддитивные эффекты — источник bloom (мир и спрайты не светятся сами)
@@ -561,7 +613,7 @@ class GLRenderer:
         w, h = max(1, int(w)), max(1, int(h))
         if (w, h) == (self.w, self.h):
             return
-        old = [self.tex_ground, self.tex_units, self.tex_glow, self.tex_ui, self.scene, self.fbo_scene,
+        old = [self.tex_ground, self.tex_units, self.tex_glow, self.tex_ui, self.tex_depth, self.scene, self.fbo_scene,
                self.light, self.fbo_light, self.lightmap, self.fbo_lightmap, self.dist, self.fbo_dist,
                self.out, self.fbo_out, self.bg_tex, self.fbo_bg]
         for item in old:
@@ -660,6 +712,20 @@ class GLRenderer:
         self.rib_buf.write(verts[:n].tobytes())
         self.vao_rib.render(moderngl.TRIANGLES, vertices=n)
 
+    def _pix(self, n, sc, glow_only=False):
+        """Пиксельные частицы (буфер уже записан): непрозрачные квадраты, спрятанные за ближними фигурками.
+        glow_only — только светящиеся, сложением (источник bloom)."""
+        if not n:
+            return
+        self.ctx.blend_func = (moderngl.ONE, moderngl.ONE) if glow_only else self.premul
+        self.tex_depth.use(3)
+        p = self.prog_pix
+        p["u_depth"] = 3
+        p["u_fx"] = self._fx(sc)
+        p["u_glow_only"] = 1.0 if glow_only else 0.0
+        self._cam(p, sc)
+        self.vao_pix.render(moderngl.TRIANGLE_STRIP, instances=n)
+
     def _layer(self, tex, sc, blend, alpha=1.0):
         self.ctx.blend_func = blend
         tex.use(0)
@@ -701,7 +767,7 @@ class GLRenderer:
             self.lab_gl = LabGL(self.ctx, self.noise)
         return self.lab_gl
 
-    def render(self, world, vfx=None, ui=None, units=None, plane=None, glow=None, lab=None):
+    def render(self, world, vfx=None, ui=None, units=None, plane=None, glow=None, lab=None, pix=None):
         """world — земля (или весь мир, если units нет), units — прозрачный слой юнитов, ui — интерфейс.
         plane — (плоская карта, цвет дымки): земля HD-2D вместо world. glow — яркие пиксели эффектов для bloom."""
         ctx = self.ctx
@@ -713,6 +779,13 @@ class GLRenderer:
             self._upload(self.tex_units, units)
         if glow is not None:
             self._upload(self.tex_glow, glow)
+        n_pix = 0
+        if pix is not None:                    # (строки частиц, карта глубины фигурок)
+            rows, depth = pix
+            n_pix = min(len(rows), self.pix_cap)
+            if n_pix:
+                self.pix_buf.write(rows[:n_pix].tobytes())
+                self._upload(self.tex_depth, depth)
         groups = vfx.batches(self.uvs) if vfx else {g: np.zeros((0, FLOATS), np.float32) for g in GROUPS}
         sfx = vfx.sfx_rows() if vfx else {}
         ribs = vfx.ribbon_verts() if vfx else {}
@@ -740,9 +813,10 @@ class GLRenderer:
         if lab is not None:                    # стили эффектов (ui/fxlab): то, что лежит на земле
             self._lab().time = vfx.time if vfx else 0.0
             self._lab().draw(lab, "ground", sc, (self.w, self.h), self._fx(sc))
-        # 2. юниты и укрытия
+        # 2. юниты и укрытия, пиксельные частицы между ними (по карте глубины)
         if units is not None:
             self._layer(self.tex_units, sc, self.premul)
+        self._pix(n_pix, sc)
         # 3. над юнитами: дым и капли, модельки, затем свет
         if vfx is not None:
             self._instances(groups["air_alpha"], self.atlas, self.premul, sc)
@@ -773,6 +847,8 @@ class GLRenderer:
             self._lab().draw(lab, "air", sc, (self.w, self.h), self._fx(sc), only_add=True)
         if glow is not None:                  # пиксельные эффекты светятся только двумя верхними цветами палитры
             self._layer(self.tex_glow, sc, add, 0.95 * self._fx(sc))
+        if n_pix:                             # светящееся ядро пиксельных частиц — тоже в bloom
+            self._pix(n_pix, sc, glow_only=True)
         # 5. искажение (половинное разрешение)
         self.fbo_dist.use()
         self.fbo_dist.clear()

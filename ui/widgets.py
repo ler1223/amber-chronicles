@@ -9,7 +9,7 @@ XP = (170, 140, 255)
 
 def button(surf, rect, label, mouse, enabled=True, accent=(90, 180, 255)):
     hot = enabled and rect.collidepoint(mouse)
-    bg = T.mix(accent, (0, 0, 0), 0.55 if hot else 0.7) if enabled else (40, 42, 48)
+    bg = T.mix(accent, (0, 0, 0), 0.55 if hot else 0.7) if enabled else (44, 36, 30)
     pygame.draw.rect(surf, bg, rect, border_radius=8)
     pygame.draw.rect(surf, accent if enabled else T.PANEL_EDGE, rect, 2, border_radius=8)
     T.text(surf, label, rect.center, 18, T.TEXT if enabled else T.TEXT_DIM, True, center=True)
@@ -18,7 +18,7 @@ def button(surf, rect, label, mouse, enabled=True, accent=(90, 180, 255)):
 def card(surf, rect, title, lines, mouse, accent=(90, 180, 255), enabled=True, header=None, badge=None):
     """lines: [(текст, цвет)]; длинные строки переносятся."""
     hot = enabled and rect.collidepoint(mouse)
-    pygame.draw.rect(surf, (52, 56, 68) if hot else (40, 44, 54), rect, border_radius=10)
+    pygame.draw.rect(surf, (70, 52, 34) if hot else (50, 38, 28), rect, border_radius=10)
     pygame.draw.rect(surf, accent if enabled else T.PANEL_EDGE, rect, 3 if hot else 2, border_radius=10)
     y = rect.y + 12
     if header:
@@ -62,7 +62,7 @@ def member_card(surf, rect, run, m, mouse, highlight=False):
     from sim.run import SLOT_NAMES
     data = run.data
     proto = run.proto(m)
-    pygame.draw.rect(surf, (52, 56, 68) if highlight else T.PANEL, rect, border_radius=10)
+    pygame.draw.rect(surf, (70, 52, 34) if highlight else T.PANEL, rect, border_radius=10)
     pygame.draw.rect(surf, (120, 255, 140) if highlight else T.PANEL_EDGE, rect, 2, border_radius=10)
     x, y = rect.x + 12, rect.y + 10
     pygame.draw.circle(surf, tuple(proto["color"]), (x + 18, y + 18), 18)
@@ -84,7 +84,7 @@ def member_card(surf, rect, run, m, mouse, highlight=False):
         r = pygame.Rect(x, y, rect.w - 24, 24)
         iid = m.items.get(slot)
         hot = r.collidepoint(mouse)
-        pygame.draw.rect(surf, (60, 56, 40) if hot else (36, 38, 46), r, border_radius=6)
+        pygame.draw.rect(surf, (60, 56, 40) if hot else (46, 35, 26), r, border_radius=6)
         pygame.draw.rect(surf, item_color(data, iid) if iid else T.PANEL_EDGE, r, 1, border_radius=6)
         label = data.items[iid]["name"] if iid else f"— {SLOT_NAMES[slot].lower()} —"
         T.text(surf, label, (r.x + 8, r.y + 3), 14, item_color(data, iid) if iid else T.TEXT_DIM, bool(iid))

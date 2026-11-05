@@ -1,6 +1,7 @@
 """ИИ команды: простые правила по роли юнита. Отдаёт те же приказы, что и игрок.
 
 Навыки отряда игрока ИИ не трогает — их применяет автокаст (sim/autocast.py)."""
+from . import brain as B
 from .grid import cheb
 from .teams import PLAYER
 
@@ -13,6 +14,8 @@ class TeamAI:
     def __init__(self, combat, team):
         self.c = combat
         self.team = team
+        # мозг врагов (sim/brain.py): правила по умолчанию или своя модель из config.enemy_brain
+        self.brain = B.make(combat.cfg.get("enemy_brain")) if team != PLAYER else B.RuleBrain()
 
     def update(self, dt):
         for u in self.c.fighters(self.team):
@@ -22,7 +25,10 @@ class TeamAI:
             if u.ai_timer > 0:
                 continue
             u.ai_timer = self.THINK
-            self.think(u)
+            if getattr(self.brain, "rules", False):
+                self.think(u)
+            else:
+                B.apply_action(self.c, u, self.brain.decide(B.observe(self.c, u)))
 
     def think(self, u):
         c = self.c

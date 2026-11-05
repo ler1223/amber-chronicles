@@ -1,31 +1,30 @@
-"""Запуск прототипа.
+"""Хроники янтаря: Экспедиция (поход отряда) и Одиночка (один герой, камера за ним).
 
-python main.py                  — игра: карта биома (профиль в save/profile.json), вылазки, бои;
+python main.py                  — игра: открывается режим, в котором играли в прошлый раз (save/launcher.json);
                                   окно тянется мышью, F11 / Alt+Enter — полный экран, размер — в настройках
-python main.py --seed 42        — вылазки с конкретными картами
-python main.py --new-profile    — начать мету заново (старый профиль перезаписывается)
-python main.py --profile p.json — другой файл профиля
-python main.py --battle 2       — песочница: отдельный бой №2 (R/N/F5/F6 листают бои)
+python main.py --solo           — сразу Одиночка (--expedition — сразу Экспедиция)
+python main.py --seed 42        — походы с конкретными картами
 python main.py --autoplay       — отрядом в боях управляет ИИ (демо)
-python main.py --battle 1 --autoplay --screenshot out.png --seconds 6
-                                — без окна: прокрутить и сохранить кадр
-python main.py --cpu            — без OpenGL (эффекты упрощённо, без свечения)
-python main.py --stats          — режим героев: уровни, атрибуты, скейлы (свой профиль save/stats.json)
-python main.py --sandbox        — песочница: открыто всё (свой профиль save/sandbox.json, настоящий не трогается);
-                                  в бою F7 — полные AP, перезарядки и шкалы отряду, F8 — мгновенная победа
+python main.py --cpu            — без OpenGL (эффекты упрощённо, без свечения; в Одиночке — без камеры за героем)
+python main.py --sandbox        — песочница: открыто всё (свой профиль, настоящий не трогается);
+                                  в бою F7 — полные AP, перезарядки и шкалы, F8 — мгновенная победа
+python main.py --screenshot out.png --seconds 3
+                                — без окна: таверна, прокрутить и сохранить кадр
+
+Старые режимы (основная игра на карте биома, режим героев, сюжет, песочница боёв) — python legacy.py.
+Сохранение одно на оба режима — общая таверна: save/expedition.json (песочница — save/sandbox_expedition.json).
 """
 import argparse
 import os
 
+ROOT = os.path.dirname(os.path.abspath(__file__))
 parser = argparse.ArgumentParser()
-parser.add_argument("--battle", type=int, default=None)
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--autoplay", action="store_true")
-parser.add_argument("--profile", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "save", "profile.json"))
-parser.add_argument("--new-profile", action="store_true")
 parser.add_argument("--sandbox", action="store_true")
-parser.add_argument("--stats", action="store_true")
 parser.add_argument("--cpu", action="store_true")
+parser.add_argument("--solo", action="store_true")
+parser.add_argument("--expedition", action="store_true")
 parser.add_argument("--screenshot")
 parser.add_argument("--seconds", type=float, default=3.0)
 args = parser.parse_args()
@@ -35,30 +34,32 @@ if args.screenshot:
 
 import pygame  # noqa: E402
 
-from game.app import App  # noqa: E402
-from ui import settings  # noqa: E402
-from game.battle_scene import BattleScene  # noqa: E402
+from game.app import App, last_mode, remember_mode, stats_path  # noqa: E402
 from sim.data import GameData  # noqa: E402
-from sim.profile import Profile  # noqa: E402
+from sim.expedition import ExpeditionProfile, expedition_data  # noqa: E402
+from ui import settings  # noqa: E402
 from ui import theme as T  # noqa: E402
 from ui.present import Presenter  # noqa: E402
 
 
-class Sandbox:
-    """Одиночный бой без забега."""
-
-    def __init__(self, data):
-        self.scene = BattleScene(data, args.battle, autoplay=args.autoplay)
-
-    def relayout(self):
-        if hasattr(self.scene, "relayout"):
-            self.scene.relayout()
+def make_app(data):
+    """Приложение в режиме Экспедиции или Одиночки — каждый со своим сохранением рядом с save/profile.json."""
+    base = os.path.join(ROOT, "save", "sandbox.json" if args.sandbox else "profile.json")
+    mode = "solo" if args.solo else "expedition" if args.expedition else last_mode(base)
+    path = None if args.screenshot else stats_path(base, "expedition")      # таверна общая у обоих режимов
+    prof = ExpeditionProfile(expedition_data(data), path, sandbox=args.sandbox, solo=mode == "solo")
+    prof.mode, prof.path = mode, path
+    if not args.screenshot:
+        remember_mode(mode, base)
+    app = App(data, args.seed, args.autoplay, prof, start="hub" if args.screenshot else "title", launcher="main")
+    app._base_path = None if args.screenshot else base
+    return app
 
 
 def main():
     pygame.init()
     settings.load()
-    pygame.display.set_caption("Хроники янтаря — прототип")
+    pygame.display.set_caption("Хроники янтаря")
     use_gl = not args.cpu
     disp = None
     if args.screenshot:
@@ -72,27 +73,10 @@ def main():
             disp = Display(False)
             presenter = Presenter(disp.screen, False)
     clock = pygame.time.Clock()
-    data = GameData()
-    if args.battle is not None:
-        holder = Sandbox(data)
-    else:
-        # скриншот без окна не трогает настоящий профиль
-        path = None if args.screenshot else args.profile
-        if args.sandbox and not args.screenshot:
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save", "sandbox.json")
-        base_path = path
-        if args.stats and path:            # режим героев — свой профиль save/stats.json
-            from game.app import stats_path
-            path = stats_path(path)
-        profile = Profile(data, None if args.new_profile else path, sandbox=args.sandbox,
-                          mode="stats" if args.stats else "base")
-        profile.path = path
-        holder = App(data, args.seed, args.autoplay, profile, start="world" if args.screenshot else "title")
-        holder._base_path = base_path
+    holder = make_app(GameData())
 
     if args.screenshot:
-        frames = int(args.seconds * 60)
-        for _ in range(frames):
+        for _ in range(int(args.seconds * 60)):
             holder.scene.update(1 / 60)
         presenter.frame(holder.scene)
         pygame.image.save(presenter.snapshot(), args.screenshot)
@@ -101,11 +85,9 @@ def main():
 
     def on_resize():
         presenter.resize()
-        if hasattr(holder, "relayout"):
-            holder.relayout()
+        holder.relayout()
 
     disp.on_resize = on_resize
-
     running = True
     while running:
         dt = clock.tick(60) / 1000.0
@@ -122,17 +104,14 @@ def main():
                 scene = holder.scene
                 if getattr(scene, "stage", False) and ev.type in (
                         pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
-                    # сцена-колонка 1280: сдвигаем мышь в её координаты
-                    ox = T.content_ox()
+                    ox = T.content_ox()          # сцена-колонка 1280: сдвигаем мышь в её координаты
                     d = dict(ev.dict)
                     if "pos" in d:
                         d["pos"] = (d["pos"][0] - ox, d["pos"][1])
-                    if "rel" in d:
-                        d["rel"] = (d["rel"][0], d["rel"][1])
                     ev = pygame.event.Event(ev.type, d)
                 scene.handle(ev)
         holder.scene.update(dt)
-        if getattr(holder, "quit", False):
+        if holder.quit:
             running = False
             continue
         presenter.frame(holder.scene)

@@ -127,7 +127,8 @@ class Presenter:
             plane = scene.plane() if hasattr(scene, "plane") else None
             glow = scene.glow_layer() if hasattr(scene, "glow_layer") else None
             lab = scene.lab_frame() if hasattr(scene, "lab_frame") else None
-            self.gl.render(self.world, scene.vfx, self.ui, self.units, plane=plane, glow=glow, lab=lab)
+            pix = scene.gpu_particles() if hasattr(scene, "gpu_particles") else None
+            self.gl.render(self.world, scene.vfx, self.ui, self.units, plane=plane, glow=glow, lab=lab, pix=pix)
         else:
             scene.draw(self.world)
             self.gl.render(self.world)

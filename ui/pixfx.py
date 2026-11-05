@@ -179,7 +179,8 @@ class PixFx:
         """Снаряд a → b (экранные точки): сама форма покадровая, движение плавное. Возвращает экземпляр
         (fx.ttl — время полёта)."""
         d = math.dist(a, b)
-        dur = dur or max(0.08, d / speed)
+        from ui import flight
+        dur = flight.get() or dur or max(0.08, d / speed)
         ang = math.atan2(b[1] - a[1], b[0] - a[0])
         rot = round(ang / (math.pi / 4)) % 8 if orient else 0
         flip = not orient and b[0] < a[0]

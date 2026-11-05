@@ -1,14 +1,12 @@
 {
   "power_strike": {
-    "name": "Мощный удар", "ap": 4, "cast": 0, "cooldown": 0, "range": 1, "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Мощный удар", "ap": 4, "cast": 0, "cooldown": 0, "range": 1, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "damage", "amount": 45, "kind": "melee"}, {"type": "knockback", "cells": 1}],
-    "desc": "45 урона и отталкивание. Сбивает каст."
+    "effects": [{"type": "damage", "amount": 45, "kind": "melee", "per_mark": {"mark": "challenge", "mult": 0.5}}, {"type": "knockback", "cells": 1}],
+    "desc": "45 урона и отталкивание; по вызванному ×1.5. Сбивает каст."
   },
   "taunt": {
-    "name": "Провокация", "ap": 3, "cast": 0, "cooldown": 8, "range": 0, "target": "self", "radius": 2,
-    "ai": "adjacent_foes",
+    "name": "Провокация", "ap": 3, "cast": 0, "cooldown": 8, "range": 0, "target": "self", "radius": 2, "ai": "adjacent_foes",
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "taunt", "radius": 2, "duration": 6}, {"type": "shield", "amount": 25, "duration": 6}],
     "desc": "Враги в радиусе 2 атакуют воина 6 сек. Воин получает щит 25."
@@ -16,26 +14,20 @@
   "charge": {
     "name": "Рывок", "ap": 4, "cast": 0, "cooldown": 4, "range": 3, "target": "cell", "free_cell": true,
     "auto": {"on": false, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [
-      {"type": "teleport"},
-      {"type": "damage", "amount": 15, "radius": 1, "kind": "melee"},
-      {"type": "stun", "radius": 1, "duration": 2.0}
-    ],
+    "effects": [{"type": "teleport"}, {"type": "damage", "amount": 15, "radius": 1, "kind": "melee"}, {"type": "stun", "radius": 1, "duration": 2.0}],
     "desc": "Прыжок до 3 клеток. Соседи-враги: 15 урона, оглушение 2 сек."
   },
   "aimed_shot": {
-    "name": "Прицельный выстрел", "ap": 4, "cast": 0.8, "cooldown": 0, "range": 6, "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Прицельный выстрел", "ap": 4, "cast": 0.8, "cooldown": 0, "range": 6, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "damage", "amount": 55, "kind": "ranged"}],
-    "desc": "55 урона, дальность 6."
+    "effects": [{"type": "damage", "amount": 55, "kind": "ranged", "arrow": true}],
+    "desc": "55 урона, дальность 6, эффект стрел колчана."
   },
   "volley": {
-    "name": "Залп", "ap": 4, "cast": 0.4, "cooldown": 0, "range": 5, "target": "cell", "radius": 1,
-    "ai": "cluster", "min_targets": 2,
+    "name": "Залп", "ap": 4, "cast": 0.4, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "ai": "cluster", "min_targets": 2,
     "auto": {"on": false, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [{"type": "damage", "amount": 18, "radius": 1, "kind": "ranged"}],
-    "desc": "18 урона всем врагам в радиусе 1."
+    "effects": [{"type": "damage", "amount": 18, "kind": "ranged", "radius": 1, "arrow": true}],
+    "desc": "18 урона всем врагам в радиусе 1, эффект стрел колчана — каждому."
   },
   "leap_back": {
     "name": "Отскок", "ap": 2, "cast": 0, "cooldown": 3, "range": 2, "target": "cell", "free_cell": true,
@@ -44,19 +36,13 @@
     "desc": "Прыжок на свободную клетку до 2."
   },
   "fireball": {
-    "name": "Огненный шар", "ap": 5, "cast": 1.5, "cooldown": 0, "range": 5, "target": "cell", "radius": 1,
-    "ai": "cluster", "min_targets": 1,
+    "name": "Огненный шар", "ap": 5, "cast": 1.5, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "ai": "cluster", "min_targets": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [
-      {"type": "damage", "amount": 35, "radius": 1, "tag": "fire", "kind": "spell"},
-      {"type": "cell_tag", "tag": "fire", "radius": 1},
-      {"type": "hazard", "hazard": "fire", "radius": 0, "duration": 5}
-    ],
+    "effects": [{"type": "damage", "amount": 35, "radius": 1, "tag": "fire", "kind": "spell"}, {"type": "cell_tag", "tag": "fire", "radius": 1}, {"type": "hazard", "hazard": "fire", "radius": 0, "duration": 5}],
     "desc": "35 урона + Огонь в радиусе 1, поджигает центр."
   },
   "ice_bolt": {
-    "name": "Ледяная стрела", "ap": 3, "cast": 0.4, "cooldown": 0, "range": 5, "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Ледяная стрела", "ap": 3, "cast": 0.4, "cooldown": 0, "range": 5, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": [{"type": "target_casting"}]},
     "effects": [{"type": "damage", "amount": 20, "tag": "ice", "kind": "ranged"}],
     "desc": "20 урона + Лёд (замедление)."
@@ -74,22 +60,15 @@
     "desc": "Перемещение на свободную клетку до 3."
   },
   "heal": {
-    "name": "Лечение", "ap": 3, "cast": 0.8, "cooldown": 0, "range": 4, "target": "ally",
-    "ai": "heal_ally",
+    "name": "Лечение", "ap": 3, "cast": 0.8, "cooldown": 0, "range": 4, "target": "ally", "ai": "heal_ally",
     "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 50}]},
     "effects": [{"type": "heal", "amount": 45}],
-    "desc": "Лечит союзника на 45."
+    "desc": "Лечит союзника на 45. Лечение копит Веру."
   },
   "holy_water": {
-    "name": "Святая вода", "ap": 4, "cast": 0.8, "cooldown": 0, "range": 5, "target": "cell", "radius": 1,
-    "ai": "cluster", "min_targets": 2,
+    "name": "Святая вода", "ap": 4, "cast": 0.8, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "ai": "cluster", "min_targets": 2,
     "auto": {"on": false, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [
-      {"type": "damage", "amount": 12, "radius": 1, "tag": "water", "kind": "spell"},
-      {"type": "heal", "amount": 20, "radius": 1, "affects": "allies"},
-      {"type": "cleanse", "tags": ["fire"], "radius": 1, "affects": "allies"},
-      {"type": "cell_tag", "tag": "water", "radius": 1}
-    ],
+    "effects": [{"type": "damage", "amount": 12, "radius": 1, "tag": "water", "kind": "spell"}, {"type": "heal", "amount": 20, "radius": 1, "affects": "allies"}, {"type": "cleanse", "tags": ["fire"], "radius": 1, "affects": "allies"}, {"type": "cell_tag", "tag": "water", "radius": 1}],
     "desc": "Враги: 12 урона + Вода. Союзники: +20 HP, огонь на них гаснет. Горящие клетки тухнут."
   },
   "purify": {
@@ -99,15 +78,13 @@
     "desc": "Снимает с союзника стихии, контроль (оглушение, заморозку, корни, сон…) и ослабления, +15 HP."
   },
   "shield_bash": {
-    "name": "Удар щитом", "ap": 3, "cast": 0, "cooldown": 3, "range": 1, "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Удар щитом", "ap": 3, "cast": 0, "cooldown": 3, "range": 1, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": true, "conds": [{"type": "target_casting"}]},
     "effects": [{"type": "damage", "amount": 12, "kind": "melee"}, {"type": "stun", "duration": 2.0}],
     "desc": "12 урона, оглушение 2 сек. Сбивает каст."
   },
   "net": {
-    "name": "Ловчая сеть", "ap": 3, "cast": 0, "cooldown": 4, "range": 4, "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Ловчая сеть", "ap": 3, "cast": 0, "cooldown": 4, "range": 4, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": true, "conds": [{"type": "target_casting"}]},
     "effects": [{"type": "stun", "duration": 2.5}],
     "desc": "Оглушение 2.5 сек, дальность 4. Сбивает каст."
@@ -118,41 +95,29 @@
     "effects": [{"type": "shield", "amount": 35, "duration": 8, "radius": 2}],
     "desc": "Щит 35 на всех союзников в радиусе 2 на 8 сек."
   },
-
   "ice_dart": {
-    "name": "Ледяной дротик", "ap": 4, "cast": 0.5, "cooldown": 0, "range": 5, "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Ледяной дротик", "ap": 4, "cast": 0.5, "cooldown": 0, "range": 5, "target": "enemy", "ai": "enemy_in_range",
     "effects": [{"type": "damage", "amount": 22, "tag": "ice", "kind": "ranged"}],
     "desc": "22 урона + Лёд."
   },
   "frog_heal": {
-    "name": "Болотное исцеление", "ap": 4, "cast": 1.0, "cooldown": 0, "range": 4, "target": "ally",
-    "ai": "heal_ally",
+    "name": "Болотное исцеление", "ap": 4, "cast": 1.0, "cooldown": 0, "range": 4, "target": "ally", "ai": "heal_ally",
     "effects": [{"type": "heal", "amount": 40}],
     "desc": "Лечит союзника на 40."
   },
   "mud_splash": {
-    "name": "Брызги трясины", "ap": 4, "cast": 0.8, "cooldown": 0, "range": 4, "target": "cell", "radius": 1,
-    "ai": "cluster", "min_targets": 2,
+    "name": "Брызги трясины", "ap": 4, "cast": 0.8, "cooldown": 0, "range": 4, "target": "cell", "radius": 1, "ai": "cluster", "min_targets": 2,
     "effects": [{"type": "damage", "amount": 10, "radius": 1, "tag": "water", "kind": "spell"}],
     "desc": "10 урона + Вода в радиусе 1."
   },
   "frost_storm": {
-    "name": "Ледяная буря", "ap": 6, "cast": 2.0, "cooldown": 0, "range": 5, "target": "cell", "radius": 1,
-    "ai": "cluster", "min_targets": 1,
-    "effects": [
-      {"type": "damage", "amount": 32, "radius": 1, "tag": "ice", "kind": "spell"},
-      {"type": "cell_tag", "tag": "ice", "radius": 1}
-    ],
+    "name": "Ледяная буря", "ap": 6, "cast": 2.0, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "ai": "cluster", "min_targets": 1,
+    "effects": [{"type": "damage", "amount": 32, "radius": 1, "tag": "ice", "kind": "spell"}, {"type": "cell_tag", "tag": "ice", "radius": 1}],
     "desc": "32 урона + Лёд в радиусе 1, замораживает воду."
   },
   "ice_ring": {
-    "name": "Ледяное кольцо", "ap": 4, "cast": 0, "cooldown": 4, "range": 0, "target": "self", "radius": 1,
-    "ai": "adjacent_foes",
-    "effects": [
-      {"type": "damage", "amount": 18, "radius": 1, "tag": "ice", "kind": "spell"},
-      {"type": "knockback", "radius": 1, "cells": 1}
-    ],
+    "name": "Ледяное кольцо", "ap": 4, "cast": 0, "cooldown": 4, "range": 0, "target": "self", "radius": 1, "ai": "adjacent_foes",
+    "effects": [{"type": "damage", "amount": 18, "radius": 1, "tag": "ice", "kind": "spell"}, {"type": "knockback", "radius": 1, "cells": 1}],
     "desc": "18 урона + Лёд соседям, отталкивает."
   },
   "whirlwind": {
@@ -164,10 +129,7 @@
   "spike_trap": {
     "name": "Шипастая ловушка", "ap": 3, "cast": 0.3, "cooldown": 0, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": false, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [
-      {"type": "damage", "amount": 12, "radius": 1, "kind": "ranged", "on_hit_buff": {"stat": "slow", "value": 1.6, "duration": 4}},
-      {"type": "stun", "duration": 1.5}
-    ],
+    "effects": [{"type": "damage", "amount": 12, "radius": 1, "kind": "ranged", "on_hit_buff": {"stat": "slow", "value": 1.6, "duration": 4}}, {"type": "stun", "duration": 1.5}],
     "desc": "Центр: оглушение 1.5 сек. Радиус 1: 12 урона и замедление движения на 4 сек."
   },
   "curse": {
@@ -177,1568 +139,1347 @@
     "desc": "10 урона; цель получает +30% урона 6 сек."
   },
   "judgment": {
-    "name": "Приговор", "ap": 4, "cast": 0.6, "cooldown": 0, "range": 5, "target": "enemy",
+    "name": "Приговор", "ap": 4, "cast": 0.6, "cooldown": 0, "range": 5, "target": "enemy", "gauge_spend": "all", "gauge_min": 0,
     "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 40}]},
-    "effects": [{"type": "damage", "amount": 30, "kind": "spell", "execute": {"below": 0.4, "mult": 1.6}}],
-    "desc": "30 урона; ×1.6, если у цели меньше 40% HP."
+    "effects": [{"type": "damage", "amount": 30, "kind": "spell", "execute": {"below": 0.4, "mult": 1.6}, "per_gauge": 0.3}],
+    "desc": "30 урона, ×1.6 по раненым. Тратит всю Веру: +30% за каждое деление."
   },
   "shadow_step": {
-    "name": "Шаг в тень",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 4,
-    "target": "enemy",
+    "name": "Шаг в тень", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 4, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 22, "kind": "melee", "backstab": 1.5}],
     "desc": "Прыжок к врагу (до 4): 22 урона, ×1.5 в спину."
   },
   "venom_blade": {
-    "name": "Ядовитый клинок",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 10,
-    "range": 0,
-    "target": "self",
+    "name": "Ядовитый клинок", "ap": 2, "cast": 0.0, "cooldown": 10, "range": 0, "target": "self",
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]},
     "effects": [{"type": "buff", "stat": "atk_tag", "value": "poison", "duration": 8}],
     "desc": "8 сек атаки накладывают Яд."
   },
   "vanish": {
-    "name": "Исчезновение",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 12,
-    "range": 0,
-    "target": "self",
+    "name": "Исчезновение", "ap": 3, "cast": 0.0, "cooldown": 12, "range": 0, "target": "self",
     "auto": {"on": true, "conds": [{"type": "self_hp_below", "value": 50}]},
     "effects": [{"type": "stealth", "duration": 5, "mult": 1.8}],
     "desc": "Уходит в тень на 5 сек: враги теряют цель, удар из тени ×1.8."
   },
   "shadow_mark": {
-    "name": "Метка смерти",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 5,
-    "target": "enemy",
+    "name": "Метка смерти", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 5, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "buff", "stat": "dmg_taken", "value": 1.35, "duration": 6, "affects": "enemies"}],
     "desc": "Цель получает +35% урона 6 сек (дальность 5)."
   },
   "riposte": {
-    "name": "Парирование",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 7,
-    "range": 0,
-    "target": "self",
+    "name": "Парирование", "ap": 2, "cast": 0.0, "cooldown": 7, "range": 0, "target": "self",
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]},
     "effects": [{"type": "buff", "stat": "armor", "value": 4, "duration": 4}, {"type": "buff", "stat": "thorns", "value": 0.8, "duration": 4}],
-    "desc": "4 сек: +4 брони, отражает 80% ближнего урона."
+    "desc": "4 сек: +4 брони, отражает 80% ближнего урона — вызванный сам себя ранит."
   },
   "bear_form": {
-    "name": "Облик медведя",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 0,
-    "target": "self",
+    "name": "Облик медведя", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 0, "target": "self",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "form", "form": "bear"}],
     "desc": "Медведь: +4 брони, +40 HP, атака ×1.8 в ближнем бою. Повтор — обратно."
   },
   "entangle": {
-    "name": "Цепкие корни",
-    "ap": 3,
-    "cast": 0.5,
-    "cooldown": 6,
-    "range": 4,
-    "target": "cell",
-    "radius": 1,
+    "name": "Цепкие корни", "ap": 3, "cast": 0.5, "cooldown": 6, "range": 4, "target": "cell", "radius": 1, "form": "human",
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "damage", "amount": 10, "kind": "spell", "radius": 1}, {"type": "stun", "duration": 1.2, "radius": 1}, {"type": "hazard", "hazard": "briar", "duration": 4, "radius": 1}],
-    "desc": "Радиус 1: 10 урона, оглушение 1.2 сек, терновник 4 сек."
+    "desc": "В облике человека. Радиус 1: 10 урона, корни 1.2 сек, терновник 4 сек."
   },
   "rejuvenate": {
-    "name": "Омоложение",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 0,
-    "range": 4,
-    "target": "ally",
+    "name": "Омоложение", "ap": 3, "cast": 0.0, "cooldown": 0, "range": 4, "target": "ally", "form": "human",
     "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 70}]},
     "effects": [{"type": "buff", "stat": "regen", "value": 8, "duration": 5}],
-    "desc": "Союзник восстанавливает 8 HP/сек 5 сек."
+    "desc": "В облике человека. Союзник восстанавливает 8 HP/сек 5 сек."
   },
   "wolf_form": {
-    "name": "Облик волка",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 0,
-    "target": "self",
+    "name": "Облик волка", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 0, "target": "self",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "form", "form": "wolf"}],
     "desc": "Волк: атаки на 40% быстрее и ×1.5, бег вдвое быстрее. Повтор — обратно."
   },
   "spirit_tree": {
-    "name": "Древо жизни",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 14,
-    "range": 3,
-    "target": "cell",
+    "name": "Древо жизни", "ap": 4, "cast": 0.0, "cooldown": 14, "range": 3, "target": "cell", "place": "allies",
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
     "effects": [{"type": "summon", "unit": "spirit_tree", "duration": 14}],
-    "desc": "Сажает древо (14 сек): лечит союзников в радиусе 2 на 7 каждую секунду.",
-    "place": "allies"
+    "desc": "Сажает древо (14 сек): лечит союзников в радиусе 2 на 7 каждую секунду."
   },
   "lunge": {
-    "name": "Выпад",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 2,
-    "target": "enemy",
+    "name": "Выпад", "ap": 3, "cast": 0.0, "cooldown": 3, "range": 2, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "line", "amount": 24, "length": 3, "kind": "melee"}],
     "desc": "Копьё пробивает 3 клетки по линии: 24 урона каждому."
   },
   "hook": {
-    "name": "Крюк",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 4,
-    "target": "enemy",
+    "name": "Крюк", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 4, "target": "enemy",
     "auto": {"on": true, "conds": [{"type": "target_casting"}]},
     "effects": [{"type": "pull", "cells": 3}, {"type": "damage", "amount": 10, "kind": "melee", "on_hit_buff": {"stat": "slow", "value": 1.5, "duration": 3}}],
     "desc": "Притягивает врага (до 4 клеток) на 3 клетки: 10 урона, замедление."
   },
   "shield_wall": {
-    "name": "Стена щитов",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 10,
-    "range": 0,
-    "target": "self",
-    "radius": 1,
+    "name": "Стена щитов", "ap": 4, "cast": 0.0, "cooldown": 10, "range": 0, "target": "self", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 2}]},
     "effects": [{"type": "buff", "stat": "armor", "value": 5, "duration": 6}, {"type": "shield", "amount": 20, "duration": 6, "radius": 1}],
     "desc": "+5 брони себе 6 сек, союзникам рядом — щит 20."
   },
   "brace": {
-    "name": "Упор",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 0,
-    "target": "self",
+    "name": "Упор", "ap": 2, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self",
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]},
     "effects": [{"type": "buff", "stat": "armor", "value": 3, "duration": 5}, {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 5}],
     "desc": "5 сек: +3 брони и атаки на 40% быстрее."
   },
   "jump_strike": {
-    "name": "Прыжок драгуна",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 4,
-    "target": "cell",
-    "radius": 1,
+    "name": "Прыжок драгуна", "ap": 4, "cast": 0.0, "cooldown": 6, "range": 4, "target": "cell", "radius": 1, "free_cell": true,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "teleport"}, {"type": "damage", "amount": 28, "kind": "melee", "radius": 1}, {"type": "stun", "duration": 0.8, "radius": 1}],
-    "desc": "Прыжок на клетку до 4: 28 урона врагам рядом, оглушение 0.8 сек.",
-    "free_cell": true
+    "desc": "Прыжок на клетку до 4: 28 урона врагам рядом, оглушение 0.8 сек."
   },
   "chain_lightning": {
-    "name": "Цепная молния",
-    "ap": 4,
-    "cast": 0.6,
-    "cooldown": 0,
-    "range": 5,
-    "target": "enemy",
+    "name": "Цепная молния", "ap": 4, "cast": 0.6, "cooldown": 0, "range": 5, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "damage", "amount": 22, "kind": "spell", "tag": "storm"}, {"type": "chain", "jumps": 2, "range": 3, "amount": 14, "tag": "storm"}],
     "desc": "22 урона + Гроза, перескакивает на 2 врагов (14)."
   },
   "storm_totem": {
-    "name": "Тотем грозы",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 10,
-    "range": 3,
-    "target": "cell",
+    "name": "Тотем грозы", "ap": 4, "cast": 0.0, "cooldown": 10, "range": 3, "target": "cell",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "summon", "unit": "totem_storm", "duration": 12}],
     "desc": "Тотем (12 сек) бьёт молнией врагов в радиусе 3."
   },
   "healing_totem": {
-    "name": "Тотем исцеления",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 12,
-    "range": 3,
-    "target": "cell",
+    "name": "Тотем исцеления", "ap": 3, "cast": 0.0, "cooldown": 12, "range": 3, "target": "cell", "place": "allies",
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
     "effects": [{"type": "summon", "unit": "totem_heal", "duration": 12}],
-    "desc": "Тотем (12 сек) лечит союзников в радиусе 2 на 5 в секунду.",
-    "place": "allies"
+    "desc": "Тотем (12 сек) лечит союзников в радиусе 2 на 5 в секунду."
   },
   "thunderstorm": {
-    "name": "Гроза",
-    "ap": 5,
-    "cast": 1.5,
-    "cooldown": 8,
-    "range": 5,
-    "target": "cell",
-    "radius": 2,
+    "name": "Гроза", "ap": 5, "cast": 1.5, "cooldown": 8, "range": 5, "target": "cell", "radius": 2,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "damage", "amount": 26, "kind": "spell", "radius": 2, "tag": "storm"}, {"type": "stun", "duration": 0.6, "radius": 2}],
     "desc": "Каст 1.5 сек, радиус 2: 26 урона + Гроза, оглушение 0.6 сек."
   },
   "spirit_link": {
-    "name": "Связь духов",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 4,
-    "target": "ally",
+    "name": "Связь духов", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 4, "target": "ally",
     "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 60}]},
     "effects": [{"type": "shield", "amount": 30, "duration": 6}, {"type": "buff", "stat": "regen", "value": 5, "duration": 5}],
     "desc": "Союзнику: щит 30 и 5 HP/сек 5 сек."
   },
   "war_song": {
-    "name": "Боевая песнь",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 12,
-    "range": 0,
-    "target": "self",
-    "radius": 3,
+    "name": "Боевая песнь", "ap": 4, "cast": 0.0, "cooldown": 12, "range": 0, "target": "self", "radius": 3,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 8, "radius": 3}, {"type": "buff", "stat": "ap_rate", "value": 0.75, "duration": 8, "radius": 3}],
     "desc": "Союзники в радиусе 3: атаки ×1.25 и AP на 25% быстрее 8 сек."
   },
   "lullaby": {
-    "name": "Колыбельная",
-    "ap": 4,
-    "cast": 0.6,
-    "cooldown": 10,
-    "range": 4,
-    "target": "cell",
-    "radius": 1,
+    "name": "Колыбельная", "ap": 4, "cast": 0.6, "cooldown": 10, "range": 4, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "sleep", "duration": 4, "radius": 1}],
     "desc": "Радиус 1: враги засыпают на 4 сек (удар будит)."
   },
   "inspire": {
-    "name": "На бис",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 4,
-    "target": "ally",
+    "name": "На бис", "ap": 2, "cast": 0.0, "cooldown": 8, "range": 4, "target": "ally",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "refresh", "ap": 3, "cooldowns": true}],
     "desc": "Союзник получает 3 AP и сбрасывает перезарядки."
   },
   "sonic_blast": {
-    "name": "Звуковая волна",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 0,
-    "target": "self",
-    "radius": 2,
+    "name": "Звуковая волна", "ap": 4, "cast": 0.0, "cooldown": 6, "range": 0, "target": "self", "radius": 2,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "damage", "amount": 18, "kind": "spell", "radius": 2}, {"type": "knockback", "cells": 1, "radius": 2}],
     "desc": "Враги в радиусе 2: 18 урона и отбрасывание на 1."
   },
   "serenade": {
-    "name": "Серенада",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 12,
-    "range": 0,
-    "target": "self",
-    "radius": 3,
+    "name": "Серенада", "ap": 4, "cast": 0.0, "cooldown": 12, "range": 0, "target": "self", "radius": 3,
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 60}]},
     "effects": [{"type": "buff", "stat": "regen", "value": 6, "duration": 6, "radius": 3}, {"type": "cleanse", "radius": 3}],
     "desc": "Союзники в радиусе 3: 6 HP/сек 6 сек и теги сняты."
   },
   "fire_bomb": {
-    "name": "Огненная бомба",
-    "ap": 4,
-    "cast": 0.4,
-    "cooldown": 0,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Огненная бомба", "ap": 4, "cast": 0.4, "cooldown": 0, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "damage", "amount": 20, "kind": "spell", "radius": 1, "tag": "fire"}, {"type": "hazard", "hazard": "fire", "duration": 3}],
     "desc": "Радиус 1: 20 урона + Огонь, центр горит 3 сек."
   },
   "oil_flask": {
-    "name": "Масляная склянка",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Масляная склянка", "ap": 2, "cast": 0.0, "cooldown": 4, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "status", "tag": "oil", "radius": 1}, {"type": "hazard", "hazard": "oil", "duration": 8, "radius": 1}],
     "desc": "Радиус 1: Масло на врагов и лужа масла 8 сек (огонь её поджигает)."
   },
   "healing_potion": {
-    "name": "Лечебное зелье",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 4,
-    "target": "ally",
-    "radius": 1,
+    "name": "Лечебное зелье", "ap": 3, "cast": 0.0, "cooldown": 3, "range": 4, "target": "ally", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 60}]},
     "effects": [{"type": "heal", "amount": 35, "radius": 1}],
     "desc": "Бросок в союзника: лечит его и всех рядом на 35."
   },
   "mine": {
-    "name": "Мина",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 3,
-    "target": "cell",
+    "name": "Мина", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 3, "target": "cell", "powder": true,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "hazard", "hazard": "mine", "duration": 30}],
-    "desc": "Мина на клетке (30 сек): первый враг получает 30 урона + Огонь и оглушение 1 сек."
+    "desc": "Мина на клетке (30 сек): первый враг получает 30 урона + Огонь и оглушение 1 сек. С Порохом — ×2, без — ×0.6."
   },
   "poison_cloud": {
-    "name": "Ядовитое облако",
-    "ap": 3,
-    "cast": 0.4,
-    "cooldown": 2,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Ядовитое облако", "ap": 3, "cast": 0.4, "cooldown": 2, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "damage", "amount": 8, "kind": "spell", "radius": 1, "tag": "poison"}, {"type": "hazard", "hazard": "poison", "duration": 6, "radius": 1}],
     "desc": "Радиус 1: 8 урона + Яд, облако 6 сек (Яд всем внутри)."
   },
   "consecrate": {
-    "name": "Освящение",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 0,
-    "target": "self",
-    "radius": 2,
+    "name": "Освящение", "ap": 4, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self", "radius": 2,
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
     "effects": [{"type": "heal", "amount": 20, "radius": 2}, {"type": "damage", "amount": 14, "kind": "spell", "radius": 2}],
     "desc": "Радиус 2: союзники +20 HP, враги 14 урона."
   },
   "headshot": {
-    "name": "В голову",
-    "ap": 4,
-    "cast": 1.2,
-    "cooldown": 6,
-    "range": 8,
-    "target": "enemy",
+    "name": "В голову", "ap": 4, "cast": 1.2, "cooldown": 6, "range": 8, "target": "enemy",
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "damage", "amount": 45, "kind": "ranged", "execute": {"below": 0.3, "mult": 1.5}}],
-    "desc": "Каст 1.2 сек, дальность 8: 45 урона, ×1.5 по целям с HP < 30%."
+    "effects": [{"type": "damage", "amount": 45, "kind": "ranged", "execute": {"below": 0.3, "mult": 1.5}, "arrow": true, "arrow_mult": 2.0}],
+    "desc": "Каст 1.2 сек, дальность 8: 45 урона, ×1.5 по раненым, эффект колчана двойной."
   },
   "blizzard": {
-    "name": "Буран",
-    "ap": 5,
-    "cast": 1.2,
-    "cooldown": 4,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Буран", "ap": 5, "cast": 1.2, "cooldown": 4, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [{"type": "damage", "amount": 20, "kind": "spell", "radius": 1, "tag": "ice"}, {"type": "cell_tag", "tag": "ice", "radius": 1}, {"type": "hazard", "hazard": "ice", "duration": 5, "radius": 1}],
-    "desc": "Каст 1.2 сек, радиус 1: 20 урона + Лёд, ледяные клетки 5 сек."
+    "effects": [{"type": "damage", "amount": 20, "kind": "spell", "radius": 1, "tag": "ice"}, {"type": "mark", "mark": "cold", "stacks": 2, "duration": 6, "radius": 1}, {"type": "hazard", "hazard": "ice", "duration": 5, "radius": 1}],
+    "desc": "Каст 1.2 сек, радиус 1: 20 урона + Лёд, 2 стака Холода, ледяные клетки 5 сек."
   },
   "revive": {
-    "name": "Воскрешение",
-    "ap": 6,
-    "cast": 2.0,
-    "cooldown": 40,
-    "range": 3,
-    "target": "cell",
+    "name": "Воскрешение", "ap": 6, "cast": 2.0, "cooldown": 25, "range": 3, "target": "cell", "gauge_cost": 3,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "revive", "pct": 0.35, "radius": 1}],
-    "desc": "Каст 2 сек: поднимает павшего союзника (до 3 клеток) с 35% HP. Перезарядка 40."
+    "desc": "Чудо (3 Веры). Каст 2 сек: поднимает павшего союзника (до 3 клеток) с 35% HP."
   },
   "e_fireball": {
-    "name": "Огненный шар",
-    "ap": 4,
-    "cast": 1.5,
-    "cooldown": 8,
-    "range": 5,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 1,
+    "name": "Огненный шар", "ap": 4, "cast": 1.5, "cooldown": 8, "range": 5, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 18, "kind": "spell", "radius": 1, "tag": "fire"}, {"type": "hazard", "hazard": "fire", "duration": 3}],
-    "desc": "Радиус 1: 18 урона + Огонь, центр горит.",
-    "min_targets": 1
+    "desc": "Радиус 1: 18 урона + Огонь, центр горит."
   },
   "e_hammer": {
-    "name": "Бросок молота",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 10,
-    "range": 4,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Бросок молота", "ap": 3, "cast": 0.0, "cooldown": 10, "range": 4, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 12, "kind": "ranged"}, {"type": "stun", "duration": 0.8}],
     "desc": "12 урона и оглушение 0.8 сек."
   },
   "e_flame_breath": {
-    "name": "Огненное дыхание",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 2,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Огненное дыхание", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 2, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 12, "kind": "spell", "radius": 1, "tag": "fire"}],
     "desc": "Радиус 1 у цели: 12 урона + Огонь."
   },
   "e_lash": {
-    "name": "Цепной хлыст",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 7,
-    "range": 3,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Цепной хлыст", "ap": 3, "cast": 0.0, "cooldown": 7, "range": 3, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "pull", "cells": 2}, {"type": "damage", "amount": 12, "kind": "melee"}],
     "desc": "Притягивает на 2 клетки, 12 урона."
   },
   "e_meteor": {
-    "name": "Метеоритный дождь",
-    "ap": 5,
-    "cast": 2.0,
-    "cooldown": 10,
-    "range": 5,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 2,
+    "name": "Метеоритный дождь", "ap": 5, "cast": 2.0, "cooldown": 10, "range": 5, "target": "cell", "ai": "cluster", "radius": 2, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 30, "kind": "spell", "radius": 2, "tag": "fire"}, {"type": "hazard", "hazard": "fire", "duration": 4, "radius": 1}],
-    "desc": "Каст 2 сек, радиус 2: 30 урона + Огонь, земля горит.",
-    "min_targets": 1
+    "desc": "Каст 2 сек, радиус 2: 30 урона + Огонь, земля горит."
   },
   "e_raise": {
-    "name": "Поднять мертвецов",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 10,
-    "range": 0,
-    "target": "self",
-    "ai": "summon_self",
+    "name": "Поднять мертвецов", "ap": 3, "cast": 0.0, "cooldown": 10, "range": 0, "target": "self", "ai": "summon_self",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "summon", "unit": "skeleton_minion", "duration": 25, "limit": 2}],
     "desc": "Поднимает скелета (до 2)."
   },
   "e_raise_lich": {
-    "name": "Армия костей",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 0,
-    "target": "self",
-    "ai": "summon_self",
+    "name": "Армия костей", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self", "ai": "summon_self",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "summon", "unit": "skeleton_minion", "duration": 30, "limit": 3}],
     "desc": "Поднимает скелета (до 3)."
   },
   "e_wither": {
-    "name": "Иссушающее проклятие",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 4,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Иссушающее проклятие", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 4, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 10, "kind": "spell"}, {"type": "buff", "stat": "heal_taken", "value": 0.5, "duration": 6, "affects": "enemies"}],
     "desc": "10 урона, лечение цели вдвое слабее 6 сек."
   },
   "e_wail": {
-    "name": "Вопль",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 9,
-    "range": 0,
-    "target": "self",
-    "ai": "adjacent_foes",
-    "radius": 2,
+    "name": "Вопль", "ap": 3, "cast": 0.0, "cooldown": 9, "range": 0, "target": "self", "ai": "adjacent_foes", "radius": 2,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 8, "kind": "spell", "radius": 2}, {"type": "stun", "duration": 1.0, "radius": 2}],
     "desc": "Радиус 2: 8 урона и оглушение 1 сек."
   },
   "e_slam": {
-    "name": "Удар о землю",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 0,
-    "target": "self",
-    "ai": "adjacent_foes",
-    "radius": 1,
+    "name": "Удар о землю", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self", "ai": "adjacent_foes", "radius": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 18, "kind": "melee", "radius": 1}, {"type": "stun", "duration": 0.8, "radius": 1}],
     "desc": "Враги рядом: 18 урона и оглушение 0.8 сек."
   },
   "e_frost_ward": {
-    "name": "Ледяной оберег",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 7,
-    "range": 4,
-    "target": "ally",
-    "ai": "shield_ally",
+    "name": "Ледяной оберег", "ap": 3, "cast": 0.0, "cooldown": 7, "range": 4, "target": "ally", "ai": "shield_ally",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "shield", "amount": 30, "duration": 8}],
     "desc": "Союзнику щит 30 на 8 сек."
   },
   "e_frost_breath": {
-    "name": "Ледяное дыхание",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 3,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 1,
+    "name": "Ледяное дыхание", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 3, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 16, "kind": "spell", "radius": 1, "tag": "ice"}],
-    "desc": "Радиус 1: 16 урона + Лёд.",
-    "min_targets": 1
+    "desc": "Радиус 1: 16 урона + Лёд."
   },
   "e_avalanche": {
-    "name": "Сход лавины",
-    "ap": 4,
-    "cast": 1.5,
-    "cooldown": 9,
-    "range": 5,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 1,
+    "name": "Сход лавины", "ap": 4, "cast": 1.5, "cooldown": 9, "range": 5, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 26, "kind": "spell", "radius": 1, "tag": "ice"}, {"type": "stun", "duration": 1.2, "radius": 1}],
-    "desc": "Каст 1.5 сек, радиус 1: 26 урона + Лёд, оглушение 1.2 сек.",
-    "min_targets": 1
+    "desc": "Каст 1.5 сек, радиус 1: 26 урона + Лёд, оглушение 1.2 сек."
   },
   "e_charge": {
-    "name": "Набег",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 4,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Набег", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 4, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 16, "kind": "melee"}],
     "desc": "Прыжок к врагу (до 4): 16 урона."
   },
   "e_rain": {
-    "name": "Ливень",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 7,
-    "range": 5,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 1,
+    "name": "Ливень", "ap": 2, "cast": 0.0, "cooldown": 7, "range": 5, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "status", "tag": "water", "radius": 1}],
-    "desc": "Радиус 1: Вода на героев (молния по мокрым — электрошок).",
-    "min_targets": 1
+    "desc": "Радиус 1: Вода на героев (молния по мокрым — электрошок)."
   },
   "e_chain": {
-    "name": "Цепная молния",
-    "ap": 3,
-    "cast": 0.6,
-    "cooldown": 4,
-    "range": 5,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Цепная молния", "ap": 3, "cast": 0.6, "cooldown": 4, "range": 5, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 16, "kind": "spell", "tag": "storm"}, {"type": "chain", "jumps": 2, "range": 3, "amount": 12, "tag": "storm"}],
     "desc": "16 урона + Гроза, перескакивает на 2 (12)."
   },
   "e_war_cry": {
-    "name": "Клич орды",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 14,
-    "range": 0,
-    "target": "self",
-    "ai": "self_buff",
-    "radius": 3,
+    "name": "Клич орды", "ap": 3, "cast": 0.0, "cooldown": 14, "range": 0, "target": "self", "ai": "self_buff", "radius": 3,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.3, "duration": 8, "radius": 3}],
     "desc": "Союзники в радиусе 3: атаки ×1.3 на 8 сек."
   },
   "e_thunderstorm": {
-    "name": "Буря",
-    "ap": 5,
-    "cast": 1.6,
-    "cooldown": 10,
-    "range": 5,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 2,
+    "name": "Буря", "ap": 5, "cast": 1.6, "cooldown": 10, "range": 5, "target": "cell", "ai": "cluster", "radius": 2, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 24, "kind": "spell", "radius": 2, "tag": "storm"}, {"type": "stun", "duration": 0.5, "radius": 2}],
-    "desc": "Каст 1.6 сек, радиус 2: 24 урона + Гроза, оглушение 0.5 сек.",
-    "min_targets": 1
+    "desc": "Каст 1.6 сек, радиус 2: 24 урона + Гроза, оглушение 0.5 сек."
   },
   "e_club": {
-    "name": "Дубина",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 7,
-    "range": 1,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Дубина", "ap": 3, "cast": 0.0, "cooldown": 7, "range": 1, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 22, "kind": "melee"}, {"type": "knockback", "cells": 2}],
     "desc": "22 урона и отбрасывание на 2."
   },
   "e_heal": {
-    "name": "Исцеление",
-    "ap": 3,
-    "cast": 0.8,
-    "cooldown": 4,
-    "range": 4,
-    "target": "ally",
-    "ai": "heal_ally",
+    "name": "Исцеление", "ap": 3, "cast": 0.8, "cooldown": 4, "range": 4, "target": "ally", "ai": "heal_ally",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "heal", "amount": 40}],
     "desc": "Лечит союзника на 40."
   },
   "e_plague": {
-    "name": "Чумное облако",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 4,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 1,
+    "name": "Чумное облако", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 4, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 10, "kind": "spell", "radius": 1, "tag": "poison"}, {"type": "hazard", "hazard": "poison", "duration": 5, "radius": 1}],
-    "desc": "Радиус 1: 10 урона + Яд, ядовитое облако 5 сек.",
-    "min_targets": 1
+    "desc": "Радиус 1: 10 урона + Яд, ядовитое облако 5 сек."
   },
   "e_raise_mummy": {
-    "name": "Восстание мумий",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 12,
-    "range": 0,
-    "target": "self",
-    "ai": "summon_self",
+    "name": "Восстание мумий", "ap": 3, "cast": 0.0, "cooldown": 12, "range": 0, "target": "self", "ai": "summon_self",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "summon", "unit": "mummy_risen", "duration": 30, "limit": 2}],
     "desc": "Поднимает мумию (до 2)."
   },
   "e_charm": {
-    "name": "Очарование",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 14,
-    "range": 4,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Очарование", "ap": 3, "cast": 0.0, "cooldown": 14, "range": 4, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "charm", "duration": 3}],
     "desc": "Герой 3 сек сражается за врага."
   },
   "e_mirror": {
-    "name": "Зеркальный образ",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 9,
-    "range": 0,
-    "target": "self",
-    "ai": "summon_self",
+    "name": "Зеркальный образ", "ap": 2, "cast": 0.0, "cooldown": 9, "range": 0, "target": "self", "ai": "summon_self",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "summon", "unit": "illusion", "duration": 10, "limit": 2}],
     "desc": "Создаёт двойника-иллюзию (до 2)."
   },
   "e_regrowth": {
-    "name": "Рост",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 4,
-    "target": "ally",
-    "ai": "heal_ally",
+    "name": "Рост", "ap": 3, "cast": 0.0, "cooldown": 5, "range": 4, "target": "ally", "ai": "heal_ally",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "buff", "stat": "regen", "value": 8, "duration": 5}],
     "desc": "Союзник: 8 HP/сек 5 сек."
   },
   "e_entangle": {
-    "name": "Оплетание",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 9,
-    "range": 4,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 1,
+    "name": "Оплетание", "ap": 3, "cast": 0.0, "cooldown": 9, "range": 4, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 8, "kind": "spell", "radius": 1}, {"type": "stun", "duration": 1.2, "radius": 1}],
-    "desc": "Радиус 1: 8 урона и оглушение 1.2 сек.",
-    "min_targets": 1
+    "desc": "Радиус 1: 8 урона и оглушение 1.2 сек."
   },
   "e_sleep": {
-    "name": "Песнь сирены",
-    "ap": 3,
-    "cast": 0.6,
-    "cooldown": 11,
-    "range": 4,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 1,
+    "name": "Песнь сирены", "ap": 3, "cast": 0.6, "cooldown": 11, "range": 4, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "sleep", "duration": 3, "radius": 1}],
-    "desc": "Радиус 1: сон 3 сек.",
-    "min_targets": 1
+    "desc": "Радиус 1: сон 3 сек."
   },
   "e_drag": {
-    "name": "Утащить на дно",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 9,
-    "range": 4,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Утащить на дно", "ap": 3, "cast": 0.0, "cooldown": 9, "range": 4, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "pull", "cells": 3}, {"type": "stun", "duration": 1.0}],
     "desc": "Притягивает на 3 клетки и оглушает 1 сек."
   },
   "e_claw": {
-    "name": "Клешня",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 1,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Клешня", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 1, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 20, "kind": "melee"}, {"type": "knockback", "cells": 1}],
     "desc": "20 урона и отбрасывание."
   },
   "e_tidal": {
-    "name": "Волна",
-    "ap": 4,
-    "cast": 1.5,
-    "cooldown": 10,
-    "range": 5,
-    "target": "cell",
-    "ai": "cluster",
-    "radius": 2,
+    "name": "Волна", "ap": 4, "cast": 1.5, "cooldown": 10, "range": 5, "target": "cell", "ai": "cluster", "radius": 2, "min_targets": 1,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 20, "kind": "spell", "radius": 2, "tag": "water"}, {"type": "knockback", "cells": 1, "radius": 2}],
-    "desc": "Каст 1.5 сек, радиус 2: 20 урона + Вода, отбрасывание.",
-    "min_targets": 1
+    "desc": "Каст 1.5 сек, радиус 2: 20 урона + Вода, отбрасывание."
   },
   "e_shield_push": {
-    "name": "Таран щитом",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 1,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Таран щитом", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 1, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 16, "kind": "melee"}, {"type": "knockback", "cells": 2}],
     "desc": "16 урона и отбрасывание на 2 — к краю пропасти."
   },
   "e_star_bolt": {
-    "name": "Звёздная стрела",
-    "ap": 3,
-    "cast": 0.5,
-    "cooldown": 3,
-    "range": 5,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Звёздная стрела", "ap": 3, "cast": 0.5, "cooldown": 3, "range": 5, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 18, "kind": "spell"}, {"type": "chain", "jumps": 1, "range": 3, "amount": 14}],
     "desc": "18 урона, перескакивает на 1 (14)."
   },
   "e_gravity": {
-    "name": "Притяжение бездны",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 5,
-    "target": "enemy",
-    "ai": "enemy_in_range",
+    "name": "Притяжение бездны", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 5, "target": "enemy", "ai": "enemy_in_range",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "pull", "cells": 2}, {"type": "damage", "amount": 12, "kind": "spell"}],
     "desc": "Притягивает на 2 и 12 урона."
   },
   "e_archon_wave": {
-    "name": "Небесная волна",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 9,
-    "range": 0,
-    "target": "self",
-    "ai": "adjacent_foes",
-    "radius": 2,
+    "name": "Небесная волна", "ap": 4, "cast": 0.0, "cooldown": 9, "range": 0, "target": "self", "ai": "adjacent_foes", "radius": 2,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "damage", "amount": 22, "kind": "spell", "radius": 2}, {"type": "knockback", "cells": 2, "radius": 2}],
     "desc": "Радиус 2: 22 урона и отбрасывание на 2."
   },
   "guard_ally": {
-    "name": "Под защиту",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 3,
-    "target": "ally",
+    "name": "Под защиту", "ap": 2, "cast": 0.0, "cooldown": 5, "range": 3, "target": "ally",
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
     "effects": [{"type": "leap_to"}, {"type": "guard", "duration": 8}],
     "desc": "Прыжок к союзнику (до 3): 8 сек удары по нему, пока воин рядом, идут в воина."
   },
   "overwatch": {
-    "name": "Дозор",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 6,
-    "target": "cell",
-    "radius": 1,
+    "name": "Дозор", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 6, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "watch", "duration": 10, "radius": 1, "mult": 2.5}],
     "desc": "Зона радиусом 1 на 10 сек: первый вошедший враг получает выстрел ×2.5."
   },
   "flashpoint": {
-    "name": "Вспышка",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 0,
-    "target": "self",
-    "radius": 0,
+    "name": "Вспышка", "ap": 4, "cast": 0.0, "cooldown": 6, "range": 0, "target": "self", "radius": 0, "gauge_spend": "all", "gauge_min": 0,
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "detonate", "radius": 6, "amount": 24, "blast": 1}],
-    "desc": "Все горящие клетки и горящие враги в радиусе 6 взрываются: 24 урона (горящим ×1.5)."
+    "effects": [{"type": "detonate", "radius": 6, "amount": 24, "blast": 1, "per_gauge": 0.2}],
+    "desc": "Все горящие клетки и горящие враги в радиусе 6 взрываются: 24 урона (горящим ×1.5). Тратит весь Жар: +20% за каждый."
   },
   "vow": {
-    "name": "Обет",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 0,
-    "range": 4,
-    "target": "ally",
+    "name": "Обет", "ap": 3, "cast": 0.0, "cooldown": 0, "range": 4, "target": "ally",
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
     "effects": [{"type": "delay", "time": 2.2, "name": "Обет", "effects": [{"type": "cleanse"}, {"type": "heal", "amount": 90}]}],
     "desc": "Через 2.2 сек союзник получает 90 HP и очищается от тегов."
   },
   "powder_keg": {
-    "name": "Бочка с порохом",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 2,
-    "range": 4,
-    "target": "cell",
-    "radius": 1,
+    "name": "Бочка с порохом", "ap": 2, "cast": 0.0, "cooldown": 2, "range": 4, "target": "cell", "radius": 1, "free_cell": true, "powder": true,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
     "effects": [{"type": "place_object", "object": "barrel_powder", "limit": 3}],
-    "desc": "Бочка на свободную клетку (до 3 бочек): укрытие, от огня или удара взрывается — 26 урона и Огонь вокруг.",
-    "free_cell": true
+    "desc": "Бочка на свободную клетку (до 3 бочек): укрытие, от огня или удара взрывается — 26 урона и Огонь вокруг. С Порохом — ×2, без — ×0.6."
   },
   "fuse": {
-    "name": "Фитиль",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 0,
-    "target": "self",
+    "name": "Фитиль", "ap": 2, "cast": 0.0, "cooldown": 5, "range": 0, "target": "self",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "fuse", "radius": 6, "delay": 2.0}],
     "desc": "Свои бочки в радиусе 6 взрываются через 2 сек."
   },
   "rhythm": {
-    "name": "Ритм",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 10,
-    "range": 0,
-    "target": "self",
-    "radius": 3,
+    "name": "Ритм", "ap": 3, "cast": 0.0, "cooldown": 10, "range": 0, "target": "self", "radius": 3,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "song", "beats": 4, "every": 2.0, "radius": 3, "finale": [{"type": "heal", "amount": 6, "per_note": 5}, {"type": "buff", "stat": "atk_mult", "value": 1.0, "per_note": 0.06, "duration": 6}]}],
     "desc": "Песня на 4 такта (8 сек): навыки союзников в радиусе 3 — ноты. Финал: союзникам рядом 4 HP и +6% урона за ноту на 6 сек."
   },
   "kick": {
-    "name": "Пинок",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 0,
-    "range": 1,
-    "target": "cell",
-    "radius": 0,
+    "name": "Пинок", "ap": 2, "cast": 0.0, "cooldown": 0, "range": 1, "target": "cell", "radius": 0,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
     "effects": [{"type": "push", "cells": 2, "amount": 14, "affects": "all"}],
     "desc": "Соседняя клетка: 14 урона врагу и толчок на 2 — кого угодно (союзника, бочку, тотем)."
   },
   "rush": {
-    "name": "Натиск",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 4,
-    "target": "cell",
+    "name": "Натиск", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 4, "target": "cell",
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
     "effects": [{"type": "rush", "length": 4, "cells": 2, "amount": 18}],
     "desc": "Бег по прямой до 4 клеток: первого на пути — 18 урона и толчок на 2 дальше."
   },
   "quake": {
-    "name": "Сотрясение",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 0,
-    "target": "self",
-    "radius": 1,
+    "name": "Сотрясение", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 0, "target": "self", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 2}]},
     "effects": [{"type": "push", "cells": 1, "amount": 10, "radius": 1, "affects": "all"}],
     "desc": "Все соседи (враги, союзники, объекты) отлетают на 1 клетку, врагам 10 урона."
   },
   "toss": {
-    "name": "Бросок",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 4,
-    "target": "cell",
-    "radius": 1,
+    "name": "Бросок", "ap": 3, "cast": 0.0, "cooldown": 3, "range": 4, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
     "effects": [{"type": "toss", "amount": 18, "splash": 12, "prefer": "enemy"}],
     "desc": "Хватает соседа (врага, союзника, бочку) и бросает на клетку до 4: брошенному врагу 18 урона, врагам у места падения 12. Бочка взрывается."
   },
   "fault_line": {
-    "name": "Разлом",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 3,
-    "target": "cell",
+    "name": "Разлом", "ap": 4, "cast": 0.0, "cooldown": 6, "range": 3, "target": "cell",
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "line", "length": 3, "amount": 16, "kind": "melee", "push": 2}],
     "desc": "Линия до 3 клеток: 16 урона и толчок на 2 от тарана каждому врагу."
   },
   "fan_flames": {
-    "name": "Раздуть",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 5,
-    "target": "cell",
-    "radius": 2,
+    "name": "Раздуть", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 5, "target": "cell", "radius": 2,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "spread_fire", "radius": 2, "duration": 4}],
     "desc": "Огонь в радиусе 2 от точки перекидывается на соседние клетки, горящие враги поджигают соседей. Без огня не работает."
   },
   "cinder_field": {
-    "name": "Тлеющее поле",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 0,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Тлеющее поле", "ap": 4, "cast": 0.0, "cooldown": 0, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "damage", "amount": 8, "kind": "spell", "radius": 1, "tag": "fire"}, {"type": "hazard", "hazard": "fire", "duration": 6, "radius": 1}],
     "desc": "Радиус 1: 8 урона + Огонь, клетки горят 6 сек."
   },
   "snare": {
-    "name": "Капкан",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 2,
-    "range": 4,
-    "target": "cell",
-    "radius": 0,
+    "name": "Капкан", "ap": 2, "cast": 0.0, "cooldown": 2, "range": 4, "target": "cell", "radius": 0,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "trap", "hazard": "snare", "limit": 3}],
     "desc": "Невидимый для врага капкан (до 3): 12 урона, держит 2.5 сек, пойманный раскрыт 5 сек (удар в спину от всех, +20% урона)."
   },
   "lure": {
-    "name": "Приманка",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 4,
-    "target": "cell",
-    "radius": 3,
+    "name": "Приманка", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 4, "target": "cell", "radius": 3, "free_cell": true,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "summon", "unit": "decoy", "duration": 6}],
-    "desc": "Чучело на клетку (6 сек): враги в радиусе 3 бросаются на него.",
-    "free_cell": true
+    "desc": "Чучело на клетку (6 сек): враги в радиусе 3 бросаются на него."
   },
   "hunter_mark": {
-    "name": "Метка охотника",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 6,
-    "target": "enemy",
+    "name": "Метка охотника", "ap": 2, "cast": 0.0, "cooldown": 6, "range": 6, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "buff", "stat": "exposed", "value": 1.25, "duration": 6, "affects": "enemies"}],
     "desc": "Враг раскрыт 6 сек: получает +25% урона и удар в спину от всех."
   },
   "bear_trap": {
-    "name": "Медвежий капкан",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 4,
-    "target": "cell",
-    "radius": 0,
+    "name": "Медвежий капкан", "ap": 3, "cast": 0.0, "cooldown": 3, "range": 4, "target": "cell", "radius": 0,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "trap", "hazard": "bear_trap", "limit": 2}],
     "desc": "Невидимый капкан (до 2): 30 урона, держит 3.5 сек, раскрывает 6 сек."
   },
   "hunting_horn": {
-    "name": "Рог загонщика",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 0,
-    "target": "self",
-    "radius": 3,
+    "name": "Рог загонщика", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self", "radius": 3,
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]},
     "effects": [{"type": "push", "cells": 2, "radius": 3, "affects": "enemies"}],
     "desc": "Враги в радиусе 3 отбегают на 2 клетки от ловчего — на капканы."
   },
   "ice_wall": {
-    "name": "Ледяная стена",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 4,
-    "target": "cell",
-    "radius": 1,
+    "name": "Ледяная стена", "ap": 3, "cast": 0.0, "cooldown": 5, "range": 4, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
     "effects": [{"type": "wall", "object": "ice_wall", "length": 3, "life": 10}],
     "desc": "Стена из 3 глыб поперёк направления (10 сек): перекрывает путь, укрывает."
   },
   "rink": {
-    "name": "Каток",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Каток", "ap": 2, "cast": 0.0, "cooldown": 6, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "terrain", "terrain": "ice_floor", "radius": 1, "duration": 8}],
     "desc": "Радиус 1: клетки 8 сек скользкий лёд — шаги и толчки проезжают дальше."
   },
   "shatter": {
-    "name": "Раскол",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 0,
-    "target": "self",
+    "name": "Раскол", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 0, "target": "self",
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "shatter", "radius": 6, "amount": 18, "blast": 1, "tag": "ice"}],
-    "desc": "Свои ледяные постройки в радиусе 6 взрываются: врагам рядом с каждой 18 урона + Лёд."
+    "effects": [{"type": "shatter", "amount": 18, "radius": 6, "blast": 1, "tag": "ice", "frozen": 22}],
+    "desc": "Свои ледяные постройки взрываются (18 урона рядом), враги с Холодом или вмороженные раскалываются: 22 урона +35% за стак."
   },
   "frost_guard": {
-    "name": "Ледяная броня",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 4,
-    "target": "ally",
+    "name": "Ледяная броня", "ap": 3, "cast": 0.0, "cooldown": 5, "range": 4, "target": "ally",
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 60}]},
-    "effects": [{"type": "shield", "amount": 40, "duration": 6}, {"type": "buff", "stat": "armor", "value": 3, "duration": 6}],
-    "desc": "Союзнику щит 40 и +3 брони на 6 сек."
+    "effects": [{"type": "shield", "amount": 40, "duration": 6}, {"type": "buff", "stat": "armor", "value": 3, "duration": 6}, {"type": "zone", "duration": 6, "every": 1.5, "radius": 1, "kind": "cold", "anchor": "target", "effects": [{"type": "mark", "mark": "cold", "stacks": 1, "duration": 5, "radius": 1}]}],
+    "desc": "Союзнику щит 40 и +3 брони на 6 сек; врагам рядом с ним раз в 1.5 сек — стак Холода."
   },
   "corpse_blast": {
-    "name": "Взрыв трупа",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 0,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Взрыв трупа", "ap": 2, "cast": 0.0, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "needs_corpse": true,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "corpse", "do": "blast", "amount": 24, "radius": 1, "tag": "poison"}],
-    "desc": "Труп у точки взрывается: 24 урона + Яд в радиусе 1.",
-    "needs_corpse": true
+    "desc": "Труп у точки взрывается: 24 урона + Яд в радиусе 1."
   },
   "raise_dead": {
-    "name": "Поднять мертвеца",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Поднять мертвеца", "ap": 3, "cast": 0.0, "cooldown": 3, "range": 5, "target": "cell", "radius": 1, "needs_corpse": true,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "corpse", "do": "raise", "unit": "risen", "limit": 2, "duration": 15}],
-    "desc": "Труп встаёт скелетом на 15 сек (до 2).",
-    "needs_corpse": true
+    "desc": "Труп встаёт скелетом на 15 сек (до 2)."
   },
   "devour": {
-    "name": "Пожрать",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 0,
-    "target": "self",
-    "radius": 2,
+    "name": "Пожрать", "ap": 2, "cast": 0.0, "cooldown": 4, "range": 0, "target": "self", "radius": 2, "needs_corpse": true,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "corpse", "do": "devour", "radius": 2, "shield": 18}],
-    "desc": "Трупы в радиусе 2 исчезают: некроманту щит 18 за каждый.",
-    "needs_corpse": true
+    "desc": "Трупы в радиусе 2 исчезают: некроманту щит 18 за каждый."
   },
   "corpse_cloud": {
-    "name": "Чумной труп",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 0,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Чумной труп", "ap": 2, "cast": 0.0, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "needs_corpse": true,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "corpse", "do": "cloud", "radius": 1, "duration": 6}],
-    "desc": "Труп у точки становится облаком яда (радиус 1, 6 сек, только по врагам).",
-    "needs_corpse": true
+    "desc": "Труп у точки становится облаком яда (радиус 1, 6 сек, только по врагам)."
   },
   "bone_wall": {
-    "name": "Костяная стена",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 0,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Костяная стена", "ap": 2, "cast": 0.0, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "needs_corpse": true,
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "corpse", "do": "wall", "object": "bone_wall", "life": 12}],
-    "desc": "Труп у точки становится костяной стеной (12 сек): перекрывает путь.",
-    "needs_corpse": true
+    "desc": "Труп у точки становится костяной стеной (12 сек): перекрывает путь."
   },
   "rewind": {
-    "name": "Откат",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 5,
-    "target": "ally",
+    "name": "Откат", "ap": 0, "cast": 0.0, "cooldown": 6, "range": 5, "target": "ally", "gauge_cost": 3,
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 40}]},
     "effects": [{"type": "rewind", "seconds": 3.0}],
-    "desc": "Союзник возвращается на клетку и к HP, какие были 3 сек назад (HP — только если было больше)."
+    "desc": "Тратит 3 Времени. Союзник возвращается на клетку и к HP, какие были 3 сек назад (HP — только если было больше)."
   },
   "haste": {
-    "name": "Ускорение",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 5,
-    "target": "ally",
+    "name": "Ускорение", "ap": 0, "cast": 0.0, "cooldown": 8, "range": 5, "target": "ally", "gauge_cost": 2,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "buff", "stat": "ap_rate", "value": 0.5, "duration": 6}, {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 6}],
-    "desc": "Союзник 6 сек: AP копятся вдвое быстрее, атаки на 30% быстрее."
+    "desc": "Тратит 2 Времени. Союзник 6 сек: AP копятся вдвое быстрее, атаки на 30% быстрее."
   },
   "stasis": {
-    "name": "Стазис",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 5,
-    "target": "enemy",
+    "name": "Стазис", "ap": 0, "cast": 0.0, "cooldown": 8, "range": 5, "target": "enemy", "gauge_gain": 2,
     "auto": {"on": true, "conds": [{"type": "target_casting"}]},
     "effects": [{"type": "stasis", "duration": 3}],
-    "desc": "Цель (враг или союзник) 3 сек вне времени: неуязвима и не действует."
+    "desc": "+2 Времени. Цель (враг или союзник) 3 сек вне времени: неуязвима и не действует."
   },
   "slow_field": {
-    "name": "Вязкое время",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Вязкое время", "ap": 0, "cast": 0.0, "cooldown": 6, "range": 5, "target": "cell", "radius": 1, "gauge_gain": 2,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "buff", "stat": "slow", "value": 2.0, "duration": 5, "radius": 1, "affects": "enemies"}, {"type": "buff", "stat": "atk_speed", "value": 1.4, "duration": 5, "radius": 1, "affects": "enemies"}],
-    "desc": "Радиус 1: враги 5 сек ходят вдвое медленнее и бьют на 40% реже."
+    "desc": "+2 Времени. Радиус 1: враги 5 сек ходят вдвое медленнее и бьют на 40% реже."
   },
   "rewind_foe": {
-    "name": "Вспять",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 6,
-    "target": "enemy",
+    "name": "Вспять", "ap": 0, "cast": 0.0, "cooldown": 4, "range": 6, "target": "enemy", "gauge_cost": 2,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "rewind", "seconds": 3.0, "hp": false}],
-    "desc": "Враг возвращается на клетку, где был 3 сек назад."
+    "desc": "Тратит 2 Времени. Враг возвращается на клетку, где был 3 сек назад."
   },
   "singularity": {
-    "name": "Сингулярность",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 5,
-    "target": "cell",
-    "radius": 2,
+    "name": "Сингулярность", "ap": 4, "cast": 0.0, "cooldown": 6, "range": 5, "target": "cell", "radius": 2,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "gather", "radius": 2, "cells": 2}],
     "desc": "Враги в радиусе 2 стягиваются к точке на 2 клетки."
   },
   "swap": {
-    "name": "Обмен",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 5,
-    "target": "enemy",
+    "name": "Обмен", "ap": 2, "cast": 0.0, "cooldown": 5, "range": 5, "target": "enemy",
     "auto": {"on": false, "conds": []},
     "effects": [{"type": "swap"}],
     "desc": "Гравитомант и враг меняются местами (до 5 клеток)."
   },
   "levitate": {
-    "name": "Невесомость",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 5,
-    "target": "enemy",
+    "name": "Невесомость", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 5, "target": "enemy",
     "auto": {"on": true, "conds": [{"type": "target_casting"}]},
     "effects": [{"type": "levitate", "duration": 3, "fall": 12}],
     "desc": "Враг 3 сек в воздухе: не действует, толчок по нему на 2 клетки дальше, падая — 12 урона."
   },
   "collapse": {
-    "name": "Коллапс",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 5,
-    "target": "cell",
-    "radius": 2,
+    "name": "Коллапс", "ap": 4, "cast": 0.0, "cooldown": 5, "range": 5, "target": "cell", "radius": 2, "gauge_spend": "all", "gauge_min": 0,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [{"type": "collapse", "radius": 2, "amount": 6, "per_unit": 6}],
-    "desc": "Враги в радиусе 2: 6 урона + 6 за каждого врага в радиусе."
+    "effects": [{"type": "collapse", "radius": 2, "amount": 6, "per_unit": 6, "per_gauge": 0.15}],
+    "desc": "Враги в радиусе 2: 6 урона + 6 за каждого врага в радиусе. Тратит всю Массу: +15% урона за стак."
   },
   "repulse": {
-    "name": "Отталкивание",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 5,
-    "range": 5,
-    "target": "cell",
-    "radius": 2,
+    "name": "Отталкивание", "ap": 3, "cast": 0.0, "cooldown": 5, "range": 5, "target": "cell", "radius": 2,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "push", "cells": 2, "radius": 2, "affects": "enemies", "from": "center"}],
     "desc": "Враги в радиусе 2 от точки разлетаются на 2 клетки."
   },
   "earth_power": {
-    "name": "Сила земли",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 1.5,
-    "range": 4,
-    "target": "enemy",
+    "name": "Сила земли", "ap": 3, "cast": 0.0, "cooldown": 1.5, "range": 4, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "terrain_cast", "by": {"grass": [{"type": "damage", "amount": 14, "kind": "spell"}, {"type": "stun", "duration": 1.4, "look": "root"}], "water": [{"type": "damage", "amount": 20, "kind": "spell", "tag": "water"}, {"type": "knockback", "cells": 1}], "stone": [{"type": "damage", "amount": 34, "kind": "ranged"}], "lava": [{"type": "damage", "amount": 24, "kind": "spell", "radius": 1, "tag": "fire"}], "ice_floor": [{"type": "damage", "amount": 22, "kind": "spell", "radius": 1, "tag": "ice"}], "default": [{"type": "damage", "amount": 18, "kind": "spell"}]}}],
-    "desc": "По клетке под ногами: трава — 14 урона и корни 1.4 сек; вода — 20 + Вода и толчок; камень — 34 урона; лава — 24 + Огонь рядом; лёд — 22 + Лёд рядом."
+    "desc": "По клетке под целью: трава — 14 урона и корни 1.4 сек; вода — 20 + Вода и толчок; камень — 34 урона; лава — 24 + Огонь рядом; лёд — 22 + Лёд рядом."
   },
   "reshape": {
-    "name": "Перековать",
-    "ap": 1,
-    "cast": 0.0,
-    "cooldown": 2,
-    "range": 0,
-    "target": "self",
+    "name": "Перековать", "ap": 1, "cast": 0.0, "cooldown": 2, "range": 4, "target": "cell",
     "auto": {"on": false, "conds": []},
-    "effects": [{"type": "terrain", "cycle": ["grass", "water", "stone"], "radius": 0, "duration": 20}],
-    "desc": "Клетка под геомантом на 20 сек: трава → вода → камень → трава."
+    "effects": [{"type": "terrain", "cycle": ["grass", "water", "stone"], "radius": 0, "duration": 12}],
+    "desc": "Клетка (до 4) на 12 сек перековывается: трава → вода → камень → трава. Готовит Силу земли под врагом."
   },
   "rockfall": {
-    "name": "Обвал",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Обвал", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 5, "target": "cell", "radius": 1, "free_cell": true,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
     "effects": [{"type": "place_object", "object": "boulder", "limit": 2}, {"type": "damage", "amount": 14, "kind": "spell", "radius": 1}],
-    "desc": "Валун падает на свободную клетку (до 2): 14 урона врагам рядом. Валун — укрытие и снаряд для Тарана.",
-    "free_cell": true
+    "desc": "Валун падает на свободную клетку (до 2): 14 урона врагам рядом. Валун — укрытие и снаряд для Тарана."
   },
   "lava_vent": {
-    "name": "Жерло",
-    "ap": 4,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Жерло", "ap": 4, "cast": 0.0, "cooldown": 8, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "terrain", "terrain": "lava", "radius": 1, "duration": 8}],
     "desc": "Радиус 1: клетки 8 сек становятся лавой (жжёт всех, кроме любящих жар)."
   },
   "spring": {
-    "name": "Родник",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Родник", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "terrain", "terrain": "water", "radius": 1, "duration": 8}, {"type": "status", "tag": "water", "radius": 1}],
     "desc": "Радиус 1: клетки 8 сек — вода; врагам Вода (для Грозы и Льда)."
   },
   "coat": {
-    "name": "Смазка",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 4,
-    "target": "ally",
+    "name": "Смазка", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 4, "target": "ally",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "buff", "stat": "atk_tag", "value": "fire", "duration": 10}, {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 10}],
     "desc": "Атаки союзника 10 сек поджигают (Огонь) и бьют ×1.2."
   },
   "flask": {
-    "name": "Склянка",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 2,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Склянка", "ap": 2, "cast": 0.0, "cooldown": 2, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "damage", "amount": 8, "kind": "ranged", "radius": 1}, {"type": "status", "tag": "water", "radius": 1}],
     "desc": "Радиус 1: 8 урона, враги мокнут (Вода) — для Грозы, Льда, Огня."
   },
   "reagent": {
-    "name": "Реактив",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 5,
-    "target": "enemy",
+    "name": "Реактив", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 5, "target": "enemy",
     "auto": {"on": true, "conds": [{"type": "target_has_tag", "value": "water"}]},
     "effects": [{"type": "reagent", "per_tag": 14}],
     "desc": "14 урона за каждый тег на враге, теги обновляются."
   },
   "toxic_flask": {
-    "name": "Ядовитая склянка",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 5,
-    "target": "cell",
-    "radius": 1,
+    "name": "Ядовитая склянка", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 5, "target": "cell", "radius": 1,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "status", "tag": "poison", "radius": 1}, {"type": "hazard", "hazard": "poison", "duration": 6, "radius": 1}],
     "desc": "Радиус 1: Яд и ядовитое облако 6 сек (только по врагам)."
   },
   "volatile_mix": {
-    "name": "Гремучая смесь",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 5,
-    "target": "enemy",
+    "name": "Гремучая смесь", "ap": 3, "cast": 0.0, "cooldown": 4, "range": 5, "target": "enemy",
     "auto": {"on": true, "conds": [{"type": "target_has_tag", "value": "oil"}]},
     "effects": [{"type": "reagent", "per_tag": 14, "explode": true, "radius": 1}],
     "desc": "Каждый тег на враге взрывается: 14 урона врагам рядом, теги исчезают."
   },
   "blood_strike": {
-    "name": "Кровавый удар",
-    "ap": 0,
-    "cast": 0.0,
-    "cooldown": 2.5,
-    "range": 1,
-    "target": "enemy",
+    "name": "Кровавый удар", "ap": 0, "cast": 0.0, "cooldown": 2.5, "range": 1, "target": "enemy", "hp_cost": 10,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "damage", "amount": 38, "kind": "melee", "lifesteal": 0.3}],
-    "desc": "Стоит 10 HP: 38 урона, лечит на 30% нанесённого.",
-    "hp_cost": 10
+    "desc": "Стоит 10 HP: 38 урона, лечит на 30% нанесённого."
   },
   "bloodlet": {
-    "name": "Кровопускание",
-    "ap": 0,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 0,
-    "target": "self",
+    "name": "Кровопускание", "ap": 0, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self", "hp_cost": 16,
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]},
     "effects": [{"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 6}],
-    "desc": "Стоит 16 HP: 6 сек атаки на 40% быстрее и ×1.2.",
-    "hp_cost": 16
+    "desc": "Стоит 16 HP: 6 сек атаки на 40% быстрее и ×1.2."
   },
   "trance": {
-    "name": "Кровавый транс",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 14,
-    "range": 0,
-    "target": "self",
+    "name": "Кровавый транс", "ap": 2, "cast": 0.0, "cooldown": 14, "range": 0, "target": "self",
     "auto": {"on": true, "conds": [{"type": "self_hp_below", "value": 50}]},
     "effects": [{"type": "buff", "stat": "trance", "value": 0.01, "duration": 8}, {"type": "buff", "stat": "dmg_taken", "value": 0.85, "duration": 8}],
     "desc": "8 сек: любое лечение берсерка вместо HP даёт +1% урона за 1 HP (до ×2), урон по нему −15%."
   },
   "cleave": {
-    "name": "Размах",
-    "ap": 0,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 0,
-    "target": "self",
-    "radius": 1,
+    "name": "Размах", "ap": 0, "cast": 0.0, "cooldown": 3, "range": 0, "target": "self", "radius": 1, "hp_cost": 12,
     "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 2}]},
-    "effects": [{"type": "damage", "amount": 26, "kind": "melee", "radius": 1}],
-    "desc": "Стоит 12 HP: 26 урона всем врагам рядом.",
-    "hp_cost": 12
+    "effects": [{"type": "damage", "amount": 26, "kind": "melee", "radius": 1, "on_hit_buff": {"stat": "bleed", "value": 4, "duration": 4}}],
+    "desc": "Стоит 12 HP: 26 урона всем врагам рядом и кровотечение 4/сек."
   },
   "undying_rage": {
-    "name": "Неистовая ярость",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 20,
-    "range": 0,
-    "target": "self",
+    "name": "Неистовая ярость", "ap": 2, "cast": 0.0, "cooldown": 20, "range": 0, "target": "self",
     "auto": {"on": true, "conds": [{"type": "self_hp_below", "value": 20}]},
     "effects": [{"type": "buff", "stat": "undying", "value": 1, "duration": 4}, {"type": "buff", "stat": "atk_mult", "value": 1.3, "duration": 4}],
     "desc": "4 сек берсерк не умирает (HP не ниже 1), атаки ×1.3."
   },
   "forward": {
-    "name": "Вперёд!",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 3,
-    "range": 5,
-    "target": "ally",
+    "name": "Вперёд!", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 5, "target": "ally",
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "extra_attack", "count": 1, "ap": 1}],
-    "desc": "Союзник сразу атакует ещё раз (если некого бить — +1 AP)."
+    "effects": [{"type": "extra_attack", "count": 1, "ap": 1, "banner_count": 1}],
+    "desc": "Союзник сразу атакует ещё раз (у знамени — дважды; если некого бить — +1 AP)."
   },
   "regroup": {
-    "name": "Перестроение",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 6,
-    "target": "cell",
+    "name": "Перестроение", "ap": 2, "cast": 0.0, "cooldown": 4, "range": 6, "target": "cell", "free_cell": true,
     "auto": {"on": false, "conds": []},
-    "effects": [{"type": "regroup", "reach": 2}],
-    "desc": "Ближайший к клетке союзник (до 2 клеток) мгновенно встаёт на неё.",
-    "free_cell": true
+    "effects": [{"type": "regroup", "reach": 2, "banner_shield": 25}],
+    "desc": "Ближайший к клетке союзник (до 2 клеток) мгновенно встаёт на неё; у знамени — щит 25."
   },
   "focus": {
-    "name": "Фокус",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 7,
-    "target": "enemy",
+    "name": "Фокус", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 7, "target": "enemy",
     "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 50}]},
-    "effects": [{"type": "focus", "mult": 1.2, "duration": 5}],
-    "desc": "Весь отряд атакует цель, она получает +20% урона 5 сек."
+    "effects": [{"type": "focus", "mult": 1.2, "duration": 5, "banner_ap": 1}],
+    "desc": "Весь отряд атакует цель, она получает +20% урона 5 сек; бойцы у знамени +1 AP."
   },
   "all_out": {
-    "name": "Общий натиск",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 10,
-    "range": 0,
-    "target": "self",
-    "radius": 3,
+    "name": "Общий натиск", "ap": 3, "cast": 0.0, "cooldown": 10, "range": 0, "target": "self", "radius": 3,
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "buff", "stat": "atk_speed", "value": 0.75, "duration": 5, "radius": 3, "affects": "allies"}, {"type": "buff", "stat": "slow", "value": 0.8, "duration": 5, "radius": 3, "affects": "allies"}],
     "desc": "Союзники в радиусе 3: атаки на 25% быстрее и шаги быстрее 5 сек."
   },
   "ambush_order": {
-    "name": "Засада",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 8,
-    "range": 7,
-    "target": "enemy",
+    "name": "Засада", "ap": 3, "cast": 0.0, "cooldown": 8, "range": 7, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "buff", "stat": "exposed", "value": 1.25, "duration": 5, "affects": "enemies"}, {"type": "focus", "mult": 1.0, "duration": 0.1}],
     "desc": "Враг раскрыт 5 сек (удар в спину от всех, +25% урона), отряд атакует его."
   },
   "tether": {
-    "name": "Привязь",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 2,
-    "range": 5,
-    "target": "ally",
+    "name": "Привязь", "ap": 2, "cast": 0.0, "cooldown": 2, "range": 5, "target": "ally",
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "tether", "duration": 15, "regen": 3}],
-    "desc": "15 сек: половина урона по союзнику — в связующего, союзнику +3 HP/сек."
+    "effects": [{"type": "tether", "duration": 15, "regen": 3, "limit": 3}],
+    "desc": "15 сек: половина урона по союзнику — в связующего, союзнику +3 HP/сек. Нитей — до 3."
   },
   "merge": {
-    "name": "Слияние",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 14,
-    "range": 0,
-    "target": "self",
+    "name": "Слияние", "ap": 3, "cast": 0.0, "cooldown": 14, "range": 0, "target": "self",
     "auto": {"on": true, "conds": [{"type": "self_hp_below", "value": 40}]},
     "effects": [{"type": "merge", "duration": 6, "host": [{"type": "buff", "stat": "armor", "value": 3, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 6}]}],
     "desc": "Входит в союзника на привязи на 6 сек: не цель для врагов; союзнику +3 брони и урон ×1.25."
   },
   "life_transfer": {
-    "name": "Отдать силы",
-    "ap": 1,
-    "cast": 0.0,
-    "cooldown": 2,
-    "range": 5,
-    "target": "ally",
+    "name": "Отдать силы", "ap": 1, "cast": 0.0, "cooldown": 2, "range": 5, "target": "ally",
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 40}]},
     "effects": [{"type": "life_transfer", "cost": 20, "amount": 32}],
     "desc": "Связующий теряет 20 HP, союзник получает 32."
   },
   "soul_shield": {
-    "name": "Щит души",
-    "ap": 3,
-    "cast": 0.0,
-    "cooldown": 6,
-    "range": 5,
-    "target": "ally",
+    "name": "Щит души", "ap": 3, "cast": 0.0, "cooldown": 6, "range": 5, "target": "ally",
     "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 50}]},
     "effects": [{"type": "shield", "amount": 50, "duration": 6}],
     "desc": "Союзнику щит 50 на 6 сек."
   },
   "share_pain": {
-    "name": "Разделить боль",
-    "ap": 2,
-    "cast": 0.0,
-    "cooldown": 4,
-    "range": 5,
-    "target": "enemy",
+    "name": "Разделить боль", "ap": 2, "cast": 0.0, "cooldown": 4, "range": 5, "target": "enemy",
     "auto": {"on": true, "conds": []},
     "effects": [{"type": "damage", "amount": 16, "kind": "spell"}, {"type": "buff", "stat": "atk_mult", "value": 0.7, "duration": 6, "affects": "enemies"}],
     "desc": "Враг: 16 урона и −30% к его урону на 6 сек."
+  },
+  "fire_lance": {
+    "name": "Огненное копьё", "ap": 4, "cast": 0.5, "cooldown": 5, "range": 5, "target": "cell",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "line", "length": 5, "amount": 30, "kind": "spell", "tag": "fire"}, {"type": "hazard", "hazard": "fire", "duration": 4, "radius": 0}],
+    "desc": "Каст 0.5 сек: копьё огня по линии на 5 клеток — 30 урона и Огонь каждому, точка удара горит."
+  },
+  "sanctuary": {
+    "name": "Святилище", "ap": 4, "cast": 0, "cooldown": 12, "range": 0, "target": "self", "radius": 2, "gauge_cost": 2,
+    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 60}]},
+    "effects": [{"type": "shield", "amount": 25, "duration": 6, "radius": 2}, {"type": "cleanse", "radius": 2}],
+    "desc": "Чудо (2 Веры). Союзники в радиусе 2: щит 25 и теги сняты."
+  },
+  "divine_light": {
+    "name": "Божественный свет", "ap": 2, "cast": 1.0, "cooldown": 20, "range": 0, "target": "self", "radius": 3, "ult": true, "ult_cond": {"live": "gauge", "need": 5, "desc": "полная Вера (5)"}, "gauge_spend": "all",
+    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 50}]},
+    "effects": [{"type": "heal", "amount": 60, "radius": 3}, {"type": "damage", "amount": 30, "kind": "spell", "radius": 3}],
+    "desc": "Условие: полная Вера (5). Каст 1 сек, радиус 3: союзники +60 HP, враги — 30 урона."
+  },
+  "backstab": {
+    "name": "Удар в спину", "ap": 3, "cast": 0, "cooldown": 3, "range": 1, "target": "enemy", "ai": "enemy_in_range",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 30, "kind": "melee", "backstab": 2.2, "from_shadow": 1.5}],
+    "desc": "30 урона, в спину ×2.2, из тени ещё ×1.5."
+  },
+  "smoke_bomb": {
+    "name": "Дымовая шашка", "ap": 3, "cast": 0, "cooldown": 12, "range": 4, "target": "cell", "radius": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "stun", "duration": 1.5, "radius": 1, "look": "blind"}, {"type": "stealth", "duration": 3, "radius": 1, "mult": 1.5}],
+    "desc": "Радиус 1: враги ослеплены 1.5 сек, союзники в дыму скрыты 3 сек."
+  },
+  "ward_totem": {
+    "name": "Тотем-страж", "ap": 3, "cast": 0, "cooldown": 14, "range": 3, "target": "cell", "place": "allies", "ai": "summon_self",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "summon", "unit": "totem_ward", "duration": 12}],
+    "desc": "Тотем-страж (12 сек): враги в радиусе 2 бьют его."
+  },
+  "crescendo": {
+    "name": "Крещендо", "ap": 1, "cast": 0, "cooldown": 18, "range": 0, "target": "self", "radius": 3, "ult": true, "ult_cond": {"live": "song_notes", "need": 3, "desc": "песня с 3 нотами"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "song_finale", "notes": 2, "mult": 1.5}],
+    "desc": "Условие: песня с 3 нотами. Финал текущей песни прямо сейчас: +2 ноты и все ноты ×1.5."
+  },
+  "slug_shot": {
+    "name": "Жакан", "ap": 3, "cast": 0, "cooldown": 4, "range": 7, "target": "enemy",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 30, "kind": "ranged", "vs_held": 2.0}, {"type": "knockback", "cells": 1}],
+    "desc": "Дальность 7: пуля — 30 урона, по пойманному (капкан, сеть, корни) ×2, толчок."
+  },
+  "caltrops": {
+    "name": "Чеснок", "ap": 2, "cast": 0, "cooldown": 9, "range": 5, "target": "cell", "radius": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "hazard", "hazard": "briar", "duration": 8, "radius": 1}, {"type": "buff", "stat": "slow", "value": 1.6, "duration": 4, "affects": "enemies", "radius": 1}],
+    "desc": "Радиус 1: рассыпает шипы на 8 сек, враги там замедлены."
+  },
+  "absolute_zero": {
+    "name": "Абсолютный ноль", "ap": 2, "cast": 1.0, "cooldown": 24, "range": 0, "target": "self", "radius": 3, "ult": true, "ult_cond": {"live": "cold", "need": 2, "desc": "2 врага с Холодом"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "damage", "amount": 30, "kind": "spell", "radius": 3, "tag": "ice"}, {"type": "mark", "mark": "cold", "stacks": 3, "duration": 6, "radius": 3}],
+    "desc": "Условие: 2 врага с Холодом. Каст 1 сек, радиус 3: 30 урона льдом и 3 стака Холода — все вморожены."
+  },
+  "time_loop": {
+    "name": "Петля времени", "ap": 0, "cast": 0, "cooldown": 9, "range": 5, "target": "ally", "ai": "shield_ally", "gauge_cost": 3,
+    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
+    "effects": [{"type": "shield", "amount": 20, "duration": 4}, {"type": "delay", "time": 4.0, "name": "Петля", "effects": [{"type": "rewind", "seconds": 4.0}]}],
+    "desc": "Тратит 3 Времени. Союзнику щит 20; через 4 сек он возвращается на клетку и к HP, какие были сейчас."
+  },
+  "time_stop": {
+    "name": "Остановка времени", "ap": 0, "cast": 1.0, "cooldown": 26, "range": 0, "target": "self", "radius": 3, "ult": true, "ult_cond": {"count": "skill", "need": 4, "desc": "4 своих навыка"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "stun", "duration": 3.0, "radius": 3, "look": "stasis"}],
+    "desc": "Условие: 4 своих навыка. Каст 1 сек, радиус 3: время врагов останавливается на 3 сек."
+  },
+  "crush": {
+    "name": "Давление", "ap": 3, "cast": 0, "cooldown": 4, "range": 6, "target": "enemy",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 26, "kind": "spell", "per_density": 0.35}, {"type": "buff", "stat": "slow", "value": 1.5, "duration": 4, "affects": "enemies"}],
+    "desc": "Дальность 6: 26 урона +35% за каждого врага вплотную к цели, замедление."
+  },
+  "gravity_well": {
+    "name": "Гравитационный колодец", "ap": 3, "cast": 0, "cooldown": 10, "range": 5, "target": "cell", "radius": 2,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "zone", "duration": 4, "every": 1.0, "radius": 2, "kind": "gravity", "now": true, "effects": [{"type": "gather", "radius": 2, "cells": 1}]}, {"type": "buff", "stat": "slow", "value": 1.6, "duration": 5, "affects": "enemies", "radius": 2}],
+    "desc": "Радиус 2: 4 сек враги каждую секунду сдвигаются к центру, замедлены."
+  },
+  "black_hole": {
+    "name": "Чёрная дыра", "ap": 2, "cast": 1.2, "cooldown": 24, "range": 6, "target": "cell", "radius": 3, "ult": true, "ult_cond": {"live": "density", "need": 2, "desc": "враг, к которому прижаты ещё 2"}, "gauge_spend": "all", "gauge_min": 0,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "gather", "radius": 3, "cells": 3}, {"type": "damage", "amount": 40, "kind": "spell", "radius": 1, "per_density": 0.3, "per_gauge": 0.15}],
+    "desc": "Условие: враг, к которому прижаты ещё 2. Каст 1.2 сек: враги в радиусе 3 падают к центру, в центре — 40 урона +30% за каждого соседа. Тратит всю Массу: +15% урона за стак."
+  },
+  "stone_skin": {
+    "name": "Каменная кожа", "ap": 3, "cast": 0, "cooldown": 10, "range": 5, "target": "ally", "ai": "shield_ally",
+    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
+    "effects": [{"type": "buff", "stat": "armor", "value": 6, "duration": 6}, {"type": "buff", "stat": "thorns", "value": 0.4, "duration": 6}],
+    "desc": "Союзнику: +6 брони и шипы на 6 сек — каменная кожа."
+  },
+  "rupture": {
+    "name": "Разрыв", "ap": 2, "cast": 0, "cooldown": 3, "range": 1, "target": "enemy", "hp_cost": 8, "ai": "enemy_in_range",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 30, "kind": "melee", "on_hit_buff": {"stat": "bleed", "value": 8, "duration": 5}}],
+    "desc": "Стоит 8 HP: 30 урона и кровотечение 8/сек 5 сек."
+  },
+  "blood_moon": {
+    "name": "Кровавая луна", "ap": 1, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "radius": 2, "hp_cost": 20, "ult": true, "ult_cond": {"live": "hp_lost", "need": 50, "desc": "потеряно 50% HP"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "damage", "amount": 45, "kind": "melee", "radius": 2, "lifesteal": 0.5}, {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 6}],
+    "desc": "Условие: потеряно 50% HP. Стоит 20 HP. Радиус 2: 45 урона с вампиризмом 50%; 6 сек берсерк бьёт на 30% чаще и на 20% сильнее."
+  },
+  "shield_formation": {
+    "name": "Строй щитов", "ap": 3, "cast": 0, "cooldown": 12, "range": 0, "target": "self", "radius": 2,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "shield", "amount": 25, "duration": 6, "radius": 2}, {"type": "buff", "stat": "armor", "value": 3, "duration": 6, "radius": 2}],
+    "desc": "Союзники в радиусе 2: щит 25 и +3 брони на 6 сек."
+  },
+  "grand_plan": {
+    "name": "Генеральный план", "ap": 2, "cast": 0.8, "cooldown": 30, "range": 0, "target": "self", "radius": 4, "ult": true, "ult_cond": {"count": "order", "need": 3, "desc": "3 приказа"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "refresh", "ap": 3, "radius": 4, "cooldowns": true}, {"type": "buff", "stat": "atk_mult", "value": 1.3, "duration": 6, "radius": 4}],
+    "desc": "Условие: 3 приказа. Каст 0.8 сек, радиус 4: союзникам +3 AP, их перезарядки сброшены, урон ×1.3 на 6 сек."
+  },
+  "bond_of_souls": {
+    "name": "Узы душ", "ap": 2, "cast": 0.8, "cooldown": 24, "range": 0, "target": "self", "radius": 4, "ult": true, "ult_cond": {"live": "tethers", "need": 2, "desc": "2 союзника на нитях"},
+    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 55}]},
+    "effects": [{"type": "tether_all", "radius": 5, "limit": 4, "duration": 15, "regen": 5}, {"type": "shield", "amount": 35, "duration": 6, "radius": 5}],
+    "desc": "Условие: 2 союзника на нитях. Каст 0.8 сек: нити ко всем союзникам в радиусе 5 на 15 сек, +5 HP/сек и щит 35."
+  },
+  "challenge": {
+    "name": "Вызов", "ap": 2, "cast": 0, "cooldown": 6, "range": 4, "target": "enemy",
+    "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 101}]},
+    "effects": [{"type": "mark", "mark": "challenge", "stacks": 1, "duration": 8}],
+    "desc": "Враг вызван на поединок 8 сек: бьёт только воина, воин наносит ему ×1.3 и получает от него ×0.75. Вызов на поле один."
+  },
+  "feint": {
+    "name": "Финт", "ap": 2, "cast": 0, "cooldown": 5, "range": 1, "target": "enemy", "ai": "enemy_in_range",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 18, "kind": "melee"}, {"type": "buff", "stat": "exposed", "value": 1.2, "duration": 3, "affects": "enemies"}, {"type": "mark", "mark": "challenge", "stacks": 1, "duration": 8, "if_mark": "challenge"}],
+    "desc": "18 урона, цель раскрыта 3 сек (удар в спину от всех). По вызванному — вызов обновляется."
+  },
+  "retarget": {
+    "name": "Смена цели", "ap": 3, "cast": 0, "cooldown": 8, "range": 4, "target": "enemy",
+    "auto": {"on": true, "conds": [{"type": "target_casting"}]},
+    "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 15, "kind": "melee"}, {"type": "mark", "mark": "challenge", "stacks": 1, "duration": 8}],
+    "desc": "Прыжок к врагу (до 4), 15 урона и вызов переходит на него."
+  },
+  "duel_execute": {
+    "name": "Казнь", "ap": 4, "cast": 0, "cooldown": 8, "range": 1, "target": "enemy", "needs_mark": "challenge", "ai": "enemy_in_range", "gauge_spend": "all", "gauge_min": 0,
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 40, "kind": "melee", "execute": {"below": 0.4, "mult": 2.0}, "per_mark": {"mark": "challenge", "mult": 0.3, "consume": true}, "per_gauge": 0.25}],
+    "desc": "Только по вызванному: 40 урона ×1.3, ×2 если HP < 40%. Тратит всю Ярость поединка: +25% за стак. Снимает вызов."
+  },
+  "disarm": {
+    "name": "Обезоружить", "ap": 3, "cast": 0, "cooldown": 9, "range": 1, "target": "enemy", "ai": "enemy_in_range",
+    "auto": {"on": true, "conds": [{"type": "target_casting"}]},
+    "effects": [{"type": "buff", "stat": "atk_mult", "value": 0.5, "duration": 5, "affects": "enemies"}, {"type": "buff", "stat": "silence", "value": 1, "duration": 3, "affects": "enemies"}, {"type": "damage", "amount": 10, "kind": "melee"}],
+    "desc": "10 урона; враг 5 сек бьёт вдвое слабее и 3 сек не применяет навыки."
+  },
+  "duel": {
+    "name": "Поединок", "ap": 2, "cast": 0, "cooldown": 24, "range": 4, "target": "enemy", "ult": true, "ult_cond": {"count": "duel_hit", "need": 4, "desc": "4 удара по вызванному"},
+    "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 101}]},
+    "effects": [{"type": "mark", "mark": "duel", "stacks": 1, "duration": 10}, {"type": "buff", "stat": "undying", "value": 1, "duration": 3, "at": "caster"}],
+    "desc": "Условие: 4 удара по вызванному. Поединок 10 сек: цель бьёт только воина, воин наносит ей ×1.6 и получает ×0.5; первые 3 сек воин не падает."
+  },
+  "quiver_fire": {
+    "name": "Огненные стрелы", "ap": 1, "cast": 0, "cooldown": 2, "range": 0, "target": "self",
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "quiver", "arrow": "fire", "shots": 3, "mult": 1.2}],
+    "desc": "Колчан: огонь — цель горит. Обычные атаки и выстрелы несут этот эффект; 3 первых выстрела ×1.2."
+  },
+  "quiver_frost": {
+    "name": "Ледяные стрелы", "ap": 1, "cast": 0, "cooldown": 2, "range": 0, "target": "self",
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "quiver", "arrow": "frost", "shots": 3, "mult": 1.2}],
+    "desc": "Колчан: холод — стаки Холода, 3 стака вмораживают. Обычные атаки и выстрелы несут этот эффект; 3 первых выстрела ×1.2."
+  },
+  "quiver_barbed": {
+    "name": "Зазубренные стрелы", "ap": 1, "cast": 0, "cooldown": 2, "range": 0, "target": "self",
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "quiver", "arrow": "barbed", "shots": 3, "mult": 1.2}],
+    "desc": "Колчан: кровотечение 4/сек. Обычные атаки и выстрелы несут этот эффект; 3 первых выстрела ×1.2."
+  },
+  "quiver_blunt": {
+    "name": "Тупые стрелы", "ap": 1, "cast": 0, "cooldown": 2, "range": 0, "target": "self",
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "quiver", "arrow": "blunt", "shots": 3, "mult": 1.2}],
+    "desc": "Колчан: толчок на 1 и сбитый каст. Обычные атаки и выстрелы несут этот эффект; 3 первых выстрела ×1.2."
+  },
+  "all_arrows": {
+    "name": "Все стрелы", "ap": 1, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "ult": true, "ult_cond": {"count": "arrow", "need": 6, "desc": "6 попаданий стрелами колчана"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "buff", "stat": "all_arrows", "value": 1, "duration": 8}, {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 8}],
+    "desc": "Условие: 6 попаданий стрелами колчана. 8 сек каждая атака несёт эффекты всех стрел сразу, атаки на 30% быстрее."
+  },
+  "ignite": {
+    "name": "Поджог", "ap": 2, "cast": 0, "cooldown": 3, "range": 6, "target": "enemy",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 10, "kind": "spell", "tag": "fire"}, {"type": "hazard", "hazard": "fire", "duration": 5, "radius": 0}],
+    "desc": "Дальность 6: 10 урона и Огонь, земля под целью горит 5 сек — очаг для Вспышки."
+  },
+  "consume_fire": {
+    "name": "Вдохнуть пламя", "ap": 2, "cast": 0, "cooldown": 8, "range": 0, "target": "self", "radius": 2,
+    "auto": {"on": true, "conds": [{"type": "self_hp_below", "value": 60}]},
+    "effects": [{"type": "consume_fire", "radius": 2, "shield": 8, "gauge": 3}],
+    "desc": "Огонь в радиусе 2 гаснет: маг получает щит 8 за каждую клетку и до +3 Жара."
+  },
+  "inferno": {
+    "name": "Инферно", "ap": 2, "cast": 0.8, "cooldown": 24, "range": 0, "target": "self", "radius": 6, "ult": true, "ult_cond": {"live": "fire_cells", "need": 4, "desc": "4 горящие клетки рядом"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "inferno", "duration": 8, "radius": 6}, {"type": "spread_fire", "radius": 6}],
+    "desc": "Условие: 4 горящие клетки рядом. Каст 0.8 сек: огонь вокруг (до 6 клеток) перекидывается дальше и 8 сек не гаснет — Вспышка его не снимает."
+  },
+  "garrote": {
+    "name": "Удавка", "ap": 3, "cast": 0, "cooldown": 6, "range": 1, "target": "enemy", "needs_shadow": true, "ai": "enemy_in_range",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 40, "kind": "melee", "from_shadow": 1.3}, {"type": "buff", "stat": "silence", "value": 1, "duration": 3, "affects": "enemies"}],
+    "desc": "Только из тени: 40 урона (из тени ×1.8×1.3) и 3 сек цель без навыков."
+  },
+  "shadow_double": {
+    "name": "Теневой двойник", "ap": 3, "cast": 0, "cooldown": 12, "range": 3, "target": "cell", "free_cell": true, "place": "allies",
+    "auto": {"on": true, "conds": [{"type": "self_hp_below", "value": 50}]},
+    "effects": [{"type": "summon", "unit": "illusion", "duration": 6}, {"type": "stealth", "duration": 3, "at": "caster", "mult": 1.6}],
+    "desc": "Двойник на клетку (6 сек) отвлекает врагов, ассасин уходит в тень на 3 сек."
+  },
+  "shadow_dance": {
+    "name": "Танец теней", "ap": 1, "cast": 0, "cooldown": 20, "range": 4, "target": "enemy", "ult": true, "ult_cond": {"live": "wounded", "need": 1, "desc": "враг с HP ниже 50%"},
+    "auto": {"on": true, "conds": [{"type": "target_hp_below", "value": 40}]},
+    "effects": [{"type": "shadow_dance", "amount": 40, "jumps": 4, "reach": 3, "backstab": 1.5, "vanish": 3}],
+    "desc": "Условие: враг с HP ниже 50%. Прыжок к врагу и удар 40 (в спину ×1.5); убил — прыжок к следующему (до 4 целей), в конце — тень 3 сек."
+  },
+  "maul": {
+    "name": "Удар лапой", "ap": 3, "cast": 0, "cooldown": 4, "range": 1, "target": "enemy", "form": "bear", "ai": "enemy_in_range",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 30, "kind": "melee"}, {"type": "stun", "duration": 0.8}, {"type": "knockback", "cells": 1}],
+    "desc": "Облик медведя: 30 урона, оглушение 0.8 сек и толчок."
+  },
+  "pounce": {
+    "name": "Прыжок волка", "ap": 3, "cast": 0, "cooldown": 5, "range": 4, "target": "enemy", "form": "wolf",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 24, "kind": "melee", "on_hit_buff": {"stat": "bleed", "value": 5, "duration": 4}}],
+    "desc": "Облик волка: прыжок к врагу (до 4), 24 урона и кровотечение 5/сек."
+  },
+  "bear_roar": {
+    "name": "Рык медведя", "ap": 3, "cast": 0, "cooldown": 10, "range": 0, "target": "self", "radius": 2, "form": "bear",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "taunt", "radius": 2, "duration": 4}, {"type": "buff", "stat": "armor", "value": 4, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 0.8, "duration": 6, "affects": "enemies", "radius": 2}],
+    "desc": "Облик медведя: враги в радиусе 2 бьют друида 4 сек и слабее на 20%, друиду +4 брони."
+  },
+  "wild_fury": {
+    "name": "Дикая ярость", "ap": 1, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "ult": true, "ult_cond": {"count": "form", "need": 2, "desc": "2 смены облика"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "buff", "stat": "armor", "value": 4, "duration": 8}, {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 8}, {"type": "buff", "stat": "regen", "value": 6, "duration": 8}, {"type": "buff", "stat": "atk_mult", "value": 1.3, "duration": 8}],
+    "desc": "Условие: 2 смены облика. 8 сек — все облики разом: +4 брони, атаки на 40% быстрее и ×1.3, 6 HP/сек."
+  },
+  "sentinel": {
+    "name": "Стойка часового", "ap": 2, "cast": 0, "cooldown": 10, "range": 0, "target": "self",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "buff", "stat": "zoc_free", "value": 1, "duration": 6}, {"type": "buff", "stat": "armor", "value": 3, "duration": 6}],
+    "desc": "6 сек удар копьём по входящим в зону — без траты шкалы, +3 брони."
+  },
+  "long_spear": {
+    "name": "Длинное древко", "ap": 2, "cast": 0, "cooldown": 12, "range": 0, "target": "self",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "buff", "stat": "zoc_range", "value": 1, "duration": 8}],
+    "desc": "8 сек зона копья шире на клетку: удары по входящим в радиус 2."
+  },
+  "spear_sweep": {
+    "name": "Подсечка древком", "ap": 3, "cast": 0, "cooldown": 6, "range": 0, "target": "self", "radius": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 2}]},
+    "effects": [{"type": "damage", "amount": 16, "kind": "melee", "radius": 1}, {"type": "stun", "duration": 1.0, "radius": 1}],
+    "desc": "Враги в зоне копья (рядом): 16 урона и оглушение 1 сек."
+  },
+  "bastion": {
+    "name": "Неприступная стена", "ap": 2, "cast": 0, "cooldown": 24, "range": 0, "target": "self", "ult": true, "ult_cond": {"count": "zoc_hit", "need": 3, "desc": "3 удара копьём зоны"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "buff", "stat": "zoc_free", "value": 3, "duration": 6}, {"type": "buff", "stat": "zoc_range", "value": 1, "duration": 6}, {"type": "buff", "stat": "armor", "value": 5, "duration": 6}],
+    "desc": "Условие: 3 удара копьём зоны. 6 сек: зона копья радиуса 2, любое движение в ней — удар без шкалы и оглушение 1 сек, +5 брони."
+  },
+  "totem_pulse": {
+    "name": "Пульс духов", "ap": 3, "cast": 0, "cooldown": 6, "range": 0, "target": "self", "needs_totem": true,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "totem_pulse", "mult": 1.0}],
+    "desc": "Все тотемы шамана срабатывают сразу."
+  },
+  "totem_move": {
+    "name": "Переселение духа", "ap": 2, "cast": 0, "cooldown": 4, "range": 6, "target": "cell", "needs_totem": true, "free_cell": true,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "totem_move", "pulse": true}],
+    "desc": "Ближайший к клетке тотем переходит в неё (до 6) и сразу срабатывает."
+  },
+  "totem_link": {
+    "name": "Сеть молний", "ap": 3, "cast": 0, "cooldown": 6, "range": 0, "target": "self", "needs_totem": true,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "totem_link", "amount": 28, "tag": "storm", "with_self": true}],
+    "desc": "Молнии между шаманом и всеми его тотемами: 28 урона + Гроза каждому врагу на линиях."
+  },
+  "spirit_circle": {
+    "name": "Круг духов", "ap": 2, "cast": 0.8, "cooldown": 22, "range": 0, "target": "self", "needs_totem": true, "ult": true, "ult_cond": {"live": "totems", "need": 2, "desc": "2 тотема на поле"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "totem_pulse", "mult": 2.0, "refresh": 12}, {"type": "delay", "time": 1.5, "effects": [{"type": "totem_pulse", "mult": 1.0}], "name": "Круг"}, {"type": "delay", "time": 3.0, "effects": [{"type": "totem_pulse", "mult": 1.0}], "name": "Круг"}],
+    "desc": "Условие: 2 тотема на поле. Каст 0.8 сек: все тотемы срабатывают ×2, потом ещё дважды, и живут ещё 12 сек."
+  },
+  "battle_hymn": {
+    "name": "Боевой гимн", "ap": 3, "cast": 0, "cooldown": 12, "range": 0, "target": "self", "radius": 3,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "song", "beats": 4, "every": 2.0, "radius": 3, "finale": [{"type": "buff", "stat": "atk_mult", "value": 1.1, "per_note": 0.05, "duration": 8}, {"type": "ap", "amount": 0, "per_note": 0.5}]}],
+    "desc": "Песня на 4 такта: навыки союзников рядом — ноты. Финал: урон ×1.1 и +5% за ноту на 8 сек, +1 AP за 2 ноты."
+  },
+  "solo": {
+    "name": "Соло", "ap": 2, "cast": 0, "cooldown": 4, "range": 0, "target": "self",
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "song_notes", "notes": 2}],
+    "desc": "+2 ноты в текущую песню."
+  },
+  "nocturne": {
+    "name": "Ноктюрн", "ap": 3, "cast": 0, "cooldown": 14, "range": 0, "target": "self", "radius": 3,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "song", "beats": 4, "every": 2.0, "radius": 3, "finale": [{"type": "sleep", "duration": 1.5, "per_note": 0.4}, {"type": "damage", "amount": 10, "per_note": 6}]}],
+    "desc": "Песня на 4 такта. Финал по врагам рядом: 10 урона +6 за ноту и сон 1.5 сек +0.4 за ноту."
+  },
+  "tempo": {
+    "name": "Ускорить темп", "ap": 2, "cast": 0, "cooldown": 8, "range": 0, "target": "self",
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "song_tempo", "mult": 0.5, "notes": 1}],
+    "desc": "Такты текущей песни вдвое чаще, +1 нота."
+  },
+  "sticky_bomb": {
+    "name": "Липкая бомба", "ap": 2, "cast": 0, "cooldown": 3, "range": 5, "target": "enemy", "powder": true,
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "mark", "mark": "bomb", "stacks": 1, "duration": 4}],
+    "desc": "Бомба на враге (до 3): через 4 сек — 24 урона огнём вокруг (+50% за каждую лишнюю бомбу). Детонатор и фитиль рвут её сразу; огонь от неё поджигает бочки. С Порохом — ×2, без — ×0.6."
+  },
+  "kick_barrel": {
+    "name": "Пинок бочки", "ap": 2, "cast": 0, "cooldown": 3, "range": 1, "target": "cell",
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "push", "cells": 4, "radius": 0, "affects": "all", "from": "caster"}],
+    "desc": "Соседняя клетка: бочка (или враг) летит на 4 клетки; бочка от удара взрывается."
+  },
+  "detonator": {
+    "name": "Детонатор", "ap": 3, "cast": 0, "cooldown": 8, "range": 0, "target": "self", "radius": 8,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "detonate_charges", "radius": 8, "power": 1.0}],
+    "desc": "Все свои бочки, мины и липкие бомбы в радиусе 8 взрываются сразу."
+  },
+  "big_bang": {
+    "name": "Большой бабах", "ap": 2, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "radius": 12, "ult": true, "ult_cond": {"live": "charges", "need": 3, "desc": "3 заряда на поле"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "detonate_charges", "radius": 12, "power": 1.8}],
+    "desc": "Условие: 3 заряда на поле. Все заряды на поле взрываются ×1.8."
+  },
+  "pin_wall": {
+    "name": "Прибить к стене", "ap": 3, "cast": 0, "cooldown": 5, "range": 1, "target": "enemy", "ai": "enemy_in_range",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "buff", "stat": "collide_stun", "value": 1.5, "duration": 0.8, "at": "caster"}, {"type": "damage", "amount": 16, "kind": "melee"}, {"type": "knockback", "cells": 3}],
+    "desc": "16 урона и толчок на 3: врезался — оглушение 1.5 сек."
+  },
+  "wallbreaker": {
+    "name": "Стенобой", "ap": 3, "cast": 0, "cooldown": 14, "range": 0, "target": "self",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "buff", "stat": "collide_stun", "value": 1.0, "duration": 8}, {"type": "buff", "stat": "armor", "value": 3, "duration": 8}],
+    "desc": "8 сек каждое столкновение от тарана оглушает на 1 сек, +3 брони."
+  },
+  "billiard": {
+    "name": "Бильярд", "ap": 1, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "ult": true, "ult_cond": {"count": "collision", "need": 3, "desc": "3 столкновения"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "buff", "stat": "billiard", "value": 1.5, "duration": 8}],
+    "desc": "Условие: 3 столкновения. 8 сек: в кого врезался толкнутый — тот летит дальше по цепочке, удар ×1.5."
+  },
+  "big_hunt": {
+    "name": "Большая охота", "ap": 2, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "ult": true, "ult_cond": {"live": "traps", "need": 2, "desc": "2 капкана на поле"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "trap_pull", "radius": 4}],
+    "desc": "Условие: 2 капкана на поле. Каждый капкан ловчего тянет к себе ближайшего врага (до 4 клеток) — прямо в пасть."
+  },
+  "ice_shard": {
+    "name": "Ледяной осколок", "ap": 2, "cast": 0, "cooldown": 0, "range": 6, "target": "enemy",
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 14, "kind": "spell", "mark_on_hit": {"mark": "cold", "stacks": 1, "duration": 6}}],
+    "desc": "Дальность 6: 14 урона и стак Холода (замедление; 3 стака — вморожен)."
+  },
+  "ice_pillar": {
+    "name": "Ледяной столб", "ap": 3, "cast": 0, "cooldown": 8, "range": 5, "target": "cell", "free_cell": true,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "place_object", "object": "ice_wall", "limit": 4}, {"type": "zone", "duration": 10, "every": 1.5, "radius": 1, "kind": "cold", "effects": [{"type": "mark", "mark": "cold", "stacks": 1, "duration": 5, "radius": 1}]}],
+    "desc": "Глыба льда (10 сек) — укрытие; враги рядом с ней раз в 1.5 сек получают стак Холода."
+  },
+  "blood_bones": {
+    "name": "Кровавые кости", "ap": 2, "cast": 0, "cooldown": 4, "range": 4, "target": "cell", "hp_cost": 10,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "corpse", "do": "make"}],
+    "desc": "Стоит 10 HP: на клетку ложится труп — ресурс для взрыва, подъёма и стены."
+  },
+  "rot": {
+    "name": "Гниль", "ap": 3, "cast": 0, "cooldown": 6, "range": 0, "target": "self", "radius": 6,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "corpse_pulse", "radius": 6, "blast": 1, "amount": 12, "tag": "poison"}],
+    "desc": "Каждый труп в радиусе 6 гниёт: врагам рядом с ним 12 урона + Яд (трупы остаются)."
+  },
+  "last_call": {
+    "name": "Последний призыв", "ap": 2, "cast": 1.0, "cooldown": 24, "range": 0, "target": "self", "ult": true, "ult_cond": {"live": "corpses", "need": 3, "desc": "3 трупа на поле"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "raise_all", "unit": "skeleton_minion", "duration": 12, "limit": 6}],
+    "desc": "Условие: 3 трупа на поле. Каст 1 сек: все трупы на поле (до 6) встают скелетами на 12 сек."
+  },
+  "time_theft": {
+    "name": "Кража времени", "ap": 0, "cast": 0, "cooldown": 6, "range": 5, "target": "enemy", "gauge_gain": 2,
+    "auto": {"on": true, "conds": [{"type": "target_casting"}]},
+    "effects": [{"type": "time_theft", "cooldown": 3, "cast": 1.0, "ap": 1, "ap_rate": 0.6, "duration": 4}],
+    "desc": "+2 Времени. Враг: перезарядки +3 сек, каст +1 сек, следующая атака позже. Хрономант: +1 AP и AP копятся быстрее 4 сек."
+  },
+  "heavy": {
+    "name": "Сверхтяжесть", "ap": 3, "cast": 0, "cooldown": 9, "range": 5, "target": "enemy",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "stun", "duration": 1.0, "look": "root"}, {"type": "zone", "duration": 4, "every": 1.0, "radius": 2, "kind": "gravity", "now": true, "anchor": "target", "effects": [{"type": "gather", "radius": 2, "cells": 1}]}],
+    "desc": "Враг становится центром тяжести 4 сек: стоит, а враги вокруг (радиус 2) каждую секунду падают к нему."
+  },
+  "attract": {
+    "name": "Притяжение", "ap": 3, "cast": 0, "cooldown": 8, "range": 0, "target": "self", "radius": 3,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "gather", "radius": 3, "cells": 2}, {"type": "damage", "amount": 10, "kind": "spell", "radius": 1, "per_density": 0.4}],
+    "desc": "Враги в радиусе 3 падают к гравитоманту, соседям — 10 урона +40% за плотность."
+  },
+  "earth_wave": {
+    "name": "Земная волна", "ap": 3, "cast": 0, "cooldown": 6, "range": 5, "target": "cell", "radius": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "terrain_wave", "radius": 1, "by": {"grass": [{"type": "damage", "amount": 10, "kind": "spell"}, {"type": "stun", "duration": 1.0, "look": "root"}], "water": [{"type": "damage", "amount": 14, "kind": "spell", "tag": "water"}, {"type": "knockback", "cells": 1}], "stone": [{"type": "damage", "amount": 24, "kind": "ranged"}], "lava": [{"type": "damage", "amount": 18, "kind": "spell", "tag": "fire"}], "ice_floor": [{"type": "damage", "amount": 16, "kind": "spell", "tag": "ice"}], "default": [{"type": "damage", "amount": 12, "kind": "spell"}]}}],
+    "desc": "Радиус 1: каждый враг — по клетке под ним: трава — корни, вода — толчок, камень — удар 24, лава — огонь, лёд — Лёд."
+  },
+  "plate_shift": {
+    "name": "Сдвиг плит", "ap": 2, "cast": 0.8, "cooldown": 22, "range": 6, "target": "cell", "radius": 2, "ult": true, "ult_cond": {"count": "skill", "need": 3, "desc": "3 своих навыка"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "terrain", "cycle": ["grass", "water", "stone"], "radius": 2, "duration": 12}, {"type": "terrain_wave", "radius": 2, "by": {"grass": [{"type": "damage", "amount": 10, "kind": "spell"}, {"type": "stun", "duration": 1.0, "look": "root"}], "water": [{"type": "damage", "amount": 14, "kind": "spell", "tag": "water"}, {"type": "knockback", "cells": 1}], "stone": [{"type": "damage", "amount": 24, "kind": "ranged"}], "lava": [{"type": "damage", "amount": 18, "kind": "spell", "tag": "fire"}], "ice_floor": [{"type": "damage", "amount": 16, "kind": "spell", "tag": "ice"}], "default": [{"type": "damage", "amount": 12, "kind": "spell"}]}}],
+    "desc": "Условие: 3 своих навыка. Каст 0.8 сек, радиус 2: рельеф перековывается (трава → вода → камень), и земля бьёт каждого врага по новой клетке."
+  },
+  "spark_flask": {
+    "name": "Искристая склянка", "ap": 2, "cast": 0, "cooldown": 4, "range": 5, "target": "cell", "radius": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "damage", "amount": 6, "kind": "spell", "radius": 1}, {"type": "status", "tag": "storm", "radius": 1}],
+    "desc": "Радиус 1: 6 урона и Гроза — ещё один ингредиент для Реактива."
+  },
+  "stabilizer": {
+    "name": "Стабилизатор", "ap": 2, "cast": 0, "cooldown": 9, "range": 5, "target": "cell", "radius": 1,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "buff", "stat": "stable", "value": 1, "duration": 6, "affects": "enemies", "radius": 1}],
+    "desc": "Радиус 1: 6 сек теги на врагах не реагируют друг с другом — копите их для Реактива."
+  },
+  "philosopher_stone": {
+    "name": "Философский камень", "ap": 1, "cast": 0.6, "cooldown": 20, "range": 5, "target": "cell", "radius": 2, "ult": true, "ult_cond": {"live": "tags", "need": 2, "desc": "враг с 2 тегами"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "reagent_area", "radius": 2, "per_tag": 20}],
+    "desc": "Условие: враг с 2 тегами. Каст 0.6 сек, радиус 2: каждому врагу 20 урона за каждый тег на нём (теги остаются)."
+  },
+  "feast": {
+    "name": "Пир", "ap": 2, "cast": 0, "cooldown": 8, "range": 0, "target": "self", "radius": 2,
+    "auto": {"on": true, "conds": [{"type": "self_hp_below", "value": 60}]},
+    "effects": [{"type": "bleed_feast", "radius": 2, "burst": 1.0, "heal": 0.8}],
+    "desc": "Кровотечения врагов в радиусе 2 срабатывают разом: весь остаток урона сразу, берсерк лечится на 80% от него."
+  },
+  "plant_banner": {
+    "name": "Водрузить знамя", "ap": 2, "cast": 0, "cooldown": 12, "range": 3, "target": "cell", "free_cell": true, "place": "allies",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "summon", "unit": "banner", "duration": 20}],
+    "desc": "Знамя на клетку (20 сек): союзникам в радиусе 2 +1 брони; приказы у знамени сильнее («Вперёд!» — два удара, «Перестроение» — щит, «Фокус» — +1 AP)."
+  },
+  "move_banner": {
+    "name": "Знамя вперёд!", "ap": 2, "cast": 0, "cooldown": 5, "range": 6, "target": "cell", "needs_banner": true, "free_cell": true,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "totem_move", "proto": "banner"}, {"type": "refresh", "ap": 1, "radius": 2}],
+    "desc": "Знамя переносится в клетку (до 6), союзники там +1 AP."
+  },
+  "soul_web": {
+    "name": "Сеть душ", "ap": 3, "cast": 0, "cooldown": 10, "range": 0, "target": "self", "radius": 3,
+    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
+    "effects": [{"type": "tether_all", "radius": 3, "limit": 3, "duration": 10, "regen": 2}],
+    "desc": "Нити ко всем союзникам в радиусе 3 (до 3) на 10 сек: урон делится со связующим, +2 HP/сек."
+  },
+  "shared_life": {
+    "name": "Общая жизнь", "ap": 3, "cast": 0, "cooldown": 6, "range": 0, "target": "self",
+    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 60}]},
+    "effects": [{"type": "tether_heal", "amount": 22}],
+    "desc": "Каждый союзник на нити и сам связующий лечатся на 22."
+  },
+  "cut_threads": {
+    "name": "Перерезать нити", "ap": 3, "cast": 0, "cooldown": 10, "range": 0, "target": "self",
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "cut_tethers", "heal": 20, "amount": 18, "blast": 1}],
+    "desc": "Все нити рвутся вспышкой: союзникам на нитях +20 HP, врагам рядом с ними 18 урона."
+  },
+  "note_do": {
+    "name": "До", "ap": 1, "cast": 0, "cooldown": 0.5, "range": 0, "target": "self", "radius": 2,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "heal", "pct": 0.02, "radius": 2}, {"type": "note", "note": "Q"}],
+    "desc": "Нота До: союзникам рядом +2% HP."
+  },
+  "note_mi": {
+    "name": "Ми", "ap": 1, "cast": 0, "cooldown": 0.5, "range": 0, "target": "self", "radius": 2,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "buff", "stat": "atk_speed", "value": 0.9, "duration": 3, "radius": 2}, {"type": "note", "note": "W"}],
+    "desc": "Нота Ми: союзникам рядом атаки на 10% быстрее 3 сек."
+  },
+  "note_sol": {
+    "name": "Соль", "ap": 1, "cast": 0, "cooldown": 0.5, "range": 0, "target": "self", "radius": 2,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "damage", "amount": 8, "kind": "spell", "radius": 2}, {"type": "note", "note": "E"}],
+    "desc": "Нота Соль: врагам рядом 8 урона."
+  },
+  "mel_life": {
+    "name": "Гимн жизни", "ap": 0, "cast": 0, "cooldown": 0, "range": 0, "target": "self", "melody": "QQQ", "radius": 3,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "heal", "pct": 0.1, "radius": 3}],
+    "desc": "Мелодия Q Q Q: союзникам рядом +10% HP."
+  },
+  "mel_march": {
+    "name": "Боевой марш", "ap": 0, "cast": 0, "cooldown": 0, "range": 0, "target": "self", "melody": "WWW", "radius": 3,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 6, "radius": 3}, {"type": "buff", "stat": "atk_speed", "value": 0.85, "duration": 6, "radius": 3}],
+    "desc": "Мелодия W W W: союзникам рядом урон +25% и атаки на 15% быстрее 6 сек."
+  },
+  "mel_wave": {
+    "name": "Звуковая волна", "ap": 0, "cast": 0, "cooldown": 0, "range": 0, "target": "self", "melody": "EEE", "radius": 3,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "damage", "amount": 30, "kind": "spell", "radius": 2}, {"type": "knockback", "cells": 1, "radius": 2}],
+    "desc": "Мелодия E E E: врагам рядом 30 урона и отбрасывание."
+  },
+  "mel_lullaby": {
+    "name": "Колыбельная", "ap": 0, "cast": 0, "cooldown": 0, "range": 0, "target": "self", "melody": "QWE", "radius": 3,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "sleep", "duration": 3, "radius": 2}],
+    "desc": "Мелодия Q W E: враги рядом засыпают на 3 сек (удар будит)."
+  },
+  "mel_discord": {
+    "name": "Диссонанс", "ap": 0, "cast": 0, "cooldown": 0, "range": 0, "target": "self", "melody": "EWQ", "radius": 3,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "damage", "amount": 14, "kind": "spell", "radius": 3}, {"type": "buff", "stat": "silence", "value": 1, "duration": 3, "radius": 3, "affects": "enemies"}],
+    "desc": "Мелодия E W Q: врагам рядом 14 урона и 3 сек без навыков."
+  },
+  "mel_encore": {
+    "name": "На бис", "ap": 0, "cast": 0, "cooldown": 0, "range": 0, "target": "self", "melody": "WQW", "radius": 3,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "refresh", "ap": 2, "radius": 3}],
+    "desc": "Мелодия W Q W: союзникам рядом +2 AP."
+  },
+  "mel_serenade": {
+    "name": "Серенада", "ap": 0, "cast": 0, "cooldown": 0, "range": 0, "target": "self", "melody": "QEQ", "radius": 3,
+    "auto": {"on": false, "conds": []},
+    "effects": [{"type": "heal", "pct": 0.05, "radius": 3}, {"type": "cleanse", "radius": 3}, {"type": "buff", "stat": "dmg_taken", "value": 0.85, "duration": 5, "radius": 3}],
+    "desc": "Мелодия Q E Q: союзникам рядом +5% HP, теги сняты, урон по ним −15% 5 сек."
+  },
+  "finale": {
+    "name": "Финал", "ap": 1, "cast": 0, "cooldown": 16, "range": 0, "target": "self", "ult": true, "ult_cond": {"live": "melody", "need": 1, "desc": "сыграна мелодия"}, "radius": 3,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "finale", "mult": 2.0}],
+    "desc": "Условие: сыграна мелодия. Последняя мелодия звучит ещё раз — вдвое сильнее."
   }
 }

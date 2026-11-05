@@ -72,6 +72,28 @@ def apply_to_proto(p, der):
     p["attrs"] = der["attrs"]
 
 
+DIRECT = ("melee", "ranged", "spell")
+
+
+def skill_values(p, sk, power=None):
+    """Чистые числа навыка для экрана: [(что, обычное, с критом или None)]. Учитывает силу героя, скейл атрибута
+    и крит (прокачка и вещи уже в прототипе); реакции, бафы в бою и бонусы отряда — нет."""
+    power = p.get("power", 1.0) if power is None else power
+    sc = p.get("scale") or {}
+    crit = p.get("crit_mult", 1.75) if p.get("crit") else None
+    out = []
+    for eff in sk.get("effects", []):
+        t = eff["type"]
+        if t in ("damage", "line", "chain", "push", "rush", "toss", "detonate", "shatter", "collapse")                 and eff.get("amount"):
+            kind = eff.get("kind", "melee" if t in ("push", "rush", "toss") else "spell")
+            v = eff["amount"] * power * sc.get(kind, 1.0)
+            out.append(("урон", int(round(v)), int(round(v * crit)) if crit and kind in DIRECT else None))
+        elif t in ("heal", "shield") and eff.get("amount"):
+            v = eff["amount"] * power * sc.get("heal", 1.0)
+            out.append(("лечение" if t == "heal" else "щит", int(round(v)), None))
+    return out
+
+
 # ---------- опыт ----------
 
 def xp_to_next(data, level):

@@ -130,6 +130,11 @@ class Run:
         p = build_proto(self.data, m.cls, m.talents, list(m.items.values()), m.branches, self.extra_mods(m),
                         m.path, m.runes, skills=m.skills if self.story else None, doctrine=m.doctrine)
         p["level"] = m.level
+        if self.story:
+            p["start_ap"] = self.data.config.get("start_ap", 0.5)   # сюжет: бой с половиной AP
+            from . import story_meta
+            if story_meta.notes_of(self.data, m.cls):
+                p["melodies"] = story_meta.melodies(self.data, m.cls, m.level)
         if self.stats:
             stats.apply_to_proto(p, stats.derive(self.data, m.cls, m.rpg))
         return p

@@ -75,7 +75,7 @@ def test_concentration_saves_cast():
     mage.pp = mage.pp_max          # шкала героя стартует пустой — заполняем
     c._start_cast(mage, "fireball", mage.cell)
     c.apply_stun(mage, 1.0)
-    assert mage.cast is not None and mage.pp == 0
+    assert mage.cast is not None and mage.pp == mage.pp_max - 1
 
 
 def test_reaction_cooldown():

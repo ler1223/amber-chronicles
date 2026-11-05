@@ -53,9 +53,19 @@ def build_proto(data, cls_id, talents=(), items=(), branches=None, extra_mods=()
         mods += pd["mods"]
     elif skills is not None:
         p["skills"] = [sid for sid in skills if sid in data.skills]
+        core = getattr(data, "passives", {}).get(cls_id)
+        if core:                               # сюжет и экспедиция: пассивка-основа класса и её шкала стаков
+            g = core.get("gauge")
+            p["gauge"] = copy.deepcopy(g)
+            p["pp_max"] = g["max"] if g else 0
+            p["pp_regen"] = g.get("trickle", 9999.0) if g else 9999.0
+            p["passive"] = copy.deepcopy(core["passive"])
+            if core.get("attack"):             # тактик: «атака» — приказ раз в 3 сек
+                p["attack"] = {**p["attack"], **core["attack"]}
     if doctrine:
         pd = data.paths[doctrine]
-        p["passive"] = copy.deepcopy(pd["passive"])
+        if not (p.get("passive") or {}).get("core"):     # пассивка-основа класса доктриной не заменяется
+            p["passive"] = copy.deepcopy(pd["passive"])
         p["doctrine"] = doctrine
         mods += pd["mods"]
     p["skill_defs"] = {sid: copy.deepcopy(data.skills[sid]) for sid in p["skills"]}

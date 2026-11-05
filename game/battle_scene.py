@@ -14,9 +14,17 @@ from ui import projection as P
 from ui.autocast_editor import AutocastEditor, adjust_first_value
 from ui.battle_view import BattleView
 
-SKILL_KEYS = {getattr(pygame, "K_" + c.lower()): i for i, c in enumerate("QWERTYUIOP")}
+SKILL_KEYS = {getattr(pygame, "K_" + c.lower()): i for i, c in enumerate("QWERDFTYUI")}   # D, F — 5-й и 6-й
 SPEED_KEYS = {pygame.K_F1: 0, pygame.K_F2: 1, pygame.K_F3: 2}
 DRAG_DIST = 12
+
+
+def shift_held():
+    return bool(pygame.key.get_mods() & pygame.KMOD_SHIFT)
+
+
+def ctrl_held():
+    return bool(pygame.key.get_mods() & pygame.KMOD_CTRL)
 
 
 class BattleScene:
@@ -24,8 +32,10 @@ class BattleScene:
     С on_finish (бой забега) — переигровки нет, по Enter после боя вызывается on_finish(combat, расстановка)."""
 
     def __init__(self, data, encounter_index=0, autoplay=False, squad=None, formation=None, on_finish=None,
-                 enemy_scale=None, scout_hp=False, fx=None, difficulty="normal", cheats=False, tutorial=None):
+                 enemy_scale=None, scout_hp=False, fx=None, difficulty="normal", cheats=False, tutorial=None,
+                 simple=False, names=None, solo=False):
         self.data = data
+        self.solo = solo              # одиночка: один герой, выбор с него не спадает, камера едет за ним
         from game.tutorial import Tutorial
         self.tutorial = Tutorial(tutorial) if tutorial else None   # сюжет: подсказки, ждущие действий игрока
         self.cheats = cheats or not on_finish    # песочница и отдельный бой: F7 — всё готово, F8 — победа
@@ -35,6 +45,9 @@ class BattleScene:
         self.scout_hp = scout_hp      # бонус «Сторожевая башня»: разведка видит HP и урон врагов
         self.cfg = data.config
         self.view = BattleView(data)
+        self.view.simple = simple     # сюжет: интерфейс без лишнего
+        self.view.solo = solo
+        self.view.names = names or {}
         self.autoplay = autoplay
         self.squad = squad
         self.on_finish = on_finish
@@ -72,8 +85,19 @@ class BattleScene:
         self.selected = squad[0] if squad else None
         self.selected_units = [self.selected] if self.selected else []
         self.box_start = None
+        self.groups = {}             # Ctrl+1–4: сохранённые группы героев (id)
+        self.box_squad = False       # рамка начата на панели отряда
+        self.target_queue = False    # навык выбран с Shift — ставим в очередь
         self.box_current = None
         self.box_active = False
+        self.view.follow_unit = self.selected if self.solo else None
+        self.view.cam_pos = None
+        if self.solo and not self.autoplay:      # расстановки нет: один герой — сразу в бой (на паузе)
+            self.begin_battle()
+
+    @property
+    def hero(self):
+        return self.view.follow_unit
 
     def finish(self):
         if self.run_mode and self.combat.result:
@@ -148,6 +172,8 @@ class BattleScene:
             self.selected_units = []
         if self.combat.result:
             self.targeting = None
+        if self.solo and self.hero is not None and self.hero.alive:   # выбор с героя не спадает
+            self.selected, self.selected_units = self.hero, [self.hero]
 
     def draw(self, surf):
         self.view.draw(surf, self)
@@ -169,6 +195,9 @@ class BattleScene:
 
     def lab_frame(self):
         return self.view.lab_frame()
+
+    def gpu_particles(self):
+        return self.view.gpu_particles()
 
     @property
     def vfx(self):
@@ -221,6 +250,10 @@ class BattleScene:
             if self.route is not None and getattr(ev, "buttons", (0, 0, 0))[2]:
                 self._extend_route(self.hover_cell)
         elif ev.type == pygame.MOUSEWHEEL:
+            if self.solo and not any(r.collidepoint(self.mouse) for r, _ in self.view.skill_rects):
+                v = self.view                          # одиночка: колесо — приближение камеры
+                v.follow_zoom = max(1.15, min(2.6, v.follow_zoom + 0.12 * ev.y))
+                return
             self._autocast_wheel(ev.y)
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             self.mouse = ev.pos
@@ -228,7 +261,9 @@ class BattleScene:
                 return
             if self.phase == "deploy":
                 self._deploy_click(ev.pos, ev.button)
-            elif ev.button == 3 and pygame.key.get_mods() & pygame.KMOD_SHIFT and self._waypoint(ev.pos):
+            elif ev.button == 3 and shift_held() and self._queue_click(ev.pos):
+                pass
+            elif ev.button == 3 and self.view.queue_hit(ev.pos, self):
                 pass
             elif ev.button == 1 and self._begin_box_select(ev.pos):
                 pass
@@ -279,6 +314,25 @@ class BattleScene:
         ok, msg = self.combat.order_path(u, route)
         if not ok:
             self.say(msg)
+
+    def _queue_click(self, pos):
+        """Shift+ПКМ: ход или атака — в конец очереди выделенных героев."""
+        units = self._selected_team()
+        cell = self.cell_at(*pos)
+        if not units or self.targeting or cell is None or self.combat.result:
+            return False
+        c = self.combat
+        foe = self.view.pick_unit(pos, lambda v: units[0].is_enemy(v), reach=0) or c.unit_at(cell)
+        if foe is not None and units[0].is_enemy(foe) and foe.alive:
+            for u in units:
+                c.queue_order(u, {"type": "attack", "target": foe})
+            return True
+        if not c.grid.passable(cell):
+            return True
+        goals = self._group_targets(units, cell) if len(units) > 1 else {units[0]: cell}
+        for u, goal in goals.items():
+            c.queue_order(u, {"type": "move", "cell": goal})
+        return True
 
     def _waypoint(self, pos):
         """Shift+ПКМ — добавить точку к маршруту: путь продлевается от конца текущего приказа."""
@@ -347,6 +401,9 @@ class BattleScene:
 
     def _key(self, key):
         c = self.combat
+        if key == pygame.K_c:                       # панель статов героя со всеми бафами боя
+            self.view.stats_open = not self.view.stats_open
+            return
         if key in SKILL_KEYS and pygame.key.get_mods() & pygame.KMOD_CTRL:
             self.toggle_autocast(SKILL_KEYS[key])
             return
@@ -391,8 +448,20 @@ class BattleScene:
                 i = squad.index(self.selected) + 1 if self.selected in squad else 0
                 self._select(squad[i % len(squad)])
         elif pygame.K_1 <= key <= pygame.K_4:
-            squad = c.heroes(PLAYER)
             i = key - pygame.K_1
+            if ctrl_held():                          # Ctrl+цифра — запомнить группу
+                units = [u for u in self.selected_units if u.alive] or ([self.selected] if self.selected else [])
+                if units:
+                    self.groups[i] = [u.id for u in units]
+                    self.say(f"Группа {i + 1}: " + ", ".join(self.view.names.get(u.proto_id) or u.name for u in units))
+                return
+            group = [u for u in c.heroes(PLAYER) if u.alive and u.id in self.groups.get(i, [])]
+            if group:                                # цифра — выбрать группу
+                self.selected_units = group
+                self.selected = group[0]
+                self.targeting = None
+                return
+            squad = c.heroes(PLAYER)
             if i < len(squad) and squad[i].alive:
                 self._select(squad[i])
         elif self.phase == "deploy":
@@ -410,15 +479,23 @@ class BattleScene:
         elif key in SPEED_KEYS:
             self.speed_idx = SPEED_KEYS[key]
         elif key == pygame.K_ESCAPE:
+            queued = [u for u in self._selected_team() if u.queue]
             if self.targeting:
                 self.targeting = None
-            else:
+                self.target_queue = False
+            elif queued:                             # Esc — очистить очередь выделенных
+                for u in queued:
+                    u.queue.clear()
+                self.say("Очередь действий очищена")
+            elif not self.solo:
                 self.selected = None
                 self.selected_units = []
         elif key in SKILL_KEYS:
             self._skill_key(SKILL_KEYS[key])
 
     def _select(self, u):
+        if self.solo and u is not self.hero:      # одиночка: управляем только героем
+            return
         self.selected = u
         self.selected_units = [u] if u is not None else []
         self.targeting = None
@@ -433,17 +510,42 @@ class BattleScene:
         return units
 
     def _squad_click(self, pos):
+        tr = self.view.toggle_rect
+        if tr is not None and tr.collidepoint(pos):     # свернуть / показать список врагов
+            self.view.enemies_collapsed = not self.view.enemies_collapsed
+            return True
         for r, u in self.view.squad_rects:
             if r.collidepoint(pos) and u.alive:
-                self._select(u)
+                if shift_held():
+                    self._toggle_selected(u)
+                else:
+                    self._select(u)
                 return True
         return False
+
+    def _toggle_selected(self, u):
+        """Shift+клик: добавить героя в выделение или убрать из него."""
+        units = [v for v in self.selected_units if v.alive]
+        if u in units:
+            units.remove(u)
+        else:
+            units.append(u)
+        order = {v.id: i for i, v in enumerate(self.combat.heroes(PLAYER))}
+        units.sort(key=lambda v: order.get(v.id, 999))
+        self.selected_units = units
+        if self.selected not in units:
+            self.selected = units[0] if units else None
+        elif u in units:
+            self.selected = u
+        self.targeting = None
 
     # ---------- выделение рамкой ----------
 
     def _ui_hit(self, pos):
         """Курсор над интерфейсом — рамку выделения там не начинаем."""
         if self.view.start_button and self.view.start_button.collidepoint(pos):
+            return True
+        if self.view.toggle_rect is not None and self.view.toggle_rect.collidepoint(pos):
             return True
         for rects in (self.view.skill_rects, self.view.auto_rects,
                       self.view.squad_rects, self.view.enemy_rects):
@@ -453,15 +555,25 @@ class BattleScene:
         return bool(ed and ed.get("rect") and ed["rect"].collidepoint(pos))
 
     def _begin_box_select(self, pos):
-        if self.phase != "battle" or self.targeting or self.combat.result or self._ui_hit(pos):
+        if self.solo:
             return False
-        # Клик по фигурке (своей или врагу) — обычное действие, а не рамка.
-        if self.view.pick_unit(pos, lambda v: v.team == PLAYER and not v.summon and not v.obj) is not None:
+        return self._begin_box_select_(pos)
+
+    def _begin_box_select_(self, pos):
+        """Рамку можно начать где угодно: на поле (и с фигурки) и на панели отряда — по портретам.
+        Короткий клик остаётся обычным кликом."""
+        if self.phase != "battle" or self.targeting or self.combat.result:
             return False
-        if self.view.pick_unit(pos, reach=0) is not None:
+        on_squad = any(r.collidepoint(pos) for r, _ in self.view.squad_rects)
+        if self._ui_hit(pos) and not on_squad:
             return False
-        if self.ground_cell(*pos) is None:
+        if not on_squad and self.ground_cell(*pos) is None:
             return False
+        self.box_squad = on_squad
+        # по фигурке или портрету — клик сразу (выбор, атака); повёл мышью — дальше рамка
+        self.box_clicked = on_squad or self.view.pick_unit(pos, reach=0) is not None or             self.view.pick_unit(pos, lambda v: v.team == PLAYER and not v.summon and not v.obj) is not None
+        if self.box_clicked:
+            self._click(pos, 1)
         self.box_start = pos
         self.box_current = pos
         self.box_active = True
@@ -476,16 +588,21 @@ class BattleScene:
         self.box_current = None
         if start is not None and math.dist(start, pos) > DRAG_DIST:
             self._select_box(start, pos)
-        else:
+        elif not getattr(self, "box_clicked", False):
             self._click(pos, 1)
+        self.box_squad = False
+        self.box_clicked = False
 
     def _select_box(self, a, b):
-        rect = pygame.Rect(min(a[0], b[0]), min(a[1], b[1]), abs(b[0] - a[0]), abs(b[1] - a[1]))
+        rect = pygame.Rect(min(a[0], b[0]), min(a[1], b[1]), abs(b[0] - a[0]) + 1, abs(b[1] - a[1]) + 1)
         seen = set()
-        units = []
-        for r, u in self.view.sprite_rects:
+        units = [u for u in self.selected_units if u.alive] if shift_held() else []   # Shift — добавить
+        seen = {u.id for u in units}
+        rects = self.view.squad_rects if self.box_squad else self.view.sprite_rects
+        for r, u in rects:
+            hit = (r.top <= rect.bottom and r.bottom >= rect.top) if self.box_squad else r.colliderect(rect)
             if (u.team == PLAYER and u.alive and not u.summon and not u.obj
-                    and r.colliderect(rect) and u.id not in seen):
+                    and hit and u.id not in seen):
                 units.append(u)
                 seen.add(u.id)
         order = {u.id: i for i, u in enumerate(self.combat.heroes(PLAYER))}
@@ -605,18 +722,23 @@ class BattleScene:
             self.say("Навыки — только на паузе")
             return
         sk = u.skill_defs[sid]
+        queue = shift_held()
         if sk["target"] == "self":
-            ok, msg = self.combat.order_skill(u, sid, u)
+            if queue:
+                ok, msg = self.combat.queue_order(u, {"type": "skill", "skill": sid, "target": u})
+            else:
+                ok, msg = self.combat.order_skill(u, sid, u)
             if ok and self.tutorial:
                 self.tutorial.ordered(sid)
             if not ok:
                 self.say(msg)
             return
         ok, msg = self.combat.check_skill(u, sid, u if sk["target"] != "enemy" else None)
-        if not ok and msg in ("Не хватает AP", "Перезарядка"):
+        if not ok and msg in ("Не хватает AP", "Перезарядка") and not queue:
             self.say(msg)
             return
         self.targeting = sid
+        self.target_queue = queue
 
     def _click(self, pos, button):
         if self._squad_click(pos):
@@ -645,11 +767,15 @@ class BattleScene:
             if target is None:
                 self.say("Нужна цель-юнит")
                 return
-            ok, msg = c.order_skill(self.selected, self.targeting, target)
+            if self.target_queue or shift_held():     # Shift — в конец очереди
+                ok, msg = c.queue_order(self.selected, {"type": "skill", "skill": self.targeting, "target": target})
+            else:
+                ok, msg = c.order_skill(self.selected, self.targeting, target)
             if ok and self.tutorial:
                 self.tutorial.ordered(self.targeting)
             if ok:
                 self.targeting = None
+                self.target_queue = False
             else:
                 self.say(msg)
             return
@@ -657,7 +783,10 @@ class BattleScene:
         if button == 1:                          # выбор своего — с притяжением к фигурке рядом с курсором
             mine = self.view.pick_unit(pos, lambda v: v.team == PLAYER and not v.summon and not v.obj)
             if mine is not None:
-                self._select(mine)
+                if shift_held():
+                    self._toggle_selected(mine)
+                else:
+                    self._select(mine)
                 return
         u = self.selected
         if not u:

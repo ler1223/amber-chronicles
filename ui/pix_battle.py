@@ -13,9 +13,11 @@ from ui import theme as T
 from ui import pixmesh as M
 from ui.pix_spells import Spells
 from ui.pixsim import BOUNCE, DIE
-from ui.pixfire import FireField, IceField
+from ui.pixfire import FireField, IceField, OilField, PoisonField
 from ui.pixfx import FPS, PixFx, family
 from ui.settings import SETTINGS
+
+G = 9.0
 
 FIRE_LIGHT = (255, 140, 50)
 ICE_LIGHT = (140, 200, 255)
@@ -35,6 +37,8 @@ class PixelPilot:
         self.burning_units = set()  # юниты, горевшие в прошлом кадре
         self.fire = FireField()    # горящие клетки — единая горящая поверхность
         self.ice = IceField(seed=8)  # ледяные клетки — единая ледяная корка
+        self.poison = PoisonField(seed=5)   # ядовитые клетки — одна лужа отравы
+        self.oil = OilField(seed=6)         # масляные клетки — одна лужа с радужной плёнкой
         self.icy = set()           # клетки, покрытые льдом в прошлом кадре
         self._masks = {}           # картинка фигурки → точки контура и тела (для огоньков по модели)
         self._acc = {}
@@ -45,6 +49,17 @@ class PixelPilot:
         self._deto = []            # детонации Вспышки этого кадра — взрываются одной поверхностью
         self._wall_key, self._wall_map = None, {}
         self.spells = Spells(self)  # живые частицы: снаряды-кометы и удары (эталон: огненный шар, метеор, лёд)
+        from ui.pix_weapons import Weapons
+        self.weapons = Weapons(self)  # оружие: Мощный удар, Прыжок драгуна (прототип)
+        self.quakes = []           # разломы и рябь (ui/pix_quake.py) — преломление земли
+        from ui.pix_light import Light
+        self.light = Light(self)   # свет жреца
+        from ui.pix_arch import Arch
+        self.arch = Arch(self)     # все остальные навыки — архетипы (ui/pix_arch.py)
+        from ui.pix_motif import Motif
+        self.motif = Motif(self)   # почерк класса: детали поверх архетипов
+        from ui.pix_extra import Extra
+        self.extra = Extra(self)   # гроза, газ, барьеры, песочные часы, выстрел ловчего
 
     @property
     def on(self):
@@ -54,6 +69,8 @@ class PixelPilot:
         self.fx.clear()
         self.spells.clear()
         self.fire.clear()
+        self.poison.clear()
+        self.oil.clear()
         self._tongues.clear()
         return self.on
 
@@ -67,6 +84,8 @@ class PixelPilot:
         self.fx.clear()
         self.spells.clear()
         self.fire.clear()
+        self.poison.clear()
+        self.oil.clear()
         self._tongues.clear()
         if self.on:
             self.fx.lib.warm()
@@ -76,8 +95,15 @@ class PixelPilot:
             self.time += dt
             self.fx.update(dt)
             self.spells.update(dt)
+            for q in self.quakes:
+                q.update(dt)
+            self.quakes = [q for q in self.quakes if not q.done]
             if self.on and self.view.combat is not None:
                 self._burn(dt, self.view.combat)
+                c = self.view.combat
+                self.extra.gas(dt, c)
+                self.extra.barriers_step(dt, c)
+                self.extra.hourglass_step(c)
 
     def _rate(self, key, per_sec, dt):
         a = self._acc.get(key, 0.0) + per_sec * dt
@@ -93,6 +119,8 @@ class PixelPilot:
         frozen = [pos for pos, cell in c.grid.cells.items() if cell.hazard == "ice" and not S.held(pos)]
         self.ice.update(dt, frozen, c.grid.w, c.grid.h)
         self.icy = set(frozen)
+        self.poison.update(dt, [p for p, cell in c.grid.cells.items() if cell.hazard == "poison"], c.grid.w, c.grid.h)
+        self.oil.update(dt, [p for p, cell in c.grid.cells.items() if cell.hazard == "oil"], c.grid.w, c.grid.h)
         self._cell_tongues(dt, len(cells))
         n = self._rate("sparks", 1.5 * len(cells), dt)
         pts = self.fire.sample(n, S.rng) if n else None
@@ -228,6 +256,12 @@ class PixelPilot:
 
     def attack(self, e, a, b):
         """Дальняя атака огнём или льдом: пиксельный снаряд. Возвращает время полёта или None."""
+        if self.on and e["src"].proto_id in ("totem_storm", "totem_thunder"):   # тотем грозы: молния в цель
+            src, dst = e["src"], e["dst"]
+            self.view.vfx.after(max(0.0, (e.get("hit") or 0.12) - 0.05), lambda: dst.alive and self.extra.zap(src, dst))
+            return e.get("hit") or 0.12
+        if self.on and e["src"].proto_id == "trapper" and e["kind"] != "melee":   # ловчий: пуля
+            return self.extra.gunshot(e["src"], e["dst"], e.get("hit") or 0.12)
         if not self.on or e["kind"] == "melee" or e.get("tag") not in ("fire", "ice"):
             return None
         fire = e["tag"] == "fire"
@@ -254,7 +288,23 @@ class PixelPilot:
 
     def skill(self, u, sk, spec, ctx, color, far, radius, tier, sid=None):
         """Навык огня или льда: свой снаряд и удар. Возвращает время до удара или None (не стихия пилота)."""
+        from ui.pix_weapons import WEAPON_SKILLS
+        if self.on and sid in WEAPON_SKILLS:
+            return self.weapons.skill(sid, u, sk, ctx, ctx.get("hit"))
+        if self.on and sid in ("thunderstorm", "e_thunderstorm"):     # гроза: молнии из тучи по площади
+            g = ctx.get("target_ground")
+            gp = P.unproject(*g) if g else None
+            if gp is not None:
+                br = sk.get("branch")
+                rain = sid == "e_thunderstorm" or bool(br and br[0] == "B")
+                self.extra.storm_strike(gp[0], gp[1], (sk.get("radius", 2) or 2) + 0.3,
+                                        max(0.25, ctx.get("hit") or 0.4), rain)
+            return ctx.get("hit") or 0.0
+        if self.on and sid in ("volley", "arrow_rain"):               # залп, ливень (и огненный — горящие стрелы)
+            return self.arch.skill(sid, u, sk, ctx, ctx.get("hit"))
         fam = family(sk)
+        if self.on and fam is None and sk:
+            return self.arch.skill(sid, u, sk, ctx, ctx.get("hit"))
         if not self.on or fam is None:
             return None
         V = self.view.vfx
@@ -444,10 +494,28 @@ class PixelPilot:
 
     def own_release(self, sid):
         """Старый эффект выпуска навыка не нужен: эти навыки целиком нарисованы пилотом."""
-        return self.on and sid in ("flashpoint", "blizzard")
+        return self.handles(sid)
+
+    def handles(self, sid, sk=None):
+        """Навык целиком рисует пиксельный стиль сам (время удара, вид) — старые ленты, сферы и выпуск не нужны."""
+        if not self.on or not sid:
+            return False
+        from ui.pix_weapons import WEAPON_SKILLS
+        if sid in ("flashpoint", "blizzard") or sid in WEAPON_SKILLS:
+            return True
+        sk = sk or self.view.data.skills.get(sid)
+        return bool(sk) and family(sk) is None
 
     def cast_area(self, u, sid, sk, alive):
         """Каст по площади: Буран — над целью сгущается туча. True — нарисовано."""
+        if self.on and sid == "revive":
+            return self.light.revive_cast(u, alive)
+        if self.on and sid in ("thunderstorm", "e_thunderstorm") and isinstance(u.cast.get("target"), tuple):
+            tx, ty = u.cast["target"]
+            br = sk.get("branch")
+            self.extra.storm_cast(tx + 0.5, ty + 0.5, (sk.get("radius", 2) or 2) + 0.3, alive,
+                                  rain=sid == "e_thunderstorm" or bool(br and br[0] == "B"))
+            return True
         if not self.on or sid != "blizzard" or sk.get("target") != "cell" or u.cast is None:
             return False
         tgt = u.cast.get("target")
@@ -455,6 +523,29 @@ class PixelPilot:
             return False
         self.spells.storm_cloud(tgt[0] + 0.5, tgt[1] + 0.5, sk.get("radius", 1) + 0.5, alive)
         return True
+
+    def cast_aura(self, u, sid, sk, alive):
+        """Каст не у мага: аура силы вокруг фигурки — частицы поднимаются по телу, у ног пульсирует кольцо."""
+        A = self.arch
+        pal = A.palette(sk or {}, u)
+        S = self.spells
+        st = [0.0]
+
+        def step(dt):
+            if not alive():
+                return False
+            st[0] += dt
+            gx, gy = self.view.ground_pos(u)
+            k = S.rng.poisson(45 * dt) + 1
+            a = S.rng.uniform(0, math.tau, k)
+            r = S.rng.uniform(0.3, 0.5, k)
+            S.ps.spawn(k, (gx + np.cos(a) * r, gy + np.sin(a) * r * 0.6, S.rng.uniform(0.0, 0.3, k)),
+                       (np.zeros(k), np.zeros(k), S.rng.uniform(0.9, 1.6, k)), life=0.55, temp=0.75, cool=1.2,
+                       drag=0.5, pal=pal, smoke=None, life_var=0.2, tall=0.6)
+            if int(st[0] * 3) != int((st[0] - dt) * 3):
+                A.ring(gx, gy, 0.55, pal, n=60, z=0.04, life=0.35, out=False, temp=0.65)
+            return True
+        S.emitters.append(step)
 
     def cast_orb(self, u, sk, head, alive, tier):
         """Копящаяся сила над головой при касте огня или льда. True — нарисовано (старая сфера не нужна)."""
@@ -537,13 +628,12 @@ class PixelPilot:
             u = e["unit"]
             gp = T.cell_feet(u.cell)
             r = eff.get("radius", 0)
-            self._at("blast_l" if r >= 1 else "blast_m", gp, lift=0.3)
-            for p in view._cells_around(u.cell, r) if r else []:
-                cp = T.cell_feet(p)
-                self._stamp("scorch", cp)
-                if p != u.cell:
-                    self._at("blast_s", cp, lift=0.3, delay=0.06 + math.dist(cp, gp) / 1500)
-            self._stamp("scorch_big", gp)
+            self._at("blast_l" if r >= 1 else "blast_m", gp, lift=0.3, scale=1.0 + 0.35 * r)
+            x, y = u.cell[0] + 0.5, u.cell[1] + 0.5
+            self.spells.scorch_mark(x, y, r + 0.6, (0.0, 0.0), crater=0.4)   # один след на весь взрыв
+            n = 50 + 30 * r                                    # обломки и жар — живыми частицами
+            self.spells.ps.spawn(n, (x, y, 0.3), (0, 0, 2.0), life=0.9, temp=0.9, cool=1.0, grav=G * 0.6, drag=0.6,
+                                 pal="fire", smoke="dust", smoke_at=0.3, spread=2.2 + r, land=DIE)
             self._at("smoke", gp, lift=0.6, delay=0.3, scale=1.3)
             self._light((gp[0], gp[1] - 20), FIRE_LIGHT, 170 + 50 * r, 1.6, 0.6)
             view.vfx.screen_fx(shake=8 + 2 * r)
@@ -620,10 +710,13 @@ class PixelPilot:
 
     def arena(self, kind, pts):
         """Событие поля: извержение — взрывы с подпалинами, лавина — ледяные шипы. True — нарисовано."""
-        if not self.on or kind not in ("eruption", "avalanche"):
+        if not self.on or kind not in ("eruption", "avalanche", "ladle"):
             return False
         for i, p in enumerate(pts):
-            if kind == "eruption":
+            if kind == "ladle":                       # ковш: огненный поток вдоль ряда
+                self._at("flame_pillar", p, anchor="bottom", delay=0.07 * i)
+                self._stamp("scorch", p)
+            elif kind == "eruption":
                 self._at("flame_pillar", p, anchor="bottom", delay=0.03 * i)
                 self._at("blast_m", p, lift=0.3, delay=0.03 * i + 0.1)
                 self._stamp("scorch", p)
@@ -631,7 +724,7 @@ class PixelPilot:
                 self._at("spikes_big", p, anchor="bottom", delay=0.04 * i)
                 self._frost(p)
         if pts:
-            self._light((pts[0][0], pts[0][1] - 20), FIRE_LIGHT if kind == "eruption" else ICE_LIGHT, 160, 1.2, 0.6)
+            self._light((pts[0][0], pts[0][1] - 20), ICE_LIGHT if kind == "avalanche" else FIRE_LIGHT, 160, 1.2, 0.6)
         self.view.vfx.screen_fx(shake=6)
         return True
 
@@ -854,6 +947,7 @@ class PixelPilot:
     def begin_frame(self, gl):
         """Перед рисованием мира: свечение — только с OpenGL; очищаем, если в прошлом кадре на нём что-то было."""
         self.glow_used = bool(gl and self.on)
+        self.gpu = self.glow_used                 # частицы рисует видеокарта (gpu_particles), не pygame
         if not self.glow_used:
             return
         if self.glow is None or self.glow.get_size() != (T.SCREEN_W, T.SCREEN_H):
@@ -879,9 +973,13 @@ class PixelPilot:
         if not self.on:
             return
         dim = self._dim()
+        self.oil.draw(flat, dim)
+        self.poison.draw(flat, dim)
         self.ice.draw(flat, dim)               # ледяные клетки — одна корка, а не иней на каждой клетке
         self.fire.draw(flat, dim)
         self.fx.draw_ground(flat, dim)
+        for q in self.quakes:
+            q.draw(flat)
 
     def world_items(self, c):
         """Что встаёт в общий порядок глубины с юнитами: пламя горящих клеток и воздушные экземпляры."""
@@ -893,10 +991,18 @@ class PixelPilot:
         for fx in self.fx.air():
             items.append((fx.ground_y(), 2, "pix", (self._draw_fx, (fx,))))
         items += self._break_items()
-        if self.spells.ps.prepare(self._dim()):
+        gpu = getattr(self, "gpu", False)
+        if self.spells.ps.prepare(self._dim(), gpu=gpu) and not gpu:
             for y, part in self.spells.ps.buckets():
                 items.append((y, 2, "pix", (self._draw_parts, (part,))))
         return items
+
+    def gpu_particles(self):
+        """Частицы кадра для видеокарты (см. Particles.gpu_rows) или None."""
+        if not (self.on and getattr(self, "gpu", False)):
+            return None
+        rows = self.spells.ps.gpu_rows()
+        return rows if len(rows) else None
 
     def _draw_parts(self, surf, part):
         self.spells.ps.draw(surf, self._glow(), part)

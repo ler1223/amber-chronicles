@@ -4,15 +4,32 @@
 
 ## Имена файлов
 - Герои: `warrior.png`, `archer.png`, `mage.png`, `priest.png`, `assassin.png`, `druid.png`, `guardian.png`,
-  `shaman.png`, `bard.png`, `alchemist.png`.
+  `shaman.png`, `bard.png`, `alchemist.png`, `ram.png`, `trapper.png`, `cryo.png`, `necro.png`, `chrono.png`,
+  `gravity.png`, `geomancer.png`, `brewer.png`, `bloodrager.png`, `tactician.png`, `binder.png`.
 - Облики друида: `druid_bear.png` / `druid_wolf.png` (или общие `bear.png` / `wolf.png`).
-- Призывы: `totem_storm.png`, `totem_thunder.png`, `totem_heal.png`, `totem_ward.png`, `spirit_tree.png`, `ent.png`.
+- Призывы: `totem_storm.png`, `totem_thunder.png`, `totem_heal.png`, `totem_ward.png`, `spirit_tree.png`, `ent.png`,
+  `skeleton_minion.png`, `decoy.png`. Без файла берётся спрайт родственника (`SPRITE_ALIAS` в `ui/battle_view.py`).
 - Подклассы (необязательно; без файла берётся спрайт класса) — по id пути из `data/paths.json`: `berserker.png`,
   `paladin.png`, `ranger.png`, `sniper.png`, `warlock.png`, `cryomancer.png`, `inquisitor.png`, `lifekeeper.png`,
   `shadow.png`, `duelist.png`, `wild.png`, `grove.png`, `sentinel.png`, `dragoon.png`, `thunderlord.png`,
   `spiritwalker.png`, `skald.png`, `minstrel.png`, `demolitionist.png`, `poisoner.png`.
-- Враги: `slime.png`, `beetle.png`, `bog_archer.png`, `frog_shaman.png`, `slime_king.png` (элита), `ice_witch.png` (босс).
-- Имя = id юнита из `data/classes.json`, `data/enemies.json`, `data/paths.json`.
+- Враги: все id из `data/enemies.json` (77 файлов) — болото и кузни гл. 1–2, нежить Склепа (`skeleton.png`,
+  `lich.png`, …), Перевалы (`yeti.png`, `frost_giant.png`, …), Степь (`raider.png`, `storm_khan.png`, …), Гробницы
+  (`mummy.png`, `pharaoh.png`, …), Лес фей (`sprite.png`, `fae_queen.png`, …), Затонувший город (`drowned.png`,
+  `deep_lord.png`, …), Цитадель (`sky_knight.png`, `archon.png`, …). Элита и боссы — по флагам `elite`/`boss`
+  в `data/enemies.json`.
+- Объекты поля: id из `data/objects.json` (`barrel_powder.png`, `boulder.png`, `nest.png`, `hearth.png`,
+  `raider_tent.png`, `cart.png`, `ward_torch.png`, `bell.png`, `bone_wall.png`, …).
+- Имя = id юнита из `data/classes.json`, `data/enemies.json`, `data/paths.json`, `data/objects.json`.
+- Окружение — в подпапке `env/`, см. ниже.
+
+## Окружение (`env/`)
+Билборды укрытий и декора поля: `env/<материал>_<вид>.png` (материал главы — `grass` болото, `ash` кузни, `dirt`
+склеп, `snow` перевалы, `dry` степь, `sand` гробницы, `moss` лес фей, `wet` затонувший город, `marble` цитадель).
+`block` — полное укрытие, `log` — половина укрытия, остальные виды (`tree`, `pine`, `bush`, `rock`, `column`,
+`tombstone`, `deadtree`, `mushroom`) — декор вокруг поля. Холсты по виду: `tree` 32×46, `pine` 28×48, `block` 36×34,
+`log` 34×18, `rock` 24×18, `column` 20×46, `bush` 24×16, `mushroom` 22×26, `tombstone` 16×20, `deadtree` 28×40;
+в игре ×2, ноги (низ картинки) — в точку на земле. Без файла рисуется заглушка (`ui/ground.py`).
 
 ## Как рисовать
 - Холст **32×32** (можно другой — см. масштаб). Прозрачный фон.

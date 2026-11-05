@@ -15,7 +15,7 @@ def sign(v):
 
 class Cell:
     __slots__ = ("pos", "terrain", "passable", "cover", "hazard", "hazard_time", "hazard_team", "base_terrain",
-                 "portal", "deco", "hazard_owner")
+                 "portal", "deco", "hazard_owner", "mine_mult")
 
     def __init__(self, pos, terrain="grass", passable=True, cover=None, hazard=None):
         self.pos = pos
@@ -26,6 +26,7 @@ class Cell:
         self.hazard_time = PERMANENT if hazard else 0.0
         self.hazard_team = None    # чья ловушка: срабатывает только на чужих
         self.hazard_owner = None   # кто поставил капкан (ему — шкала за пойманного)
+        self.mine_mult = 1.0       # мина подрывника с Порохом — ×2, без — ×0.6
         self.base_terrain = None   # прилив: настоящий рельеф под временной водой
         self.portal = False
         self.deco = None           # дерево и т.п. — только для отрисовки

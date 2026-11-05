@@ -117,7 +117,8 @@ class Spells:
     def comet(self, a, b, kind, on_hit, speed=9.0, scale=1.0):
         """Снаряд a → b по прямой. kind: fire, fire_big (метеор), ice. on_hit(b, направление). Возвращает время."""
         d = math.dist(a, b)
-        dur = max(0.08, d / speed)
+        from ui import flight
+        dur = flight.get() or max(0.08, d / speed)
         dirv = _norm(tuple(b[i] - a[i] for i in range(3)))
         st = [0.0]
 
@@ -680,6 +681,8 @@ class Spells:
         тогда мороз, шипы, снег и одна большая снежинка (ice_hit_area)."""
         R = radius + 0.5
         st = [False]
+        from ui import flight
+        delay = flight.get() or delay
 
         def rain(dt, f):
             k = int(dt * 260 * (R + 0.5)) + 1

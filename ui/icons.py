@@ -22,7 +22,13 @@ BUFF_NAMES = {"armor": "броня", "atk_mult": "урон", "atk_speed": "бы�
               "thorns": "шипы", "regen": "восстановление", "slow": "скорость", "immune": "иммунитет",
               "stealth": "в тени", "ap_rate": "AP быстрее", "atk_tag": "клинок с ядом", "heal_taken": "лечение",
               "range_add": "дальность", "exposed": "раскрыт — удар в спину от всех",
-              "trance": "кровавый транс: лечение → ярость", "undying": "не умирает"}
+              "trance": "кровавый транс: лечение → ярость", "undying": "не умирает",
+              "bleed": "кровотечение", "silence": "безмолвие — без навыков",
+              "banner": "у знамени: приказы сильнее", "zoc_free": "стойка часового", "zoc_range": "длинное древко",
+              "collide_stun": "стенобой: столкновения оглушают", "billiard": "бильярд: толчки по цепочке",
+              "all_arrows": "все стрелы сразу", "inferno": "инферно: огонь не гаснет",
+              "stable": "стабилизатор: теги не реагируют"}
+MARK_GLYPH = {"challenge": "duel", "duel": "duel", "cold": "ice", "bomb": "bomb"}
 
 _cache = {}
 
@@ -193,6 +199,28 @@ def glyph(s, kind, size):
     elif kind == "heal_down":
         _heart(s, (200, 90, 100), c, c, r)
         pygame.draw.line(s, OUT, (c, c - r * 0.6), (c - r * 0.2, c + r * 0.8), 2)
+    elif kind.startswith("mark:"):                 # метка механики: рисунок и число стаков
+        _, mid, n = kind.split(":")
+        base = MARK_GLYPH.get(mid, "other")
+        glyph(s, base, size)
+        if int(n) > 1:
+            f = pygame.font.SysFont("arial", max(9, int(size * 0.55)), bold=True)
+            img = f.render(n, True, (255, 255, 255))
+            s.blit(img, (size - img.get_width() - 1, size - img.get_height() + 1))
+    elif kind == "duel":
+        pygame.draw.line(s, (235, 235, 245), (c - r, c + r), (c + r, c - r), 2)
+        pygame.draw.line(s, (235, 235, 245), (c - r, c - r), (c + r, c + r), 2)
+        pygame.draw.circle(s, (255, 190, 80), (c, c), max(2, r * 0.35))
+    elif kind == "bomb":
+        pygame.draw.circle(s, (60, 60, 70), (c, c + r * 0.2), r * 0.9)
+        pygame.draw.line(s, (200, 170, 110), (c + r * 0.4, c - r * 0.5), (c + r * 0.9, c - r * 1.1), 2)
+        pygame.draw.circle(s, (255, 200, 80), (c + r * 0.95, c - r * 1.15), max(1, r * 0.3))
+    elif kind == "bleed":
+        _drop(s, (200, 30, 40), c, c + r * 0.2, r, (255, 150, 140))
+        _drop(s, (150, 20, 30), c + r * 0.7, c - r * 0.5, r * 0.45)
+    elif kind == "silence":
+        pygame.draw.ellipse(s, (200, 190, 220), (c - r, c - r * 0.45, r * 2, r * 0.9), 2)
+        pygame.draw.line(s, (230, 70, 70), (c - r * 1.1, c + r * 0.9), (c + r * 1.1, c - r * 0.9), 2)
     elif kind == "range_down":
         pygame.draw.circle(s, (220, 200, 150), (c, c), r, 2)
         pygame.draw.line(s, (220, 200, 150), (c - r * 1.3, c), (c + r * 1.3, c), 1)
@@ -235,6 +263,14 @@ def buff_icon(stat, value):
         return ("atk_up", True)
     if stat == "undying":
         return ("immune", True)
+    if stat in ("bleed", "silence"):
+        return (stat, False)
+    if stat == "stable":
+        return ("other", False)
+    if stat in ("banner", "zoc_free", "zoc_range", "collide_stun"):
+        return ("armor_up", True)
+    if stat in ("billiard", "all_arrows", "inferno"):
+        return ("atk_up", True)
     if stat == "atk_speed":
         return ("haste", True) if value < 1 else ("slow", False)
     return {"atk_speed": ("haste", True), "thorns": ("thorns", True), "regen": ("regen", True),
@@ -265,6 +301,20 @@ def unit_states(u, data, combat=None):
     if u.guarded_by is not None and u.guard_time > 0:
         out.append(("shield", (150, 200, 255), min(1.0, u.guard_time / 8), f"Под защитой: {u.guarded_by.name}, "
                                                                           f"{u.guard_time:.1f} с"))
+    marks = data.config.get("marks", {})
+    for mid, m in u.marks.items():                 # стаки механик: вызов, холод, бомба
+        d = marks.get(mid, {})
+        n = f" ×{m['n']}" if d.get("max", 1) > 1 else ""
+        src = f" ({m['src'].name})" if m.get("src") is not None else ""
+        out.insert(0 if mid in ("challenge", "duel") else len(out), (f"mark:{mid}:{m['n']}", tuple(d.get("color", (255, 220, 120))),
+                    max(0.0, min(1.0, m["t"] / max(m["total"], 0.01))), f"{d.get('name', mid)}{n}{src} {m['t']:.1f} с"))
+    mut = getattr(u, "mutator", None)
+    if mut and mut in getattr(data, "mutators", {}):     # механика врага — первой, чтобы её видели
+        d = data.mutators[mut]
+        out.insert(0, (d.get("icon", "other"), tuple(d["color"]), 1.0, f"{d['name']}: {d['desc']}"))
+    if getattr(u, "quiver", None):
+        q = data.config.get("quiver", {}).get(u.quiver, {})
+        out.append(("atk_tag", (255, 220, 150), 1.0, f"Колчан: {q.get('name', u.quiver)}"))
     if combat is not None:
         for name, left, total in combat.pending_on(u):
             out.append(("regen", (255, 240, 170), left / max(total, 0.01), f"{name} через {left:.1f} с"))

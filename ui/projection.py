@@ -17,7 +17,7 @@ MARGIN_L, MARGIN_T, MARGIN_R, MARGIN_B = 9, 10, 9, 3     # клеток мест
 FLAT_W = (MARGIN_L + COLS + MARGIN_R) * FLAT
 FLAT_H = (MARGIN_T + ROWS + MARGIN_B) * FLAT
 
-PITCH = math.radians(45)        # наклон камеры от горизонта
+PITCH = math.radians(50)        # наклон камеры от горизонта (круче — доска выше и клетки менее сплюснуты)
 DEPTH_RATIO = 1.25              # ближний ряд шире дальнего во столько раз
 PX_PER_CELL = 80.0              # ширина клетки в центре доски на экране
 BASE_PX = 80.0                  # при такой ширине клетки фигурки в масштабе 1 (на больших досках — мельче)
@@ -45,6 +45,70 @@ def set_board(cols, rows):
     near = (DEPTH_RATIO + 1) / 2                     # во сколько раз ближний ряд шире среднего
     PX_PER_CELL = min(_DEFAULT[1], MAX_NEAR_W / (COLS * near), 430.0 / (ROWS * 0.75))
     FOCAL = PX_PER_CELL * DIST
+
+
+def fit(left, top, right, bottom, head_px=64.0, cap=150.0, avoid=()):
+    """Камера боя: доска (с головами фигурок дальнего ряда и полосками HP) вписывается целиком в прямоугольник
+    экрана — сколько позволяют ширина и высота. Ближний ряд — у нижнего края, дальние головы — у верхнего.
+    avoid — прямоугольники панелей (x, y, w, h) поверх поля: доска к ним не подходит (уменьшается, пока край
+    доски и головы дальнего ряда их не обходят)."""
+    global CENTER_SCREEN, PX_PER_CELL, FOCAL
+    if avoid:
+        # самая крупная доска, которая обходит панели; можно сдвинуть её вбок от центра
+        lo, hi = 20.0, cap
+        best = (20.0, 0.0)
+        shifts = sorted(range(-260, 261, 13), key=abs)
+        for _ in range(18):
+            mid = (lo + hi) / 2
+            ok = None
+            for dx in shifts:
+                fit(left + dx, top, right + dx, bottom, head_px, mid)
+                full = fit_width(left, right)
+                if full and _clear(avoid, head_px):
+                    ok = dx
+                    break
+            if ok is not None:
+                best, lo = (mid, ok), mid
+            else:
+                hi = mid
+        return fit(left + best[1], top, right + best[1], bottom, head_px, best[0])
+    far = DIST + CY * COS
+    near = DIST - CY * COS
+    a = DIST * CY * SIN / far                 # центр → дальний край доски (вверх), на пиксель клетки
+    b = DIST * CY * SIN / near                # центр → ближний край (вниз)
+    c = DIST * (COLS / 2) / near              # полширины ближнего ряда
+    h = head_px * 1.2 * DIST / far / BASE_PX  # фигурка дальнего ряда над краем доски
+    pad = 22                                  # полоска HP над головой
+    px = min((bottom - top - pad) / (a + b + h), (right - left) / (2 * c), cap)
+    CENTER_SCREEN = ((left + right) / 2.0, top + pad + px * (a + h))
+    PX_PER_CELL = px
+    FOCAL = PX_PER_CELL * DIST
+    return CENTER_SCREEN, PX_PER_CELL
+
+
+def fit_width(left, right):
+    """Ближний ряд доски целиком в пределах экрана по ширине."""
+    x0, _, _ = project(0.0, ROWS)
+    x1, _, _ = project(COLS, ROWS)
+    return x0 >= left - 1 and x1 <= right + 1
+
+
+def _clear(avoid, head_px):
+    """Край доски (и головы фигурок у края) не заходит ни в один из прямоугольников avoid."""
+    pts = []
+    for i in range(13):
+        gy = ROWS * i / 12
+        for gx in (0.0, COLS):
+            x, y, k = project(gx, gy)
+            pts += [(x, y), (x, y - head_px * 1.25 * k - 22)]
+    for i in range(1, 10):
+        x, y, k = project(COLS * i / 10, 0.0)
+        pts.append((x, y - head_px * 1.25 * k - 22))
+    for ax, ay, aw, ah in avoid:
+        for x, y in pts:
+            if ax - 6 <= x <= ax + aw + 6 and ay - 6 <= y <= ay + ah + 6:
+                return False
+    return True
 
 
 def configure(center, px_per_cell):

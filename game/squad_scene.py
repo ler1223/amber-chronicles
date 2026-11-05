@@ -46,6 +46,10 @@ class SquadScene(MetaScene):
         self.drag = None            # {"cls", "from": "board"|"roster", "start": pos}
         self.portraits = []         # (rect, cls)
         self.last_click = (None, 0.0)
+        self.story = app.profile.mode == "story"
+        if self.story:
+            self.hint = ("Перетащите героя на поле — в отряд, по полю — переставить, с поля вниз — убрать. "
+                         "Новые спутники присоединяются по сюжету.")
         self._layout()
 
     def _layout(self):
@@ -171,7 +175,8 @@ class SquadScene(MetaScene):
         T.text(surf, "Отряд", (24, 14), 30, T.TEXT, True)
         amber = f"Янтарь: {prof.amber}"
         T.text(surf, amber, (T.SCREEN_W - 30 - T.font(22, True).size(amber)[0], 18), 22, AMBER, True)
-        self._draw_presets(surf)
+        if not self.story:
+            self._draw_presets(surf)
         self._draw_board(surf)
         self._draw_info(surf)
         self._draw_synergy(surf)
@@ -180,6 +185,12 @@ class SquadScene(MetaScene):
             img = self._sprite(self.drag["cls"], 1.5)
             surf.blit(img, (self.mouse[0] - img.get_width() / 2, self.mouse[1] - img.get_height() * 0.7))
         self.draw_footer(surf)
+
+    def who(self, cls):
+        """Подпись героя: в сюжете — имя персонажа, иначе — класс."""
+        if self.story:
+            return self.app.profile.character(cls)["name"]
+        return self.app.data.classes[cls]["name"]
 
     def _sprite(self, cls, k=1.0, dim=False):
         c = self.app.data.classes[cls]
@@ -232,7 +243,7 @@ class SquadScene(MetaScene):
             img = self._sprite(cls, 1.0)
             bob = 2 * math.sin(self.clock * 2 + cell[1])
             surf.blit(img, (r.centerx - img.get_width() / 2, r.bottom - img.get_height() - 6 - bob))
-            T.text(surf, c["name"], (r.x + 4, r.y + 2), 11, T.TEXT, True, shadow=True)
+            T.text(surf, self.who(cls), (r.x + 4, r.y + 2), 11, T.TEXT, True, shadow=True)
             self.hit(r, None, f"{c['name']}: перетащите, чтобы переставить; вниз — убрать из отряда")
 
     def _draw_info(self, surf):
@@ -244,7 +255,8 @@ class SquadScene(MetaScene):
         img = self._sprite(cls, 2.0, dim=not hired)
         surf.blit(img, (INFO.x + 8, INFO.y + 8))
         x = INFO.x + 150
-        T.text(surf, c["name"], (x, INFO.y + 10), 24, T.TEXT if hired else T.TEXT_DIM, True)
+        title = f"{self.who(cls)} · {c['name']}" if self.story else c["name"]
+        T.text(surf, title, (x, INFO.y + 10), 24, T.TEXT if hired else T.TEXT_DIM, True)
         sub = ROLE.get(c["role"], c["role"]) + (f" · мастерство {prof.mastery(cls)}" if hired else "")
         h = prof.heroes[cls]
         if hired and h["path"]:
@@ -316,18 +328,21 @@ class SquadScene(MetaScene):
         prof, data = self.app.profile, self.app.data
         pygame.draw.rect(surf, T.PANEL, ROSTER, border_radius=10)
         x = ROSTER.x + 12
-        for fid, name in FILTERS:
+        for fid, name in ([] if self.story else FILTERS):
             w = T.font(13, True).size(name)[0] + 20
             r = pygame.Rect(x, ROSTER.y + 8, w, 24)
             on = fid == self.filter
-            pygame.draw.rect(surf, (60, 64, 78) if on else (36, 38, 46), r, border_radius=12)
+            pygame.draw.rect(surf, (80, 60, 36) if on else (46, 35, 26), r, border_radius=12)
             pygame.draw.rect(surf, GOLD if on else T.PANEL_EDGE, r, 1, border_radius=12)
             T.text(surf, name, r.center, 13, T.TEXT if on else T.TEXT_DIM, on, center=True)
             self.hit(r, ("filter", fid), None)
             x += w + 8
         T.text(surf, "ПКМ или двойной клик — в отряд/из отряда · перетащить на поле — на клетку",
-               (x + 12, ROSTER.y + 12), 12, T.TEXT_DIM)
-        heroes = [c for c in data.classes if self.filter == "all" or data.classes[c]["role"] == self.filter]
+               (x + 12 - (12 if self.story else 0), ROSTER.y + 12), 12, T.TEXT_DIM)
+        if self.story:                       # сюжет: только присоединившиеся к отряду
+            heroes = [c for c in prof.all_story_heroes() if c in prof.unlocked]
+        else:
+            heroes = [c for c in data.classes if self.filter == "all" or data.classes[c]["role"] == self.filter]
         self.portraits = []
         tw, th = 104, 74
         per_row = max(1, ROSTER.w // (tw + 6))       # шире окно — больше героев в ряду
@@ -337,12 +352,12 @@ class SquadScene(MetaScene):
             c = data.classes[cls]
             hired, in_squad = cls in prof.unlocked, cls in prof.squad
             hot = r.collidepoint(self.mouse) or cls == self.selected
-            pygame.draw.rect(surf, (52, 56, 68) if hot else (36, 38, 46), r, border_radius=8)
+            pygame.draw.rect(surf, (70, 52, 34) if hot else (46, 35, 26), r, border_radius=8)
             edge = GOLD if in_squad else (tuple(c["color"]) if hired else T.PANEL_EDGE)
             pygame.draw.rect(surf, edge, r, 3 if in_squad else 1, border_radius=8)
             img = self._sprite(cls, 0.85, dim=not hired)
             surf.blit(img, (r.centerx - img.get_width() / 2, r.y - 2))
-            label = c["name"]
+            label = self.who(cls)
             size = 11
             while T.font(size, True).size(label)[0] > tw - 6 and size > 9:
                 size -= 1

@@ -1,0 +1,21 @@
+{
+  "_note": "Механики врагов на тяжёлых сложностях похода (sim/mutators.py). Значения — доли: 0.06 = 6%.",
+  "suppressor":  {"name": "Глушащий", "group": "skills", "color": [190, 150, 255], "icon": "silence", "silence": 2.0, "icd": 5.0,
+                  "desc": "Удар глушит героя на 2 сек (без навыков) и сбивает каст."},
+  "decay":       {"name": "Гниющий", "group": "skills", "color": [150, 190, 90], "icon": "heal_down", "heal_taken": 0.5, "duration": 5.0,
+                  "desc": "Удар — лечение по цели вдвое слабее 5 сек."},
+  "devourer":    {"name": "Пожирающий", "group": "skills", "color": [220, 110, 200], "icon": "atk_down", "steal": 1, "heal": 0.03, "icd": 3.0,
+                  "desc": "Удар крадёт стак пассивки героя и лечит пожирателя на 3% HP."},
+  "pack_shaman": {"name": "Целящий", "group": "pack", "color": [120, 230, 140], "icon": "regen", "every": 4.0, "radius": 3, "heal": 0.06,
+                  "desc": "Раз в 4 сек лечит врагов рядом на 6% HP."},
+  "shieldbearer":{"name": "Щитоносный", "group": "pack", "color": [170, 210, 255], "icon": "shield", "every": 6.0, "radius": 2, "shield": 0.1, "duration": 5.0,
+                  "desc": "Раз в 6 сек даёт врагам рядом щит 10% HP."},
+  "warlord":     {"name": "Вожак", "group": "pack", "color": [255, 170, 80], "icon": "atk_up", "radius": 2, "atk": 1.25,
+                  "desc": "Враги рядом бьют на 25% сильнее."},
+  "explosive":   {"name": "Взрывной", "group": "death", "color": [255, 120, 60], "icon": "fire", "delay": 1.2, "radius": 1, "pct": 0.15,
+                  "desc": "Погибнув, через 1.2 сек взрывается: героям рядом 15% их HP."},
+  "splitter":    {"name": "Делящийся", "group": "death", "color": [130, 220, 200], "icon": "other", "count": 2, "hp": 0.4, "atk": 0.6,
+                  "desc": "Погибнув, делится на двух меньших (40% HP)."},
+  "restless":    {"name": "Неупокоенный", "group": "death", "color": [210, 215, 190], "icon": "immune", "delay": 2.5, "hp": 0.4,
+                  "desc": "Погибнув, встаёт ещё раз с 40% HP."}
+}

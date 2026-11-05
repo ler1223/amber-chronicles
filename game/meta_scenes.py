@@ -346,6 +346,11 @@ class HeroesScene(MetaScene):
             ok = story_meta.equip(data, self.cls, hero, action[1], self.slot_sel)
             if ok:
                 self.show_skill(action[1])
+            elif story_meta.is_ult(data, self.cls, action[1]):
+                self.show_skill(action[1])
+                lv = story_meta.skill_level(data, self.cls, action[1])
+                self.say("Ультимейт не занимает слот — он всегда на R" + (f" (откроется на уровне {lv})"
+                         if story_meta.level(hero) < lv else ""))
             else:
                 self.say(f"Навык откроется на уровне {story_meta.skill_level(data, self.cls, action[1])}")
         elif self.story and kind == "unequip":
@@ -394,8 +399,8 @@ class HeroesScene(MetaScene):
             h = prof.heroes[self.cls]
             build = {"cls": self.cls, "path": h["path"], "branches": h["branches"], "talents": h["talents"],
                      "mastery": prof.mastery(self.cls), "autocast": h["autocast"], "items": list(h["loadout"]),
-                     "skills": list(h.get("skill_loadout", [])), "doctrine": h.get("doctrine"),
-                     "rpg": h["rpg"]}
+                     "skills": story_meta.battle_skills(self.app.data, self.cls, h) if h.get("skill_loadout") else [],
+                     "doctrine": h.get("doctrine"), "rpg": h["rpg"]}
             run = Run(self.app.data, 0, None, bonus, [build], mode=prof.mode)
             self.preview = run.proto(run.squad[0])
         return self.preview
@@ -420,7 +425,7 @@ class HeroesScene(MetaScene):
         for i, cls in enumerate(units):
             r = pygame.Rect(24 + (i % per_row) * (bw + 6), (62 if rows == 1 else 58) + (i // per_row) * (bh + 4), bw, bh)
             sel = cls == self.cls
-            pygame.draw.rect(surf, (52, 56, 68) if sel else T.PANEL, r, border_radius=8)
+            pygame.draw.rect(surf, (70, 52, 34) if sel else T.PANEL, r, border_radius=8)
             edge = T.SELECT if sel else ((255, 200, 110) if cls in prof.squad else T.PANEL_EDGE)
             pygame.draw.rect(surf, edge, r, 2, border_radius=8)
             h = prof.heroes[cls]
@@ -449,7 +454,7 @@ class HeroesScene(MetaScene):
         for i, (wid, title) in enumerate(self.windows):
             r = pygame.Rect(24 + i * 250, 116, 240, 32)
             on = wid == self.window
-            pygame.draw.rect(surf, (52, 56, 68) if on else T.PANEL, r, border_top_left_radius=8,
+            pygame.draw.rect(surf, (70, 52, 34) if on else T.PANEL, r, border_top_left_radius=8,
                              border_top_right_radius=8)
             pygame.draw.rect(surf, BRANCH_COLOR if on else T.PANEL_EDGE, r, 2, border_top_left_radius=8,
                              border_top_right_radius=8)
@@ -505,7 +510,7 @@ class HeroesScene(MetaScene):
             ad = k["attrs"][a]
             r = pygame.Rect(x - 4, y, left.w - 24, 104)
             prim = a == c["primary"]
-            pygame.draw.rect(surf, (36, 38, 46), r, border_radius=8)
+            pygame.draw.rect(surf, (46, 35, 26), r, border_radius=8)
             pygame.draw.rect(surf, tuple(ad["color"]) if prim else T.PANEL_EDGE, r, 2 if prim else 1,
                              border_radius=8)
             T.text(surf, ad["name"] + ("  · основной" if prim else ""), (r.x + 12, r.y + 8), 18, tuple(ad["color"]),
@@ -656,7 +661,7 @@ class HeroesScene(MetaScene):
             r = pygame.Rect(x, y, rect.w - 28, 150)
             sel = hero["path"] == pid
             locked = pid is not None and not unlocked
-            pygame.draw.rect(surf, (52, 56, 68) if sel else (36, 38, 46), r, border_radius=8)
+            pygame.draw.rect(surf, (70, 52, 34) if sel else (46, 35, 26), r, border_radius=8)
             pygame.draw.rect(surf, PATH_COLOR if sel else T.PANEL_EDGE, r, 2, border_radius=8)
             T.text(surf, title + ("  (выбран)" if sel else ""), (r.x + 10, r.y + 6), 16,
                    T.TEXT_DIM if locked else T.TEXT, True)
@@ -694,7 +699,7 @@ class HeroesScene(MetaScene):
             r = pygame.Rect(x, y, rect.w - 28, 150)
             sel = hero.get("doctrine") == pid
             locked = pid is not None and lvl < story_meta.doctrine_level(data, self.cls, pid)
-            pygame.draw.rect(surf, (52, 56, 68) if sel else (36, 38, 46), r, border_radius=8)
+            pygame.draw.rect(surf, (70, 52, 34) if sel else (46, 35, 26), r, border_radius=8)
             pygame.draw.rect(surf, PATH_COLOR if sel else T.PANEL_EDGE, r, 2, border_radius=8)
             T.text(surf, title + ("  (выбрана)" if sel else ""), (r.x + 10, r.y + 6), 16,
                    T.TEXT_DIM if locked else T.TEXT, True)
@@ -726,7 +731,7 @@ class HeroesScene(MetaScene):
             r = pygame.Rect(x + i * (slot_w + 8), y, slot_w, 54)
             sel = i == self.slot_sel
             sid = load[i] if i < len(load) else None
-            pygame.draw.rect(surf, (52, 56, 68) if sel else (36, 38, 46), r, border_radius=7)
+            pygame.draw.rect(surf, (70, 52, 34) if sel else (46, 35, 26), r, border_radius=7)
             pygame.draw.rect(surf, BRANCH_COLOR if sel else T.PANEL_EDGE, r, 2 if sel else 1, border_radius=7)
             T.text(surf, f"Слот {i + 1}", (r.x + 8, r.y + 4), 12, T.TEXT_DIM)
             if sid:
@@ -742,23 +747,29 @@ class HeroesScene(MetaScene):
         T.text(surf, "Пул навыков", (x, y), 15, T.TEXT_DIM, True)
         y += 22
         lvl = self.app.profile.level(self.cls)
-        for e in story_meta.entries(data, self.cls):
+        pool = story_meta.entries(data, self.cls)
+        step = max(44, min(56, (rect.bottom - 8 - y) // max(1, len(pool))))    # 8+ навыков — строки плотнее
+        for e in pool:
             sid = e["id"]
             sk = data.skills[sid]
             unlocked = story_meta.is_unlocked(data, self.cls, sid, lvl)
             equipped = sid in load
-            r = pygame.Rect(x, y, rect.w - 28, 50)
-            pygame.draw.rect(surf, (46, 50, 60) if equipped else (36, 38, 46), r, border_radius=6)
+            r = pygame.Rect(x, y, rect.w - 28, step - 6)
+            pygame.draw.rect(surf, (58, 44, 30) if equipped else (46, 35, 26), r, border_radius=6)
             pygame.draw.rect(surf, BRANCH_COLOR if equipped else (T.PANEL_EDGE if unlocked else (70, 60, 60)),
                              r, 1, border_radius=6)
             T.text(surf, sk["name"], (r.x + 8, r.y + 4), 15, T.TEXT if unlocked else T.TEXT_DIM, True)
-            T.text(surf, f"AP {sk['ap']} · {T.wrap(sk['desc'], 12, r.w - 150)[0]}", (r.x + 8, r.y + 24), 12,
+            T.text(surf, f"AP {sk['ap']} · {T.wrap(sk['desc'], 12, r.w - 150)[0]}", (r.x + 8, r.y + r.h - 22), 12,
                    T.TEXT_DIM if unlocked else (120, 110, 110))
-            mark = ("в слоте" if equipped else "взять") if unlocked else f"уровень {e['level']}"
+            if e.get("ult"):                            # ультимейт: всегда четвёртый, клавиша R
+                mark = "R · ультимейт" if unlocked else f"R · уровень {e['level']}"
+                equipped = unlocked
+            else:
+                mark = ("в слоте" if equipped else "взять") if unlocked else f"уровень {e['level']}"
             T.text(surf, mark, (r.right - 8 - T.font(12).size(mark)[0], r.y + 5), 12,
                    (150, 240, 160) if equipped else (T.TEXT_DIM if unlocked else BAD))
             self.hit(r, ("pool", sid), f"{sk['name']}: {sk['desc']}")
-            y += 56
+            y += step
 
     def _draw_story_skill_info(self, surf, rect):
         """Под превью сюжета: описание и ветки выбранного навыка из слота."""
@@ -796,7 +807,7 @@ class HeroesScene(MetaScene):
                 taken = cur is not None and cur[0] == br and cur[1] >= tier
                 cost = tier - (cur[1] if cur and cur[0] == br else 0)
                 affordable = taken or cost <= free + (cur[1] if cur and cur[0] != br else 0)
-                pygame.draw.rect(surf, T.mix(BRANCH_COLOR, (30, 30, 34), 0.55) if taken else (36, 38, 46),
+                pygame.draw.rect(surf, T.mix(BRANCH_COLOR, (30, 30, 34), 0.55) if taken else (46, 35, 26),
                                  r, border_radius=5)
                 pygame.draw.rect(surf, BRANCH_COLOR if taken else (T.PANEL_EDGE if affordable else (90, 50, 50)),
                                  r, 1, border_radius=5)
@@ -819,7 +830,7 @@ class HeroesScene(MetaScene):
             shown = self.pv is not None and self.pv[0] == sid
             head = pygame.Rect(rect.x + 8, y - 2, rect.w - 16, 22)
             if shown and self.pv[1] is None:
-                pygame.draw.rect(surf, (52, 56, 68), head, border_radius=5)
+                pygame.draw.rect(surf, (70, 52, 34), head, border_radius=5)
             T.text(surf, ("» " if shown else "") + title, (rect.x + 14, y), 16, BRANCH_COLOR if shown else T.TEXT, True)
             T.text(surf, f"AP {sk['ap']}", (rect.right - 60, y + 2), 13, T.AP_COLOR)
             self.hit(head, ("show", sid, None, None), f"{base['name']}: показать в превью")
@@ -838,7 +849,7 @@ class HeroesScene(MetaScene):
                     taken = cur is not None and cur[0] == b and cur[1] >= t
                     cost = t - (cur[1] if cur and cur[0] == b else 0)
                     affordable = taken or cost <= free + (cur[1] if cur and cur[0] != b else 0)
-                    fill = T.mix(BRANCH_COLOR, (30, 30, 34), 0.55) if taken else (36, 38, 46)
+                    fill = T.mix(BRANCH_COLOR, (30, 30, 34), 0.55) if taken else (46, 35, 26)
                     pygame.draw.rect(surf, fill, r, border_radius=6)
                     edge = BRANCH_COLOR if taken else (T.PANEL_EDGE if affordable else (90, 50, 50))
                     if self.pv == (sid, b, t):
@@ -867,7 +878,7 @@ class HeroesScene(MetaScene):
             r = pygame.Rect(x, y, rect.w - 28, 26)
             on = tid in hero["talents"]
             cost = meta.talent_cost(data, tid)
-            pygame.draw.rect(surf, T.mix(TALENT_COLOR, (30, 30, 34), 0.6) if on else (36, 38, 46), r, border_radius=6)
+            pygame.draw.rect(surf, T.mix(TALENT_COLOR, (30, 30, 34), 0.6) if on else (46, 35, 26), r, border_radius=6)
             pygame.draw.rect(surf, TALENT_COLOR if on else (T.PANEL_EDGE if cost <= free else (90, 50, 50)), r, 1,
                              border_radius=6)
             T.text(surf, t["name"], (r.x + 8, r.y + 4), 14, T.TEXT, on)
@@ -900,7 +911,7 @@ class HeroesScene(MetaScene):
             r = pygame.Rect(x + col * (col_w + 8), y, col_w, 26)
             owner = prof.loadout_owner(iid)
             mine = owner == self.cls
-            pygame.draw.rect(surf, (60, 56, 40) if mine else (36, 38, 46), r, border_radius=6)
+            pygame.draw.rect(surf, (60, 56, 40) if mine else (46, 35, 26), r, border_radius=6)
             pygame.draw.rect(surf, W.item_color(data, iid) if mine else T.PANEL_EDGE, r, 1, border_radius=6)
             T.text(surf, it["name"], (r.x + 8, r.y + 4), 14, W.item_color(data, iid), mine)
             mark = "у героя" if mine else (data.classes[owner]["name"] if owner else SLOT_NAMES[it["slot"]].lower())
@@ -942,7 +953,7 @@ class CampScene(MetaScene):
                 lvl, cost = prof.camp_level(uid), prof.camp_cost(uid)
                 can = cost is not None and prof.amber >= cost
                 hot = r.collidepoint(self.mouse) and can
-                pygame.draw.rect(surf, (52, 56, 68) if hot else T.PANEL, r, border_radius=10)
+                pygame.draw.rect(surf, (70, 52, 34) if hot else T.PANEL, r, border_radius=10)
                 pygame.draw.rect(surf, AMBER if can else T.PANEL_EDGE, r, 2, border_radius=10)
                 T.text(surf, up["name"], (r.x + 12, r.y + 8), 17, T.TEXT, True)
                 for i in range(len(up["costs"])):
@@ -968,7 +979,7 @@ class CampScene(MetaScene):
             if x + w > T.SCREEN_W - 24:
                 x, y = 24, y + 32
             r = pygame.Rect(x, y, w, 26)
-            pygame.draw.rect(surf, (36, 38, 46), r, border_radius=6)
+            pygame.draw.rect(surf, (46, 35, 26), r, border_radius=6)
             pygame.draw.rect(surf, W.item_color(data, iid), r, 1, border_radius=6)
             T.text(surf, it["name"], (r.x + 10, r.y + 4), 14, W.item_color(data, iid), True)
             owner = prof.loadout_owner(iid)

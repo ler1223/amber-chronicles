@@ -31,6 +31,7 @@ class GameData:
         self.relics = load("relics.json")
         self.camp = load("camp.json")
         self.summons = load("summons.json")
+        self.mutators = {k: v for k, v in load("mutators.json").items() if not k.startswith("_")}
         self.objects = load("objects.json")
         self.synergy = load("synergy.json")
         self.rules = load("rules.json")
@@ -49,6 +50,11 @@ class GameData:
             if cid in self.classes:
                 self.classes[cid]["gauge"] = g
                 self.classes[cid]["pp_regen"] = g.get("trickle", 8.0)
+                if g.get("max"):                   # шкала класса шире (Вера жреца, Жар пироманта)
+                    self.classes[cid]["pp_max"] = g["max"]
+        # пассивки-основы классов (sim/passives.py): шкала стаков и сама пассивка
+        # у героев сюжета и экспедиции (набор из пула); старая кампания живёт со своими пассивками
+        self.passives = {cid: v for cid, v in load("passives.json").items() if cid in self.classes}
         # длинные бои: волны, цели, объекты поля и фазы боссов (tools/content_battles.py)
         battles = load("battles.json")
         for enc in self.encounters:

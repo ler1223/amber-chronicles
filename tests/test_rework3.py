@@ -54,11 +54,11 @@ def test_geomancer_effect_depends_on_ground():
     (f,) = only(c)
     put(gm, (1, 2))
     put(f, (4, 2))
-    c.grid.get((1, 2)).terrain = "grass"
+    c.grid.get((4, 2)).terrain = "grass"                # сила земли — по клетке под целью
     cast(c, gm, "earth_power", f)
     assert f.stun_look == "root"
     f.stun = 0
-    c.grid.get((1, 2)).terrain = "stone"
+    c.grid.get((4, 2)).terrain = "stone"
     hp = f.hp
     cast(c, gm, "earth_power", f)
     assert hp - f.hp >= 20 and f.stun <= 0 and gm.pp >= 1
@@ -69,9 +69,9 @@ def test_reshape_cycles_ground_and_rockfall_places_boulder():
     gm = hero(c, "geomancer")
     put(gm, (1, 2))
     c.grid.get((1, 2)).terrain = "grass"
-    cast(c, gm, "reshape", gm)
+    cast(c, gm, "reshape", (1, 2))                     # перековка — по клетке (до 4)
     assert c.grid.get((1, 2)).terrain == "water"
-    cast(c, gm, "reshape", gm)
+    cast(c, gm, "reshape", (1, 2))
     assert c.grid.get((1, 2)).terrain == "stone"
     cast(c, gm, "rockfall", (4, 0))
     assert any(u.alive and u.proto_id == "boulder" and u.owner is gm for u in c.units)

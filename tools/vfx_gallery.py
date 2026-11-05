@@ -44,6 +44,9 @@ TERRAIN_NAMES = {None: "обычный", "water": "вода", "stone": "каме
 ROW = 24
 
 
+STORY = "story"          # путь-метка: навык из сюжетного пула, не из набора класса
+
+
 def entries(data):
     """(подпись, класс, путь, ветки, навык): навыки всех героев на всех путях, база и ветки A2/B2;
     затем вражеские навыки огня и льда (их применяет маг)."""
@@ -62,6 +65,17 @@ def entries(data):
                     mark = {"fire": "  [огонь]", "ice": "  [лёд]"}.get(fam, "")
                     label = f"{c['name']} · {sk['name']}" + (f" ({br}2)" if br else "") + mark
                     out.append((label, cls, path, {sid: (br, 2)} if br else {}, sid))
+    for cls, c in data.classes.items():            # навыки из сюжетного пула (уровни 5–15), которых нет в путях
+        for e in data.story_progression["classes"].get(cls, {}).get("skills", []):
+            sid = e["id"]
+            for br in [None] + sorted(data.branches.get(sid, {})):
+                if (sid, br) in seen:
+                    continue
+                seen.add((sid, br))
+                sk = data.skills[sid]
+                mark = {"fire": "  [огонь]", "ice": "  [лёд]"}.get(family(sk), "")
+                label = f"{c['name']} · {sk['name']}" + (f" ({br}2)" if br else "") + mark
+                out.append((label, cls, STORY, {sid: (br, 2)} if br else {}, sid))
     for sid, sk in data.skills.items():
         if sid.startswith("e_") and family(sk):
             out.append((f"враг · {sk['name']}  [{'огонь' if family(sk) == 'fire' else 'лёд'}]", "mage", None, {},
@@ -113,6 +127,8 @@ class Gallery:
             self._inject(sid)
             pv.cls, pv.sid, pv.title = cls, sid, ""
             pv.restart()
+        elif path == STORY:                        # навык сюжетного пула: герой берёт только его
+            pv.show(cls, None, branches, sid, skills=[sid])
         else:
             pv.show(cls, path, branches, sid)
         for u in (pv.caster, pv.ally):            # только навык — без автоатак, чтобы видеть последствия
@@ -182,6 +198,10 @@ class Gallery:
 
     def lab_frame(self):
         return self.pv.view.lab_frame()
+
+    def gpu_particles(self):
+        """Пиксельные частицы рисует видеокарта (как в бою) — без этого их в галерее не видно."""
+        return self.pv.view.gpu_particles()
 
     def draw_layers(self, world, ui, units):
         world.fill((0, 0, 0))

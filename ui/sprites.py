@@ -2,6 +2,8 @@
 
 Формат PNG — см. assets/sprites/README.md: смотрит вправо, ноги внизу по центру, прозрачный фон.
 Масштаб целочисленный (пиксели остаются чёткими): обычный юнит ~64 px в высоту, босс ~96 px.
+Детализация (настройка sprite_res): 32 — обычные спрайты ×2; 64 — assets/sprites/x2 без увеличения (нарезка
+tools/import_sheet.py --res 2), нет файла — обычный; 16 — обычный, уменьшенный вдвое и увеличенный ×4.
 """
 import os
 
@@ -10,6 +12,31 @@ import pygame
 ASSET_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "sprites")
 CANVAS = 32
 TARGET_H = {"normal": 64, "boss": 96}
+
+
+def res():
+    from ui import settings
+    return settings.SETTINGS.get("sprite_res", 32)
+
+
+def sprite_path(name, folder=ASSET_DIR):
+    """Файл спрайта под детализацию: высокая — из x2, если есть. Второе значение — во сколько раз он крупнее."""
+    if res() >= 64:
+        hi = os.path.join(folder, "x2", f"{name}.png")
+        if os.path.exists(hi):
+            return hi, 2
+    return os.path.join(folder, f"{name}.png"), 1
+
+
+def lowres(img):
+    """Низкая детализация: вдвое меньше пикселей (цвет — среднее, прозрачность — порогом)."""
+    w, h = img.get_size()
+    small = pygame.transform.smoothscale(img.convert_alpha() if pygame.display.get_surface() else img,
+                                         (max(1, w // 2), max(1, h // 2)))
+    a = pygame.surfarray.pixels_alpha(small)
+    a[:] = (a > 110) * 255
+    del a
+    return small
 OUTLINE = (22, 18, 24)
 
 
@@ -28,12 +55,12 @@ class SpriteBank:
 
     def _base(self, names, kind, color, boss, look=None):
         """Спрайт в итоговом масштабе, смотрит вправо. names — кандидаты имени файла по порядку."""
-        key = (tuple(names), boss)
+        key = (tuple(names), boss, res())
         if key in self.base:
             return self.base[key]
         img = None
         for n in names:
-            path = os.path.join(self.folder, f"{n}.png")
+            path, _ = sprite_path(n, self.folder) if n else (None, 1)
             if n and os.path.exists(path):
                 img = pygame.image.load(path)
                 try:
@@ -43,6 +70,8 @@ class SpriteBank:
                 break
         if img is None:
             img = placeholder(kind, color, look)
+        if res() <= 16:
+            img = lowres(img)
         target = TARGET_H["boss" if boss else "normal"]
         k = max(1, round(target / img.get_height()))
         img = pygame.transform.scale(img, (img.get_width() * k, img.get_height() * k))
@@ -50,7 +79,7 @@ class SpriteBank:
         return img
 
     def get(self, names, kind, color, boss=False, flip=False, flash=False, look=None):
-        key = (tuple(names), boss, flip, flash)
+        key = (tuple(names), boss, flip, flash, res())
         if key not in self.cache:
             img = self._base(names, kind, color, boss, look)
             if flip:

@@ -49,12 +49,33 @@ class Unit:
         self.move_dur = 0.0
 
         self.order = None      # {"type": "move"|"attack"|"skill", ...}
+        self.queue = []        # очередь приказов игрока (Shift): то же, что order, по порядку
+        self.uses = {}         # сколько раз за бой применён каждый навык — ранги навыков в походе растут от этого
+        self.tally = {"dealt": 0, "taken": 0, "absorbed": 0, "healed": 0, "healed_in": 0, "kills": 0}  # статистика боя
+        self.last_hit_by = None
+        self.mutator = None    # механика врага на тяжёлых сложностях (sim/mutators.py)
+        self.mut_t = 0.0
+        self.mut_cd = 0.0
+        self.phases_left = []  # фазы босса: доли HP, на которых он зовёт подмогу
         self.cast = None       # {"skill", "target", "left", "total", "ap"}
         self.attack_timer = 0.0
         self.last_target = None
         self.wait = 0.0
 
         self.statuses = {}     # tag -> оставшиеся секунды
+        self.ult_count = {}    # счётчики условий ультимейта за бой (sim/kit.py, ult_ready)
+        # пассивка-основа (sim/passives.py): таймер, прошлая цель, Дикость/Гармония, ингредиенты, накопитель, ноты
+        self.pass_t = 0.0
+        self.pass_target = None
+        self.pass_acc = 0.0
+        self.wild = 0
+        self.harmony = 0
+        self.recipe = set()
+        self.soil = None
+        self.notes = []
+        self.last_melody = None
+        self.marks = {}        # метки-стаки механик классов (sim/kit.py): id -> {"n", "t", "src", "total"}
+        self.quiver = proto.get("quiver")      # лучник: активный тип стрел
         self.stun = 0.0
         self.stun_total = 0.0  # длительность текущего оглушения (для таймера на значке)
         self.stun_look = "stun"
@@ -99,6 +120,7 @@ class Unit:
         self.frost_timer = 0.0
         self.ice_walker = proto.get("ice_walker", False)  # не скользит по льду
         self.lifesteal = proto.get("lifesteal", 0.0)      # атаки лечат на долю урона
+        self.airborne = 0.0                               # в прыжке (навык с приземлением): не действует
         self.charm_time = 0.0                             # очарован: сражается за другую сторону
         self.hidden = False                               # туман: не виден на разведке
         self.affix = None

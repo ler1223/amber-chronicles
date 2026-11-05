@@ -37,7 +37,87 @@ def is_unlocked(data, cls, sid, lvl):
 
 
 def unlocked_skills(data, cls, lvl):
-    return [sid for sid in all_skills(data, cls) if is_unlocked(data, cls, sid, lvl)]
+    """Открытые навыки для слотов (ультимейт — отдельно, см. battle_skills)."""
+    return [sid for sid in all_skills(data, cls) if is_unlocked(data, cls, sid, lvl) and not is_ult(data, cls, sid)]
+
+
+# ---------- ультимейт, обязательные навыки и зависимости ----------
+
+def ult_of(data, cls):
+    """Ультимейт класса: не занимает слот, в бою всегда четвёртый (клавиша R)."""
+    return next((e["id"] for e in entries(data, cls) if e.get("ult")), None)
+
+
+def is_ult(data, cls, sid):
+    return sid is not None and sid == ult_of(data, cls)
+
+
+def notes_of(data, cls):
+    """Бард: вместо слотов — три ноты (Q, W, E); пул класса — мелодии."""
+    return list(cfg(data)["classes"][cls].get("notes", []))
+
+
+def melodies(data, cls, lvl):
+    """Мелодии, которые бард знает на этом уровне."""
+    return [s for s in unlocked_skills(data, cls, lvl) if data.skills.get(s, {}).get("melody")]
+
+
+def battle_skills(data, cls, hero):
+    """Навыки героя в бой: слоты и, когда открыт, ультимейт четвёртым (у барда — три ноты и финал)."""
+    notes = notes_of(data, cls)
+    load = notes if notes else [s for s in hero.get("skill_loadout", []) if not is_ult(data, cls, s)][:slots(data)]
+    ult = ult_of(data, cls)
+    if ult and is_unlocked(data, cls, ult, level(hero)):
+        load.append(ult)
+    return load
+
+
+def core_group(data, cls):
+    """Обязательная группа: хотя бы один из этих навыков держит механику класса."""
+    return list(cfg(data)["classes"][cls].get("core", []))
+
+
+def requires(data, cls, sid):
+    """Навык работает, только если в наборе есть один из этих (облик, тотем, песня, огонь…)."""
+    return list(cfg(data)["classes"][cls].get("requires", {}).get(sid, []))
+
+
+def kit_ok(data, cls, skills):
+    """Набор цельный: есть навык из обязательной группы, у каждого навыка есть то, на чём он работает."""
+    have = set(skills)
+    if notes_of(data, cls):
+        return True
+    core = core_group(data, cls)
+    if core and not have & set(core):
+        return False
+    return all(not requires(data, cls, s) or have & set(requires(data, cls, s)) for s in skills)
+
+
+def random_kit(data, cls, rng, n=None):
+    """Случайный цельный набор для таверны: навык из обязательной группы + совместимые + ультимейт."""
+    n = n or slots(data)
+    if notes_of(data, cls):                   # бард: ноты и финал
+        return notes_of(data, cls) + [ult_of(data, cls)]
+    pool = [s for s in all_skills(data, cls) if not is_ult(data, cls, s)]
+    core = [s for s in core_group(data, cls) if s in pool] or pool[:1]
+    kit = [rng.choice(core)]
+    rest = [s for s in pool if s not in kit]
+    rng.shuffle(rest)
+    for _ in range(3):                        # зависимый навык может стать доступным после другого
+        for s in list(rest):
+            if len(kit) >= n:
+                break
+            need = requires(data, cls, s)
+            if not need or set(need) & set(kit):
+                kit.append(s)
+                rest.remove(s)
+    for s in rest:                            # если всё ещё мало — добрать «самостоятельные»
+        if len(kit) >= n:
+            break
+        if not requires(data, cls, s):
+            kit.append(s)
+    ult = ult_of(data, cls)
+    return kit[:n] + ([ult] if ult else [])
 
 
 def default_loadout(data, cls, lvl):
@@ -86,7 +166,7 @@ def sanitize_hero(data, cls, hero):
     pool = all_skills(data, cls)
     load = []
     for sid in hero.get("skill_loadout", []):
-        if sid in pool and sid not in load and is_unlocked(data, cls, sid, lvl):
+        if sid in pool and sid not in load and is_unlocked(data, cls, sid, lvl) and not is_ult(data, cls, sid):
             load.append(sid)
     if not load:
         load = default_loadout(data, cls, lvl)
@@ -115,8 +195,8 @@ def auto_fill(data, cls, hero):
 
 
 def equip(data, cls, hero, sid, slot):
-    """Поставить навык в выбранный слот. False — навык ещё закрыт или слота нет."""
-    if not is_unlocked(data, cls, sid, level(hero)) or not 0 <= slot < slots(data):
+    """Поставить навык в выбранный слот. False — навык ещё закрыт, это ультимейт (он всегда на R) или слота нет."""
+    if not is_unlocked(data, cls, sid, level(hero)) or not 0 <= slot < slots(data) or is_ult(data, cls, sid)             or notes_of(data, cls):
         return False
     load = list(hero.get("skill_loadout", []))
     if sid in load:

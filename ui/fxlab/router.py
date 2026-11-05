@@ -31,5 +31,8 @@ class FxRouter:
         self.lab.toggle()
         return label
 
+    def handles(self, sid, sk=None):
+        return self.pixel.handles(sid, sk) if not self.lab.on else False
+
     def lab_frame(self):
         return self.lab.lab_frame() if self.lab.on else None

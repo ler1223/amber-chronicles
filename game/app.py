@@ -19,12 +19,14 @@ class App:
     """profile — sim.profile.Profile; по умолчанию профиль в памяти (без сохранения).
     seed — сид первой вылазки, следующие берут seed + номер вылазки."""
 
-    def __init__(self, data, seed=None, autoplay=False, profile=None, start="title"):
+    def __init__(self, data, seed=None, autoplay=False, profile=None, start="title", launcher="legacy"):
         self.data = data
+        self.launcher = launcher  # "main" — Экспедиция и Одиночка (main.py), "legacy" — все старые режимы (legacy.py)
         self.autoplay = autoplay
         self.seed = seed
         self.profile = profile or Profile(data)
         self.run = None
+        self.exp = None           # поход экспедиции (sim/expedition.py)
         self.scene = None
         self.quit = False
         self._campfire = None
@@ -58,13 +60,17 @@ class App:
         return self._campfire
 
     def to_title(self):
-        from game.title_scene import TitleScene
+        from game.title_scene import MainTitleScene, TitleScene
         self.run = None
-        self.switch(TitleScene(self))
+        self.switch(MainTitleScene(self) if self.launcher == "main" else TitleScene(self))
 
     def to_hub(self):
         from game.hub_scene import HubScene
         self.run = None
+        if self.profile.mode in ("expedition", "solo"):
+            from game.expedition_scenes import to_tavern
+            to_tavern(self)
+            return
         if self.profile.mode == "story":
             from game.story_scenes import StoryHub
             self.switch(StoryHub(self))
@@ -78,6 +84,12 @@ class App:
 
     def new_game(self):
         path = self.profile.path
+        if self.profile.mode in ("expedition", "solo"):
+            from sim.expedition import ExpeditionProfile
+            self.profile = ExpeditionProfile(self.profile.data, None, solo=self.profile.mode == "solo")
+            self.profile.path = path
+            self.profile.save()
+            return
         if self.profile.mode == "story":
             from sim.story import StoryProfile
             self.profile = StoryProfile(self.profile.data, None)
@@ -95,23 +107,31 @@ class App:
             self._base_path = base = self.profile.path
         if mode == "base" or base is None:
             return base
-        return stats_path(base, mode)
+        return stats_path(base, "expedition" if mode == "solo" else mode)   # одиночка — та же таверна
 
     def switch_mode(self, mode):
         """Основная игра ⇄ режим героев: свой профиль у каждого, прогресс не смешивается."""
         if mode == self.profile.mode:
             return
         path = self.mode_path(mode)
+        base = getattr(self, "_base_path", None) or path
         sandbox = self.profile.sandbox
         if mode == "story":                     # сюжет: свои бои (обучающие карты) и свой состав героев
             from sim.story import StoryProfile, story_data
             prof = StoryProfile(story_data(self.data), path, sandbox=sandbox)
+        elif mode in ("expedition", "solo"):    # экспедиция (отряд) и одиночка (один герой): таверна и главы
+            from sim.expedition import ExpeditionProfile, expedition_data
+            prof = ExpeditionProfile(expedition_data(self.data), path, sandbox=sandbox, solo=mode == "solo")
         else:
             prof = Profile(self.data, path, sandbox=sandbox, mode=mode)
         prof.mode = mode
         prof.path = path
         self.profile = prof
         self.run = None
+        self.exp = None
+        if self.launcher == "main":
+            remember_mode(mode, base)
+
 
     def to_world(self):
         self.profile.remember_autocast(self.run)    # вылазку бросили — настройки автокаста не теряются
@@ -171,7 +191,8 @@ class App:
                                     squad=run.combat_squad(), formation=run.formation,
                                     on_finish=self._story_battle_done, enemy_scale=run.enemy_scale(),
                                     fx=run.combat_fx(), difficulty="normal", cheats=prof.sandbox,
-                                    tutorial=None if self.autoplay else b.get("tutorial")))
+                                    tutorial=None if self.autoplay else b.get("tutorial"), simple=True,
+                                    names={c: ch["name"] for c, ch in prof.story["characters"].items()}))
         if b.get("intro"):
             self.switch(DialogScene(self, b["intro"], fight))
         else:
@@ -223,3 +244,28 @@ class App:
     def continue_run(self):
         """После награды/отдыха/торговца — обратно на карту вылазки."""
         self.switch(MapScene(self))
+
+
+def launcher_file(base):
+    import os
+    return os.path.join(os.path.dirname(os.path.abspath(base)), "launcher.json")
+
+
+def remember_mode(mode, base):
+    """main.py: какой режим (Экспедиция или Одиночка) открыть при следующем запуске."""
+    import json
+    try:
+        with open(launcher_file(base), "w", encoding="utf-8") as f:
+            json.dump({"mode": mode}, f)
+    except OSError:
+        pass
+
+
+def last_mode(base):
+    import json
+    try:
+        with open(launcher_file(base), encoding="utf-8") as f:
+            m = json.load(f).get("mode")
+        return m if m in ("expedition", "solo") else "expedition"
+    except (OSError, ValueError):
+        return "expedition"

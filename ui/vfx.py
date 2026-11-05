@@ -191,6 +191,8 @@ class Screen:
         self.hitstop = 0.0
         self.slow_k, self.slow_time = 1.0, 0.0
         self.zoom, self.zoom_target, self.zoom_hold = 1.0, 1.0, 0.0
+        self.base_zoom = 1.0       # постоянный зум камеры (одиночка: приближение на героя)
+        self.shake_off = (0.0, 0.0)
         self.center = (640.0, 360.0)
         self.aberration = 0.0
         self.radial = 0.0
@@ -464,7 +466,8 @@ class VfxWorld:
         Возвращает время полёта."""
         dist = math.dist(a, b)
         if dur is None:
-            dur = max(0.06, dist / speed)
+            from ui import flight
+            dur = flight.get() or max(0.06, dist / speed)
         ang = math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
 
         def at(t):
@@ -785,7 +788,7 @@ class VfxWorld:
             sc.slow_k = min(sc.slow_k if sc.slow_time > 0 else 1.0, slowmo[0])
             sc.slow_time = max(sc.slow_time, slowmo[1])
         if zoom:
-            sc.zoom_target = max(sc.zoom_target, zoom)
+            sc.zoom_target = max(sc.zoom_target, zoom * sc.base_zoom)
             sc.zoom_hold = max(sc.zoom_hold, zoom_time)
             if center is not None:
                 sc.center = tuple(center)
@@ -843,7 +846,8 @@ class VfxWorld:
         if sc.shake < 0.3:
             sc.shake = 0.0
         a = self.prng.uniform(0, math.tau)
-        sc.offset = (math.cos(a) * sc.shake, math.sin(a) * sc.shake * 0.7)
+        sc.shake_off = (math.cos(a) * sc.shake, math.sin(a) * sc.shake * 0.7)
+        sc.offset = sc.shake_off
         sc.flash = max(0.0, sc.flash - dt * sc.flash_decay * max(sc.flash, 0.2))
         sc.dim_hold = max(0.0, sc.dim_hold - dt)
         if sc.dim_hold <= 0:
@@ -851,7 +855,7 @@ class VfxWorld:
         sc.dim += (sc.dim_target - sc.dim) * min(1.0, dt * 6)
         sc.zoom_hold = max(0.0, sc.zoom_hold - dt)
         if sc.zoom_hold <= 0:
-            sc.zoom_target = 1.0
+            sc.zoom_target = sc.base_zoom
         sc.zoom += (sc.zoom_target - sc.zoom) * min(1.0, dt * (14 if sc.zoom_target > sc.zoom else 5))
         sc.bars_hold = max(0.0, sc.bars_hold - dt)
         if sc.bars_hold <= 0:

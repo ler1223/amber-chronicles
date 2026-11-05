@@ -73,7 +73,20 @@ class SkillPreview:
         """Герой cls с выбранным навыком sid. path — старый режим; skills/doctrine — сюжетный."""
         self.proto = build_proto(self.data, cls, branches=branches, path=path, skills=skills, doctrine=doctrine)
         self.cls, self.sid, self.title = cls, sid, title
+        self._free_ult()
         self.restart()
+
+    def show_proto(self, cls, proto, sid, title=""):
+        """Навык sid из готового прототипа героя (прокачка, вещи, ветки похода уже в нём)."""
+        self.proto = copy.deepcopy(proto)
+        self.cls, self.sid, self.title = cls, sid, title
+        self._free_ult()
+        self.restart()
+
+    def _free_ult(self):
+        """В превью ультимейт применяется сразу — без условия набора."""
+        for sk in self.proto["skill_defs"].values():
+            sk.pop("ult_cond", None)
 
     def restart(self):
         self.t, self.cast_done, self.acc = 0.0, False, 0.0
@@ -211,6 +224,9 @@ class SkillPreview:
     @property
     def vfx(self):
         return self.view.vfx
+
+    def gpu_particles(self):
+        return self.view.gpu_particles()
 
     def draw_layers(self, world, units, ui):
         """С OpenGL: земля — плоская карта (плоскость кладёт видеокарта), фигурки — в units, надписи — в ui."""

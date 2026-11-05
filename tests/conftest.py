@@ -5,7 +5,11 @@
 """
 import pytest
 
+from sim.combat import Combat
 from ui import theme as T
+
+# тесты механик кастуют и сразу проверяют итог — для них удар без полёта (время попадания проверяет test_hit_timing)
+INSTANT_MODULES = {"test_heroes", "test_rework1", "test_rework2", "test_rework3", "test_tags", "test_pixfx"}
 
 
 @pytest.fixture(autouse=True)
@@ -16,3 +20,13 @@ def _reset_screen_size():
         yield
     finally:
         T.SCREEN_W, T.SCREEN_H = old
+
+
+@pytest.fixture(autouse=True)
+def _instant_hits(request):
+    old = Combat.HIT_TIMING
+    Combat.HIT_TIMING = request.module.__name__.rsplit(".", 1)[-1] not in INSTANT_MODULES
+    try:
+        yield
+    finally:
+        Combat.HIT_TIMING = old

@@ -163,7 +163,7 @@ class WorldScene:
             b = data.biomes[cid]
             open_ = prof.chapter_unlocked(cid)
             sel = cid == prof.biome_id
-            pygame.draw.rect(surf, (52, 56, 68) if sel else (34, 36, 44), r, border_radius=6)
+            pygame.draw.rect(surf, (70, 52, 34) if sel else (34, 36, 44), r, border_radius=6)
             pygame.draw.rect(surf, T.SELECT if sel else (T.PANEL_EDGE if open_ else (50, 50, 56)), r, 2,
                              border_radius=6)
             label = f"{b.get('order', 0) + 1}. {b['name']}"

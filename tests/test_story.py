@@ -213,34 +213,34 @@ def test_story_skill_pool_and_loadout_grow_with_hero_level(tmp_path):
 
     hero["rpg"]["level"] = 2
     story_meta.auto_fill(prof.data, "warrior", hero)
-    assert hero["skill_loadout"] == ["power_strike", "taunt"]
+    assert hero["skill_loadout"] == ["power_strike", "challenge"]
     hero["rpg"]["level"] = 3
     story_meta.auto_fill(prof.data, "warrior", hero)
-    assert hero["skill_loadout"] == ["power_strike", "taunt", "guard_ally"]
+    assert hero["skill_loadout"] == ["power_strike", "challenge", "riposte"]
 
     hero["rpg"]["level"] = 5
     story_meta.auto_fill(prof.data, "warrior", hero)
-    assert hero["skill_loadout"] == ["power_strike", "taunt", "guard_ally"]   # слоты заняты
-    assert story_meta.equip(prof.data, "warrior", hero, "whirlwind", 2)
-    assert hero["skill_loadout"] == ["power_strike", "taunt", "whirlwind"]
+    assert hero["skill_loadout"] == ["power_strike", "challenge", "riposte"]   # слоты заняты
+    assert story_meta.equip(prof.data, "warrior", hero, "feint", 2)
+    assert hero["skill_loadout"] == ["power_strike", "challenge", "feint"]
 
     build = prof.hero_builds()[prof.squad.index("warrior")]
     run = Run(prof.data, 0, None, {}, [build], mode="story")
     proto = run.proto(run.squad[0])
-    assert proto["skills"] == ["power_strike", "taunt", "whirlwind"]
-    assert "whirlwind" in proto["skill_defs"]
+    assert proto["skills"] == ["power_strike", "challenge", "feint"]
+    assert "feint" in proto["skill_defs"]
 
     hero["rpg"]["level"] = 3
     assert not story_meta.set_doctrine(prof.data, "warrior", hero, "berserker")
     hero["rpg"]["level"] = 4
     assert story_meta.set_doctrine(prof.data, "warrior", hero, "berserker")
     assert hero["doctrine"] == "berserker"
-    assert hero["skill_loadout"] == ["power_strike", "taunt", "whirlwind"]
+    assert hero["skill_loadout"] == ["power_strike", "challenge", "feint"]
     build = prof.hero_builds()[prof.squad.index("warrior")]
     run = Run(prof.data, 0, None, {}, [build], mode="story")
     proto = run.proto(run.squad[0])
-    assert proto["passive"]["name"] == prof.data.paths["berserker"]["passive"]["name"]
-    assert proto["skills"] == ["power_strike", "taunt", "whirlwind"]
+    assert proto["passive"]["core"] == "duel_fury"          # пассивка-основа класса доктриной не заменяется
+    assert proto["skills"] == ["power_strike", "challenge", "feint"]
 
 
 def test_story_slot_count_is_data_driven(tmp_path):
@@ -275,15 +275,15 @@ def test_story_hero_scene_edits_loadout_and_doctrine(tmp_path):
     hero = app.profile.heroes["warrior"]
     sc.cls = "warrior"
     sc.slot_sel = 0
-    sc.act(("pool", "taunt"))                                  # ещё закрыт на 1 уровне
+    sc.act(("pool", "challenge"))                              # ещё закрыт на 1 уровне
     assert hero["skill_loadout"] == ["power_strike"]
     hero["rpg"]["level"] = 5
     story_meta.auto_fill(app.data, "warrior", hero)
     sc.slot_sel = 2
-    sc.act(("pool", "whirlwind"))
-    assert hero["skill_loadout"] == ["power_strike", "taunt", "whirlwind"]
+    sc.act(("pool", "feint"))
+    assert hero["skill_loadout"] == ["power_strike", "challenge", "feint"]
     sc.act(("unequip", 2))
-    assert hero["skill_loadout"] == ["power_strike", "taunt"]
+    assert hero["skill_loadout"] == ["power_strike", "challenge"]
     sc.act(("doctrine", "berserker"))
     assert hero["doctrine"] == "berserker"
     sc.update(1 / 30)

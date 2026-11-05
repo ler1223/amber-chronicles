@@ -1,0 +1,5788 @@
+{
+ "_note": "Глава 2 похода «Огненные кузни» (sim/expedition.py: chapter_view). Жар и извержения — mechanics.heat, руда и наковальни — mechanics.forge. Числа — первая прикидка.",
+ "name": "Огненные кузни",
+ "trade_faction": "guild",
+ "factions": {
+  "guild": "Вольная гильдия",
+  "slaves": "Рабы шахт",
+  "cult": "Культ пламени",
+  "golems": "Големы"
+ },
+ "mats": {
+  "ore": {
+   "name": "Руда",
+   "color": [
+    190,
+    150,
+    110
+   ],
+   "desc": "Основа ковки: свойства вещей, перековка"
+  },
+  "obsidian": {
+   "name": "Обсидиан",
+   "color": [
+    150,
+    110,
+    190
+   ],
+   "desc": "Для свойств-срабатываний и перековки"
+  },
+  "starsteel": {
+   "name": "Звёздная сталь",
+   "color": [
+    150,
+    200,
+    255
+   ],
+   "desc": "Для шедевров"
+  },
+  "emberheart": {
+   "name": "Сердце углей",
+   "color": [
+    255,
+    140,
+    60
+   ],
+   "desc": "Закалка (+1 тир) и шедевры"
+  }
+ },
+ "mechanics": {
+  "heat": {
+   "step": 5,
+   "battle": 3,
+   "thresholds": [
+    30,
+    60,
+    100
+   ],
+   "flood": [
+    3,
+    4,
+    5
+   ],
+   "max": 100,
+   "act_carry": 0.5,
+   "after_big": 55,
+   "big_curse": "scorched",
+   "molten_hp": 1.2,
+   "arena_per_stage": 0.18
+  },
+  "forge": {
+   "stat_offers": 4,
+   "proc_offers": 2,
+   "cost_base": {
+    "ore": 2
+   },
+   "cost_stat": {
+    "ore": 2
+   },
+   "cost_proc": {
+    "ore": 3,
+    "obsidian": 1
+   },
+   "cost_upgrade": {
+    "ore": 4,
+    "obsidian": 1
+   },
+   "cost_masterpiece": {
+    "ore": 8,
+    "obsidian": 2,
+    "starsteel": 2,
+    "emberheart": 1
+   },
+   "battle_ore": {
+    "battle": 2,
+    "elite": 4,
+    "boss": 6
+   },
+   "smelt": {
+    "common": 2,
+    "rare": 3,
+    "epic": 5,
+    "unique": 6
+   }
+  }
+ },
+ "boss_rules": [
+  {
+   "requires": {
+    "heat_at_least": 85
+   },
+   "enc": "ex_f_volcano",
+   "name": "Жар на пределе — вулкан проснулся раньше Владыки"
+  }
+ ],
+ "curses": {
+  "scorched": {
+   "name": "Ожоги",
+   "desc": "Отряд: −12% здоровья",
+   "mods": [
+    {
+     "stat": "hp",
+     "mult": 0.88
+    }
+   ]
+  },
+  "soot_lungs": {
+   "name": "Сажа в лёгких",
+   "desc": "Отряд: −12% восполнения AP",
+   "mods": [
+    {
+     "stat": "ap_regen",
+     "mult": 0.88
+    }
+   ]
+  },
+  "brittle_steel": {
+   "name": "Хрупкая сталь",
+   "desc": "Отряд: −2 брони",
+   "mods": [
+    {
+     "stat": "armor",
+     "add": -2
+    }
+   ]
+  },
+  "cult_brand": {
+   "name": "Клеймо культа",
+   "desc": "Отряд: −15% силы навыков",
+   "mods": [
+    {
+     "stat": "power",
+     "mult": 0.85
+    }
+   ]
+  }
+ },
+ "acts": [
+  {
+   "name": "Акт I. Шлаковые отвалы",
+   "art": "forge_act_0",
+   "difficulty": "normal",
+   "intro": "Ворота кузни остались позади. Над отвалами висит рыжий дым, рабы таскают руду, а под ногами гудит земля: Жар растёт с каждым шагом.",
+   "weights": {
+    "battle": 34,
+    "event": 30,
+    "elite": 9,
+    "shop": 6,
+    "camp": 10,
+    "anvil": 11
+   },
+   "rest": [
+    "camp",
+    "anvil"
+   ],
+   "pools": {
+    "battle": [
+     "forge_0",
+     "ex_f_slag_pit",
+     "ex_f_bellows",
+     "ex_f_revolt"
+    ],
+    "elite": [
+     "forge_4",
+     "ex_f_chain_gang"
+    ]
+   },
+   "boss": "ex_f_groh",
+   "arena": []
+  },
+  {
+   "name": "Акт II. Литейные цеха",
+   "art": "forge_act_1",
+   "difficulty": "heroic",
+   "intro": "Цеха, где льют големов. Над головой ползут ковши с расплавом, и надсмотрщики не стесняются их опрокидывать.",
+   "weights": {
+    "battle": 34,
+    "event": 30,
+    "elite": 9,
+    "shop": 6,
+    "camp": 10,
+    "anvil": 11
+   },
+   "rest": [
+    "camp",
+    "anvil"
+   ],
+   "pools": {
+    "battle": [
+     "forge_1",
+     "st_slag",
+     "forge_3",
+     "st_furnace_gate",
+     "ex_f_crucible",
+     "ex_f_ash_hall"
+    ],
+    "elite": [
+     "ex_f_chain_gang",
+     "ex_f_golem_pit",
+     "forge_4"
+    ]
+   },
+   "boss": "ex_f_titan",
+   "arena": [
+    {
+     "type": "ladle",
+     "name": "Ковш расплава",
+     "every": [
+      12,
+      16
+     ],
+     "first": 9,
+     "warn": 2.0,
+     "damage": 20,
+     "length": 5,
+     "burn": 5
+    }
+   ]
+  },
+  {
+   "name": "Акт III. Сердце горна",
+   "art": "forge_act_2",
+   "difficulty": "nightmare",
+   "intro": "Здесь кузня дышит. Огромные меха гоняют жар по залам, а в глубине Владыка кузни куёт армию из магмы.",
+   "weights": {
+    "battle": 34,
+    "event": 30,
+    "elite": 9,
+    "shop": 6,
+    "camp": 10,
+    "anvil": 11
+   },
+   "rest": [
+    "camp",
+    "anvil"
+   ],
+   "pools": {
+    "battle": [
+     "forge_2",
+     "forge_3",
+     "st_ashgrove",
+     "ex_f_ash_hall",
+     "ex_f_lava_bridge",
+     "ex_f_cult_altar"
+    ],
+    "elite": [
+     "ex_f_golem_pit",
+     "ex_f_cult_choir",
+     "ex_f_chain_gang"
+    ]
+   },
+   "boss": "forge_9",
+   "arena": [
+    {
+     "type": "ladle",
+     "name": "Ковш расплава",
+     "every": [
+      13,
+      17
+     ],
+     "first": 10,
+     "warn": 2.0,
+     "damage": 26,
+     "length": 6,
+     "burn": 5
+    },
+    {
+     "type": "bellows",
+     "name": "Меха",
+     "every": [
+      15,
+      19
+     ],
+     "first": 13,
+     "warn": 1.6,
+     "push": 1
+    }
+   ]
+  }
+ ],
+ "enemies": {
+  "slag_slave": {
+   "name": "Раб-шлаковщик",
+   "label": "Рш",
+   "color": [
+    140,
+    110,
+    90
+   ],
+   "role": "melee",
+   "hp": 95,
+   "armor": 0,
+   "move_time": 0.6,
+   "attack": {
+    "damage": 9,
+    "range": 1,
+    "cooldown": 1.2
+   },
+   "skills": [],
+   "sprite_fallback": "raider"
+  },
+  "ember_hound": {
+   "name": "Угольный пёс",
+   "label": "Уп",
+   "color": [
+    220,
+    110,
+    50
+   ],
+   "role": "melee",
+   "hp": 115,
+   "armor": 0,
+   "move_time": 0.35,
+   "attack": {
+    "damage": 10,
+    "range": 1,
+    "cooldown": 0.9,
+    "tag": "fire"
+   },
+   "skills": [
+    "e_charge"
+   ],
+   "sprite_fallback": "frost_wolf",
+   "ap_max": 6,
+   "ap_regen": 4.0
+  },
+  "bellows_keeper": {
+   "name": "Мехоносец",
+   "label": "Мх",
+   "color": [
+    160,
+    120,
+    80
+   ],
+   "role": "support",
+   "hp": 150,
+   "armor": 1,
+   "move_time": 0.6,
+   "attack": {
+    "damage": 8,
+    "range": 3,
+    "cooldown": 1.3
+   },
+   "skills": [
+    "e_war_cry"
+   ],
+   "sprite_fallback": "hammer_thrower",
+   "ap_max": 6,
+   "ap_regen": 4.0
+  },
+  "chain_smith": {
+   "name": "Цепной кузнец",
+   "label": "Цк",
+   "color": [
+    120,
+    100,
+    100
+   ],
+   "role": "melee",
+   "hp": 230,
+   "armor": 2,
+   "move_time": 0.6,
+   "attack": {
+    "damage": 15,
+    "range": 1,
+    "cooldown": 1.3
+   },
+   "skills": [
+    "e_drag",
+    "e_lash"
+   ],
+   "sprite_fallback": "hammer_thrower",
+   "ap_max": 6,
+   "ap_regen": 4.0
+  },
+  "ash_wraith": {
+   "name": "Пепельный дух",
+   "label": "Пд",
+   "color": [
+    150,
+    140,
+    140
+   ],
+   "role": "caster",
+   "hp": 105,
+   "armor": 0,
+   "move_time": 0.5,
+   "attack": {
+    "damage": 9,
+    "range": 4,
+    "cooldown": 1.3
+   },
+   "skills": [
+    "e_wail"
+   ],
+   "sprite_fallback": "wraith",
+   "ap_max": 6,
+   "ap_regen": 4.0,
+   "flying": true
+  },
+  "cinder_caster": {
+   "name": "Литейщица",
+   "label": "Лт",
+   "color": [
+    230,
+    140,
+    80
+   ],
+   "role": "ranged",
+   "hp": 120,
+   "armor": 0,
+   "move_time": 0.55,
+   "attack": {
+    "damage": 11,
+    "range": 4,
+    "cooldown": 1.3,
+    "tag": "fire"
+   },
+   "skills": [
+    "e_fireball"
+   ],
+   "sprite_fallback": "flame_priest",
+   "ap_max": 6,
+   "ap_regen": 4.0
+  },
+  "cult_zealot": {
+   "name": "Фанатик пламени",
+   "label": "Фп",
+   "color": [
+    210,
+    80,
+    60
+   ],
+   "role": "melee",
+   "hp": 135,
+   "armor": 1,
+   "move_time": 0.5,
+   "attack": {
+    "damage": 13,
+    "range": 1,
+    "cooldown": 1.1,
+    "tag": "fire"
+   },
+   "skills": [
+    "e_charge"
+   ],
+   "sprite_fallback": "raider",
+   "ap_max": 6,
+   "ap_regen": 4.0,
+   "on_death": {
+    "name": "Последний огонь",
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 14,
+      "radius": 1,
+      "affects": "all",
+      "tag": "fire",
+      "kind": "spell"
+     }
+    ]
+   }
+  },
+  "crucible_golem": {
+   "name": "Тигельный голем",
+   "label": "Тг",
+   "color": [
+    200,
+    110,
+    60
+   ],
+   "role": "melee",
+   "hp": 540,
+   "armor": 3,
+   "move_time": 0.85,
+   "attack": {
+    "damage": 20,
+    "range": 1,
+    "cooldown": 1.6,
+    "tag": "fire"
+   },
+   "skills": [
+    "e_slam"
+   ],
+   "sprite_fallback": "magma_golem",
+   "ap_max": 6,
+   "ap_regen": 4.0,
+   "elite": true,
+   "on_death": {
+    "name": "Расплав",
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 24,
+      "radius": 1,
+      "affects": "all",
+      "tag": "fire",
+      "kind": "spell"
+     }
+    ]
+   }
+  },
+  "free_golem": {
+   "name": "Вольный голем",
+   "label": "Вг",
+   "color": [
+    130,
+    150,
+    160
+   ],
+   "role": "melee",
+   "hp": 290,
+   "armor": 3,
+   "move_time": 0.75,
+   "attack": {
+    "damage": 15,
+    "range": 1,
+    "cooldown": 1.5
+   },
+   "skills": [
+    "e_slam"
+   ],
+   "sprite_fallback": "obsidian_guard",
+   "ap_max": 6,
+   "ap_regen": 4.0
+  },
+  "overseer_groh": {
+   "name": "Надсмотрщик Грох",
+   "label": "Гр",
+   "color": [
+    170,
+    90,
+    60
+   ],
+   "role": "melee",
+   "hp": 480,
+   "armor": 2,
+   "move_time": 0.7,
+   "attack": {
+    "damage": 17,
+    "range": 1,
+    "cooldown": 1.4
+   },
+   "skills": [
+    "e_lash",
+    "e_slam",
+    "e_war_cry"
+   ],
+   "sprite_fallback": "forge_overseer",
+   "ap_max": 8,
+   "ap_regen": 3.5,
+   "boss": true
+  },
+  "crucible_titan": {
+   "name": "Литейный титан",
+   "label": "Лт",
+   "color": [
+    230,
+    120,
+    50
+   ],
+   "role": "melee",
+   "hp": 680,
+   "armor": 3,
+   "move_time": 0.9,
+   "attack": {
+    "damage": 18,
+    "range": 1,
+    "cooldown": 1.8,
+    "tag": "fire"
+   },
+   "skills": [
+    "e_slam",
+    "e_meteor"
+   ],
+   "sprite_fallback": "magma_golem",
+   "ap_max": 8,
+   "ap_regen": 3.5,
+   "boss": true
+  },
+  "volcano_heart": {
+   "name": "Пробуждённый вулкан",
+   "label": "Вл",
+   "color": [
+    255,
+    100,
+    40
+   ],
+   "role": "caster",
+   "hp": 1150,
+   "armor": 2,
+   "move_time": 0.9,
+   "attack": {
+    "damage": 24,
+    "range": 3,
+    "cooldown": 1.5,
+    "tag": "fire"
+   },
+   "skills": [
+    "e_meteor",
+    "e_fireball"
+   ],
+   "sprite_fallback": "living_lava",
+   "ap_max": 8,
+   "ap_regen": 3.0,
+   "boss": true
+  },
+  "smith_ghost": {
+   "name": "Безымянный кузнец",
+   "label": "Бк",
+   "color": [
+    160,
+    200,
+    220
+   ],
+   "role": "melee",
+   "hp": 640,
+   "armor": 3,
+   "move_time": 0.7,
+   "attack": {
+    "damage": 20,
+    "range": 1,
+    "cooldown": 1.5
+   },
+   "skills": [
+    "e_hammer",
+    "e_slam"
+   ],
+   "sprite_fallback": "hammer_thrower",
+   "ap_max": 8,
+   "ap_regen": 3.5,
+   "boss": true
+  },
+  "ash_wyrm": {
+   "name": "Пепельный змей",
+   "label": "Пз",
+   "color": [
+    120,
+    110,
+    110
+   ],
+   "role": "melee",
+   "hp": 1100,
+   "armor": 3,
+   "move_time": 0.6,
+   "attack": {
+    "damage": 24,
+    "range": 1,
+    "cooldown": 1.4,
+    "tag": "fire"
+   },
+   "skills": [
+    "e_flame_breath",
+    "e_slam"
+   ],
+   "sprite_fallback": "salamander",
+   "ap_max": 8,
+   "ap_regen": 3.5,
+   "boss": true,
+   "lifesteal": 0.1
+  }
+ },
+ "encounters": [
+  {
+   "id": "ex_f_slag_pit",
+   "name": "Шлаковая яма",
+   "kind": "normal",
+   "tier": 1,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "....L.....",
+    "..L...O...",
+    "..........",
+    "......L...",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "slag_slave",
+     "pos": [
+      6,
+      1
+     ]
+    },
+    {
+     "type": "slag_slave",
+     "pos": [
+      6,
+      3
+     ]
+    },
+    {
+     "type": "hammer_thrower",
+     "pos": [
+      9,
+      2
+     ]
+    },
+    {
+     "type": "ember_hound",
+     "pos": [
+      8,
+      5
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      5,
+      3
+     ]
+    },
+    {
+     "type": "magma_vent",
+     "pos": [
+      7,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_bellows",
+   "name": "Зал мехов",
+   "kind": "normal",
+   "tier": 1,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "....L.....",
+    "..L...O...",
+    "..........",
+    "......L...",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "bellows_keeper",
+     "pos": [
+      9,
+      3
+     ]
+    },
+    {
+     "type": "fire_imp",
+     "pos": [
+      6,
+      1
+     ]
+    },
+    {
+     "type": "fire_imp",
+     "pos": [
+      6,
+      3
+     ]
+    },
+    {
+     "type": "cinder_caster",
+     "pos": [
+      9,
+      0
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_revolt",
+   "name": "Надсмотрщики",
+   "kind": "normal",
+   "tier": 1,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "....L.....",
+    "..L...O...",
+    "..........",
+    "......L...",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "chain_smith",
+     "pos": [
+      7,
+      2
+     ]
+    },
+    {
+     "type": "hammer_thrower",
+     "pos": [
+      9,
+      1
+     ]
+    },
+    {
+     "type": "hammer_thrower",
+     "pos": [
+      9,
+      4
+     ]
+    },
+    {
+     "type": "fire_imp",
+     "pos": [
+      6,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_slave_mob",
+   "name": "Бунт рабов",
+   "kind": "normal",
+   "tier": 1,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "....L.....",
+    "..L...O...",
+    "..........",
+    "......L...",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "slag_slave",
+     "pos": [
+      6,
+      0
+     ]
+    },
+    {
+     "type": "slag_slave",
+     "pos": [
+      6,
+      1
+     ]
+    },
+    {
+     "type": "slag_slave",
+     "pos": [
+      7,
+      4
+     ]
+    },
+    {
+     "type": "slag_slave",
+     "pos": [
+      8,
+      1
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      9,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_chain_gang",
+   "name": "Цепная бригада",
+   "kind": "elite",
+   "tier": 1,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "....L.....",
+    "..L...O...",
+    "..........",
+    "......L...",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "chain_smith",
+     "pos": [
+      7,
+      1
+     ]
+    },
+    {
+     "type": "chain_smith",
+     "pos": [
+      7,
+      4
+     ]
+    },
+    {
+     "type": "slag_slave",
+     "pos": [
+      6,
+      1
+     ]
+    },
+    {
+     "type": "flame_priest",
+     "pos": [
+      9,
+      3
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      5,
+      0
+     ]
+    },
+    {
+     "type": "magma_vent",
+     "pos": [
+      5,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_groh",
+   "name": "Двор надсмотрщика",
+   "kind": "boss",
+   "tier": 2,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "...#......#...",
+    "......LL......",
+    "..............",
+    "..............",
+    "......LL......",
+    "...#......#...",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "overseer_groh",
+     "pos": [
+      11,
+      3
+     ]
+    },
+    {
+     "type": "slag_slave",
+     "pos": [
+      9,
+      2
+     ]
+    },
+    {
+     "type": "slag_slave",
+     "pos": [
+      9,
+      5
+     ]
+    },
+    {
+     "type": "hammer_thrower",
+     "pos": [
+      12,
+      6
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      7,
+      3
+     ]
+    },
+    {
+     "type": "magma_vent",
+     "pos": [
+      7,
+      4
+     ]
+    }
+   ],
+   "phases": [
+    {
+     "at": 0.5,
+     "name": "Плети и цепи",
+     "spawn": [
+      {
+       "type": "slag_slave",
+       "pos": [
+        13,
+        1
+       ]
+      },
+      {
+       "type": "slag_slave",
+       "pos": [
+        13,
+        6
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_crucible",
+   "name": "Тигельный зал",
+   "kind": "normal",
+   "tier": 2,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "...LL.....",
+    "..........",
+    "..O....L..",
+    "...LL.....",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "magma_golem",
+     "pos": [
+      7,
+      2
+     ]
+    },
+    {
+     "type": "cinder_caster",
+     "pos": [
+      9,
+      1
+     ]
+    },
+    {
+     "type": "cinder_caster",
+     "pos": [
+      9,
+      4
+     ]
+    },
+    {
+     "type": "ember_hound",
+     "pos": [
+      6,
+      5
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_ash_hall",
+   "name": "Зал пепла",
+   "kind": "normal",
+   "tier": 2,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "....L.....",
+    "..L...O...",
+    "..........",
+    "......L...",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "ash_wraith",
+     "pos": [
+      8,
+      1
+     ]
+    },
+    {
+     "type": "ash_wraith",
+     "pos": [
+      8,
+      4
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      6,
+      1
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      6,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_golem_pit",
+   "name": "Яма големов",
+   "kind": "elite",
+   "tier": 2,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "...#......#...",
+    "......LL......",
+    "..............",
+    "..............",
+    "......LL......",
+    "...#......#...",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "crucible_golem",
+     "pos": [
+      10,
+      3
+     ]
+    },
+    {
+     "type": "magma_golem",
+     "pos": [
+      8,
+      1
+     ]
+    },
+    {
+     "type": "obsidian_guard",
+     "pos": [
+      8,
+      5
+     ]
+    },
+    {
+     "type": "cinder_caster",
+     "pos": [
+      12,
+      2
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      6,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_titan",
+   "name": "Литейная яма",
+   "kind": "boss",
+   "tier": 3,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "....LLL.......",
+    "..............",
+    "...L......L...",
+    "...L......L...",
+    "..............",
+    ".......LLL....",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "crucible_titan",
+     "pos": [
+      11,
+      3
+     ]
+    },
+    {
+     "type": "ember_hound",
+     "pos": [
+      9,
+      1
+     ]
+    },
+    {
+     "type": "cinder_caster",
+     "pos": [
+      12,
+      6
+     ]
+    },
+    {
+     "type": "cinder_caster",
+     "pos": [
+      12,
+      0
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      7,
+      2
+     ]
+    },
+    {
+     "type": "magma_vent",
+     "pos": [
+      7,
+      5
+     ]
+    }
+   ],
+   "phases": [
+    {
+     "at": 0.6,
+     "name": "Новая отливка",
+     "spawn": [
+      {
+       "type": "fire_imp",
+       "pos": [
+        13,
+        4
+       ]
+      },
+      {
+       "type": "fire_imp",
+       "pos": [
+        13,
+        2
+       ]
+      }
+     ]
+    },
+    {
+     "at": 0.3,
+     "name": "Тигель треснул",
+     "spawn": [
+      {
+       "type": "living_lava",
+       "pos": [
+        13,
+        1
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_lava_bridge",
+   "name": "Мост над расплавом",
+   "kind": "normal",
+   "tier": 3,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "..LLLLLL..",
+    "..........",
+    "..........",
+    "..LLLLLL..",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "salamander",
+     "pos": [
+      7,
+      2
+     ]
+    },
+    {
+     "type": "salamander",
+     "pos": [
+      7,
+      3
+     ]
+    },
+    {
+     "type": "ember_hound",
+     "pos": [
+      9,
+      0
+     ]
+    },
+    {
+     "type": "ember_hound",
+     "pos": [
+      9,
+      5
+     ]
+    },
+    {
+     "type": "flame_priest",
+     "pos": [
+      9,
+      2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_cult_altar",
+   "name": "Алтарь культа",
+   "kind": "normal",
+   "tier": 3,
+   "chapter": "forge",
+   "map": [
+    "..........",
+    "....L.....",
+    "..L...O...",
+    "..........",
+    "......L...",
+    ".........."
+   ],
+   "player_spawn": [
+    [
+     1,
+     2
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "cult_zealot",
+     "pos": [
+      6,
+      1
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      6,
+      3
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      7,
+      2
+     ]
+    },
+    {
+     "type": "flame_priest",
+     "pos": [
+      9,
+      3
+     ]
+    },
+    {
+     "type": "ash_wraith",
+     "pos": [
+      9,
+      0
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      8,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_cult_choir",
+   "name": "Хор пламени",
+   "kind": "elite",
+   "tier": 3,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "...#......#...",
+    "......LL......",
+    "..............",
+    "..............",
+    "......LL......",
+    "...#......#...",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "flame_priest",
+     "pos": [
+      11,
+      2
+     ]
+    },
+    {
+     "type": "flame_priest",
+     "pos": [
+      11,
+      5
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      8,
+      1
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      8,
+      6
+     ]
+    },
+    {
+     "type": "crucible_golem",
+     "pos": [
+      9,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_volcano",
+   "name": "Пробуждённый вулкан",
+   "kind": "boss",
+   "tier": 3,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "....LLL.......",
+    "..............",
+    "...L......L...",
+    "...L......L...",
+    "..............",
+    ".......LLL....",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "volcano_heart",
+     "pos": [
+      11,
+      3
+     ]
+    },
+    {
+     "type": "living_lava",
+     "pos": [
+      9,
+      1
+     ]
+    },
+    {
+     "type": "living_lava",
+     "pos": [
+      9,
+      5
+     ]
+    },
+    {
+     "type": "fire_imp",
+     "pos": [
+      12,
+      0
+     ]
+    },
+    {
+     "type": "fire_imp",
+     "pos": [
+      12,
+      7
+     ]
+    }
+   ],
+   "phases": [
+    {
+     "at": 0.6,
+     "name": "Лава поднимается",
+     "spawn": [
+      {
+       "type": "living_lava",
+       "pos": [
+        13,
+        3
+       ]
+      }
+     ]
+    },
+    {
+     "at": 0.3,
+     "name": "Извержение",
+     "spawn": [
+      {
+       "type": "salamander",
+       "pos": [
+        13,
+        1
+       ]
+      },
+      {
+       "type": "salamander",
+       "pos": [
+        13,
+        6
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_cult_ascension",
+   "name": "Вознесение Владыки",
+   "kind": "boss",
+   "tier": 3,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "...#......#...",
+    "......LL......",
+    "..............",
+    "..............",
+    "......LL......",
+    "...#......#...",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "forge_lord",
+     "pos": [
+      11,
+      3
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      9,
+      1
+     ]
+    },
+    {
+     "type": "cult_zealot",
+     "pos": [
+      9,
+      6
+     ]
+    },
+    {
+     "type": "flame_priest",
+     "pos": [
+      12,
+      0
+     ]
+    },
+    {
+     "type": "flame_priest",
+     "pos": [
+      12,
+      7
+     ]
+    },
+    {
+     "type": "ash_wraith",
+     "pos": [
+      12,
+      4
+     ]
+    }
+   ],
+   "phases": [
+    {
+     "at": 0.5,
+     "name": "Хор поёт",
+     "spawn": [
+      {
+       "type": "cult_zealot",
+       "pos": [
+        13,
+        2
+       ]
+      },
+      {
+       "type": "cult_zealot",
+       "pos": [
+        13,
+        5
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_smith_ghost",
+   "name": "Призрачная кузня",
+   "kind": "boss",
+   "tier": 2,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "...#......#...",
+    "......LL......",
+    "..............",
+    "..............",
+    "......LL......",
+    "...#......#...",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "smith_ghost",
+     "pos": [
+      10,
+      3
+     ]
+    },
+    {
+     "type": "hammer_thrower",
+     "pos": [
+      12,
+      1
+     ]
+    },
+    {
+     "type": "hammer_thrower",
+     "pos": [
+      12,
+      6
+     ]
+    }
+   ],
+   "objects": [
+    {
+     "type": "magma_vent",
+     "pos": [
+      7,
+      1
+     ]
+    },
+    {
+     "type": "magma_vent",
+     "pos": [
+      7,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ex_f_ash_wyrm",
+   "name": "Пепельное гнездо",
+   "kind": "boss",
+   "tier": 3,
+   "chapter": "forge",
+   "map": [
+    "..............",
+    "....LLL.......",
+    "..............",
+    "...L......L...",
+    "...L......L...",
+    "..............",
+    ".......LLL....",
+    ".............."
+   ],
+   "player_spawn": [
+    [
+     2,
+     3
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     5
+    ]
+   ],
+   "enemies": [
+    {
+     "type": "ash_wyrm",
+     "pos": [
+      10,
+      2
+     ]
+    },
+    {
+     "type": "ember_hound",
+     "pos": [
+      8,
+      1
+     ]
+    },
+    {
+     "type": "ember_hound",
+     "pos": [
+      8,
+      5
+     ]
+    }
+   ]
+  }
+ ],
+ "uniques": {
+  "starforged_blade": {
+   "name": "Звёздный клинок",
+   "base": "blade",
+   "desc": "Шедевр: каждый 4-й удар — доп. удар 120% атаки",
+   "stats": [
+    {
+     "stat": "atk_damage",
+     "pct": 0.4
+    }
+   ],
+   "masterpiece": true,
+   "rules": [
+    {
+     "trigger": "hit",
+     "chance": 0.25,
+     "raw": [
+      {
+       "type": "damage",
+       "atk_pct": 1.2,
+       "kind": "reaction",
+       "to": "foe"
+      }
+     ]
+    }
+   ]
+  },
+  "obsidian_aegis": {
+   "name": "Обсидиановая эгида",
+   "base": "plate",
+   "desc": "Шедевр: когда ранен — щит 15% здоровья (раз в 6 сек)",
+   "stats": [
+    {
+     "stat": "hp",
+     "pct": 0.4
+    }
+   ],
+   "masterpiece": true,
+   "rules": [
+    {
+     "trigger": "hurt",
+     "chance": 1.0,
+     "icd": 6.0,
+     "do": [
+      "ward"
+     ]
+    }
+   ]
+  },
+  "ember_crown": {
+   "name": "Венец углей",
+   "base": "charm",
+   "desc": "Шедевр: +35% силы навыков, удары поджигают врага (30%)",
+   "stats": [
+    {
+     "stat": "power",
+     "pct": 0.35
+    }
+   ],
+   "masterpiece": true,
+   "rules": [
+    {
+     "trigger": "hit",
+     "chance": 0.3,
+     "do": [
+      "ignite"
+     ]
+    }
+   ]
+  },
+  "volcano_maul": {
+   "name": "Молот вулкана",
+   "base": "axe",
+   "desc": "Шедевр: крит — взрыв лавы вокруг цели",
+   "stats": [
+    {
+     "stat": "atk_damage",
+     "pct": 0.3
+    },
+    {
+     "stat": "hp",
+     "pct": 0.15
+    }
+   ],
+   "masterpiece": true,
+   "rules": [
+    {
+     "trigger": "crit",
+     "chance": 1.0,
+     "do": [
+      "burst"
+     ]
+    }
+   ]
+  },
+  "magma_bow": {
+   "name": "Лук расплава",
+   "base": "bow",
+   "desc": "Шедевр: стрелы поджигают, по горящим +30% урона",
+   "stats": [
+    {
+     "stat": "atk_damage",
+     "pct": 0.3
+    }
+   ],
+   "masterpiece": true,
+   "rules": [
+    {
+     "trigger": "hit",
+     "chance": 0.4,
+     "do": [
+      "ignite"
+     ]
+    }
+   ]
+  },
+  "forge_heart_ring": {
+   "name": "Кольцо горна",
+   "base": "band",
+   "desc": "Шедевр: вампиризм 10%, +20% здоровья",
+   "stats": [
+    {
+     "stat": "hp",
+     "pct": 0.2
+    },
+    {
+     "stat": "lifesteal",
+     "add": 0.1
+    }
+   ],
+   "masterpiece": true
+  }
+ },
+ "events": {
+  "slave_revolt": {
+   "title": "Шёпот в шахте",
+   "kind": "thread",
+   "acts": [
+    1
+   ],
+   "weight": 12,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Под отвалом, где не слышат надсмотрщики, рабы точат кирки о камень. Старик с выжженным клеймом на лбу смотрит на ваши мечи: «Мы поднимемся. Нужен лишь первый удар — по надсмотрщикам у ворот».",
+     "options": [
+      {
+       "text": "Ударить по надсмотрщикам",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": 3
+        },
+        {
+         "heat": 10
+        },
+        {
+         "flag": "revolt"
+        },
+        {
+         "battle": "ex_f_revolt",
+         "after": [
+          {
+           "mat": "ore",
+           "add": 4
+          },
+          {
+           "add_node": {
+            "event": "revolt_rising",
+            "label": "Восстание в цехах",
+            "ahead": 2,
+            "in_act": 2
+           }
+          }
+         ]
+        }
+       ],
+       "result": "Цепи звенят по камню — шахта поднимается. Кузня гудит громче: на пожар бунта сбегается Жар."
+      },
+      {
+       "text": "Дать им руды и оружия (4 руды)",
+       "requires": {
+        "mat_at_least": {
+         "ore": 4
+        }
+       },
+       "do": [
+        {
+         "mat": "ore",
+         "add": -4
+        },
+        {
+         "rep": "slaves",
+         "add": 2
+        },
+        {
+         "flag": "revolt"
+        },
+        {
+         "add_node": {
+          "event": "revolt_rising",
+          "label": "Восстание в цехах",
+          "ahead": 2,
+          "in_act": 2
+         }
+        }
+       ],
+       "result": "Старик прячет кирки под ветошь. «Мы запомним»."
+      },
+      {
+       "text": "Сдать заговор надсмотрщикам",
+       "do": [
+        {
+         "gold": 80
+        },
+        {
+         "rep": "slaves",
+         "add": -4
+        },
+        {
+         "rep": "guild",
+         "add": 1
+        },
+        {
+         "flag": "revolt_betrayed"
+        },
+        {
+         "battle_mod": {
+          "name": "Надсмотрщики благодарны: охрана слабее",
+          "battles": 2,
+          "dmg": 0.85,
+          "good": true
+         }
+        }
+       ],
+       "result": "Надсмотрщик отсчитывает монеты, не глядя вам в глаза. Ночью из шахты слышны крики."
+      },
+      {
+       "text": "Пройти мимо",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "revolt_rising": {
+   "title": "Восстание в цехах",
+   "kind": "thread",
+   "acts": [],
+   "weight": 40,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Литейные цеха горят. Рабы с кирками держат мост против цепной бригады — и проигрывают.",
+     "options": [
+      {
+       "text": "Встать с ними на мосту",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": 3
+        },
+        {
+         "battle": "ex_f_chain_gang",
+         "after": [
+          {
+           "guest": {
+            "unit": "slag_slave",
+            "name": "Вольный шлаковщик",
+            "battles": 4
+           }
+          },
+          {
+           "guest": {
+            "unit": "slag_slave",
+            "name": "Вольный шлаковщик",
+            "battles": 4
+           }
+          },
+          {
+           "add_node": {
+            "event": "revolt_end",
+            "label": "Последний бой восстания",
+            "ahead": 2,
+            "in_act": 3
+           }
+          }
+         ]
+        }
+       ],
+       "result": "Цепи против кирок — и против вас."
+      },
+      {
+       "text": "Повести их на склады (ограбить кузню)",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 8
+        },
+        {
+         "mat": "obsidian",
+         "add": 2
+        },
+        {
+         "heat": 15
+        },
+        {
+         "rep": "slaves",
+         "add": 1
+        },
+        {
+         "add_node": {
+          "event": "revolt_end",
+          "label": "Последний бой восстания",
+          "ahead": 2,
+          "in_act": 3
+         }
+        }
+       ],
+       "result": "Склады пустеют за час. Брошенные горны раскаляются без присмотра."
+      },
+      {
+       "text": "Предать восстание Владыке",
+       "do": [
+        {
+         "gold": 150
+        },
+        {
+         "rep": "slaves",
+         "add": -6
+        },
+        {
+         "flag": "revolt_betrayed"
+        },
+        {
+         "boss_mod": {
+          "name": "Владыка доверяет вам: стража у трона редеет",
+          "good": true,
+          "hp": 0.9
+         }
+        }
+       ],
+       "result": "Мост пустеет. Владыка шлёт вам золото — и запоминает ваши лица."
+      }
+     ]
+    }
+   }
+  },
+  "revolt_end": {
+   "title": "Последний бой восстания",
+   "kind": "thread",
+   "acts": [],
+   "weight": 40,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "У самого Сердца горна вас ждут вольные шлаковщики — сотня, с факелами и молотами. Старик с клеймом выходит вперёд.",
+     "options": [
+      {
+       "text": "Идти на Владыку вместе",
+       "requires": {
+        "rep_at_least": {
+         "slaves": 4
+        }
+       },
+       "do": [
+        {
+         "boss_mod": {
+          "name": "Восставшие рабы штурмуют трон с вами",
+          "good": true,
+          "guests": [
+           "slag_slave",
+           "slag_slave",
+           "slag_slave"
+          ],
+          "hp": 0.9
+         }
+        }
+       ],
+       "result": "«За каждого, кто не дошёл», — говорит старик."
+      },
+      {
+       "text": "Отправить их отвлекать стражу",
+       "do": [
+        {
+         "boss_mod": {
+          "name": "Стражу отвлекли: у трона меньше врагов",
+          "good": true,
+          "hp": 0.8
+         }
+        },
+        {
+         "rep": "slaves",
+         "add": -2
+        },
+        {
+         "say": "Многие не вернутся"
+        }
+       ],
+       "result": "Рабы уходят в бой первыми. Вы слышите, как он затихает."
+      },
+      {
+       "text": "Отпустить их домой",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": 2
+        },
+        {
+         "heal": 1.0
+        },
+        {
+         "xp": 80
+        }
+       ],
+       "result": "Кто-то должен выжить. Старик кланяется — впервые в жизни не хозяину."
+      }
+     ]
+    }
+   }
+  },
+  "golem_core": {
+   "title": "Голем без сердца",
+   "kind": "thread",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 10,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "В нише стоит голем — пыльный, остывший. В груди пустота размером с кулак: кто-то вынул его сердце-руну. Пальцы голема чуть шевелятся.",
+     "options": [
+      {
+       "text": "Вложить сердце углей",
+       "requires": {
+        "mat_at_least": {
+         "emberheart": 1
+        }
+       },
+       "do": [
+        {
+         "mat": "emberheart",
+         "add": -1
+        },
+        {
+         "rep": "golems",
+         "add": 3
+        },
+        {
+         "flag": "golem_friend"
+        },
+        {
+         "guest": {
+          "unit": "free_golem",
+          "name": "Вольный голем",
+          "battles": 6
+         }
+        },
+        {
+         "add_node": {
+          "event": "golem_awakening",
+          "label": "Пробуждение големов",
+          "ahead": 2,
+          "in_act": 3
+         }
+        }
+       ],
+       "result": "Глаза голема вспыхивают. Он встаёт — и встаёт рядом с вами."
+      },
+      {
+       "text": "Починить руну из обсидиана",
+       "check": {
+        "attr": "int",
+        "dc": 13,
+        "classes": [
+         "alchemist",
+         "chrono",
+         "geomancer",
+         "binder"
+        ]
+       },
+       "success": {
+        "text": "Обсидиан не сердце, но голем понимает. Он кланяется — и уходит будить своих.",
+        "do": [
+         {
+          "mat": "obsidian",
+          "add": -1
+         },
+         {
+          "rep": "golems",
+          "add": 2
+         },
+         {
+          "flag": "golem_friend"
+         },
+         {
+          "add_node": {
+           "event": "golem_awakening",
+           "label": "Пробуждение големов",
+           "ahead": 2,
+           "in_act": 3
+          }
+         }
+        ]
+       },
+       "fail": {
+        "text": "Руна трескается. Голем рассыпается в шлак.",
+        "do": [
+         {
+          "mat": "ore",
+          "add": 4
+         }
+        ]
+       },
+       "requires": {
+        "mat_at_least": {
+         "obsidian": 1
+        }
+       }
+      },
+      {
+       "text": "Разобрать на руду",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 6
+        },
+        {
+         "mat": "obsidian",
+         "add": 1
+        },
+        {
+         "rep": "golems",
+         "add": -3
+        }
+       ],
+       "result": "Хорошая сталь. Мёртвая."
+      },
+      {
+       "text": "Не трогать",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "golem_awakening": {
+   "title": "Пробуждение големов",
+   "kind": "thread",
+   "acts": [],
+   "weight": 40,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "В литейной яме поднимаются големы — десятки. Их глаза горят тем же светом, что и у вашего первого. «Владыка отливал нас для войны. Мы выбираем, с кем».",
+     "options": [
+      {
+       "text": "Зовите их на Владыку",
+       "do": [
+        {
+         "boss_mod": {
+          "name": "Вольные големы ломают ворота трона",
+          "good": true,
+          "guests": [
+           "free_golem",
+           "free_golem"
+          ],
+          "hp": 0.85
+         }
+        }
+       ],
+       "result": "Пол дрожит от шагов."
+      },
+      {
+       "text": "Пусть уходят из кузни",
+       "do": [
+        {
+         "rep": "golems",
+         "add": 2
+        },
+        {
+         "gift": "random"
+        }
+       ],
+       "result": "Големы уходят в горы. Последний оставляет вам свою руну."
+      }
+     ]
+    }
+   }
+  },
+  "cult_initiation": {
+   "title": "Посвящение пламени",
+   "kind": "thread",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 10,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Люди в обугленных рясах танцуют вокруг горна. Жрица протягивает чашу с жидким огнём: «Испей — и пламя не тронет тебя. Но станет частью тебя».",
+     "options": [
+      {
+       "text": "Испить (герой — посвящённый)",
+       "do": [
+        {
+         "perk": {
+          "name": "Посвящённый пламени",
+          "mods": [
+           {
+            "stat": "power",
+            "mult": 1.25
+           },
+           {
+            "stat": "hp",
+            "mult": 0.9
+           }
+          ],
+          "desc": "+25% силы навыков, −10% здоровья",
+          "who": "any"
+         }
+        },
+        {
+         "heat": 15
+        },
+        {
+         "rep": "cult",
+         "add": 3
+        },
+        {
+         "flag": "cult_initiate"
+        },
+        {
+         "add_node": {
+          "event": "cult_ascension",
+          "label": "Вознесение Владыки",
+          "ahead": 2,
+          "in_act": 3
+         }
+        }
+       ],
+       "result": "{hero_any} пьёт. Огонь внутри не жжёт — он ждёт."
+      },
+      {
+       "text": "Разогнать сборище",
+       "do": [
+        {
+         "rep": "cult",
+         "add": -3
+        },
+        {
+         "battle": "ex_f_ash_hall",
+         "after": [
+          {
+           "item": "normal"
+          }
+         ]
+        }
+       ],
+       "result": "Фанатики бросаются на вас с горящими руками."
+      },
+      {
+       "text": "Выведать тайну культа",
+       "check": {
+        "attr": "int",
+        "dc": 13,
+        "traits": [
+         "scholar"
+        ],
+        "classes": [
+         "bard",
+         "necro"
+        ]
+       },
+       "success": {
+        "text": "Жрица проговаривается: культ хочет вознести Владыку — сделать его богом огня.",
+        "do": [
+         {
+          "flag": "cult_secret"
+         },
+         {
+          "boss_mod": {
+           "name": "Вы знаете ритуал культа — и как его сорвать",
+           "good": true,
+           "dmg": 0.9
+          }
+         }
+        ]
+       },
+       "fail": {
+        "text": "Вас узнают. Клеймо культа горит на ваших плащах.",
+        "do": [
+         {
+          "curse": "cult_brand"
+         },
+         {
+          "rep": "cult",
+          "add": -2
+         }
+        ]
+       }
+      },
+      {
+       "text": "Уйти",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "cult_ascension": {
+   "title": "Вознесение Владыки",
+   "kind": "thread",
+   "acts": [],
+   "weight": 40,
+   "once": true,
+   "requires": {
+    "flag": "cult_initiate"
+   },
+   "steps": {
+    "start": {
+     "text": "Хор культа поёт у Сердца горна. Жрица ждёт вас: «Ты носишь наш огонь. Помоги вознести Владыку — и станешь его правой рукой».",
+     "options": [
+      {
+       "text": "Сорвать ритуал",
+       "do": [
+        {
+         "rep": "cult",
+         "add": -5
+        },
+        {
+         "battle": "ex_f_cult_choir",
+         "after": [
+          {
+           "gift": "random"
+          },
+          {
+           "boss_mod": {
+            "name": "Ритуал сорван: Владыка не вознесён",
+            "good": true,
+            "hp": 0.9
+           }
+          }
+         ]
+        }
+       ],
+       "result": "Хор срывается на визг."
+      },
+      {
+       "text": "Помочь вознести (финальный бой станет другим)",
+       "do": [
+        {
+         "boss": "ex_f_cult_ascension"
+        },
+        {
+         "gift": "random"
+        },
+        {
+         "gift": "random"
+        },
+        {
+         "rep": "cult",
+         "add": 4
+        }
+       ],
+       "result": "Огонь входит во Владыку. Теперь вам придётся драться с богом — но и вы получили дар."
+      },
+      {
+       "text": "Уйти, не мешая",
+       "do": [
+        {
+         "boss_mod": {
+          "name": "Культ поёт: Владыка сильнее",
+          "good": false,
+          "hp": 1.15
+         }
+        }
+       ],
+       "result": "Песня звучит вам вслед."
+      }
+     ]
+    }
+   }
+  },
+  "cold_anvil": {
+   "title": "Холодная наковальня",
+   "kind": "thread",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 9,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Посреди раскалённого цеха — наковальня, покрытая инеем. На ней выбито: «Ударь трижды, если достоин». Рядом лежит молот без хозяина.",
+     "options": [
+      {
+       "text": "Ударить трижды",
+       "check": {
+        "attr": "str",
+        "dc": 13,
+        "classes": [
+         "warrior",
+         "ram",
+         "guardian"
+        ],
+        "traits": [
+         "brave"
+        ]
+       },
+       "success": {
+        "text": "Третий удар звенит, как колокол. Где-то в глубине кузни открывается дверь, которой не было.",
+        "do": [
+         {
+          "add_node": {
+           "event": "ghost_forge",
+           "label": "Призрачная кузня",
+           "ahead": 2
+          }
+         }
+        ]
+       },
+       "fail": {
+        "text": "Молот отскакивает. Иней ползёт по рукам {hero}.",
+        "do": [
+         {
+          "hurt": 0.2,
+          "who": "hero"
+         },
+         {
+          "perk": {
+           "name": "Морозный ожог",
+           "mods": [
+            {
+             "stat": "atk_cooldown",
+             "mult": 1.06
+            }
+           ],
+           "desc": "−6% скорости атак",
+           "who": "hero"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "text": "Забрать молот",
+       "do": [
+        {
+         "item": {
+          "slot": "weapon"
+         }
+        },
+        {
+         "curse": "brittle_steel"
+        }
+       ],
+       "result": "Молот ваш. Сталь отряда вдруг кажется хрупкой."
+      },
+      {
+       "text": "Не трогать",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "ghost_forge": {
+   "title": "Призрачная кузня",
+   "kind": "thread",
+   "acts": [],
+   "weight": 40,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Синий огонь в горне, стук молота без кузнеца. Из пламени выходит высокий силуэт в фартуке: «Я ковал для королей. Покажи, чего стоит твоя сталь».",
+     "options": [
+      {
+       "text": "Бой с Безымянным кузнецом (тайный босс)",
+       "do": [
+        {
+         "battle": "ex_f_smith_ghost",
+         "after": [
+          {
+           "mat": "starsteel",
+           "add": 2
+          },
+          {
+           "mat": "emberheart",
+           "add": 1
+          },
+          {
+           "gift": "random"
+          },
+          {
+           "flag": "smith_ghost"
+          }
+         ]
+        }
+       ],
+       "result": "Кузнец поднимает молот."
+      },
+      {
+       "text": "Показать свою ковку",
+       "requires": {
+        "flag_at_least": {
+         "forged": 1
+        }
+       },
+       "do": [
+        {
+         "rep": "guild",
+         "add": 2
+        },
+        {
+         "upgrade_item": 2
+        },
+        {
+         "mat": "starsteel",
+         "add": 1
+        }
+       ],
+       "result": "Кузнец вертит вашу вещь. «Неплохо». И правит её двумя ударами."
+      },
+      {
+       "text": "Уйти, пока не поздно",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "ash_nest": {
+   "title": "Пепельное гнездо",
+   "kind": "short",
+   "acts": [
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Пещера, засыпанная пеплом по колено. Из пепла торчат рёбра — огромные. Что-то дышит под пеплом, и он поднимается и опадает.",
+     "options": [
+      {
+       "text": "Разбудить змея (тайный босс)",
+       "do": [
+        {
+         "battle": "ex_f_ash_wyrm",
+         "after": [
+          {
+           "mat": "starsteel",
+           "add": 2
+          },
+          {
+           "mat": "emberheart",
+           "add": 2
+          },
+          {
+           "gift": "random"
+          }
+         ]
+        }
+       ],
+       "result": "Пепел встаёт стеной."
+      },
+      {
+       "text": "Украсть уголь из гнезда",
+       "check": {
+        "attr": "agi",
+        "dc": 14,
+        "classes": [
+         "assassin",
+         "trapper"
+        ],
+        "traits": [
+         "nimble"
+        ]
+       },
+       "success": {
+        "text": "Горсть живых углей — и ни одного вздоха змея.",
+        "do": [
+         {
+          "mat": "emberheart",
+          "add": 1
+         },
+         {
+          "mat": "ore",
+          "add": 3
+         }
+        ]
+       },
+       "fail": {
+        "text": "Змей открывает глаз.",
+        "do": [
+         {
+          "battle": "ex_f_ash_wyrm",
+          "after": [
+           {
+            "mat": "emberheart",
+            "add": 1
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "text": "Уйти тихо",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "chained_ifrit": {
+   "title": "Скованный ифрит",
+   "kind": "short",
+   "acts": [
+    2
+   ],
+   "weight": 8,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "В клетке из звёздной стали бьётся огненный дух. «Освободи — и я сожгу тех, кто меня сковал. Клянусь… почти честно».",
+     "options": [
+      {
+       "text": "Освободить",
+       "do": [
+        {
+         "chance": 0.55,
+         "do": [
+          {
+           "boss_mod": {
+            "name": "Ифрит выжигает стражу у трона",
+            "good": true,
+            "hp": 0.85
+           }
+          },
+          {
+           "say": "Ифрит сдержал слово"
+          }
+         ],
+         "else": [
+          {
+           "heat": 30
+          },
+          {
+           "say": "Ифрит смеётся и уносится — кузня вспыхивает"
+          }
+         ]
+        },
+        {
+         "mat": "starsteel",
+         "add": 1
+        }
+       ],
+       "result": "Прутья клетки — ваши."
+      },
+      {
+       "text": "Выпить его силу",
+       "do": [
+        {
+         "perk": {
+          "name": "Пламя ифрита",
+          "mods": [
+           {
+            "stat": "power",
+            "mult": 1.3
+           }
+          ],
+          "desc": "+30% силы навыков",
+          "who": "any"
+         }
+        },
+        {
+         "curse": "scorched"
+        }
+       ],
+       "result": "{hero_any} сжимает огонь в кулаке. Кожа дымится."
+      },
+      {
+       "text": "Оставить в клетке",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "volcano_whisper": {
+   "title": "Шёпот вулкана",
+   "kind": "short",
+   "acts": [
+    3
+   ],
+   "weight": 12,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Скала под ногами тёплая, как живая. В трещинах шепчет огонь: «Владыка держит меня в цепях. Дай мне Жара — и я проснусь вместо него».",
+     "options": [
+      {
+       "text": "Разжечь вулкан (финальный бой — вулкан)",
+       "do": [
+        {
+         "heat": 40
+        },
+        {
+         "boss": "ex_f_volcano"
+        },
+        {
+         "gift": "random"
+        }
+       ],
+       "result": "Земля вздыхает. Финальный бой будет с тем, что сильнее Владыки."
+      },
+      {
+       "text": "Успокоить (Жар −30)",
+       "do": [
+        {
+         "heat": -30
+        },
+        {
+         "xp": 60
+        }
+       ],
+       "result": "Шёпот затихает до следующего века."
+      },
+      {
+       "text": "Слушать дольше",
+       "check": {
+        "attr": "int",
+        "dc": 14,
+        "classes": [
+         "geomancer",
+         "shaman",
+         "druid"
+        ]
+       },
+       "success": {
+        "text": "Вулкан рассказывает, где у Владыки трещина в броне.",
+        "do": [
+         {
+          "boss_mod": {
+           "name": "Трещина в броне Владыки",
+           "good": true,
+           "hp": 0.85
+          }
+         }
+        ]
+       },
+       "fail": {
+        "text": "Жар проникает в голову.",
+        "do": [
+         {
+          "hurt": 0.2
+         },
+         {
+          "heat": 10
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "forge_herald": {
+   "title": "Глашатай Владыки",
+   "kind": "short",
+   "acts": [
+    2,
+    3
+   ],
+   "weight": 8,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Человек в маске из стали держит свиток с печатью-наковальней: «Владыка ценит сильных. Принесите голову вожака рабов — получите место у его горна».",
+     "options": [
+      {
+       "text": "Согласиться",
+       "do": [
+        {
+         "gold": 150
+        },
+        {
+         "rep": "slaves",
+         "add": -5
+        },
+        {
+         "flag": "lord_servant"
+        },
+        {
+         "boss_mod": {
+          "name": "Вы — человек Владыки: стража пропустит",
+          "good": true,
+          "hp": 0.85
+         }
+        }
+       ],
+       "result": "Маска кивает. Рабы будут вас ненавидеть."
+      },
+      {
+       "text": "Отказать",
+       "do": [
+        {
+         "battle": "elite",
+         "after": [
+          {
+           "item": "elite"
+          }
+         ]
+        }
+       ],
+       "result": "Глашатай свистит — из теней выходят цепные."
+      },
+      {
+       "text": "Обмануть глашатая",
+       "check": {
+        "attr": "int",
+        "dc": 14,
+        "classes": [
+         "bard",
+         "tactician",
+         "assassin"
+        ]
+       },
+       "success": {
+        "text": "Свиток с печатью теперь ваш — с ним открываются склады.",
+        "do": [
+         {
+          "mat": "ore",
+          "add": 6
+         },
+         {
+          "mat": "obsidian",
+          "add": 2
+         }
+        ]
+       },
+       "fail": {
+        "text": "Обман раскрыт.",
+        "do": [
+         {
+          "battle": "elite",
+          "after": []
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "lava_dam": {
+   "title": "Плотина лавы",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 9,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Каменная плотина держит озеро лавы. Трещины по ней светятся, кладка гудит.",
+     "options": [
+      {
+       "text": "Открыть шлюз",
+       "do": [
+        {
+         "heat": -25
+        },
+        {
+         "erupt": 1
+        }
+       ],
+       "result": "Лава уходит в нижние цеха — Жар падает, но карту заливает сейчас."
+      },
+      {
+       "text": "Укрепить плотину",
+       "check": {
+        "attr": "str",
+        "dc": 13,
+        "classes": [
+         "geomancer",
+         "guardian",
+         "ram"
+        ]
+       },
+       "success": {
+        "text": "Камень встаёт на место. Цех внизу спасён.",
+        "do": [
+         {
+          "heat": -10
+         },
+         {
+          "rep": "guild",
+          "add": 2
+         }
+        ]
+       },
+       "fail": {
+        "text": "Камень срывается — {hero} обжигается.",
+        "do": [
+         {
+          "hurt": 0.3,
+          "who": "hero"
+         },
+         {
+          "heat": 10
+         }
+        ]
+       }
+      },
+      {
+       "text": "Уйти, пока держит",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "cooling_cistern": {
+   "title": "Цистерна охлаждения",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 10,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Огромный чан с водой для закалки, вокруг — пар. Воды хватит на что-то одно.",
+     "options": [
+      {
+       "text": "Напиться и омыться",
+       "do": [
+        {
+         "heal": 0.5
+        }
+       ],
+       "result": "Впервые за день не жарко."
+      },
+      {
+       "text": "Слить в горны (Жар −20)",
+       "do": [
+        {
+         "heat": -20
+        }
+       ],
+       "result": "Горны шипят и гаснут."
+      },
+      {
+       "text": "Отдать воду рабам",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": 2
+        },
+        {
+         "xp": 30
+        }
+       ],
+       "result": "Рабы пьют прямо из ладоней."
+      }
+     ]
+    }
+   }
+  },
+  "starsteel_vein": {
+   "title": "Жила звёздной стали",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 9,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "В стене штрека — голубая жила, холодная на ощупь среди жара. Металл из упавшей звезды.",
+     "options": [
+      {
+       "text": "Добыть сколько выйдет",
+       "do": [
+        {
+         "hurt": 0.15
+        },
+        {
+         "mat": "starsteel",
+         "add": 1
+        },
+        {
+         "mat": "ore",
+         "add": 3
+        }
+       ],
+       "result": "Кирки звенят полдня."
+      },
+      {
+       "text": "Вырубить всю жилу",
+       "check": {
+        "attr": "str",
+        "dc": 14,
+        "classes": [
+         "warrior",
+         "ram",
+         "geomancer"
+        ]
+       },
+       "success": {
+        "text": "Вся жила ваша.",
+        "do": [
+         {
+          "mat": "starsteel",
+          "add": 2
+         },
+         {
+          "mat": "ore",
+          "add": 4
+         }
+        ]
+       },
+       "fail": {
+        "text": "Свод проседает. Вас откапывают час.",
+        "do": [
+         {
+          "hurt": 0.3
+         },
+         {
+          "curse": "soot_lungs"
+         }
+        ]
+       }
+      },
+      {
+       "text": "Отметить для гильдии",
+       "do": [
+        {
+         "rep": "guild",
+         "add": 2
+        },
+        {
+         "gold": 40
+        }
+       ],
+       "result": "Гильдия платит за находку."
+      }
+     ]
+    }
+   }
+  },
+  "molten_river": {
+   "title": "Река расплава",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 8,
+   "steps": {
+    "start": {
+     "text": "Поперёк пути течёт река жидкого металла. Над ней — цепной мост, у берега — гильдейский паромщик на каменном плоту.",
+     "options": [
+      {
+       "text": "По цепям над расплавом",
+       "check": {
+        "attr": "agi",
+        "dc": 12,
+        "classes": [
+         "assassin",
+         "archer",
+         "trapper"
+        ],
+        "traits": [
+         "nimble"
+        ]
+       },
+       "success": {
+        "text": "Весь отряд на той стороне — и никто не обжёгся.",
+        "do": [
+         {
+          "xp": 40
+         }
+        ]
+       },
+       "fail": {
+        "text": "Цепь качнулась. Сапоги {hero} дымятся.",
+        "do": [
+         {
+          "hurt": 0.3,
+          "who": "hero"
+         }
+        ]
+       }
+      },
+      {
+       "text": "Паром гильдии ({price:40} золота)",
+       "requires": {
+        "pay": 40
+       },
+       "do": [
+        {
+         "pay": 40
+        }
+       ],
+       "result": "Плот скользит по расплаву."
+      },
+      {
+       "text": "Пройти по горячему краю",
+       "do": [
+        {
+         "hurt": 0.2
+        },
+        {
+         "heat": 5
+        }
+       ],
+       "result": "Жар печёт подошвы."
+      }
+     ]
+    }
+   }
+  },
+  "overseer_bribe": {
+   "title": "Надсмотрщик у костра",
+   "kind": "short",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 8,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Надсмотрщик греет руки у жаровни и не спешит звать стражу. «Каждому — своё. Мне — монеты, вам — тишина».",
+     "options": [
+      {
+       "text": "Заплатить (60 золота)",
+       "requires": {
+        "gold": 60
+       },
+       "do": [
+        {
+         "gold": -60
+        },
+        {
+         "battle_mod": {
+          "name": "Стража не спешит: враги слабее",
+          "battles": 2,
+          "dmg": 0.85,
+          "good": true
+         }
+        }
+       ],
+       "result": "Он пересчитывает монеты и отворачивается."
+      },
+      {
+       "text": "Сдать ему тайник рабов",
+       "do": [
+        {
+         "gold": 50
+        },
+        {
+         "rep": "slaves",
+         "add": -3
+        }
+       ],
+       "result": "Он ухмыляется. Рабы узнают."
+      },
+      {
+       "text": "Оглушить и обыскать",
+       "do": [
+        {
+         "rep": "guild",
+         "add": -1
+        },
+        {
+         "mat": "ore",
+         "add": 3
+        },
+        {
+         "gold": 30
+        },
+        {
+         "battle_mod": {
+          "name": "Тревога: стража настороже",
+          "battles": 2,
+          "adds": [
+           "chain_smith"
+          ]
+         }
+        }
+       ],
+       "result": "В его кошеле — руда и ключ. Скоро его найдут."
+      }
+     ]
+    }
+   }
+  },
+  "bellows_hall": {
+   "title": "Зал великих мехов",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 8,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Кожаные меха размером с дом дышат в горны. Рычаг управления никто не охраняет.",
+     "options": [
+      {
+       "text": "Сломать меха (Жар −15)",
+       "do": [
+        {
+         "heat": -15
+        },
+        {
+         "battle_mod": {
+          "name": "Горны остыли: огонь врагов слабее",
+          "battles": 2,
+          "dmg": 0.9,
+          "good": true
+         }
+        }
+       ],
+       "result": "Меха выдыхают в последний раз."
+      },
+      {
+       "text": "Раздуть на полную (Жар +20)",
+       "do": [
+        {
+         "heat": 20
+        },
+        {
+         "mat": "ore",
+         "add": 5
+        },
+        {
+         "mat": "obsidian",
+         "add": 1
+        }
+       ],
+       "result": "Горны ревут — и плавят руду прямо в слитки."
+      },
+      {
+       "text": "Перенастроить на вентиляцию",
+       "check": {
+        "attr": "int",
+        "dc": 13,
+        "classes": [
+         "alchemist",
+         "chrono",
+         "gravity"
+        ]
+       },
+       "success": {
+        "text": "Свежий воздух гонит дым прочь.",
+        "do": [
+         {
+          "heat": -10
+         },
+         {
+          "remove_curse": 1
+         }
+        ]
+       },
+       "fail": {
+        "text": "Меха выдувают сажу прямо на вас.",
+        "do": [
+         {
+          "curse": "soot_lungs"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "slag_merchant": {
+   "title": "Лавка шлаковщика",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 8,
+   "steps": {
+    "start": {
+     "text": "Горбатый торговец из вольной гильдии торгует прямо из вагонетки: руда, обломки обсидиана, ржавые слитки.",
+     "options": [
+      {
+       "text": "Купить руду ({price:30} золота): +5",
+       "requires": {
+        "pay": 30
+       },
+       "do": [
+        {
+         "pay": 30
+        },
+        {
+         "mat": "ore",
+         "add": 5
+        }
+       ],
+       "result": "Тяжёлая, честная руда."
+      },
+      {
+       "text": "Купить обсидиан ({price:55} золота): +1",
+       "requires": {
+        "pay": 55
+       },
+       "do": [
+        {
+         "pay": 55
+        },
+        {
+         "mat": "obsidian",
+         "add": 1
+        }
+       ],
+       "result": "Чёрное стекло вулкана."
+      },
+      {
+       "text": "Продать вещь на переплавку (+4 руды)",
+       "requires": {
+        "items_at_least": 1
+       },
+       "do": [
+        {
+         "lose_item": 1
+        },
+        {
+         "mat": "ore",
+         "add": 4
+        }
+       ],
+       "result": "Торговец кидает вещь в тигель."
+      },
+      {
+       "text": "Уйти",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "master_blueprints": {
+   "title": "Чертежи мастера",
+   "kind": "scene",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Сгоревшая мастерская. В железном сундуке — чертежи, не тронутые огнём.",
+     "options": [
+      {
+       "text": "Разобрать чертежи",
+       "check": {
+        "attr": "int",
+        "dc": 13,
+        "traits": [
+         "scholar"
+        ],
+        "classes": [
+         "alchemist",
+         "tactician"
+        ]
+       },
+       "success": {
+        "text": "Схемы закалки звёздной стали — и запасы мастера.",
+        "do": [
+         {
+          "mat": "starsteel",
+          "add": 1
+         },
+         {
+          "mat": "emberheart",
+          "add": 1
+         }
+        ]
+       },
+       "fail": {
+        "text": "Половина — шифр. Зато в сундуке руда.",
+        "do": [
+         {
+          "mat": "ore",
+          "add": 4
+         }
+        ]
+       }
+      },
+      {
+       "text": "Продать гильдии",
+       "do": [
+        {
+         "gold": 90
+        },
+        {
+         "rep": "guild",
+         "add": 2
+        }
+       ],
+       "result": "Гильдия давно искала эти листы."
+      },
+      {
+       "text": "Сжечь (чтобы Владыка не нашёл)",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": 1
+        },
+        {
+         "xp": 40
+        }
+       ],
+       "result": "Листы чернеют."
+      }
+     ]
+    }
+   }
+  },
+  "fire_trial": {
+   "title": "Испытание огнём",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 8,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Огненный коридор: в конце — алтарь гильдии с наградой для того, кто пройдёт, не оглядываясь.",
+     "options": [
+      {
+       "text": "Пройти сквозь огонь",
+       "check": {
+        "attr": "str",
+        "dc": 13,
+        "traits": [
+         "tough",
+         "brave"
+        ],
+        "classes": [
+         "guardian",
+         "bloodrager"
+        ]
+       },
+       "success": {
+        "text": "{hero} выходит из огня закалённым.",
+        "do": [
+         {
+          "perk": {
+           "name": "Закалённый в огне",
+           "mods": [
+            {
+             "stat": "hp",
+             "mult": 1.15
+            }
+           ],
+           "desc": "+15% здоровья",
+           "who": "hero"
+          }
+         }
+        ]
+       },
+       "fail": {
+        "text": "Огонь сильнее.",
+        "do": [
+         {
+          "hurt": 0.35,
+          "who": "hero"
+         },
+         {
+          "wound": "hero"
+         }
+        ]
+       }
+      },
+      {
+       "text": "Пройти всем отрядом, прикрываясь щитами",
+       "do": [
+        {
+         "hurt": 0.2
+        },
+        {
+         "item": "normal"
+        }
+       ],
+       "result": "Ожоги заживут. Награда — нет."
+      },
+      {
+       "text": "Обойти",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "trapped_miner": {
+   "title": "Заваленный рудокоп",
+   "kind": "short",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 8,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Из-под завала торчит рука и слышен голос: «Я из вольной гильдии! Вытащите — не пожалеете!» Рядом его мешок.",
+     "options": [
+      {
+       "text": "Откопать",
+       "check": {
+        "attr": "str",
+        "dc": 12,
+        "classes": [
+         "geomancer",
+         "ram",
+         "warrior"
+        ]
+       },
+       "success": {
+        "text": "Рудокоп жив и щедр.",
+        "do": [
+         {
+          "rep": "guild",
+          "add": 3
+         },
+         {
+          "mat": "ore",
+          "add": 3
+         },
+         {
+          "mat": "obsidian",
+          "add": 1
+         }
+        ]
+       },
+       "fail": {
+        "text": "Камни сползают снова. Вы тянете его уже за обе руки — но ушиблены.",
+        "do": [
+         {
+          "hurt": 0.2
+         },
+         {
+          "rep": "guild",
+          "add": 1
+         }
+        ]
+       }
+      },
+      {
+       "text": "Забрать мешок",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 6
+        },
+        {
+         "rep": "guild",
+         "add": -3
+        }
+       ],
+       "result": "Голос под завалом проклинает вас."
+      },
+      {
+       "text": "Уйти",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "salamander_nest": {
+   "title": "Гнездо саламандр",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "В расщелине — гнездо саламандр. Яйца светятся, как угли; мать спит, свернувшись кольцом.",
+     "options": [
+      {
+       "text": "Напасть на гнездо",
+       "do": [
+        {
+         "battle": "battle",
+         "after": [
+          {
+           "mat": "emberheart",
+           "add": 1
+          },
+          {
+           "xp": 40
+          }
+         ]
+        }
+       ],
+       "result": "Мать просыпается."
+      },
+      {
+       "text": "Утащить яйцо",
+       "check": {
+        "attr": "agi",
+        "dc": 13,
+        "classes": [
+         "assassin",
+         "trapper"
+        ]
+       },
+       "success": {
+        "text": "Яйцо — чистое сердце углей.",
+        "do": [
+         {
+          "mat": "emberheart",
+          "add": 1
+         }
+        ]
+       },
+       "fail": {
+        "text": "Мать просыпается — и не одна.",
+        "do": [
+         {
+          "battle": "battle",
+          "after": []
+         }
+        ]
+       }
+      },
+      {
+       "text": "Остудить яйца (на продажу)",
+       "requires": {
+        "class_any": [
+         "cryo",
+         "shaman"
+        ]
+       },
+       "do": [
+        {
+         "mat": "obsidian",
+         "add": 2
+        },
+        {
+         "gold": 30
+        }
+       ],
+       "result": "Остывшие яйца — обсидиан."
+      },
+      {
+       "text": "Уйти",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "hammer_duel": {
+   "title": "Кузнечный поединок",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Мастер гильдии бросает молот к вашим ногам: «Кто быстрее выкует клинок — тому оба. Слабо?»",
+     "options": [
+      {
+       "text": "Принять вызов",
+       "check": {
+        "attr": "str",
+        "dc": 14,
+        "classes": [
+         "warrior",
+         "ram",
+         "geomancer"
+        ],
+        "traits": [
+         "veteran"
+        ]
+       },
+       "success": {
+        "text": "Клинок {hero} звенит чище. Мастер смеётся и отдаёт свой.",
+        "do": [
+         {
+          "item": {
+           "slot": "weapon"
+          }
+         },
+         {
+          "rep": "guild",
+          "add": 2
+         }
+        ]
+       },
+       "fail": {
+        "text": "Мастер быстрее. Ставка — ваша руда.",
+        "do": [
+         {
+          "mat": "ore",
+          "add": -4
+         },
+         {
+          "rep": "guild",
+          "add": 1
+         }
+        ]
+       }
+      },
+      {
+       "text": "Поставить чужие руки — заплатить подмастерью ({price:40})",
+       "requires": {
+        "pay": 40
+       },
+       "do": [
+        {
+         "pay": 40
+        },
+        {
+         "item": "normal"
+        }
+       ],
+       "result": "Подмастерье проигрывает, но клинок неплох."
+      },
+      {
+       "text": "Отказаться",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "golem_parts": {
+   "title": "Рынок деталей",
+   "kind": "short",
+   "acts": [
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Гильдейские механики торгуют деталями големов: руки, шестерни, одно целое ядро — тёплое.",
+     "options": [
+      {
+       "text": "Купить ядро ({price:90}): голем с отрядом",
+       "requires": {
+        "pay": 90
+       },
+       "do": [
+        {
+         "pay": 90
+        },
+        {
+         "guest": {
+          "unit": "free_golem",
+          "name": "Наёмный голем",
+          "battles": 4
+         }
+        }
+       ],
+       "result": "Голем собирается за час и встаёт в строй."
+      },
+      {
+       "text": "Продать ваши трофеи на детали (+обсидиан)",
+       "requires": {
+        "items_at_least": 1
+       },
+       "do": [
+        {
+         "lose_item": 1
+        },
+        {
+         "mat": "obsidian",
+         "add": 2
+        }
+       ],
+       "result": "Механики довольны."
+      },
+      {
+       "text": "Украсть ядро",
+       "do": [
+        {
+         "rep": "guild",
+         "add": -3
+        },
+        {
+         "guest": {
+          "unit": "free_golem",
+          "name": "Краденый голем",
+          "battles": 4
+         }
+        }
+       ],
+       "result": "Голем идёт за вами. Гильдия это запомнит."
+      }
+     ]
+    }
+   }
+  },
+  "flame_preacher": {
+   "title": "Проповедник пламени",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "На бочке стоит проповедник: «Жар — это любовь Владыки! Чем жарче, тем ближе спасение!» Рабы слушают, разинув рты.",
+     "options": [
+      {
+       "text": "Слушать",
+       "do": [
+        {
+         "heat": 10
+        },
+        {
+         "gift": "random"
+        }
+       ],
+       "result": "В словах есть сила — горячая."
+      },
+      {
+       "text": "Переспорить",
+       "check": {
+        "attr": "int",
+        "dc": 12,
+        "classes": [
+         "priest",
+         "bard"
+        ]
+       },
+       "success": {
+        "text": "Рабы смеются над проповедником.",
+        "do": [
+         {
+          "rep": "cult",
+          "add": -2
+         },
+         {
+          "rep": "slaves",
+          "add": 2
+         },
+         {
+          "xp": 40
+         }
+        ]
+       },
+       "fail": {
+        "text": "Толпа освистывает уже вас.",
+        "do": [
+         {
+          "rep": "slaves",
+          "add": -1
+         }
+        ]
+       }
+      },
+      {
+       "text": "Сжечь его кафедру",
+       "requires": {
+        "class_any": [
+         "mage",
+         "alchemist"
+        ]
+       },
+       "do": [
+        {
+         "rep": "cult",
+         "add": -3
+        },
+        {
+         "item": "normal"
+        },
+        {
+         "heat": 5
+        }
+       ],
+       "result": "Бочка горит красиво."
+      }
+     ]
+    }
+   }
+  },
+  "ash_storm": {
+   "title": "Пепельная буря",
+   "kind": "short",
+   "acts": [
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Из жерла валит пепел — сплошной стеной. Видно на шаг.",
+     "options": [
+      {
+       "text": "Переждать в укрытии",
+       "do": [
+        {
+         "heal": 0.2
+        },
+        {
+         "heat": 10
+        }
+       ],
+       "result": "Буря уходит, оставив кузню горячее."
+      },
+      {
+       "text": "Идти сквозь пепел",
+       "do": [
+        {
+         "curse": "soot_lungs"
+        },
+        {
+         "xp": 50
+        }
+       ],
+       "result": "Кашель не проходит."
+      },
+      {
+       "text": "Найти дорогу по жару земли",
+       "check": {
+        "attr": "int",
+        "dc": 13,
+        "classes": [
+         "geomancer",
+         "druid",
+         "shaman"
+        ],
+        "traits": [
+         "tracker"
+        ]
+       },
+       "success": {
+        "text": "Под пеплом — старая гильдейская тропа.",
+        "do": [
+         {
+          "lava_shift": 1
+         },
+         {
+          "mat": "ore",
+          "add": 2
+         }
+        ]
+       },
+       "fail": {
+        "text": "Тропа ведёт в тупик.",
+        "do": [
+         {
+          "hurt": 0.15
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "broken_automaton": {
+   "title": "Сломанный механоид",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Механический слуга с разбитым котлом пытается встать и падает снова. В его груди тикает что-то живое.",
+     "options": [
+      {
+       "text": "Починить (3 руды)",
+       "check": {
+        "attr": "int",
+        "dc": 12,
+        "classes": [
+         "alchemist",
+         "chrono",
+         "tactician",
+         "binder"
+        ]
+       },
+       "success": {
+        "text": "Механоид встаёт и салютует.",
+        "do": [
+         {
+          "mat": "ore",
+          "add": -3
+         },
+         {
+          "guest": {
+           "unit": "free_golem",
+           "name": "Механоид",
+           "battles": 4
+          }
+         },
+         {
+          "rep": "golems",
+          "add": 1
+         }
+        ]
+       },
+       "fail": {
+        "text": "Котёл взрывается.",
+        "do": [
+         {
+          "mat": "ore",
+          "add": -3
+         },
+         {
+          "hurt": 0.2
+         }
+        ]
+       }
+      },
+      {
+       "text": "Разобрать",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 5
+        },
+        {
+         "mat": "obsidian",
+         "add": 1
+        },
+        {
+         "rep": "golems",
+         "add": -1
+        }
+       ],
+       "result": "Тиканье затихает."
+      },
+      {
+       "text": "Оставить",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "heat_altar": {
+   "title": "Алтарь Жара",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Алтарь из застывшей магмы. Над ним дрожит воздух. Надпись: «Возьми мой жар — или отдай свой».",
+     "options": [
+      {
+       "text": "Отдать жар (Жар +25): дар",
+       "do": [
+        {
+         "heat": 25
+        },
+        {
+         "gift": "random"
+        }
+       ],
+       "result": "Алтарь пьёт тепло кузни."
+      },
+      {
+       "text": "Взять жар (Жар −25): проклятие",
+       "do": [
+        {
+         "heat": -25
+        },
+        {
+         "curse": "random"
+        }
+       ],
+       "result": "Холод — тоже цена."
+      },
+      {
+       "text": "Не трогать",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "obsidian_mirror": {
+   "title": "Обсидиановое зеркало",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Плита чёрного стекла. В отражении кузня горит — та часть, куда вы ещё не дошли.",
+     "options": [
+      {
+       "text": "Смотреть дальше",
+       "do": [
+        {
+         "lava_shift": 1
+        },
+        {
+         "xp": 30
+        }
+       ],
+       "result": "Отражение меняется: огонь повернул."
+      },
+      {
+       "text": "Разбить на куски",
+       "do": [
+        {
+         "mat": "obsidian",
+         "add": 2
+        }
+       ],
+       "result": "Чистый обсидиан."
+      },
+      {
+       "text": "Шагнуть в отражение",
+       "check": {
+        "attr": "int",
+        "dc": 14,
+        "traits": [
+         "scholar"
+        ],
+        "classes": [
+         "chrono",
+         "binder"
+        ]
+       },
+       "success": {
+        "text": "{hero} выходит, зная будущее на шаг вперёд.",
+        "do": [
+         {
+          "perk": {
+           "name": "Знающий наперёд",
+           "mods": [
+            {
+             "stat": "ap_regen",
+             "mult": 1.12
+            }
+           ],
+           "desc": "+12% восполнения AP",
+           "who": "hero"
+          }
+         }
+        ]
+       },
+       "fail": {
+        "text": "Стекло режет.",
+        "do": [
+         {
+          "hurt": 0.25,
+          "who": "hero"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "runaway_apprentice": {
+   "title": "Сбежавший подмастерье",
+   "kind": "short",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Мальчишка в прожжённом фартуке прячется за наковальней. «Не выдавайте! Я украл молот мастера — хотел быть свободным».",
+     "options": [
+      {
+       "text": "Спрятать",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": 2
+        },
+        {
+         "upgrade_item": 1
+        }
+       ],
+       "result": "В благодарность он правит вашу вещь — руки у него золотые."
+      },
+      {
+       "text": "Вернуть мастеру гильдии",
+       "do": [
+        {
+         "gold": 50
+        },
+        {
+         "rep": "guild",
+         "add": 2
+        },
+        {
+         "rep": "slaves",
+         "add": -1
+        }
+       ],
+       "result": "Мастер платит за молот."
+      },
+      {
+       "text": "Забрать молот себе",
+       "do": [
+        {
+         "item": {
+          "slot": "weapon"
+         }
+        },
+        {
+         "rep": "guild",
+         "add": -2
+        }
+       ],
+       "result": "Мальчишка смотрит вам вслед."
+      }
+     ]
+    }
+   }
+  },
+  "quench_bath": {
+   "title": "Закалочная ванна",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Ванна с маслом и ледяной водой для закалки клинков. Мастер давно мёртв, ванна ещё работает.",
+     "options": [
+      {
+       "text": "Закалить вещь (риск треснуть)",
+       "requires": {
+        "items_at_least": 1
+       },
+       "do": [
+        {
+         "chance": 0.75,
+         "do": [
+          {
+           "upgrade_item": 1
+          },
+          {
+           "say": "Сталь поёт"
+          }
+         ],
+         "else": [
+          {
+           "lose_item": 1
+          },
+          {
+           "say": "Вещь треснула"
+          }
+         ]
+        }
+       ],
+       "result": "Шипение и пар."
+      },
+      {
+       "text": "Охладить горны маслом (Жар −10)",
+       "do": [
+        {
+         "heat": -10
+        }
+       ],
+       "result": "Масло дымит, но горит хуже."
+      },
+      {
+       "text": "Уйти",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "smoke_signal": {
+   "title": "Дым над шахтой",
+   "kind": "thread",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 8,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Над старой шахтой поднимается дым — три коротких столба. Знак рабов: «здесь тайник».",
+     "options": [
+      {
+       "text": "Идти к шахте",
+       "do": [
+        {
+         "add_node": {
+          "event": "slave_cache",
+          "label": "Тайник рабов",
+          "ahead": 1
+         }
+        }
+       ],
+       "result": "Тропа уходит в штрек."
+      },
+      {
+       "text": "Указать надсмотрщикам",
+       "do": [
+        {
+         "gold": 60
+        },
+        {
+         "rep": "slaves",
+         "add": -3
+        }
+       ],
+       "result": "Дым гаснет."
+      },
+      {
+       "text": "Не вмешиваться",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "slave_cache": {
+   "title": "Тайник рабов",
+   "kind": "thread",
+   "acts": [],
+   "weight": 40,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Под камнями — тайник: руда, что рабы годами прятали от надсмотрщиков, и записка: «Для тех, кто поднимется».",
+     "options": [
+      {
+       "text": "Взять всё",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 8
+        },
+        {
+         "mat": "obsidian",
+         "add": 1
+        },
+        {
+         "rep": "slaves",
+         "add": -2
+        }
+       ],
+       "result": "Это было не для вас."
+      },
+      {
+       "text": "Взять половину, оставить знак",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 4
+        },
+        {
+         "rep": "slaves",
+         "add": 2
+        }
+       ],
+       "result": "Рядом с тайником — ваш знак."
+      },
+      {
+       "text": "Добавить своего золота (40)",
+       "requires": {
+        "gold": 40
+       },
+       "do": [
+        {
+         "gold": -40
+        },
+        {
+         "rep": "slaves",
+         "add": 4
+        },
+        {
+         "xp": 40
+        }
+       ],
+       "result": "Рабы найдут больше, чем прятали."
+      }
+     ]
+    }
+   }
+  },
+  "tribute_cart": {
+   "title": "Обоз дани",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Вагонетки с данью Владыке тащат рабы под охраной цепных. На вагонетках — слитки и чёрный обсидиан.",
+     "options": [
+      {
+       "text": "Отбить обоз",
+       "do": [
+        {
+         "battle": "ex_f_chain_gang",
+         "after": [
+          {
+           "mat": "ore",
+           "add": 8
+          },
+          {
+           "mat": "obsidian",
+           "add": 2
+          },
+          {
+           "rep": "slaves",
+           "add": 2
+          }
+         ]
+        }
+       ],
+       "result": "Цепные бросаются в бой."
+      },
+      {
+       "text": "Тайком срезать вагонетку",
+       "check": {
+        "attr": "agi",
+        "dc": 13,
+        "classes": [
+         "assassin",
+         "trapper"
+        ]
+       },
+       "success": {
+        "text": "Одна вагонетка «потерялась» по дороге.",
+        "do": [
+         {
+          "mat": "ore",
+          "add": 5
+         },
+         {
+          "mat": "obsidian",
+          "add": 1
+         }
+        ]
+       },
+       "fail": {
+        "text": "Вас заметили.",
+        "do": [
+         {
+          "battle": "ex_f_revolt",
+          "after": []
+         }
+        ]
+       }
+      },
+      {
+       "text": "Пропустить",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "hot_springs": {
+   "title": "Горячие ключи",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Подземный источник — кипяток с запахом серы. Гильдейцы говорят, он лечит любые ожоги.",
+     "options": [
+      {
+       "text": "Окунуться всем",
+       "do": [
+        {
+         "heal": 1.0
+        },
+        {
+         "heat": 10
+        }
+       ],
+       "result": "Пар поднимается к сводам."
+      },
+      {
+       "text": "Набрать воды для горнов (Жар −15)",
+       "do": [
+        {
+         "heat": -15
+        }
+       ],
+       "result": "Бурдюки шипят."
+      },
+      {
+       "text": "Смыть проклятие",
+       "requires": {
+        "curse_any": true
+       },
+       "do": [
+        {
+         "remove_curse": 1
+        },
+        {
+         "hurt": 0.15
+        }
+       ],
+       "result": "Больно, но чисто."
+      }
+     ]
+    }
+   }
+  },
+  "master_contest": {
+   "title": "Состязание мастеров",
+   "kind": "scene",
+   "acts": [
+    2,
+    3
+   ],
+   "weight": 9,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Гильдия устраивает смотр: мастера выкладывают лучшие работы. Судья — старый кузнец с одним глазом.",
+     "options": [
+      {
+       "text": "Выставить свою ковку",
+       "requires": {
+        "flag_at_least": {
+         "forged": 1
+        }
+       },
+       "do": [
+        {
+         "rep": "guild",
+         "add": 3
+        },
+        {
+         "gift": "random"
+        },
+        {
+         "mat": "starsteel",
+         "add": 1
+        }
+       ],
+       "result": "Судья долго смотрит — и прикалывает к вашей работе ленту."
+      },
+      {
+       "text": "Оценивать чужие работы",
+       "check": {
+        "attr": "int",
+        "dc": 12,
+        "traits": [
+         "scholar",
+         "greedy"
+        ]
+       },
+       "success": {
+        "text": "Вы замечаете подделку. Гильдия благодарна.",
+        "do": [
+         {
+          "rep": "guild",
+          "add": 2
+         },
+         {
+          "gold": 60
+         }
+        ]
+       },
+       "fail": {
+        "text": "Вы хвалите подделку.",
+        "do": [
+         {
+          "rep": "guild",
+          "add": -1
+         }
+        ]
+       }
+      },
+      {
+       "text": "Украсть работу с витрины",
+       "do": [
+        {
+         "item": "elite"
+        },
+        {
+         "rep": "guild",
+         "add": -4
+        }
+       ],
+       "result": "Ни одного свидетеля. Почти."
+      }
+     ]
+    }
+   }
+  },
+  "old_armory": {
+   "title": "Забытый арсенал",
+   "kind": "scene",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Заваленная оружейная прошлого Владыки. Три стойки уцелели — на каждой своё.",
+     "options": [
+      {
+       "text": "Стойка с клинком",
+       "do": [
+        {
+         "item": {
+          "slot": "weapon"
+         }
+        }
+       ],
+       "result": "Старая сталь, но острая."
+      },
+      {
+       "text": "Стойка с бронёй",
+       "do": [
+        {
+         "item": {
+          "slot": "armor"
+         }
+        }
+       ],
+       "result": "Тяжёлая, надёжная."
+      },
+      {
+       "text": "Сгрести всё",
+       "do": [
+        {
+         "item": {
+          "slot": "weapon"
+         }
+        },
+        {
+         "item": {
+          "slot": "armor"
+         }
+        },
+        {
+         "curse": "brittle_steel"
+        },
+        {
+         "heat": 10
+        }
+       ],
+       "result": "Своды скрипят — проклятие арсенала держится на стали."
+      }
+     ]
+    }
+   }
+  },
+  "fire_ale": {
+   "title": "Огненное пиво",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Гном-пивовар разливает по кружкам что-то, что светится. «Рецепт гильдии. Или выживете — или станете крепче».",
+     "options": [
+      {
+       "text": "Выпить (герой)",
+       "do": [
+        {
+         "chance": 0.6,
+         "do": [
+          {
+           "perk": {
+            "name": "Огненная глотка",
+            "mods": [
+             {
+              "stat": "atk_cooldown",
+              "mult": 0.93
+             }
+            ],
+            "desc": "+7% скорости атак",
+            "who": "any"
+           }
+          }
+         ],
+         "else": [
+          {
+           "perk": {
+            "name": "Изжога",
+            "mods": [
+             {
+              "stat": "hp",
+              "mult": 0.93
+             }
+            ],
+            "desc": "−7% здоровья",
+            "who": "any"
+           }
+          }
+         ]
+        }
+       ],
+       "result": "{hero_any} пьёт залпом."
+      },
+      {
+       "text": "Купить бочонок для горнов ({price:30}) — Жар −15",
+       "requires": {
+        "pay": 30
+       },
+       "do": [
+        {
+         "pay": 30
+        },
+        {
+         "heat": -15
+        }
+       ],
+       "result": "Пиво гасит огонь лучше воды."
+      },
+      {
+       "text": "Отказаться",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "tunnel_collapse": {
+   "title": "Обвал",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Свод штрека трещит. Впереди — выход, позади — рабы с вагонеткой руды.",
+     "options": [
+      {
+       "text": "Удержать свод",
+       "check": {
+        "attr": "str",
+        "dc": 13,
+        "classes": [
+         "guardian",
+         "warrior",
+         "geomancer"
+        ]
+       },
+       "success": {
+        "text": "Все успели. Рабы делятся рудой.",
+        "do": [
+         {
+          "rep": "slaves",
+          "add": 2
+         },
+         {
+          "mat": "ore",
+          "add": 4
+         }
+        ]
+       },
+       "fail": {
+        "text": "Камень ломает плечо {hero}.",
+        "do": [
+         {
+          "wound": "hero"
+         },
+         {
+          "rep": "slaves",
+          "add": 1
+         }
+        ]
+       }
+      },
+      {
+       "text": "Бежать к выходу",
+       "do": [
+        {
+         "hurt": 0.1
+        }
+       ],
+       "result": "Позади грохот. Крики стихают."
+      },
+      {
+       "text": "Обрушить свод на погоню",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": -2
+        },
+        {
+         "battle_mod": {
+          "name": "Погоня отрезана: врагов меньше",
+          "battles": 2,
+          "hp": 0.9,
+          "good": true
+         }
+        }
+       ],
+       "result": "Камень решает всё."
+      }
+     ]
+    }
+   }
+  },
+  "guild_contract": {
+   "title": "Заказ гильдии",
+   "kind": "thread",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 9,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Гильдейский мастер разворачивает пергамент: «Выкую вещь по вашей мерке. Руда вперёд — заберёте у меня дальше по пути».",
+     "options": [
+      {
+       "text": "Заказать доспех (6 руды)",
+       "requires": {
+        "mat_at_least": {
+         "ore": 6
+        }
+       },
+       "do": [
+        {
+         "mat": "ore",
+         "add": -6
+        },
+        {
+         "flag": "contract_armor"
+        },
+        {
+         "add_node": {
+          "event": "contract_due",
+          "label": "Мастерская гильдии",
+          "ahead": 3
+         }
+        }
+       ],
+       "result": "Мастер снимает мерки."
+      },
+      {
+       "text": "Заказать оружие (6 руды)",
+       "requires": {
+        "mat_at_least": {
+         "ore": 6
+        }
+       },
+       "do": [
+        {
+         "mat": "ore",
+         "add": -6
+        },
+        {
+         "flag": "contract_weapon"
+        },
+        {
+         "add_node": {
+          "event": "contract_due",
+          "label": "Мастерская гильдии",
+          "ahead": 3
+         }
+        }
+       ],
+       "result": "Мастер взвешивает руду."
+      },
+      {
+       "text": "Отказаться",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "contract_due": {
+   "title": "Мастерская гильдии",
+   "kind": "thread",
+   "acts": [],
+   "weight": 40,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Мастер ждёт с готовой работой, завёрнутой в кожу. «Как договаривались. Гильдия держит слово».",
+     "options": [
+      {
+       "text": "Забрать доспех",
+       "requires": {
+        "flag": "contract_armor"
+       },
+       "do": [
+        {
+         "item": {
+          "slot": "armor",
+          "unique": null
+         }
+        },
+        {
+         "upgrade_item": 1
+        },
+        {
+         "rep": "guild",
+         "add": 1
+        }
+       ],
+       "result": "Сидит как влитой."
+      },
+      {
+       "text": "Забрать оружие",
+       "requires": {
+        "flag": "contract_weapon"
+       },
+       "do": [
+        {
+         "item": {
+          "slot": "weapon"
+         }
+        },
+        {
+         "upgrade_item": 1
+        },
+        {
+         "rep": "guild",
+         "add": 1
+        }
+       ],
+       "result": "Баланс идеален."
+      },
+      {
+       "text": "Попросить вернуть руду",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 6
+        }
+       ],
+       "result": "Мастер пожимает плечами."
+      }
+     ]
+    }
+   }
+  },
+  "lava_raft": {
+   "title": "Лавовый плот",
+   "kind": "short",
+   "acts": [
+    2,
+    3
+   ],
+   "weight": 6,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Каменный плот на цепях ходит по озеру лавы к дальним цехам. Цепь скрипит.",
+     "options": [
+      {
+       "text": "Прокатиться (быстрее, жарче)",
+       "do": [
+        {
+         "xp": 70
+        },
+        {
+         "heat": 15
+        },
+        {
+         "hurt": 0.1
+        }
+       ],
+       "result": "Плот летит над огнём."
+      },
+      {
+       "text": "Разбить цепь (Жар −10)",
+       "do": [
+        {
+         "heat": -10
+        },
+        {
+         "mat": "ore",
+         "add": 3
+        }
+       ],
+       "result": "Плот тонет в лаве. Цепь — на руду."
+      },
+      {
+       "text": "Пройти пешком",
+       "do": []
+      }
+     ]
+    }
+   }
+  },
+  "ember_orphans": {
+   "title": "Дети угольщиков",
+   "kind": "short",
+   "acts": [
+    1,
+    2
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Чумазые дети собирают угли в корзины голыми руками. Самый мелкий протягивает уголёк — горящий, как сердце.",
+     "options": [
+      {
+       "text": "Накормить и отдать золото (40)",
+       "requires": {
+        "gold": 40
+       },
+       "do": [
+        {
+         "gold": -40
+        },
+        {
+         "rep": "slaves",
+         "add": 3
+        },
+        {
+         "mat": "emberheart",
+         "add": 1
+        }
+       ],
+       "result": "Мелкий отдаёт свой уголёк."
+      },
+      {
+       "text": "Научить держать щипцы",
+       "do": [
+        {
+         "rep": "slaves",
+         "add": 1
+        },
+        {
+         "xp": 40
+        }
+       ],
+       "result": "Дети смеются впервые за день."
+      },
+      {
+       "text": "Купить угли (+руда)",
+       "requires": {
+        "gold": 15
+       },
+       "do": [
+        {
+         "gold": -15
+        },
+        {
+         "mat": "ore",
+         "add": 2
+        }
+       ],
+       "result": "Честная сделка."
+      }
+     ]
+    }
+   }
+  },
+  "brass_oracle": {
+   "title": "Медный оракул",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 7,
+   "once": true,
+   "steps": {
+    "start": {
+     "text": "Механическая голова на треноге поворачивается к вам: «За монету скажу, куда потечёт лава. За две — поверну её».",
+     "options": [
+      {
+       "text": "Спросить (10 золота)",
+       "requires": {
+        "gold": 10
+       },
+       "do": [
+        {
+         "gold": -10
+        },
+        {
+         "say": "Оракул щёлкает: отметки лавы видны на карте — ищите оранжевые кольца"
+        }
+       ],
+       "result": "Оракул называет узлы."
+      },
+      {
+       "text": "Повернуть лаву (40 золота)",
+       "requires": {
+        "gold": 40
+       },
+       "do": [
+        {
+         "gold": -40
+        },
+        {
+         "lava_shift": 1
+        }
+       ],
+       "result": "Где-то впереди огонь меняет русло."
+      },
+      {
+       "text": "Разобрать на медь",
+       "do": [
+        {
+         "mat": "ore",
+         "add": 3
+        },
+        {
+         "curse": "random"
+        }
+       ],
+       "result": "Голова успевает проклясть вас."
+      }
+     ]
+    }
+   }
+  },
+  "guild_feast": {
+   "title": "Пир гильдии",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 9,
+   "once": true,
+   "requires": {
+    "rep_at_least": {
+     "guild": 2
+    }
+   },
+   "steps": {
+    "start": {
+     "text": "Вольная гильдия празднует удачную плавку — и зовёт вас, друзей гильдии, к столу из наковален.",
+     "options": [
+      {
+       "text": "Пировать",
+       "do": [
+        {
+         "heal": 0.7
+        },
+        {
+         "heat": -5
+        }
+       ],
+       "result": "Гномьи песни про сталь."
+      },
+      {
+       "text": "Подарить мастерам вещь",
+       "requires": {
+        "items_at_least": 1
+       },
+       "do": [
+        {
+         "lose_item": 1
+        },
+        {
+         "rep": "guild",
+         "add": 2
+        },
+        {
+         "mat": "starsteel",
+         "add": 1
+        }
+       ],
+       "result": "Мастера растроганы."
+      },
+      {
+       "text": "Тост за свободу",
+       "check": {
+        "attr": "int",
+        "dc": 12,
+        "classes": [
+         "bard",
+         "priest"
+        ]
+       },
+       "success": {
+        "text": "Гильдия поднимает кружки за рабов.",
+        "do": [
+         {
+          "rep": "guild",
+          "add": 1
+         },
+         {
+          "rep": "slaves",
+          "add": 2
+         }
+        ]
+       },
+       "fail": {
+        "text": "Кто-то из мастеров обиделся.",
+        "do": [
+         {
+          "rep": "guild",
+          "add": -1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "guild_toll": {
+   "title": "Гильдейская пошлина",
+   "kind": "short",
+   "acts": [
+    1,
+    2,
+    3
+   ],
+   "weight": 14,
+   "requires": {
+    "rep_below": {
+     "guild": 0
+    }
+   },
+   "steps": {
+    "start": {
+     "text": "У ворот цеха — гильдейские стражи с алебардами. «Вас знают. С вас — двойная пошлина. Или руда».",
+     "options": [
+      {
+       "text": "Заплатить ({price:40} золота)",
+       "requires": {
+        "pay": 40
+       },
+       "do": [
+        {
+         "pay": 40
+        }
+       ],
+       "result": "Стражи отступают."
+      },
+      {
+       "text": "Отдать руду (4)",
+       "requires": {
+        "mat_at_least": {
+         "ore": 4
+        }
+       },
+       "do": [
+        {
+         "mat": "ore",
+         "add": -4
+        }
+       ],
+       "result": "Стражи взвешивают руду на ладони."
+      },
+      {
+       "text": "Прорваться",
+       "do": [
+        {
+         "rep": "guild",
+         "add": -1
+        },
+        {
+         "battle": "ex_f_revolt",
+         "after": [
+          {
+           "gold": 30
+          }
+         ]
+        }
+       ],
+       "result": "Алебарды опускаются."
+      }
+     ]
+    }
+   }
+  }
+ }
+}

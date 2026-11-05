@@ -10,6 +10,7 @@
 Без OpenGL плоская карта кладётся на плоскость здесь же (warp, numpy).
 """
 import math
+import os
 
 import numpy as np
 import pygame
@@ -31,6 +32,16 @@ DECOR = {"grass": ["tree", "bush", "rock", "tree"], "ash": ["rock", "deadtree", 
          "sand": ["column", "rock"], "moss": ["mushroom", "tree", "mushroom"], "wet": ["column", "rock"],
          "marble": ["column", "column", "rock"]}
 LOWERED = {"water": 5, "lava": 4, "chasm": 16}       # высота обрыва-берега, логических пикселей
+# разброс размера декора (во сколько раз от базовой картинки): деревья заметно выше героя и разной высоты
+VARY = {"tree": (1.35, 2.3), "pine": (1.4, 2.4), "deadtree": (1.2, 2.0), "column": (1.1, 1.6),
+        "bush": (0.75, 1.35), "rock": (0.6, 1.4), "mushroom": (0.7, 1.5), "tombstone": (0.85, 1.2)}
+
+
+def vary(kind, a, b):
+    """Размер и зеркало декора — детерминированно по месту (одна и та же карта выглядит одинаково)."""
+    lo, hi = VARY.get(kind, (1.0, 1.0))
+    t = _h(a, b, 23)
+    return lo + (hi - lo) * t * t, _h(a, b, 29) < 0.5
 
 
 def _rng(seed):
@@ -71,6 +82,8 @@ class GroundPainter:
         self._props = []
         self._warp = None
         self._water = None
+        self._prep = None        # шумы и материалы боя: от рельефа не зависят, считаются один раз
+        self._built = {}         # готовые варианты карты по рельефу: перековка туда-обратно — без пересборки
 
     # ---------- цвета главы ----------
 
@@ -99,12 +112,19 @@ class GroundPainter:
     def base(self, combat):
         grid = combat.grid
         # прилив временно топит клетки (base_terrain) — землю не пересобираем, вода кладётся поверх (water_layer)
-        key = (combat.enc["id"], getattr(combat, "chapter", {}).get("palette") and combat.enc.get("chapter"),
-               tuple(c.base_terrain or c.terrain for c in grid.cells.values()))
+        # временный рельеф (родник, жерло, перековка, прилив) тоже пересобирает карту: у новой воды и лавы — берега
+        key = (combat.enc["id"], combat.enc.get("chapter") if getattr(combat, "chapter", {}).get("palette") else None,
+               tuple(c.base_terrain if c.terrain == "ice_floor" and c.base_terrain else c.terrain
+                     for c in grid.cells.values()))
         if key != self._key:
+            if self._key is None or key[:2] != self._key[:2]:
+                self._built.clear()
             self._key = key
-            self._water = None
-            self._surf, self._props = self._build(combat)
+            if key not in self._built:
+                if len(self._built) >= 12:
+                    self._built.pop(next(iter(self._built)))
+                self._built[key] = self._build(combat)
+            self._surf, self._props = self._built[key]
         return self._surf
 
     def water_layer(self, combat, terrain="water"):
@@ -148,7 +168,7 @@ class GroundPainter:
         idx = {n: i for i, n in enumerate(names)}
         tm = np.full((ch, cw), idx["grass"], int)
         for (x, y), c in grid.cells.items():
-            t = c.base_terrain or c.terrain
+            t = c.base_terrain if c.terrain == "ice_floor" and c.base_terrain else c.terrain   # каток — слоем
             tm[y + P.MARGIN_T, x + P.MARGIN_L] = idx[t if t in idx else "grass"]
         for cy in range(ch):
             for cx in range(cw):
@@ -162,41 +182,112 @@ class GroundPainter:
                     tm[cy, cx] = idx[t]
         return tm, names
 
+    def _prepare(self, combat):
+        """Шумы, координаты и тени боя — от рельефа клеток не зависят: считаются один раз на бой."""
+        LW, LH = dims()
+        key = (combat.enc["id"], LW, LH, tuple(sorted(p for p, c in combat.grid.cells.items() if c.cover)),
+               tuple(sorted(p for p, c in combat.grid.cells.items() if c.portal)))
+        if self._prep is not None and self._prep["key"] == key:
+            return self._prep
+        seed = sum(ord(ch) for ch in combat.enc["id"])
+        Y, X = np.mgrid[0:LH, 0:LW]
+        pr = {"key": key, "seed": seed, "X": X, "Y": Y, "lx": X % L, "ly": Y % L, "mat": {},
+              "n1": vnoise((LH, LW), 24, seed), "n2": vnoise((LH, LW), 7, seed + 1), "n3": _rng(seed + 2).random((LH, LW)),
+              # стыки рельефа плывут по шуму на ±3 пикселя
+              "jx": ((vnoise((LH, LW), 6, seed + 3) - 0.5) * 7).astype(int),
+              "jy": ((vnoise((LH, LW), 6, seed + 4) - 0.5) * 7).astype(int)}
+        # тени укрытий и деревьев на земле — один множитель
+        shade = np.ones((LH, LW), float)
+        for (x, y), c in combat.grid.cells.items():
+            if c.cover:
+                ox, oy = (P.MARGIN_L + x) * L + L // 2, (P.MARGIN_T + y) * L + L // 2 + 3
+                d = ((X - ox) / 13.0) ** 2 + ((Y - oy) / 8.0) ** 2
+                shade *= 1 - np.clip(1.2 - d, 0, 1) * 0.45
+        pr["shade"] = shade
+        self._prep = pr
+        # материалы рельефа, который навыки бойцов умеют создавать (перековка, жерло, родник), — сразу:
+        # иначе первая же перековка посчитает плиты на всю карту посреди боя
+        pal, style = self.palette(combat), self.style(combat)
+        made = {"grass"}
+        for u in combat.units:
+            for sk in getattr(u, "skill_defs", {}).values():
+                for eff in sk.get("effects", []):
+                    if eff.get("type") == "terrain":
+                        made |= set(eff.get("cycle") or []) | ({eff["terrain"]} if eff.get("terrain") else set())
+        for name in made & set(pal):
+            self._material(pr, name, pal[name], style)
+        return pr
+
+    def _material(self, pr, name, base, style):
+        """Материал рельефа на всю карту (трава, плиты, вода…) — один раз на бой."""
+        mat = pr["mat"]
+        if name not in mat:
+            n1, n2, n3, X, Y, lx, ly = (pr[k] for k in ("n1", "n2", "n3", "X", "Y", "lx", "ly"))
+            if name == "grass":
+                mat[name] = self._ground(style, base, n1, n2, n3, X, Y, lx, ly, pr["seed"])
+            elif name == "stone":
+                mat[name] = self._pavers(base, n1, n3, X, Y, lx, ly, marble=style == "marble")
+            elif name == "water":
+                mat[name] = self._water_mat(base, n1, n3, Y)
+            elif name == "lava":
+                mat[name] = self._lava(n1, n2, n3)
+            elif name == "ice_floor":
+                mat[name] = self._ice(base, n1, n3, X, Y)
+            elif name == "chasm":
+                mat[name] = self._chasm(base, n1, Y)
+            else:
+                mat[name] = None
+        return mat[name]
+
     def _build(self, combat):
+        """Плоская карта под нынешний рельеф. Если клеток поменялось немного (перековка, родник, жерло), заново
+        считается только окно вокруг них — без фриза; иначе вся карта."""
         LW, LH = dims()
         pal = self.palette(combat)
         style = self.style(combat)
         tm, names = self._terrain_map(combat)
-        seed = sum(ord(ch) for ch in combat.enc["id"])
-        Y, X = np.mgrid[0:LH, 0:LW]
-        n1 = vnoise((LH, LW), 24, seed)
-        n2 = vnoise((LH, LW), 7, seed + 1)
-        n3 = _rng(seed + 2).random((LH, LW))
-        # стыки рельефа плывут по шуму на ±3 пикселя
-        jx = ((vnoise((LH, LW), 6, seed + 3) - 0.5) * 7).astype(int)
-        jy = ((vnoise((LH, LW), 6, seed + 4) - 0.5) * 7).astype(int)
-        cx = np.clip((X + jx) // L, 0, tm.shape[1] - 1)
-        cy = np.clip((Y + jy) // L, 0, tm.shape[0] - 1)
+        pr = self._prepare(combat)
+        last = pr.get("last")
+        if last is not None and last[0].shape == tm.shape:
+            diff = np.argwhere(last[0] != tm)
+            if len(diff) == 0:
+                arr = last[1]
+            elif len(diff) <= 40:
+                (cy0, cx0), (cy1, cx1) = diff.min(0), diff.max(0)
+                arr = last[1].copy()
+                y0, y1 = max(0, cy0 * L - L), min(LH, (cy1 + 2) * L)          # окно: клетки ± клетка
+                x0, x1 = max(0, cx0 * L - L), min(LW, (cx1 + 2) * L)
+                oy0, ox0 = max(0, y0 - L), max(0, x0 - L)                     # запас под берега и стыки
+                part = self._paint(combat, tm, names, pal, style, pr, (oy0, min(LH, y1 + L), ox0, min(LW, x1 + L)))
+                arr[y0:y1, x0:x1] = part[y0 - oy0:y1 - oy0, x0 - ox0:x1 - ox0]
+            else:
+                arr = None
+        else:
+            arr = None
+        if arr is None:
+            arr = self._paint(combat, tm, names, pal, style, pr, (0, LH, 0, LW))
+        pr["last"] = (tm, arr)
+        surf = pygame.surfarray.make_surface(arr.swapaxes(0, 1))
+        surf = pygame.transform.scale(surf, (P.FLAT_W, P.FLAT_H))
+        return surf, self._place_props(combat, tm, names, style, pal)
+
+    def _paint(self, combat, tm, names, pal, style, pr, win):
+        """Пиксели плоской карты в окне (y0, y1, x0, x1) логических пикселей."""
+        y0, y1, x0, x1 = win
+        sl = (slice(y0, y1), slice(x0, x1))
+        X, Y, lx, ly, n2, n3 = (pr[k][sl] for k in ("X", "Y", "lx", "ly", "n2", "n3"))
+        H, W = y1 - y0, x1 - x0
+        cx = np.clip((X + pr["jx"][sl]) // L, 0, tm.shape[1] - 1)
+        cy = np.clip((Y + pr["jy"][sl]) // L, 0, tm.shape[0] - 1)
         ter = tm[cy, cx]
-        img = np.zeros((LH, LW, 3), float)
-        lx, ly = X % L, Y % L
+        img = np.zeros((H, W, 3), float)
         for i, name in enumerate(names):
             m = ter == i
             if not m.any():
                 continue
-            base = pal.get(name, pal["grass"])
-            if name == "grass":
-                img[m] = self._ground(style, base, n1, n2, n3, X, Y, lx, ly, seed)[m]
-            elif name == "stone":
-                img[m] = self._pavers(base, n1, n3, X, Y, lx, ly, marble=style == "marble")[m]
-            elif name == "water":
-                img[m] = self._water_mat(base, n1, n3, Y)[m]
-            elif name == "lava":
-                img[m] = self._lava(n1, n2, n3)[m]
-            elif name == "ice_floor":
-                img[m] = self._ice(base, n1, n3, X, Y)[m]
-            elif name == "chasm":
-                img[m] = self._chasm(base, n1, Y)[m]
+            mat = self._material(pr, name, pal.get(name, pal["grass"]), style)
+            if mat is not None:
+                img[m] = mat[sl][m]
         # обрыв-берег у дальнего края низин и светлая губа земли над ним
         ground_col = pal["grass"]
         for name, hgt in LOWERED.items():
@@ -207,19 +298,15 @@ class GroundPainter:
                 continue
             land = ~low
             wall = np.zeros_like(low)
+            depth = np.zeros((H, W), float)
             for k in range(1, hgt + 1):
                 above = np.zeros_like(land)
                 above[k:] = land[:-k]
                 wall |= low & above
-            depth = np.zeros((LH, LW), float)
-            for k in range(1, hgt + 1):
-                above = np.zeros_like(land)
-                above[k:] = land[:-k]
                 depth = np.where(low & above & (depth == 0), k, depth)
             shade = 0.62 - 0.25 * (depth / hgt) + 0.08 * (n3 > 0.6)
             stripes = 0.9 + 0.1 * np.sin(X * 1.7 + n2 * 4)
-            wall_col = (ground_col * 0.55 + np.array((40, 30, 24)) * 0.45)[None, None, :] * \
-                (shade * stripes)[..., None]
+            wall_col = (ground_col * 0.55 + np.array((40, 30, 24)) * 0.45)[None, None, :] *                 (shade * stripes)[..., None]
             if name == "lava":
                 wall_col = wall_col * 0.8 + np.array((90, 30, 10)) * (depth / hgt)[..., None] * 0.6
             img[wall] = wall_col[wall]
@@ -229,13 +316,7 @@ class GroundPainter:
             near = np.zeros_like(land)
             near[1:] = land[1:] & low[:-1]
             img[near] = img[near] * 0.72
-        # тени укрытий и деревьев на земле
-        for (x, y), c in combat.grid.cells.items():
-            if c.cover:
-                ox, oy = (P.MARGIN_L + x) * L + L // 2, (P.MARGIN_T + y) * L + L // 2 + 3
-                d = ((X - ox) / 13.0) ** 2 + ((Y - oy) / 8.0) ** 2
-                sh = np.clip(1.2 - d, 0, 1) * 0.45
-                img *= (1 - sh)[..., None]
+        img *= pr["shade"][sl][..., None]      # тени укрытий и деревьев на земле
         # мягкая сетка: шов в пиксель только на доске, край доски чуть темнее; вокруг — темнее с расстоянием
         bx0, by0 = P.MARGIN_L * L, P.MARGIN_T * L
         bx1, by1 = bx0 + combat.grid.w * L, by0 + combat.grid.h * L
@@ -256,10 +337,7 @@ class GroundPainter:
                 ring = (d < 1) & (d > 0.75)
                 img[d < 0.75] = img[d < 0.75] * 0.3 + np.array((70, 40, 130)) * 0.7
                 img[ring] = (190, 150, 255)
-        arr = np.clip(img, 0, 255).astype(np.uint8)
-        surf = pygame.surfarray.make_surface(arr.swapaxes(0, 1))
-        surf = pygame.transform.scale(surf, (P.FLAT_W, P.FLAT_H))
-        return surf, self._place_props(combat, tm, names, style, pal)
+        return np.clip(img, 0, 255).astype(np.uint8)
 
     # ---------- материалы ----------
 
@@ -357,17 +435,18 @@ class GroundPainter:
     # ---------- билборды ----------
 
     def _place_props(self, combat, tm, names, style, pal):
-        """Укрытия доски и декор вокруг неё: [(gx, gy, вид, цвет)] — gx, gy в клетках, у ног."""
+        """Укрытия доски и декор вокруг неё: [(gx, gy, вид, цвет, масштаб, зеркало)] — gx, gy в клетках, у ног."""
         out = []
         tree = tuple(int(v) for v in pal["tree"])
         stone = tuple(int(v) for v in pal["stone"])
         for (x, y), c in combat.grid.cells.items():
             if c.deco == "tree":
-                out.append((x + 0.5, y + 0.62, "tree", tree))
+                k, fl = vary("tree", x, y)
+                out.append((x + 0.5, y + 0.62, "tree", tree, min(k, 1.7), fl))
             elif c.cover == "full":
-                out.append((x + 0.5, y + 0.62, "block", stone))
+                out.append((x + 0.5, y + 0.62, "block", stone, 1.0, _h(x, y, 31) < 0.5))
             elif c.cover == "half":
-                out.append((x + 0.5, y + 0.62, "log", (120, 88, 58)))
+                out.append((x + 0.5, y + 0.62, "log", (120, 88, 58), 1.0, _h(x, y, 31) < 0.5))
         low = {names.index(n) for n in LOWERED if n in names}
         kinds = DECOR.get(style, DECOR["grass"])
         ch, cw = tm.shape
@@ -381,8 +460,11 @@ class GroundPainter:
                 if _h(cx, cy, 11) > 0.22:
                     continue
                 kind = kinds[int(_h(cx, cy, 13) * len(kinds)) % len(kinds)]
+                k, fl = vary(kind, cx, cy)
+                if by >= combat.grid.h and kind not in ("bush", "rock", "mushroom", "tombstone"):
+                    kind, k = ("bush" if "bush" in kinds or _h(cx, cy, 37) < 0.5 else "rock"), min(k, 1.0)
                 col = tree if kind in ("tree", "bush", "mushroom", "pine") else stone
-                out.append((bx + 0.25 + 0.5 * _h(cx, cy, 17), by + 0.3 + 0.5 * _h(cx, cy, 19), kind, col))
+                out.append((bx + 0.25 + 0.5 * _h(cx, cy, 17), by + 0.3 + 0.5 * _h(cx, cy, 19), kind, col, k, fl))
         return out
 
     # ---------- без OpenGL ----------
@@ -435,11 +517,36 @@ def _shade(c, k):
     return tuple(int(c[i] + (t[i] - c[i]) * k) for i in range(3))
 
 
-def prop_image(kind, color):
-    """Билборд 32×N логических пикселей → ×2, контур в пиксель."""
-    size = {"tree": (32, 46), "pine": (28, 48), "deadtree": (28, 40), "column": (20, 46), "block": (36, 34),
-            "log": (34, 18), "bush": (24, 16), "rock": (24, 18), "tombstone": (16, 20), "mushroom": (22, 26)}
-    w, h = size.get(kind, (24, 24))
+PROP_SIZE = {"tree": (32, 46), "pine": (28, 48), "deadtree": (28, 40), "column": (20, 46), "block": (36, 34),
+             "log": (34, 18), "bush": (24, 16), "rock": (24, 18), "tombstone": (16, 20), "mushroom": (22, 26)}
+ENV_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "sprites", "env")
+_env = {}
+
+
+def env_image(kind, style):
+    """Нарисованный билборд окружения: env/<материал>_<вид>.png (swamp → grass_block.png), иначе env/<вид>.png."""
+    key = (kind, style)
+    if key not in _env:
+        _env[key] = None
+        for name in (f"{style}_{kind}", kind):
+            path = os.path.join(ENV_DIR, f"{name}.png")
+            if style and os.path.exists(path):
+                img = pygame.image.load(path)
+                try:
+                    img = img.convert_alpha()
+                except pygame.error:
+                    pass
+                _env[key] = pygame.transform.scale(img, (img.get_width() * 2, img.get_height() * 2))
+                break
+    return _env[key]
+
+
+def prop_image(kind, color, style=None):
+    """Билборд 32×N логических пикселей → ×2, контур в пиксель. Есть картинка в assets/sprites/env — берём её."""
+    art = env_image(kind, style)
+    if art is not None:
+        return art.copy()
+    w, h = PROP_SIZE.get(kind, (24, 24))
     s = pygame.Surface((w, h), pygame.SRCALPHA)
     c = color
     if kind == "tree":
