@@ -42,6 +42,7 @@ class Combat:
         self.result = None
         self._skill = None
         self._intercepting = False
+        self._actor = None            # кто сейчас применяет эффекты (заслуги: щит, контроль, бафф — ему)
         self._basic = False       # идёт обычная атака (режим героев: скейл от основного атрибута)
         self.enraged = 0          # ступень ярости затянутого боя
         self.traps = {}           # id ловчего -> клетки его капканов
@@ -126,6 +127,7 @@ class Combat:
             ev["pending"] = None
             self.arena.append(ev)
         self.ais = [TeamAI(self, t) for t in ai_teams]
+        self.controllers = []                  # нейросети юнитов: tick(combat, dt) каждый шаг
         # отряд игрока применяет навыки по настройкам автокаста; в демо-режиме — все навыки без условий
         self.autocaster = autocast.AutoCaster(self, PLAYER, force=PLAYER in ai_teams)
 
@@ -533,6 +535,8 @@ class Combat:
         for ai in self.ais:
             ai.update(dt)
         self.autocaster.update(dt)
+        for ctl in self.controllers:           # нейросети юнитов (sim/neural.py)
+            ctl.tick(self, dt)
         for u in self.units:
             if u.alive:
                 if u.obj:
@@ -972,8 +976,8 @@ class Combat:
             u.last_target = None
             self._retarget(u)
             o = u.order
-        if u.charmed and o is None and not u.static:
-            self._retarget(u)
+        if o is None and not u.static and (u.charmed or self._free_minion(u)):
+            self._retarget(u)                 # зачарованный и призванный без приказа — сами к ближайшему врагу
             o = u.order
         if o is None or (u.static and o["type"] != "skill"):
             self._auto_attack(u)
@@ -1167,6 +1171,10 @@ class Combat:
             self.log(f"{u.name} срывается и выкарабкивается", (255, 200, 150))
             self.damage(u, u.max_hp * 0.4, None, kind="reaction")
 
+    def _free_minion(self, u):
+        """Призванный боец отряда (скелет, нежить, иллюзия): ходит и бьёт сам, если игрок не дал приказ."""
+        return u.summon and u.owner is not None and u.team == PLAYER and not u.obj
+
     def _retarget(self, u):
         """Цель атаки погибла — переключаемся на ближайшего живого врага (при равенстве — на раненого)."""
         foes = self.foes_of(u)
@@ -1218,23 +1226,25 @@ class Combat:
                 flight = round(min(h["max"], max(0.06, cheb(u.cell, t.cell) / speed)), 2)
         self.emit("attack", src=u, dst=t, kind=kind, tag=tag, hit=flight)
 
-        def land():
-            if not t.alive:
-                return
-            self._basic = True
-            try:
-                dealt = self.damage(t, amount, u, tag, kind)
-            finally:
-                self._basic = False
-            if dealt and (u.quiver or "all_arrows" in u.buffs):
-                kit.basic_rider(self, u, t)
-            if u.lifesteal and dealt and u.alive:
-                self.heal(u, int(round(dealt * u.lifesteal)))
-        if flight > 0:
-            self.delayed.append({"left": flight, "total": flight, "fn": land, "tunit": None})
+        if flight > 0:                         # снаряд в полёте — данными, не замыканием: бой можно копировать
+            self.delayed.append({"left": flight, "total": flight, "basic": (u, t, amount, tag, kind), "tunit": None})
         else:
-            land()
+            self._land_basic(u, t, amount, tag, kind)
         u.ambush = 1.0
+
+    def _land_basic(self, u, t, amount, tag, kind):
+        """Обычная атака долетела (или ударила вплотную)."""
+        if not t.alive:
+            return
+        self._basic = True
+        try:
+            dealt = self.damage(t, amount, u, tag, kind)
+        finally:
+            self._basic = False
+        if dealt and (u.quiver or "all_arrows" in u.buffs):
+            kit.basic_rider(self, u, t)
+        if u.lifesteal and dealt and u.alive:
+            self.heal(u, int(round(dealt * u.lifesteal)))
 
     def _start_cast(self, u, sid, target):
         sk = u.skill_defs[sid]
@@ -1348,6 +1358,14 @@ class Combat:
     # ---------- эффекты ----------
 
     def apply_effects(self, caster, effects, center, tunit=None):
+        prev = self._actor
+        self._actor = self.credit(caster)
+        try:
+            self._apply_effects(caster, effects, center, tunit)
+        finally:
+            self._actor = prev
+
+    def _apply_effects(self, caster, effects, center, tunit=None):
         for eff in effects:
             t = eff["type"]
             if eff.get("at") == "caster":
@@ -1426,6 +1444,7 @@ class Combat:
             for v in self._select(caster, caster.cell, r, "enemies", None):
                 v.taunted_by, v.taunt_time = caster, eff["duration"]
                 v.ai_timer = 0.0
+                caster.tally["taunts"] += 1
                 self.emit("taunt", unit=v, src=caster)
             return
         default = "enemies" if t in ("damage", "stun", "knockback", "status", "sleep", "pull", "charm") else "allies"
@@ -1452,10 +1471,12 @@ class Combat:
                 if eff.get("overheal_shield") and excess > 0 and v.alive:
                     v.shield += excess
                     v.shield_time = max(v.shield_time, 6.0)
+                    v.shield_src = self.credit(caster)
                     self.emit("shield", unit=v, amount=excess)
             elif t == "shield":
                 amount = int(round(eff["amount"] * caster.power * caster.proto.get("scale", {}).get("heal", 1.0)))
                 v.shield, v.shield_time = amount, eff["duration"]
+                v.shield_src = self.credit(caster)
                 self.emit("shield", unit=v, amount=amount)
             elif t == "buff":
                 self.add_buff(v, eff["stat"], eff["value"], eff["duration"])
@@ -1545,6 +1566,9 @@ class Combat:
         if stat == "silence" and u.cast is not None:      # безмолвие сбивает каст
             self._interrupt(u)
         u.buff_total[stat] = duration         # для таймера на значке
+        a = self._actor
+        if fresh and a is not None and a is not u:
+            a.tally["buffs" if a.team == u.team else "debuffs"] += 1
         self.emit("buff", unit=u, stat=stat, value=value, fresh=fresh)
 
     def exposed(self, v, attacker):
@@ -1582,8 +1606,16 @@ class Combat:
         u.owner = caster
         u.life = eff.get("duration", proto.get("life", 10))
         k = caster.power * eff.get("power", 1.0)
-        u.max_hp = u.hp = int(round(u.max_hp * k))
-        u.atk_damage = int(round(u.atk_damage * k))
+        os_ = proto.get("owner_scale")
+        if os_:                                # нежить некроманта: доля здоровья, урона и брони хозяина
+            u.max_hp = u.hp = max(u.max_hp, int(round(caster.max_hp * os_.get("hp", 0) * sm)))
+            dmg = max(caster.atk_damage, 1) * os_.get("atk", 0) * k * sm
+            u.atk_damage = max(u.atk_damage, int(round(dmg)))
+            u.armor = max(u.armor, int(round(caster.total_armor() * os_.get("armor", 0))))
+        else:
+            u.max_hp = u.hp = int(round(u.max_hp * k))
+            u.atk_damage = int(round(u.atk_damage * k))
+        u.base.update(atk_damage=u.atk_damage)
         if proto.get("thorns"):                           # колючее чучело
             u.buffs["thorns"] = [proto["thorns"], 1e9]
         if u.aura:
@@ -1857,6 +1889,7 @@ class Combat:
                 target.asleep, target.stun = False, 0.0
                 self.emit("wake", unit=target)
         amount = int(round(amount))
+        hp_before = max(0, target.hp)          # для эффективного урона: overkill не считается заслугой
         absorbed = 0
         if target.shield > 0:
             absorbed = min(target.shield, amount)
@@ -1870,8 +1903,16 @@ class Combat:
         PS.after_damage(self, attacker, target, amount + absorbed, kind, tag, self._basic)
         src = self.credit(attacker)            # статистика боя: призыв и гость считаются за хозяина
         if src is not None and src.team != target.team:
+            eff = min(target.max_hp, min(amount, hp_before) + absorbed)
             src.tally["dealt"] += amount + absorbed
+            src.tally["dealt_eff"] += eff
+            src.tally["dealt_frac"] += eff / max(1, target.max_hp)
             target.last_hit_by = src
+            target.hit_by[src] = self.time
+        sh = target.shield_src
+        if absorbed and sh is not None and sh.team == target.team:
+            sh.tally["shielded"] += absorbed
+            sh.tally["shielded_frac"] += absorbed / max(1, target.max_hp)
         target.tally["taken"] += amount
         target.tally["absorbed"] += absorbed
         if attacker is not None and attacker.mutator:
@@ -2305,7 +2346,13 @@ class Combat:
             if d["left"] > 0:
                 continue
             self.delayed.remove(d)
-            if d.get("fn"):                   # выстрел обычной атакой долетел
+            if d.get("basic"):                # выстрел обычной атакой долетел
+                self._land_basic(*d["basic"])
+                continue
+            if d.get("blast"):                # взрыв мутатора «взрывной»
+                MU.blast(self, *d["blast"])
+                continue
+            if d.get("fn"):
                 d["fn"]()
                 continue
             tu, caster = d["tunit"], d["caster"]
@@ -2555,6 +2602,7 @@ class Combat:
         who = self.credit(src if src is not None else u)
         if who is not None:
             who.tally["healed"] += real
+            who.tally["healed_frac"] += real / max(1, u.max_hp)
         self.emit("heal", unit=u, amount=real)
         return real
 
@@ -2669,6 +2717,8 @@ class Combat:
 
     def _interrupt(self, u):
         if u.cast and not self._try_concentration(u):
+            if self._actor is not None and self._actor.team != u.team:
+                self._actor.tally["interrupts"] += 1
             sk = u.skill_defs[u.cast["skill"]]
             u.cast = None
             self.emit("interrupt", unit=u)
@@ -2680,6 +2730,8 @@ class Combat:
         if not u.alive:
             return
         self._interrupt(u)
+        if self._actor is not None and self._actor.team != u.team:
+            self._actor.tally["cc"] += max(0.0, dur - max(0.0, u.stun))
         if dur >= u.stun:
             u.stun_look = look or "stun"
             u.stun_total = dur
@@ -2703,6 +2755,9 @@ class Combat:
         u.hp = 0
         if not expire and not u.obj and u.last_hit_by is not None and u.last_hit_by.team != u.team:
             u.last_hit_by.tally["kills"] += 1
+            for s, t0 in u.hit_by.items():       # помощь: били его в последние 6 сек, но добил другой
+                if s is not u.last_hit_by and s.team != u.team and self.time - t0 <= 6.0:
+                    s.tally["assists"] += 1
         if not expire and not u.obj:
             PS.on_death(self, u)
             if u.mutator and not (u.undying and not u.risen):

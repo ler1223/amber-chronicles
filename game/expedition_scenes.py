@@ -218,7 +218,16 @@ def battle(app):
     app.switch(BattleScene(run.data, n["encounter"], autoplay=app.autoplay, squad=run.combat_squad(),
                            formation=run.formation, on_finish=lambda c, f: battle_done(app, c, f),
                            enemy_scale=run.enemy_scale(), difficulty=run.difficulty, cheats=app.profile.sandbox,
-                           simple=True, solo=getattr(run, "solo", False)))
+                           simple=True, solo=getattr(run, "solo", False), **neural_args(app)))
+
+
+def neural_args(app):
+    """Режим обучения (learn.py): бой ведут нейросети героев и врагов, после боя они учатся."""
+    nl = getattr(app, "neural", None)
+    if nl is None:
+        return {}
+    run = app.exp
+    return {"neural": lambda c: nl.controller(run, c), "neural_done": lambda ctl: nl.after_battle(run, ctl)}
 
 
 def battle_done(app, combat, formation):
@@ -261,6 +270,8 @@ def after_reward(app, summary):
 
 
 def finish(app):
+    if getattr(app, "neural", None) is not None:
+        app.neural.after_run(app.exp)              # опыт героев — в школы их классов
     end = app.profile.finish(app.exp)
     app.switch(EndScene(app, end))
 
@@ -1462,6 +1473,10 @@ class HeroScene(XScene):
             self.hit(dr, None, [pd["name"], pd["passive"].get("desc", "")])
         self._draw_skills(surf, p)
         self._draw_gear(surf)
+        if getattr(self.app, "neural", None) is not None:       # режим обучения: опыт сети героя
+            from game.learn_mode import draw_progress
+            draw_progress(surf, pygame.Rect(24, T.SCREEN_H - 200, 330, 128), self.app.neural.agent(h).stats,
+                          title="Сеть героя")
         self.button(surf, pygame.Rect(T.SCREEN_W - 230, T.SCREEN_H - 62, 206, 44), "Назад (Esc)", "back")
         if self.respec:
             self.button(surf, pygame.Rect(T.SCREEN_W - 470, T.SCREEN_H - 62, 226, 44), "Сбросить ветки", "respec",
@@ -2662,6 +2677,9 @@ class CampScene(XScene):
         elif action == "cool":
             run.camp_cool()
             to_map(self.app)
+        elif action == "neural":                   # режим обучения: фоновые бои без графики
+            from game.learn_mode import TrainScene
+            self.app.switch(TrainScene(self.app, back=lambda: to_map(self.app), battles=20))
         elif action[0] == "hero":
             self.app.switch(HeroScene(self.app, action[1], back=lambda: self.app.switch(CampScene(self.app)),
                                       respec=True))
@@ -2673,6 +2691,8 @@ class CampScene(XScene):
             self.act("train")
         elif k == pygame.K_3 and self.run.heat_on():
             self.act("cool")
+        elif k == pygame.K_4 and getattr(self.app, "neural", None) is not None:
+            self.act("neural")
 
     def draw(self, surf):
         run = self.run
@@ -2696,6 +2716,10 @@ class CampScene(XScene):
                                                    (f"сейчас {run.heat}", T.TEXT_DIM),
                                                    ("Залить водой ближние горны: извержение откладывается", T.TEXT)],
                          HEAT))
+        if getattr(self.app, "neural", None) is not None:
+            opts.append(("neural", "Тренировка сети", [("20 быстрых боёв без графики", (150, 200, 255)),
+                                                     ("сети героев и врагов учатся", T.TEXT),
+                                                     ("лагерь при этом тратится", T.TEXT_DIM)], (150, 200, 255)))
         x0 = T.SCREEN_W - len(opts) * 290 - 40
         for i, (key, title, lines, accent) in enumerate(opts):
             r = pygame.Rect(x0 + i * 290, 110, 270, 170)

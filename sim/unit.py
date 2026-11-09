@@ -51,7 +51,15 @@ class Unit:
         self.order = None      # {"type": "move"|"attack"|"skill", ...}
         self.queue = []        # очередь приказов игрока (Shift): то же, что order, по порядку
         self.uses = {}         # сколько раз за бой применён каждый навык — ранги навыков в походе растут от этого
-        self.tally = {"dealt": 0, "taken": 0, "absorbed": 0, "healed": 0, "healed_in": 0, "kills": 0}  # статистика боя
+        self.tally = {"dealt": 0, "taken": 0, "absorbed": 0, "healed": 0, "healed_in": 0, "kills": 0,  # статистика боя
+                      # заслуги (награды нейросетей): поглотили мои щиты на союзниках, секунды моего контроля,
+                      # баффы союзникам и дебаффы врагам, сорванные касты, насмешки, помощь в убийстве
+                      "shielded": 0, "cc": 0.0, "buffs": 0, "debuffs": 0, "interrupts": 0, "taunts": 0, "assists": 0,
+                      # эффективные (без overkill) заслуги в долях максимального HP цели: так урон по слабому
+                      # юниту не ценится выше урона по боссу, а награда не зависит от масштаба боя
+                      "dealt_eff": 0.0, "dealt_frac": 0.0, "healed_frac": 0.0, "shielded_frac": 0.0}
+        self.shield_src = None # кто поставил текущий щит
+        self.hit_by = {}       # кто бил юнита: {юнит: время последнего удара} — помощь в убийстве
         self.last_hit_by = None
         self.mutator = None    # механика врага на тяжёлых сложностях (sim/mutators.py)
         self.mut_t = 0.0

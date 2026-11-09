@@ -27,6 +27,7 @@ class App:
         self.profile = profile or Profile(data)
         self.run = None
         self.exp = None           # поход экспедиции (sim/expedition.py)
+        self.neural = None        # режим обучения (learn.py): нейросети героев и врагов (game/learn_mode.py)
         self.scene = None
         self.quit = False
         self._campfire = None
@@ -62,7 +63,7 @@ class App:
     def to_title(self):
         from game.title_scene import MainTitleScene, TitleScene
         self.run = None
-        self.switch(MainTitleScene(self) if self.launcher == "main" else TitleScene(self))
+        self.switch(MainTitleScene(self) if self.launcher in ("main", "learn") else TitleScene(self))
 
     def to_hub(self):
         from game.hub_scene import HubScene

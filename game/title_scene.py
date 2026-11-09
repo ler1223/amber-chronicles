@@ -271,7 +271,9 @@ class MainTitleScene(TitleScene):
         prof = self.app.profile
         title = self.app.data.config.get("title", "Хроники янтаря")
         T.text(surf, title, (70, 120), 72, (255, 196, 96), True, shadow=True)
-        sub = "Таверна, главы из трёх актов, события и снаряжение — отрядом или в одиночку"
+        sub = ("Обучение: героями и врагами управляют нейросети, они учатся в каждом бою" if
+               getattr(self.app, "launcher", "") == "learn" else
+               "Таверна, главы из трёх актов, события и снаряжение — отрядом или в одиночку")
         T.text(surf, sub, (74, 206), 18, (230, 214, 180), shadow=True)
         pygame.draw.line(surf, T.AMBER, (74, 240), (520, 240), 2)
         T.frame(surf, self.panel_rect, 210, accent=T.AMBER_DIM)

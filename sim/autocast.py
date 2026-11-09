@@ -6,6 +6,7 @@
 import copy
 
 from . import conditions as C
+from . import kit
 from .grid import cheb
 
 MAX_CONDS = 2
@@ -148,6 +149,9 @@ class AutoCaster:
                 self.c.order_skill(u, choice[0], choice[1], auto=True)
 
     def choose(self, u):
+        from . import autopilot as AP
+        if self.force or (kit.notes_of_unit(self.c, u) and any(u.autocast.get(s, {}).get("on") for s in u.skills)):
+            return AP.choose(self, u)          # демо и бот — умный автопилот; бард — мелодиями, а не нотами вразнобой
         for sid in u.skills:
             sk = u.skill_defs[sid]
             st = dict(default_setting(sk), on=True) if self.force else u.autocast.get(sid)

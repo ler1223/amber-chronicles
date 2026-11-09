@@ -138,13 +138,7 @@ def on_death(c, u):
     if mid == "explosive":
         cell, radius, pct = u.cell, d["radius"], d["pct"]
         c.emit("mutator_warn", pos=cell, radius=radius, delay=d["delay"])
-
-        def blast():
-            c.emit("mutator_blast", pos=cell, radius=radius)
-            for v in c.units_in_radius(cell, radius):
-                if v.alive and v.team != ENEMY and not v.obj:
-                    c.damage(v, v.max_hp * pct, None, "fire", "reaction")
-        c.delayed.append({"left": d["delay"], "total": d["delay"], "fn": blast, "tunit": None})
+        c.delayed.append({"left": d["delay"], "total": d["delay"], "blast": (cell, radius, pct), "tunit": None})
     elif mid == "splitter":
         for _ in range(d["count"]):
             v = spawn_add(c, u.proto_id, c.enemy_scale, near=u.cell)
@@ -155,3 +149,11 @@ def on_death(c, u):
             v.base.update(atk_damage=v.atk_damage)
             v.name = f"Осколок: {c.data.enemies[u.proto_id]['name'].lower()}"
             c.emit("summon", unit=v, owner=None)
+
+
+def blast(c, cell, radius, pct):
+    """Взрыв «взрывного» врага после смерти (отложенный эффект боя)."""
+    c.emit("mutator_blast", pos=cell, radius=radius)
+    for v in c.units_in_radius(cell, radius):
+        if v.alive and v.team != ENEMY and not v.obj:
+            c.damage(v, v.max_hp * pct, None, "fire", "reaction")

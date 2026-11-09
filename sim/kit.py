@@ -546,6 +546,16 @@ def known_melodies(c, u):
     return [s for s in ids if s in c.data.skills and c.data.skills[s].get("melody")]
 
 
+def notes_of_unit(c, u):
+    """Ноты барда в бою по порядку Q, W, E: навыки с эффектом «note» (пусто — не бард)."""
+    out = {}
+    for sid in u.skills:
+        for e in u.skill_defs[sid]["effects"]:
+            if e["type"] == "note":
+                out[e["note"]] = sid
+    return [out[k] for k in "QWE" if k in out] if len(out) >= 3 else []
+
+
 def play_note(c, u, note):
     """Нота в строку; последние три ноты — мелодия, если такая известна."""
     u.notes = (u.notes + [note])[-3:]

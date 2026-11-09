@@ -76,7 +76,7 @@
     "summon": true,
     "static": true
   },
-  "skeleton_minion": {
+  "skeleton_minion": {"owner_scale": {"hp": 0.35, "atk": 0.8, "armor": 0.5}, 
     "name": "Поднятый скелет",
     "label": "Ск",
     "color": [210, 205, 190],
@@ -91,7 +91,7 @@
     "look": {"body": "skeleton", "color": [210, 205, 190], "accent": [210, 205, 190], "head": "skull", "weapon": "sword"},
     "summon": true
   },
-  "mummy_risen": {
+  "mummy_risen": {"owner_scale": {"hp": 0.45, "atk": 0.8, "armor": 0.5}, 
     "name": "Восставшая мумия",
     "label": "Мм",
     "color": [190, 175, 140],
@@ -149,7 +149,7 @@
     "static": true,
     "thorns": 0.6
   },
-  "risen": {
+  "risen": {"owner_scale": {"hp": 0.3, "atk": 0.7, "armor": 0.4}, 
     "name": "Поднятый мертвец",
     "label": "М",
     "color": [200, 196, 170],
@@ -161,7 +161,7 @@
     "summon": true,
     "look": {"body": "skeleton", "color": [210, 205, 180], "accent": [140, 230, 120]}
   },
-  "risen_knight": {
+  "risen_knight": {"owner_scale": {"hp": 0.6, "atk": 1.1, "armor": 0.8}, 
     "name": "Костяной рыцарь",
     "label": "Р",
     "color": [190, 186, 170],

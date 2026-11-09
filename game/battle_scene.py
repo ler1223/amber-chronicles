@@ -33,8 +33,10 @@ class BattleScene:
 
     def __init__(self, data, encounter_index=0, autoplay=False, squad=None, formation=None, on_finish=None,
                  enemy_scale=None, scout_hp=False, fx=None, difficulty="normal", cheats=False, tutorial=None,
-                 simple=False, names=None, solo=False):
+                 simple=False, names=None, solo=False, neural=None, neural_done=None):
         self.data = data
+        self.neural = neural          # режим обучения: neural(combat) → контроллер нейросетей (sim/neural.py)
+        self.neural_done = neural_done
         self.solo = solo              # одиночка: один герой, выбор с него не спадает, камера едет за ним
         from game.tutorial import Tutorial
         self.tutorial = Tutorial(tutorial) if tutorial else None   # сюжет: подсказки, ждущие действий игрока
@@ -90,6 +92,8 @@ class BattleScene:
         self.target_queue = False    # навык выбран с Shift — ставим в очередь
         self.box_current = None
         self.box_active = False
+        self.ctl = self.neural(self.combat) if self.neural else None
+        self._learned = False
         self.view.follow_unit = self.selected if self.solo else None
         self.view.cam_pos = None
         if self.solo and not self.autoplay:      # расстановки нет: один герой — сразу в бой (на паузе)
@@ -172,6 +176,10 @@ class BattleScene:
             self.selected_units = []
         if self.combat.result:
             self.targeting = None
+            if self.ctl is not None and not self._learned:      # бой окончен — сети учатся на нём
+                self._learned = True
+                if self.neural_done:
+                    self.neural_done(self.ctl)
         if self.solo and self.hero is not None and self.hero.alive:   # выбор с героя не спадает
             self.selected, self.selected_units = self.hero, [self.hero]
 
@@ -179,12 +187,19 @@ class BattleScene:
         self.view.draw(surf, self)
         if self.tutorial:
             self.tutorial.draw(surf)
+        self._draw_mind(surf)
 
     def draw_layers(self, world, ui, units=None):
         """Для OpenGL: земля, юниты и интерфейс отдельными слоями, эффекты (self.vfx) кладёт видеокарта."""
         self.view.draw_layers(world, ui, self, units)
         if self.tutorial:
             self.tutorial.draw(ui)
+        self._draw_mind(ui)
+
+    def _draw_mind(self, surf):
+        if self.ctl is not None:                   # режим обучения: что думает сеть выбранного героя
+            from game.learn_mode import draw_mind
+            draw_mind(surf, self.ctl, self.selected, 16, 96)
 
     def plane(self):
         """Земля HD-2D для видеокарты: плоская карта и цвет дымки."""
@@ -240,6 +255,15 @@ class BattleScene:
         return self.ground_cell(mx, my)
 
     def handle(self, ev):
+        if self.ctl is not None and ev.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+            before = {u.id: u.order for u in self.combat.units}
+            self._handle(ev)
+            from sim.neural import mark_manual             # приказ игрока: сеть не мешает и учится на нём
+            mark_manual(self.combat, before)
+            return
+        self._handle(ev)
+
+    def _handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
             if self.box_active:
