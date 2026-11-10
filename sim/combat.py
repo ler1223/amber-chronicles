@@ -18,6 +18,7 @@ from .unit import Unit
 from .teams import ENEMY, NEUTRAL, PLAYER
 
 DIRECT = ("melee", "ranged", "spell")
+DOT_TAGS = ("fire", "poison", "bleed")
 # периодические прибавки шкалы: событие -> раз в сколько секунд, пока условие держится
 PERIODIC = ("still", "aim", "unseen", "form_time", "near_fire", "structures")
 OBJ_TEAMS = {"enemy": ENEMY, "player": PLAYER}
@@ -780,7 +781,10 @@ class Combat:
                     del d[k]
         u.attack_timer = max(0.0, u.attack_timer - dt)
         u.kite_cd = max(0.0, u.kite_cd - dt)
+        self._sync_dots(u)
         for tag in list(u.statuses):
+            if tag in u.dots:
+                continue                      # доты тикают отдельно: у них свои сила, стаки и длительность
             u.statuses[tag] -= dt
             if u.statuses[tag] <= 0:
                 del u.statuses[tag]
@@ -809,15 +813,7 @@ class Combat:
             u.regen_acc = 0.0
 
         self._cell_effects(u, dt)
-        dps = sum(self.tags[t].get("dps", 0) for t in u.statuses if not self.immune(u, t))
-        dps += u.buff("bleed", 0) if "bleed" in u.buffs else 0     # кровотечение: урон в секунду, пока длится
-        if dps:
-            u.dot_acc += dt
-            if u.dot_acc >= 1.0:
-                u.dot_acc -= 1.0
-                self.damage(u, dps, None, kind="dot")
-        else:
-            u.dot_acc = 0.0
+        self._tick_dots(u, dt)
         if not u.alive:
             return
 
@@ -926,11 +922,12 @@ class Combat:
         terrain_status = terrain.get("status")
         if terrain_status and not c.hazard and not self.immune(u, terrain_status):
             self._touch_status(u, terrain_status, hostile=False)     # вода гасит огонь, а не взрывается паром
-        if terrain.get("dps") and not c.hazard and not self.immune(u, terrain.get("status")):
+        if (terrain.get("dps") or terrain.get("dps_pct")) and not c.hazard and not self.immune(u, terrain.get("status")):
             u.hazard_acc += dt                         # лава жжёт всегда
             if u.hazard_acc >= 1.0:
                 u.hazard_acc -= 1.0
-                self.damage(u, terrain["dps"], None, kind="hazard")
+                self.damage(u, self._env_amount(u, terrain), None, kind="hazard",
+                            dtype=terrain.get("damage_type"))
             return
         if c.hazard:
             h = self.cfg["hazards"][c.hazard]
@@ -957,13 +954,193 @@ class Combat:
                 return
             if h.get("status"):
                 self._touch_status(u, h["status"], hostile=c.hazard_team != u.team)
-            if h.get("dps"):
+            if h.get("dps") or h.get("dps_pct"):
                 u.hazard_acc += dt
                 if u.hazard_acc >= 1.0:
                     u.hazard_acc -= 1.0
-                    self.damage(u, h["dps"], None, kind="hazard")
+                    self.damage(u, self._env_amount(u, h), None, kind="hazard",
+                                dtype=h.get("damage_type"))
         else:
             u.hazard_acc = 0.0
+
+    # ---------- доты ----------
+
+    def _dot_cfg(self, tag):
+        return self.tags.get(tag, {}).get("dot", {})
+
+    @staticmethod
+    def _pct_value(base, pct):
+        """Проценты в данных можно писать как 0.04 или как 4 — обе формы дают 4%."""
+        pct = float(pct)
+        return base * (pct / 100.0 if pct > 1.0 else pct)
+
+    def _env_amount(self, u, cfg):
+        """Урон среды: фиксированный процент от максимума HP цели (старый dps — запасной вариант)."""
+        if cfg.get("dps_pct") is not None:
+            return max(0.0, self._pct_value(u.max_hp, cfg["dps_pct"]))
+        return float(cfg.get("dps", 0))
+
+    def _dot_mult(self, tag, attacker):
+        if attacker is None:
+            return 1.0
+        mult = getattr(attacker, "dot_mult", 1.0)
+        mult *= getattr(attacker, "dot_%s_mult" % tag, 1.0)
+        mult *= attacker.buff("dot_power", 1.0)
+        return mult
+
+    def _dot_dps(self, tag, attacker, hit):
+        """Сила дот-эффекта: прямой удар — процент от нанесённого урона, чистое наложение — сила навыков."""
+        cfg = self._dot_cfg(tag)
+        if hit and hit > 0:
+            dps = float(hit) * cfg.get("hit_pct", 0.0)
+        else:
+            power = attacker.power if attacker is not None else 1.0
+            atk = attacker.atk_damage if attacker is not None else 0.0
+            dps = max(float(cfg.get("spell_base", 0.0)) * power, float(atk) * cfg.get("atk_pct", 0.0))
+        return max(float(cfg.get("min", 0.0)), dps)
+
+    def _dot_heal_mult(self, u, tag, dot):
+        cfg = self._dot_cfg(tag)
+        if tag == "poison":
+            per = cfg.get("heal_mult_per_stack", 0.0)
+            low = cfg.get("heal_mult_min", 0.0)
+            base = cfg.get("heal_mult", self.tags.get(tag, {}).get("heal_mult", 1.0))
+            return max(low, base - per * max(0, dot.get("stacks", 1) - 1))
+        return cfg.get("heal_mult", self.tags.get(tag, {}).get("heal_mult", 1.0))
+
+    def _mirror_bleed(self, u, dot):
+        """Совместимость со старыми проверками/UI: кровотечение остаётся видно и как бафф."""
+        if dot is None:
+            u.buffs.pop("bleed", None)
+            u.buff_total.pop("bleed", None)
+            return
+        u.buffs["bleed"] = [round(dot["dps"] * dot["stacks"], 3), dot["left"]]
+        u.buff_total["bleed"] = dot["total"]
+
+    def _clear_dot(self, u, tag):
+        u.dots.pop(tag, None)
+        u.statuses.pop(tag, None)
+        if tag == "bleed":
+            self._mirror_bleed(u, None)
+
+    def _sync_dots(self, u):
+        """Подхватить прямые записи в statuses (тесты, старые эффекты) и убрать осиротевшие доты."""
+        for tag in list(u.dots):
+            if tag not in u.statuses:
+                u.dots.pop(tag, None)
+                if tag == "bleed":
+                    self._mirror_bleed(u, None)
+        for tag in DOT_TAGS:
+            left = u.statuses.get(tag)
+            if left is None or left <= 0 or tag in u.dots:
+                continue
+            cfg = self._dot_cfg(tag)
+            dps = float(cfg.get("env_dps", self.tags.get(tag, {}).get("dps", 0.0)))
+            # Прямая запись в statuses — старый/ручной путь: сохраняем прежний dps,
+            # процентный урон среды создаётся через apply_status/_touch_status.
+            u.dots[tag] = {"tag": tag, "stacks": 1, "dps": dps, "dps_pct": None,
+                           "left": float(left), "total": float(left), "src": None,
+                           "damage_type": cfg.get("damage_type", tag), "acc": 0.0}
+            if tag == "bleed":
+                self._mirror_bleed(u, u.dots[tag])
+
+    def _burst_bleed(self, u, dot, attacker):
+        cfg = self._dot_cfg("bleed")
+        total_dps = dot["dps"] * dot["stacks"]
+        burst = total_dps * cfg.get("burst_mult", 2.0)
+        if cfg.get("burst_pct"):
+            burst = max(burst, self._pct_value(u.max_hp, cfg["burst_pct"]))
+        self.emit("bleed_burst", unit=u, amount=burst, stacks=dot["stacks"])
+        self._clear_dot(u, "bleed")
+        if burst > 0 and u.alive:
+            self.damage(u, burst, attacker or dot.get("src"), kind="dot",
+                        dtype=cfg.get("damage_type", "physical"))
+        self.log(f"{u.name}: кровотечение прорывается ({int(round(burst))})", (220, 70, 80))
+
+    def apply_dot(self, u, tag, dps, duration=None, attacker=None, stacks=1, add_stack=True,
+                  damage_type=None, dps_pct=None):
+        """Наложить/обновить дот. dps — сила одной единицы (стака) в секунду до множителей владельца.
+        dps_pct — для дотов среды: доля максимума HP в секунду (тогда dps не используется)."""
+        if not u.alive or u.obj or self.immune(u, tag):
+            return 0
+        cfg = self._dot_cfg(tag)
+        if not cfg:
+            return 0
+        duration = float(duration if duration is not None else cfg.get("duration", self.cfg["status_duration"]))
+        if attacker is not None:
+            duration *= getattr(attacker, "dot_duration_mult", 1.0)
+        dps = max(0.0, float(dps) * self._dot_mult(tag, attacker) * getattr(u, "dot_taken", 1.0))
+        if dps_pct is not None:
+            dps = 0.0
+        max_stacks = max(1, int(cfg.get("stacks", 1)))
+        old = u.dots.get(tag)
+        if old is None:
+            dot = {"tag": tag, "stacks": min(max_stacks, max(1, stacks)), "dps": dps, "dps_pct": dps_pct,
+                   "left": duration, "total": duration, "src": attacker,
+                   "damage_type": damage_type or cfg.get("damage_type", tag), "acc": 0.0}
+            u.dots[tag] = dot
+            u.statuses[tag] = duration
+            self.emit("status", unit=u, tag=tag, stacks=dot["stacks"], dps=dot["dps"])
+            self.rules.fire("status", {"element", tag, *self.tags.get(tag, {}).get("groups", [])},
+                            unit=u, source=attacker)
+        else:
+            if add_stack:
+                old["stacks"] = min(max_stacks, old["stacks"] + max(1, stacks))
+            else:
+                old["stacks"] = max(old["stacks"], min(max_stacks, max(1, stacks)))
+            old["dps"] = max(old["dps"], dps)          # сильнейшее наложение обновляет силу
+            if dps_pct is not None:
+                old["dps_pct"] = max(old.get("dps_pct") or 0.0, dps_pct)
+            old["left"] = max(old["left"], duration)
+            old["total"] = max(old["total"], old["left"])
+            if attacker is not None:
+                old["src"] = attacker
+            if damage_type:
+                old["damage_type"] = damage_type
+            u.statuses[tag] = old["left"]
+            self.emit("status_refresh", unit=u, tag=tag, stacks=old["stacks"], dps=old["dps"])
+            dot = old
+        if tag == "bleed":
+            self._mirror_bleed(u, dot)
+            if dot["stacks"] >= max_stacks:
+                self._burst_bleed(u, dot, attacker)
+        return dot["dps"] * dot["stacks"]
+
+    def _refresh_dot(self, u, tag, duration=None):
+        dot = u.dots.get(tag)
+        if dot is None:
+            return False
+        duration = float(duration if duration is not None else self.cfg["status_duration"])
+        dot["left"] = max(dot["left"], duration)
+        dot["total"] = max(dot["total"], dot["left"])
+        u.statuses[tag] = dot["left"]
+        if tag == "bleed":
+            self._mirror_bleed(u, dot)
+        return True
+
+    def _tick_dots(self, u, dt):
+        self._sync_dots(u)
+        for tag, dot in list(u.dots.items()):
+            if not u.alive:
+                break
+            if self.immune(u, tag):
+                self._clear_dot(u, tag)
+                continue
+            dot["left"] -= dt
+            dot["acc"] += dt
+            while dot["acc"] >= 1.0 and u.alive:
+                dot["acc"] -= 1.0
+                amount = dot["dps"] * dot["stacks"]
+                if dot.get("dps_pct"):
+                    amount += self._pct_value(u.max_hp, dot["dps_pct"]) * dot["stacks"]
+                self.damage(u, amount, dot.get("src"), kind="dot",
+                            dtype=dot.get("damage_type", tag))
+            if dot["left"] <= 0:
+                self._clear_dot(u, tag)
+            else:
+                u.statuses[tag] = dot["left"]
+                if tag == "bleed":
+                    self._mirror_bleed(u, dot)
 
     # ---------- исполнение приказов ----------
 
@@ -1122,13 +1299,13 @@ class Combat:
         """Цена опасной клетки для пути: лава и урон клетки (кроме тех, кому он не страшен)."""
         c = self.grid.cells[p]
         t = self.cfg["terrain"][c.terrain]
-        if t.get("dps") and not self.immune(u, t.get("status")):
+        if (t.get("dps") or t.get("dps_pct")) and not self.immune(u, t.get("status")):
             return 5.0
         if c.hazard:
             h = self.cfg["hazards"][c.hazard]
             if h.get("trigger") and c.hazard_team not in (None, u.team) and not h.get("hidden"):
                 return 6.0                       # спрятанный капкан враг не видит и не обходит
-            if h.get("dps") and not self.immune(u, h.get("status")) and \
+            if (h.get("dps") or h.get("dps_pct")) and not self.immune(u, h.get("status")) and \
                     not (h.get("foes_only") and c.hazard_team in (None, u.team)):
                 return 3.0
         return 0.0
@@ -1560,7 +1737,9 @@ class Combat:
         k = u.proto.get("blood_rage")
         return 1.0 + k * (1 - u.hp / max(1, u.max_hp)) if k else 1.0
 
-    def add_buff(self, u, stat, value, duration):
+    def add_buff(self, u, stat, value, duration, src=None):
+        if stat == "bleed":                       # кровотечение — дот со стаками, а не обычный бафф
+            return self.apply_dot(u, "bleed", value, duration, attacker=src or self._actor)
         fresh = u.buffs.get(stat, [None])[0] != value     # продление того же баффа (аура знамени) — без надписи
         u.buffs[stat] = [value, duration]
         if stat == "silence" and u.cast is not None:      # безмолвие сбивает каст
@@ -1641,7 +1820,9 @@ class Combat:
         u.alive = True
         u.hp = max(1, int(u.max_hp * eff["pct"]))
         u.statuses.clear()
+        u.dots.clear()
         u.buffs.clear()
+        u.buff_total.clear()
         u.stun, u.asleep, u.shield = 0.0, False, 0
         u.ap = min(u.ap_max, 2)
         self.emit("revive", unit=u, src=caster)
@@ -1795,9 +1976,9 @@ class Combat:
 
     # ---------- урон, теги, реакции ----------
 
-    def damage(self, target, amount, attacker=None, tag=None, kind="melee"):
+    def damage(self, target, amount, attacker=None, tag=None, kind="melee", dtype=None):
         """Полный конвейер удара. kind: melee/ranged/spell — прямой удар; dot/hazard/reaction/collision — без брони
-        и пассивок."""
+        и пассивок. dtype — тип урона для резистов (physical/magic/стихия), не вешает статус."""
         if not target.alive:
             return 0
         sc = attacker.proto.get("scale") if attacker is not None and not self._intercepting else None
@@ -1853,7 +2034,7 @@ class Combat:
             self.gain(g, "intercept")
             self._intercepting = True
             try:
-                return self.damage(g, amount, attacker, tag, kind)
+                return self.damage(g, amount, attacker, tag, kind, dtype=dtype)
             finally:
                 self._intercepting = False
         p = target.passive
@@ -1878,6 +2059,8 @@ class Combat:
             target.shield = 0                      # огонь раскалывает ледяную броню
             amount *= 1.5
             self.emit("armor_break", unit=target)
+        if dtype and dtype != tag:
+            amount *= target.resist.get(dtype, 1.0)
         if tag:
             amount *= target.resist.get(tag, 1.0)
             amount += self.apply_status(target, tag, attacker, amount)
@@ -2014,13 +2197,13 @@ class Combat:
             if eff.get("explode"):
                 for tag in tags:
                     if not keep:
-                        tunit.statuses.pop(tag, None)
+                        self._clear_dot(tunit, tag)
                     for v in self.units_in_radius(tunit.cell, eff.get("radius", 1)):
                         if caster.is_enemy(v):
                             self.damage(v, eff["per_tag"] * caster.power, caster, None, "spell")
             else:
                 for tag in tags:
-                    tunit.statuses[tag] = self.cfg["status_duration"]
+                    self._touch_status(tunit, tag, caster, hostile=False)
                 self.damage(tunit, eff["per_tag"] * len(tags) * caster.power, caster, None, "spell")
         elif t == "extra_attack":          # приказ «Вперёд!»: союзник сразу бьёт ещё раз
             if tunit is not None and tunit.alive and tunit is not caster:
@@ -2111,7 +2294,7 @@ class Combat:
                         c.hazard, c.hazard_time, c.hazard_team = "fire", eff.get("duration", 4), caster.team
                         self.emit("cell_reaction", pos=q, name="", tag="fire")
             for v in hot:
-                v.statuses["fire"] = self.cfg["status_duration"]
+                self._touch_status(v, "fire", caster)
                 for w in self.units_in_radius(v.cell, 1):
                     if w is not v and caster.is_enemy(w) and not w.obj:
                         self._touch_status(w, "fire", caster)
@@ -2398,7 +2581,7 @@ class Combat:
             if v.alive and "fire" in v.statuses and caster.is_enemy(v) and v not in hit:
                 hit.add(v)
                 if not eff.get("keep_fire") and "inferno" not in caster.buffs:
-                    del v.statuses["fire"]
+                    self._clear_dot(v, "fire")
                 self.emit("detonate", pos=v.cell, src=caster)
                 self.damage(v, amount * eff.get("burning_mult", 1.5) * caster.power, caster, None, "spell")
         if not hit and not cells:
@@ -2593,8 +2776,10 @@ class Combat:
             self.add_buff(u, "atk_mult", round(rage, 3), u.buffs["trance"][1])
             self.emit("rage", unit=u, value=rage)
             return 0
-        for t in u.statuses:                     # яд режет лечение
-            amount = int(round(amount * self.tags[t].get("heal_mult", 1.0)))
+        for t in list(u.statuses):               # яд режет лечение (сильнее — на большем числе стаков)
+            dot = u.dots.get(t)
+            mult = self._dot_heal_mult(u, t, dot) if dot else self.tags.get(t, {}).get("heal_mult", 1.0)
+            amount = int(round(amount * mult))
         amount = int(round(amount * u.buff("heal_taken", 1.0)))    # проклятие склепа
         real = min(amount, u.max_hp - u.hp)
         u.hp += real
@@ -2617,6 +2802,10 @@ class Combat:
             PS.on_status(self, u, tag, attacker)
         if hostile is None:
             hostile = attacker is None or attacker.is_enemy(u)
+        if tag == "water":
+            return self._apply_water(u, attacker, hit, hostile)
+        if tag in DOT_TAGS:
+            return self._apply_dot_status(u, tag, attacker, hit, hostile)
         if tag in u.statuses:
             u.statuses[tag] = dur
             return 0
@@ -2627,17 +2816,88 @@ class Combat:
         for other in list(u.statuses):
             r = self._reactions.get(frozenset((tag, other)))
             if r and (r["id"] not in u.reaction_cd or not hostile):
-                del u.statuses[other]
+                self._clear_dot(u, other)
                 return self._react(r, u, attacker, hit, hostile)
         u.statuses[tag] = dur
         self.emit("status", unit=u, tag=tag)
         self.rules.fire("status", {"element", tag, *self.tags[tag].get("groups", [])}, unit=u, source=attacker)
         return 0
 
+    def _apply_water(self, u, attacker, hit, hostile):
+        """Вода всегда тушит огонь; союзная/рельефная вода оставляет мокрый тег, вражеская — пар."""
+        dur = self.cfg["status_duration"]
+        if "fire" in u.statuses:
+            self._clear_dot(u, "fire")
+            self.emit("extinguish", unit=u, tag="fire")
+            r = self._reactions.get(frozenset(("fire", "water")))
+            if r and (not hostile or r["id"] not in u.reaction_cd):
+                if hostile or attacker is not None:   # вода-навык/вражеская вода расходуется на пар
+                    self._clear_dot(u, "water")
+                    return self._react(r, u, attacker, hit, hostile)
+                self._react(r, u, None, hit, False)   # рельеф: пар нейтрализует огонь, мокрый тег остаётся
+        if "water" in u.statuses:
+            u.statuses["water"] = dur
+            return 0
+        if "stable" in u.buffs:
+            u.statuses["water"] = dur
+            self.emit("status", unit=u, tag="water")
+            return 0
+        for other in list(u.statuses):
+            r = self._reactions.get(frozenset(("water", other)))
+            if r and (r["id"] not in u.reaction_cd or not hostile):
+                self._clear_dot(u, other)
+                return self._react(r, u, attacker, hit, hostile)
+        u.statuses["water"] = dur
+        self.emit("status", unit=u, tag="water")
+        self.rules.fire("status", {"element", "water", *self.tags["water"].get("groups", [])},
+                        unit=u, source=attacker)
+        return 0
+
+    def _apply_dot_status(self, u, tag, attacker, hit, hostile):
+        """Наложение дот-тега с реакциями и правилами стаков."""
+        self._sync_dots(u)
+        cfg = self._dot_cfg(tag)
+        dur = cfg.get("duration", self.cfg["status_duration"])
+        if tag == "fire" and ("water" in u.statuses or "wet" in C.unit_tags(self, u)):
+            self._clear_dot(u, "fire")             # мокрого поджечь нельзя
+            self.emit("extinguish", unit=u, tag="fire")
+            r = self._reactions.get(frozenset(("fire", "water")))
+            if hostile and r and r["id"] not in u.reaction_cd:
+                self._clear_dot(u, "water")
+                return self._react(r, u, attacker, hit, hostile)
+            return 0
+        if tag in u.statuses:
+            if tag == "fire":                      # горение не стакается, только сильнейшее обновление
+                refresh = dur * getattr(attacker, "dot_duration_mult", 1.0) if attacker is not None else dur
+                if not self._refresh_dot(u, tag, refresh):
+                    u.statuses[tag] = refresh
+                return 0
+            dps = self._dot_dps(tag, attacker, hit)
+            self.apply_dot(u, tag, dps, dur, attacker=attacker, add_stack=True)
+            return 0
+        env = attacker is None and not hit
+        dps = 0.0 if env else self._dot_dps(tag, attacker, hit)
+        dps_pct = cfg.get("env_pct") if env else None
+        env_type = cfg.get("env_damage_type") if env else None
+        if "stable" in u.buffs:
+            self.apply_dot(u, tag, dps, dur, attacker=attacker, dps_pct=dps_pct, damage_type=env_type)
+            return 0
+        for other in list(u.statuses):
+            r = self._reactions.get(frozenset((tag, other)))
+            if r and (r["id"] not in u.reaction_cd or not hostile):
+                self._clear_dot(u, other)
+                return self._react(r, u, attacker, hit, hostile)
+        self.apply_dot(u, tag, dps, dur, attacker=attacker, dps_pct=dps_pct, damage_type=env_type)
+        return 0
+
     def _touch_status(self, u, tag, attacker=None, hostile=None):
         """Тег без удара (клетка, эффект «status»): бонусный урон реакции наносится отдельно."""
+        self._sync_dots(u)
         if tag in u.statuses:
-            u.statuses[tag] = self.cfg["status_duration"]
+            if tag in u.dots:
+                self._refresh_dot(u, tag)
+            else:
+                u.statuses[tag] = self.cfg["status_duration"]
             return
         extra = self.apply_status(u, tag, attacker, 0, hostile)
         if extra and u.alive:
@@ -2792,7 +3052,9 @@ class Combat:
         u.alive = True
         u.hp = max(1, int(u.max_hp * u.undying.get("hp", 0.5)))
         u.statuses.clear()
+        u.dots.clear()
         u.buffs.clear()
+        u.buff_total.clear()
         u.stun = 0.0
         self.emit("rise", unit=u)
         self.log(f"{u.name} встаёт снова!", (190, 220, 160))

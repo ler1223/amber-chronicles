@@ -25,6 +25,8 @@ class Cond:
     left: float = 0.0
     total: float = 0.0
     name: str = ""
+    stacks: int = 1
+    dps: float = 0.0
 
 
 def _buff_good(stat, value):
@@ -46,8 +48,17 @@ def conditions(c, u):
     dur = c.cfg["status_duration"]
     for tag, left in u.statuses.items():
         t = tags_cfg.get(tag, {})
-        out.append(Cond("status", tag, frozenset({"element", tag, *t.get("groups", [])}), left, dur,
-                        t.get("name", tag)))
+        dot = getattr(u, "dots", {}).get(tag)
+        cond = Cond("status", tag, frozenset({"element", tag, *t.get("groups", [])}),
+                    left, dot["total"] if dot else dur, t.get("name", tag))
+        if dot:
+            cond.stacks = dot.get("stacks", 1)
+            dps = dot.get("dps", 0.0)
+            if dot.get("dps_pct"):
+                pct = dot["dps_pct"]
+                dps += u.max_hp * (pct / 100.0 if pct > 1 else pct)
+            cond.dps = dps * cond.stacks
+        out.append(cond)
     if u.stun > 0:
         look = "sleep" if u.asleep else u.stun_look
         extra = c.cfg.get("control_tags", {}).get(look, [])
@@ -59,6 +70,8 @@ def conditions(c, u):
         out.append(Cond("taunt", "taunt", frozenset({"control", "taunt", "mind"}), u.taunt_time, u.taunt_time,
                         "провокация"))
     for stat, (value, left) in u.buffs.items():
+        if stat == "bleed" and "bleed" in u.statuses:
+            continue                              # кровотечение уже показано как статус-дот
         good = _buff_good(stat, value)
         tags = {"buff" if good else "debuff", f"stat:{stat}"}
         if stat == "slow" and not good:
@@ -104,6 +117,10 @@ def remove(c, u, tags=DEFAULT_CLEANSE, limit=None):
         k = cond.kind
         if k == "status":
             u.statuses.pop(cond.key, None)
+            getattr(u, "dots", {}).pop(cond.key, None)
+            if cond.key == "bleed":
+                u.buffs.pop("bleed", None)
+                u.buff_total.pop("bleed", None)
         elif k == "control":
             u.stun, u.asleep = 0.0, False
             if cond.key == "levitate":

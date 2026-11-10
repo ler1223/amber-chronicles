@@ -292,7 +292,16 @@ def unit_states(u, data, combat=None):
     dur = data.config["status_duration"]
     for tag, left in u.statuses.items():
         tg = data.tags[tag]
-        out.append((tag, tuple(tg["color"]), left / dur, f"{tg['name']} {left:.1f} с — {tg['status']}"))
+        dot = getattr(u, "dots", {}).get(tag)
+        total = dot.get("total", dur) if dot else dur
+        stacks = dot.get("stacks", 1) if dot else 1
+        stack_s = f" ×{stacks}" if stacks > 1 else ""
+        dps = dot.get("dps", 0.0) if dot else 0.0
+        if dot and dot.get("dps_pct"):
+            dps += u.max_hp * (dot["dps_pct"] / 100.0 if dot["dps_pct"] > 1 else dot["dps_pct"])
+        dps_s = f", {dps * stacks:.1f}/с" if dot else ""
+        out.append((tag, tuple(tg["color"]), max(0.0, min(1.0, left / max(total, 0.01))),
+                    f"{tg['name']}{stack_s} {left:.1f} с — {tg['status']}{dps_s}"))
     if u.shield > 0:
         out.append(("shield", GOOD, 1.0, f"Щит {u.shield}"))
     if u.tethered_by is not None and u.tether_time > 0:
@@ -325,6 +334,8 @@ def unit_states(u, data, combat=None):
         out.append(("ap_rate", (255, 170, 220), 1 - u.song["beat"] / u.song["beats"],
                     f"Ритм: такт {u.song['beat']}/{u.song['beats']}, нот {u.song['notes']}"))
     for stat, (val, left) in u.buffs.items():
+        if stat == "bleed" and "bleed" in u.statuses:
+            continue                              # кровотечение уже показано как дот-статус
         kind, good = buff_icon(stat, val)
         total = u.buff_total.get(stat, left) or 1
         out.append((kind, GOOD if good else BAD, max(0.0, min(1.0, left / total)),

@@ -173,7 +173,8 @@ def arrow_rider(c, u, t, mult=1.0):
     if a.get("mark"):
         add_mark(c, t, a["mark"], a.get("stacks", 1), a.get("duration", 5), u)
     if a.get("bleed"):
-        c.add_buff(t, "bleed", round(a["bleed"] * mult, 1), a.get("duration", 4))
+        value = max(a["bleed"], u.atk_damage * a.get("bleed_pct", 0))
+        c.add_buff(t, "bleed", round(value * mult, 1), a.get("duration", 4), src=u)
     if a.get("knockback") and not t.boss:
         c.knockback(u.cell, t, a["knockback"], u)
     if a.get("interrupt"):
@@ -428,9 +429,10 @@ def special(c, caster, eff, center, tunit):
     elif t == "bleed_feast":                       # пир: кровь врагов вокруг — в берсерка
         n = 0
         for v in c.units_in_radius(caster.cell, eff.get("radius", 2)):
-            if caster.is_enemy(v) and "bleed" in v.buffs:
-                left = v.buffs["bleed"][0] * v.buffs["bleed"][1]
-                del v.buffs["bleed"]
+            if caster.is_enemy(v) and "bleed" in v.statuses:
+                dot = v.dots.get("bleed")
+                left = (dot["dps"] * dot["stacks"] * dot["left"]) if dot else 0.0
+                c._clear_dot(v, "bleed")
                 c.damage(v, left * eff.get("burst", 1.0), caster, None, "reaction")
                 c.heal(caster, int(left * eff.get("heal", 0.6)))
                 c.emit("link", src=v, dst=caster, color=(220, 40, 50))

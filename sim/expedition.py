@@ -176,7 +176,7 @@ def make_item(xd, rng, tier, rarity="common", slot=None, unique=None, uid=0, all
     n = it["rarities"][rarity]["affixes"]
     affixes, procs = [], 0
     max_procs = 2 if rarity == "epic" else 1
-    stat_ids = sorted(it["stat_affixes"])
+    stat_ids = sorted(s for s in it["stat_affixes"] if not it["stat_affixes"][s].get("dot"))
     for _ in range(n):
         if procs < max_procs and rng.random() < 0.45:
             affixes.append(roll_proc(xd, rng, allow_tags and rarity == "epic"))
@@ -184,6 +184,16 @@ def make_item(xd, rng, tier, rarity="common", slot=None, unique=None, uid=0, all
         else:
             free = [s for s in stat_ids if s not in [a.get("id") for a in affixes]]
             affixes.append({"kind": "stat", "id": rng.choice(free)})
+    # дот-свойства — отдельный пул: не ломают прежний порядок случайных статов и добавляются сверху
+    dot_ids = sorted(s for s in it["stat_affixes"] if it["stat_affixes"][s].get("dot"))
+    if dot_ids:
+        aux = random.Random()
+        aux.setstate(rng.getstate())
+        if aux.random() < 0.35:
+            used = [a.get("id") for a in affixes]
+            free = [s for s in dot_ids if s not in used]
+            if free:
+                affixes.append({"kind": "stat", "id": aux.choice(free)})
     first = next((a for a in affixes if a["kind"] == "stat"), None)
     name = it["bases"][base]["name"]
     if first:
@@ -1656,9 +1666,16 @@ class Expedition:
         fc = self.forge_cfg()
         rng = random.Random(f"{self.seed}:anvil:{node['id']}")
         it = self.xd["items"]
-        props = [{"kind": "stat", "id": s} for s in rng.sample(sorted(it["stat_affixes"]), fc["stat_offers"])]
+        props = [{"kind": "stat", "id": s} for s in rng.sample(
+            sorted(s for s in it["stat_affixes"] if not it["stat_affixes"][s].get("dot")), fc["stat_offers"])]
         allow = self.tag_items() < self.cfg.get("tag_items_max", 2)
         props += [roll_proc(self.xd, rng, allow) for _ in range(fc["proc_offers"])]
+        dot_ids = sorted(s for s in it["stat_affixes"] if it["stat_affixes"][s].get("dot"))
+        if dot_ids:
+            aux = random.Random()
+            aux.setstate(rng.getstate())
+            if aux.random() < 0.5:
+                props.append({"kind": "stat", "id": aux.choice(dot_ids)})
         bases = {}
         for slot in SLOTS:
             opts = sorted(b for b, v in it["bases"].items() if v["slot"] == slot)

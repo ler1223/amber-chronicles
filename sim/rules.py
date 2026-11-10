@@ -140,7 +140,8 @@ class Rules:
             elif t == "stun":
                 c.apply_stun(v, act["duration"], act.get("look"))
             elif t == "buff":                    # кровотечение от вещи — доля атаки в секунду
-                c.add_buff(v, act["stat"], amount if act["stat"] == "bleed" and amount else act["value"], act["duration"])
+                c.add_buff(v, act["stat"], amount if act["stat"] == "bleed" and amount else act["value"],
+                           act["duration"], src=by)
             elif t == "chain":                   # цепной удар: соседний с целью враг
                 near = [w for w in c.units_in_radius(v.cell, act.get("radius", 2))
                         if w is not v and w.alive and not w.obj and by is not None and by.is_enemy(w)]

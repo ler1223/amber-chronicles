@@ -2163,11 +2163,22 @@ class BattleView:
             if u.atk_tag:
                 lines.append((f"Атака с тегом: {self.data.tags[u.atk_tag]['name']}", self.tag_color(u.atk_tag)))
             for stat, (val, left) in u.buffs.items():
+                if stat == "bleed" and "bleed" in u.statuses:
+                    continue
                 lines.append((f"{BUFF_TEXT.get(stat, lambda v: stat)(val)} — {left:.1f}с",
                               (150, 240, 160) if buff_good(stat, val) else (255, 150, 120)))
             for tag, left in u.statuses.items():
                 tg = self.data.tags[tag]
-                lines.append((f"{tg['name']} {left:.1f}с — {tg['status']}", tuple(tg["color"])))
+                dot = getattr(u, "dots", {}).get(tag)
+                extra = ""
+                if dot:
+                    n = dot.get("stacks", 1)
+                    dps = dot.get("dps", 0.0)
+                    if dot.get("dps_pct"):
+                        pct = dot["dps_pct"]
+                        dps += u.max_hp * (pct / 100.0 if pct > 1 else pct)
+                    extra = (f" ×{n}" if n > 1 else "") + f", {dps * n:.1f}/с"
+                lines.append((f"{tg['name']}{extra} {left:.1f}с — {tg['status']}", tuple(tg["color"])))
             if u.passive:
                 lines.append((f"Пассив: {u.passive['name']} — {u.passive['desc']}", self.gauge_color(u)))
             if u.gauge:

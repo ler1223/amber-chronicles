@@ -44,6 +44,8 @@ def build_proto(data, cls_id, talents=(), items=(), branches=None, extra_mods=()
     doctrine — сюжетный режим: пассивная доктрина вместо подкласса (её replace не применяется)."""
     p = copy.deepcopy(data.classes[cls_id])
     p.setdefault("power", 1.0)
+    for k in ("dot_mult", "dot_fire_mult", "dot_poison_mult", "dot_bleed_mult", "dot_duration_mult", "dot_taken"):
+        p.setdefault(k, 1.0)
     mods = []
     if path:
         pd = data.paths[path]

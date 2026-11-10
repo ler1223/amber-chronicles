@@ -71,6 +71,16 @@ class Unit:
         self.wait = 0.0
 
         self.statuses = {}     # tag -> оставшиеся секунды
+        # периодические эффекты: tag -> {"stacks", "dps", "left", "total", "src", "kind", "acc", ...}
+        # statuses остаются удобным словарём тегов для условий, реакций и UI, а dots хранят силу и стаки.
+        self.dots = {}
+        # множители дот-эффектов от предметов/талантов (см. data/expedition.json, stat_affixes)
+        self.dot_mult = proto.get("dot_mult", 1.0)
+        self.dot_fire_mult = proto.get("dot_fire_mult", 1.0)
+        self.dot_poison_mult = proto.get("dot_poison_mult", 1.0)
+        self.dot_bleed_mult = proto.get("dot_bleed_mult", 1.0)
+        self.dot_duration_mult = proto.get("dot_duration_mult", 1.0)
+        self.dot_taken = proto.get("dot_taken", 1.0)
         self.ult_count = {}    # счётчики условий ультимейта за бой (sim/kit.py, ult_ready)
         # пассивка-основа (sim/passives.py): таймер, прошлая цель, Дикость/Гармония, ингредиенты, накопитель, ноты
         self.pass_t = 0.0

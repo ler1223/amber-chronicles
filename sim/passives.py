@@ -296,7 +296,7 @@ def tick(c, u, dt):
         _set(u, int(round(_missing(u) * u.pp_max)))
         if u.pass_t >= 1.0:
             u.pass_t -= 1.0
-            n = sum(1 for v in c.units if v.alive and u.is_enemy(v) and "bleed" in v.buffs and cheb(v.cell, u.cell) <= 2)
+            n = sum(1 for v in c.units if v.alive and u.is_enemy(v) and "bleed" in v.statuses and cheb(v.cell, u.cell) <= 2)
             if n:
                 c.heal(u, int(round(u.max_hp * p["bleed_regen"] * n)))
     elif ck == "powder":

@@ -1023,6 +1023,41 @@
     "stat": "lifesteal",
     "add": 0.03
    },
+   "kindling": {
+    "name": "розжига",
+    "text": "+{v}% урона горением",
+    "stat": "dot_fire_mult",
+    "pct": 0.15,
+    "dot": true
+   },
+   "toxin": {
+    "name": "токсичности",
+    "text": "+{v}% урона ядом",
+    "stat": "dot_poison_mult",
+    "pct": 0.15,
+    "dot": true
+   },
+   "hemostasis": {
+    "name": "кровопускания",
+    "text": "+{v}% урона кровотечением",
+    "stat": "dot_bleed_mult",
+    "pct": 0.15,
+    "dot": true
+   },
+   "lingering": {
+    "name": "затяжности",
+    "text": "+{v}% длительности дотов",
+    "stat": "dot_duration_mult",
+    "pct": 0.10,
+    "dot": true
+   },
+   "affliction": {
+    "name": "мучения",
+    "text": "+{v}% силы всех дотов",
+    "stat": "dot_mult",
+    "pct": 0.10,
+    "dot": true
+   },
    "haste": {
     "name": "спешки",
     "text": "−{v}% перезарядки навыков",
