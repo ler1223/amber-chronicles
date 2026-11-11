@@ -24,6 +24,7 @@ CONDS = {
                                                           "control", "debuff"],
                        "scope": "target"},
     "enemies_in_area": {"label": "врагов в зоне ≥ {v}", "values": [1, 2, 3, 4, 5], "scope": "target"},
+    "charges_at_least": {"label": "зарядов ≥ {v}", "values": list(range(1, 9)), "scope": "global"},
 }
 
 
@@ -82,6 +83,8 @@ def allowed_conds(sk):
         out.append("target_has_tag")
     if kind in ("cell", "self") or sk.get("radius", 0) > 0:
         out.append("enemies_in_area")
+    if any(e["type"] == "fuse" for e in sk.get("effects", [])):
+        out.append("charges_at_least")             # Фитиль подрывника: сколько зарядов ждать
     return out
 
 
@@ -98,8 +101,24 @@ def sanitize(setting, sk):
 def default_setting(sk):
     """Умолчание — автокаст выключен у всех навыков; условия из данных остаются готовой подсказкой."""
     st = copy.deepcopy(sk.get("auto", {"on": False, "conds": []}))
-    st["on"] = False
+    st["on"] = bool(sk.get("mech") and st.get("on"))   # кнопка механики класса (Фитиль) — включена сразу
     return sanitize(st, sk)
+
+
+def priority_for(skills, order=None, reserve=None):
+    """Приоритет автокаста героя: порядок навыков (неизвестные убраны, новые — в конец) и резервы AP (≥ 0)."""
+    order = [s for s in (order or []) if s in skills]
+    order += [s for s in skills if s not in order]
+    res = {s: max(0, int(v)) for s, v in (reserve or {}).items() if s in order and int(v) > 0}
+    return order, res
+
+
+def reserve_before(order, reserve, sid):
+    """Сколько AP оставить под навыки выше sid: сумма резервов между ними и sid (резерв первого не считается)."""
+    if sid not in order:
+        return 0
+    i = order.index(sid)
+    return sum(reserve.get(s, 0) for s in order[1:i + 1])
 
 
 def settings_for(skill_defs, given=None):
@@ -152,11 +171,15 @@ class AutoCaster:
         from . import autopilot as AP
         if self.force or (kit.notes_of_unit(self.c, u) and any(u.autocast.get(s, {}).get("on") for s in u.skills)):
             return AP.choose(self, u)          # демо и бот — умный автопилот; бард — мелодиями, а не нотами вразнобой
-        for sid in u.skills:
+        order = [s for s in (getattr(u, "ac_order", None) or u.skills) if s in u.skill_defs]
+        reserve = getattr(u, "ac_reserve", None) or {}
+        for sid in order:                          # по приоритету: выше — раньше; ниже — только с резервом AP
             sk = u.skill_defs[sid]
             st = dict(default_setting(sk), on=True) if self.force else u.autocast.get(sid)
             if not st or not st["on"] or not u.skill_ready(sid, sk):
                 continue
+            if not self.force and reserve and u.ap - sk["ap"] < reserve_before(order, reserve, sid):
+                continue                           # копим AP под навыки выше по приоритету
             if any(e["type"] == "form" and e.get("form") == u.form for e in sk["effects"]):
                 continue   # уже в этом облике — повтор вернул бы обратно
             conds = st["conds"]
@@ -182,6 +205,8 @@ class AutoCaster:
             return any(a.hp < a.max_hp * v / 100 for a in self.c.alive(u.team))
         if t == "enemies_adjacent":
             return sum(1 for f in self._foes(u) if cheb(f.cell, u.cell) <= 1) >= v
+        if t == "charges_at_least":                 # Фитиль подрывника: сколько зарядов ждать
+            return len(kit.own_charges(self.c, u, armed=True)) >= v
         return True
 
     def _area_ok(self, group, conds, area_count):
@@ -278,6 +303,10 @@ class AutoCaster:
             if not cells:
                 return None
             return min(cells, key=lambda p: (abs(cheb(p, u.cell) - cheb(f.cell, u.cell) + 2), cheb(p, f.cell)))
+        if kind == "self" and any(e["type"] == "fuse" for e in sk["effects"]):
+            foes_ = self._foes(u)                   # Фитиль: только если рядом с каким-то зарядом есть враг
+            near = any(cheb(f.cell, cell) <= 1 for _, _, cell in kit.own_charges(self.c, u, armed=True) for f in foes_)
+            return u if near else None
         if kind == "self":
             r = sk.get("radius", 0)
             area = [f for f in foes if cheb(f.cell, u.cell) <= r]
@@ -327,6 +356,14 @@ class AutoCaster:
         """Тотем: свободная клетка в досягаемости — у врагов (боевой) или среди своих (лечащий)."""
         if not foes or not any(cheb(f.cell, u.cell) <= sk["range"] + 3 for f in foes):
             return None
+        for e in sk["effects"]:                     # тотемы: лимит полон — обновляем тот, что сейчас не у дел
+            g = self.c.data.summons.get(e.get("unit"), {}).get("group") if e["type"] == "summon" else None
+            if g and not e.get("extra") and len(self.c.group_members(u, g)) >= self.c.group_limit(u, g):
+                w = self.c.worst_totem(u, g)
+                stale = w is not None and (self.c.totem_use(w) == 0 or w.hp < w.max_hp * 0.6
+                                           or cheb(w.cell, u.cell) > sk["range"] + 1)
+                if not stale:
+                    return None                     # все тотемы при деле — AP на другое
         cells = [p for p in self.c.grid.in_radius(u.cell, sk["range"]) if self.c.is_free(p)]
         if not cells:
             return None

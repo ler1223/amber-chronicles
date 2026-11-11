@@ -14,7 +14,8 @@ from ui import projection as P
 from ui.autocast_editor import AutocastEditor, adjust_first_value
 from ui.battle_view import BattleView
 
-SKILL_KEYS = {getattr(pygame, "K_" + c.lower()): i for i, c in enumerate("QWERDFTYUI")}   # D, F — 5-й и 6-й
+SKILL_KEYS = {getattr(pygame, "K_" + c.lower()): i for i, c in enumerate("QWERDGTYUI")}   # D, G — 5-й и 6-й
+MECH_KEY = pygame.K_f            # кнопка механики класса (Фитиль подрывника)
 SPEED_KEYS = {pygame.K_F1: 0, pygame.K_F2: 1, pygame.K_F3: 2}
 DRAG_DIST = 12
 
@@ -53,7 +54,9 @@ class BattleScene:
         self.autoplay = autoplay
         self.squad = squad
         self.on_finish = on_finish
-        self.speed_idx = 1
+        from ui import settings
+        n = len(self.cfg["speeds"])
+        self.speed_idx = min(n - 1, max(0, int(settings.SETTINGS.get("battle_speed", 1))))   # как в прошлом бою
         self.positions = {}  # индекс боя -> последняя расстановка игрока
         self.formation = formation
         self.start(encounter_index)
@@ -83,6 +86,9 @@ class BattleScene:
         self.pick = None         # юнит под курсором (подсвечен кольцом)
         self.drag_start = None
         self.editor = None       # открытый редактор автокаста: {"unit", "idx", "editor", "rect"}
+        from ui.autocast_priority import PriorityPanel
+        self.prio = PriorityPanel(self.data.tags)    # приоритет автокаста выбранного героя (P), бой на паузе
+        self.prio_open = False
         squad = self.combat.fighters(PLAYER)
         self.selected = squad[0] if squad else None
         self.selected_units = [self.selected] if self.selected else []
@@ -263,7 +269,29 @@ class BattleScene:
             return
         self._handle(ev)
 
+    def toggle_priority(self):
+        u = self.selected
+        if self.prio_open or u is None or u.team != PLAYER or not u.skills:
+            self.prio_open = False
+            return
+        self.prio_open = True
+        self.paused = True                           # настраиваем приоритет на паузе
+
     def _handle(self, ev):
+        if self.prio_open:                           # панель приоритета: её события — первыми
+            u = self.selected
+            if u is None or not u.alive:
+                self.prio_open = False
+            else:
+                self.prio.set_source(u.skill_defs, u.autocast, u.ac_order, u.ac_reserve)
+                if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_ESCAPE, pygame.K_p):
+                    self.prio_open = False
+                    return
+                if self.prio.handle(ev):
+                    return
+        if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and self.view.prio_rect                 and self.view.prio_rect.collidepoint(ev.pos):
+            self.toggle_priority()
+            return
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
             if self.box_active:
@@ -425,9 +453,20 @@ class BattleScene:
 
     def _key(self, key):
         c = self.combat
+        if key == pygame.K_p:                       # приоритет автокаста выбранного героя
+            self.toggle_priority()
+            return
         if key == pygame.K_c:                       # панель статов героя со всеми бафами боя
             self.view.stats_open = not self.view.stats_open
             return
+        if key == MECH_KEY and self.selected is not None:           # F — кнопка механики класса
+            mi = next((i for i, s in enumerate(self.selected.skills) if self.selected.skill_defs[s].get("mech")), None)
+            if mi is not None:
+                if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    self.toggle_autocast(mi)
+                elif not c.result and self.phase == "battle":
+                    self._skill_key(mi)
+                return
         if key in SKILL_KEYS and pygame.key.get_mods() & pygame.KMOD_CTRL:
             self.toggle_autocast(SKILL_KEYS[key])
             return
@@ -502,6 +541,8 @@ class BattleScene:
             self.slowmo = not self.slowmo
         elif key in SPEED_KEYS:
             self.speed_idx = SPEED_KEYS[key]
+            from ui import settings
+            settings.put("battle_speed", self.speed_idx)      # переходит в следующие бои и запуски
         elif key == pygame.K_ESCAPE:
             queued = [u for u in self._selected_team() if u.queue]
             if self.targeting:

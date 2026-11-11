@@ -122,6 +122,15 @@ class PixelPilot:
         self.poison.update(dt, [p for p, cell in c.grid.cells.items() if cell.hazard == "poison"], c.grid.w, c.grid.h)
         self.oil.update(dt, [p for p, cell in c.grid.cells.items() if cell.hazard == "oil"], c.grid.w, c.grid.h)
         self._cell_tongues(dt, len(cells))
+        blaze = [pos for pos in cells if c.grid.get(pos).blaze]
+        n = self._rate("blaze", 26 * len(blaze), dt)
+        if n:                                   # горящее масло: высокие жёлтые языки и густой чёрный дым
+            i = S.rng.integers(0, len(blaze), n)
+            xs = np.array([blaze[k][0] for k in i], float) + S.rng.uniform(0.1, 0.9, n)
+            ys = np.array([blaze[k][1] for k in i], float) + S.rng.uniform(0.1, 0.9, n)
+            S.ps.spawn(n, (xs, ys, np.full(n, 0.02)), (0, 0, 1.25), life=0.85, temp=S.rng.uniform(0.92, 1.0, n),
+                       cool=1.1, buoy=3.4, drag=3.0, size=2.8, grow=-2.6, tall=1.2, pal="fire", smoke="dust",
+                       smoke_at=0.35, jitter=0.08, life_var=0.3)
         n = self._rate("sparks", 1.5 * len(cells), dt)
         pts = self.fire.sample(n, S.rng) if n else None
         if pts is not None:                    # редкие искры улетают высоко

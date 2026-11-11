@@ -115,7 +115,7 @@
     "class": "alchemist",
     "name": "Минёр",
     "desc": "Мины и взрывы. Вместо Лечебного зелья — Мина.",
-    "replace": {"fuse": "mine"},
+    "replace": {"grenade": "mine"},
     "passive": {"kind": "catalyst", "name": "Детонатор", "pp": 1, "mult": 2.0, "desc": "Реакция от удара подрывника: −1 деление шкалы, она сильнее вдвое"},
     "mods": [{"stat": "power", "mult": 1.08}]
   },

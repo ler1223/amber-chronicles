@@ -93,7 +93,10 @@ class Unit:
         self.notes = []
         self.last_melody = None
         self.marks = {}        # метки-стаки механик классов (sim/kit.py): id -> {"n", "t", "src", "total"}
-        self.quiver = proto.get("quiver")      # лучник: активный тип стрел
+        self.ac_order = list(proto.get("skills", []))   # приоритет автокаста: порядок навыков (выше — раньше)
+        self.ac_reserve = {}                           # резерв AP под навыки выше: {навык: AP}
+        self.quivers = list(proto.get("quivers") or [])   # лучник: колчаны (до трёх), стрелы чередуются
+        self.arrow_i = 0
         self.stun = 0.0
         self.stun_total = 0.0  # длительность текущего оглушения (для таймера на значке)
         self.stun_look = "stun"
@@ -172,7 +175,7 @@ class Unit:
         return b[0] if b else default
 
     def total_armor(self):
-        return self.armor + self.buff("armor", 0)
+        return self.armor + self.buff("armor", 0) - self.buff("armor_shred", 0)
 
     @property
     def moving(self):

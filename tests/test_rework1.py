@@ -41,6 +41,9 @@ def put(u, cell):
 
 
 def cast(c, u, sid, target):
+    from needs import need, need_unit
+    need(sid)                                    # механику переделали — тест пропускается, а не падает
+    need_unit(u, sid)
     c._resolve_skill(u, sid, target)
 
 

@@ -47,7 +47,7 @@ EFFECT_GROUPS = {
                "extra_attack", "rush", "toss", "fuse"},
     "heal": {"heal", "revive"},
     "shield": {"shield", "guard"},
-    "buff": {"buff", "focus", "form", "quiver", "refresh", "stealth"},
+    "buff": {"buff", "focus", "form", "refresh", "stealth"},
     "control": {"stun", "knockback", "push", "pull", "sleep", "charm", "stasis", "taunt", "tether", "tether_all",
                 "levitate", "gather"},
     "mobility": {"leap_to", "teleport", "swap", "rush", "regroup"},

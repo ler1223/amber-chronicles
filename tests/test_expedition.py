@@ -95,7 +95,7 @@ def test_tavern_roster_and_upgrades(tmp_path):
         assert len(h.skills) == 4 and len(h.gear) == 1 and h.trait in XD["tavern"]["traits"]
         assert h.skills[3] == story_meta.ult_of(ED, h.cls)                   # ультимейт — четвёртым, на R
         assert story_meta.kit_ok(ED, h.cls, h.skills[:3])                    # набор не ломает механику класса
-    prof.glory = 200
+    prof.glory = 1000
     assert prof.buy_upgrade("hall") and len(prof.roster) == 8
     assert prof.buy_upgrade("guests") and "shaman" in prof.classes()
     again = X.ExpeditionProfile(ED, prof.path)
@@ -344,7 +344,7 @@ def test_random_kits_are_whole_for_every_class():
         for _ in range(200):
             kit = story_meta.random_kit(ED, cls, rng)
             assert len(kit) == 4 and len(set(kit)) == 4, (cls, kit)
-            assert kit[3] == story_meta.ult_of(ED, cls)
+            assert kit[3] in story_meta.ults_of(ED, cls)
             assert story_meta.kit_ok(ED, cls, kit[:3]), (cls, kit)
 
 

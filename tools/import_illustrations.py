@@ -55,6 +55,12 @@ ORDER = [
     "hot_springs", "master_contest", "old_armory", "fire_ale",
     "tunnel_collapse", "guild_contract", "contract_due", "lava_raft",
     "ember_orphans", "brass_oracle", "guild_feast", "guild_toll",
+    "room_muster", "room_workshop", "room_yard", "room_fame",          # комнаты таверны (лист 32)
+    "room_build", "room_cemetery", "room_library", "room_dorm",        # комнаты таверны (лист 33)
+    "room_dorm_2", "room_dorm_3", "room_dorm_4", "room_dorm_5",        # комнаты общежития (лист 34)
+    "yard_sky_low", "yard_sky_mid", "yard_sky_high", "room_dorm_6",    # небо двора слоями + чердак (лист 35)
+    "ws_bench_jewel", "ws_bench_forge", "ws_bench_alchemy", "ws_bench_leather",   # верстаки мини-игр (лист 36)
+    "room_market", "market_gems", "market_goods", "market_night",       # рынок (лист 37)
 ]
 SHEETS = [ORDER[i:i + 4] for i in range(0, len(ORDER), 4)]
 

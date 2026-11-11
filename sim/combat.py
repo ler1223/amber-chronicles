@@ -45,6 +45,7 @@ class Combat:
         self._intercepting = False
         self._actor = None            # кто сейчас применяет эффекты (заслуги: щит, контроль, бафф — ему)
         self._basic = False       # идёт обычная атака (режим героев: скейл от основного атрибута)
+        self._flat = False        # идёт эффект навыка героя от его стата (атрибут уже учтён в множителе)
         self.enraged = 0          # ступень ярости затянутого боя
         self.traps = {}           # id ловчего -> клетки его капканов
         self.corpses = []         # трупы врагов: {"cell", "left", "name"} — ресурс некроманта
@@ -69,6 +70,7 @@ class Combat:
             if m.get("hp") is not None:
                 u.hp = max(1, min(u.max_hp, m["hp"]))
             u.autocast = autocast.settings_for(u.skill_defs, m.get("autocast"))
+            u.ac_order, u.ac_reserve = autocast.priority_for(u.skills, m.get("ac_order"), m.get("ac_reserve"))
             u.ap = int(round(u.ap_max * m["proto"].get("start_ap", 1.0)))   # экспедиция и сюжет: с половиной AP
             if (u.passive or {}).get("start"):
                 u.pp = min(u.pp_max, u.passive["start"])
@@ -519,6 +521,16 @@ class Combat:
                 c.hazard_time -= dt
                 if c.hazard_time <= 0:
                     c.hazard = None
+                    c.blaze = False
+        self._oil_t = getattr(self, "_oil_t", 0.0) + dt
+        if self._oil_t >= 0.2:                 # огонь рядом с маслом поджигает лужу (как бы его ни поставили)
+            self._oil_t = 0.0
+            oil = [p for p, c in self.grid.cells.items() if c.hazard == "oil"]
+            for p in oil:
+                if self.grid.get(p).hazard == "oil" and any(
+                        (q := self.grid.get((p[0] + dx, p[1] + dy))) is not None and q.hazard == "fire"
+                        for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy):
+                    self.ignite_oil(p)
         self._arena_update(dt)
         for item in list(self.rising):
             item[1] -= dt
@@ -774,9 +786,10 @@ class Combat:
                 self.apply_effects(u, u.aura["effects"], u.cell)
                 self.gain(u.owner, "aura")         # заряд шамана: тотем сработал
         self._regen(u, dt)
+        cdr = u.buff("cd_rate", 1.0)
         for d in (u.cooldowns, u.reaction_cd):
             for k in list(d):
-                d[k] -= dt
+                d[k] -= dt * (cdr if d is u.cooldowns else 1.0)
                 if d[k] <= 0:
                     del d[k]
         u.attack_timer = max(0.0, u.attack_timer - dt)
@@ -935,12 +948,17 @@ class Combat:
                 if c.hazard_team is not None and c.hazard_team != u.team and not u.obj:
                     tr = h["trigger"]
                     owner = c.hazard_owner
-                    c.hazard, c.hazard_owner = None, None
+                    ch = c.charge
+                    c.hazard, c.hazard_owner, c.charge = None, None, None
                     self.emit("mine", pos=c.pos, unit=u, kind=h.get("look", "mine"))
-                    self.damage(u, tr["damage"] * getattr(c, "mine_mult", 1.0),
-                                owner if owner is not None and owner.alive else None, tr.get("tag"), "reaction")
-                    if tr.get("stun") and u.alive:
-                        self.apply_stun(u, tr["stun"], tr.get("look", "trap"))
+                    src = owner if owner is not None and owner.alive else None
+                    if ch:                             # мина героя: урон от силы навыков, свой радиус и оглушение
+                        kit.blow_cell(self, src, c.pos, ch, tr.get("tag"), first=u)
+                    else:
+                        self.damage(u, tr["damage"] * getattr(c, "mine_mult", 1.0), src, tr.get("tag"), "reaction")
+                    stun = (ch or {}).get("stun") or tr.get("stun")
+                    if stun and u.alive:
+                        self.apply_stun(u, stun, tr.get("look", "trap"))
                     if tr.get("expose") and u.alive:
                         self.add_buff(u, "exposed", tr.get("expose_mult", 1.2), tr["expose"])
                     if owner is not None:
@@ -958,7 +976,8 @@ class Combat:
                 u.hazard_acc += dt
                 if u.hazard_acc >= 1.0:
                     u.hazard_acc -= 1.0
-                    self.damage(u, self._env_amount(u, h), None, kind="hazard",
+                    k = self.cfg["blaze"]["mult"] if c.blaze and c.hazard == "fire" else 1.0
+                    self.damage(u, self._env_amount(u, h) * k, None, kind="hazard",
                                 dtype=h.get("damage_type"))
         else:
             u.hazard_acc = 0.0
@@ -1418,7 +1437,7 @@ class Combat:
             dealt = self.damage(t, amount, u, tag, kind)
         finally:
             self._basic = False
-        if dealt and (u.quiver or "all_arrows" in u.buffs):
+        if dealt and (u.quivers or u.owner is not None or "fletch" in u.buffs):
             kit.basic_rider(self, u, t)
         if u.lifesteal and dealt and u.alive:
             self.heal(u, int(round(dealt * u.lifesteal)))
@@ -1474,6 +1493,10 @@ class Combat:
         if types & self.INSTANT or mode == "instant":
             return 0.0
         dist = cheb(u.cell, tuple(center))
+        if sk["target"] in ("enemy", "cell") and any(x.get("arrow") for x in sk["effects"])                 and not types & {"zone", "teleport"}:      # выстрел лучника — со скоростью обычной стрелы
+            sp = h["attack_speed"]
+            speed = sp.get(u.proto_id) or sp.get("ranged", 13.0)
+            return round(min(h["max"], max(0.06, dist / speed)), 2)
         if mode == "fly":
             return round(min(h["max"], max(e.get("min", h["min"]), max(1, dist) / e["speed"])), 2)
         if mode in ("fall", "time"):
@@ -1542,61 +1565,96 @@ class Combat:
         finally:
             self._actor = prev
 
+    def stat_k(self, u, of, pct=False):
+        """Навык героя растёт от своего стата (sim/stats.py STAT_BASES): множитель вместо силы навыков."""
+        ref = u.proto.get("ref") or {"atk": max(1, u.proto["attack"]["damage"]), "hp": max(1, u.proto["hp"])}
+        if of == "atk":
+            v = u.atk_damage * (u.proto.get("scale") or {}).get("basic", 1.0) * u.buff("atk_mult", 1.0)
+            return v if pct else v / ref.get("atk", 1)
+        if of == "hp":
+            return u.max_hp if pct else u.max_hp / ref.get("hp", 1)
+        k = getattr(u, "_pw_base", u.power) * (u.proto.get("scale") or {}).get("spell", 1.0)
+        return k * ref.get("atk", 1) if pct else k
+
     def _apply_effects(self, caster, effects, center, tunit=None):
         for eff in effects:
-            t = eff["type"]
-            if eff.get("at") == "caster":
-                if t in kit.TYPES:
-                    kit.special(self, caster, eff, caster.cell, caster)
-                else:
-                    self._apply_one(caster, eff, caster.cell, None)
-                continue
+            of = eff.get("of")
+            if of and (caster.proto.get("ref") or eff.get("pct")):   # числа навыка — от стата героя
+                outer = hasattr(caster, "_pw_base")
+                if not outer:
+                    caster._pw_base = caster.power
+                flat = self._flat
+                caster.power = self.stat_k(caster, of, eff.get("pct")) * caster.buff("skill_mult", 1.0)
+                self._flat = True
+                try:
+                    stop = self._apply_eff(caster, eff, center, tunit)
+                finally:
+                    self._flat = flat
+                    caster.power = caster._pw_base
+                    if not outer:
+                        del caster._pw_base
+            else:
+                stop = self._apply_eff(caster, eff, center, tunit)
+            if stop:
+                return
+
+    def _apply_eff(self, caster, eff, center, tunit):
+        """Один эффект навыка. True — навык сорвался (дальше эффекты не применять)."""
+        t = eff["type"]
+        if eff.get("at") == "caster":
             if t in kit.TYPES:
-                kit.special(self, caster, eff, center, tunit)
-                continue
-            if t in ("delay", "rush", "toss", "fuse", "place_object", "watch", "detonate", "song", "trap", "wall",
-                     "terrain", "shatter", "corpse", "rewind", "stasis", "spread_fire", "gather", "swap",
-                     "levitate", "collapse", "terrain_cast", "reagent", "extra_attack", "regroup", "focus", "tether",
-                     "merge", "life_transfer"):
-                self._special(caster, eff, center, tunit)
-                continue
-            if t == "teleport":
-                if not self.is_free(center, exclude=caster):
-                    spot = self.free_near(center, 1) if caster.airborne <= 0.05 else None
-                    if spot is None or spot == caster.cell:      # клетку заняли, пока летел — рядом
-                        self.emit("fizzle", unit=caster, skill=None)
-                        return
-                    center = spot
-                self._place(caster, center, 0.12)
-                continue
-            if t == "leap_to":
-                if tunit is None or not self._leap_next_to(caster, tunit):
+                kit.special(self, caster, eff, caster.cell, caster)
+            elif t == "summon":
+                self.summon(caster, eff, caster.cell)
+            else:
+                self._apply_one(caster, eff, caster.cell, None)
+            return
+        if t in kit.TYPES:
+            kit.special(self, caster, eff, center, tunit)
+            return
+        if t in ("delay", "rush", "toss", "fuse", "place_object", "watch", "detonate", "song", "trap", "wall",
+                 "terrain", "shatter", "corpse", "rewind", "stasis", "spread_fire", "gather", "swap",
+                 "levitate", "collapse", "terrain_cast", "reagent", "extra_attack", "regroup", "focus", "tether",
+                 "merge", "life_transfer"):
+            self._special(caster, eff, center, tunit)
+            return
+        if t == "teleport":
+            if not self.is_free(center, exclude=caster):
+                spot = self.free_near(center, 1) if caster.airborne <= 0.05 else None
+                if spot is None or spot == caster.cell:      # клетку заняли, пока летел — рядом
                     self.emit("fizzle", unit=caster, skill=None)
-                    return
-                continue
-            if t == "line":
-                for v in self._line_victims(caster, center, eff["length"]):
-                    self._hit(caster, v, eff)
-                    if eff.get("push") and v.alive:      # разлом тарана: каждого задетого — толчком от себя
-                        self.knockback(caster.cell, v, eff["push"], caster)
-                continue
-            if t == "chain":
-                self._chain(caster, tunit or self.unit_at(center), eff)
-                continue
-            if t == "transfer_statuses":
-                if tunit is not None:
-                    self._transfer_statuses(caster, tunit, eff)
-                continue
-            if t == "summon":
-                self.summon(caster, eff, center)
-                continue
-            if t == "form":
-                self.set_form(caster, eff.get("form"))
-                continue
-            if t == "revive":
-                self.revive(caster, eff, center)
-                continue
-            self._apply_one(caster, eff, center, tunit)
+                    return True
+                center = spot
+            self._place(caster, center, 0.12)
+            return
+        if t == "leap_to":
+            if tunit is None or not self._leap_next_to(caster, tunit):
+                self.emit("fizzle", unit=caster, skill=None)
+                return True
+            return
+        if t == "line":
+            for v in self._line_victims(caster, center, eff["length"]):
+                self._hit(caster, v, eff)
+                if eff.get("push") and v.alive:      # разлом тарана: каждого задетого — толчком от себя
+                    self.knockback(caster.cell, v, eff["push"], caster)
+            return
+        if t == "chain":
+            self._chain(caster, tunit or self.unit_at(center), eff)
+            return
+        if t == "transfer_statuses":
+            if tunit is not None:
+                self._transfer_statuses(caster, tunit, eff)
+            return
+        if t == "summon":
+            self.summon(caster, eff, center)
+            return
+        if t == "form":
+            self.set_form(caster, eff.get("form"))
+            return
+        if t == "revive":
+            self.revive(caster, eff, center)
+            return
+        self._apply_one(caster, eff, center, tunit)
 
     def _apply_one(self, caster, eff, center, tunit):
         t = eff["type"]
@@ -1614,6 +1672,10 @@ class Combat:
                     c.hazard_team = caster.team
                     if eff["hazard"] == "mine":
                         c.hazard_owner, c.mine_mult = caster, eff.get("_powder", 1.0)
+                        c.charge = None
+                        if eff.get("blast"):       # мина героя: урон — % силы навыков на момент установки
+                            c.charge = {"dmg": eff["blast"] * self.stat_k(caster, "sp", True) * eff.get("_powder", 1.0),
+                                        "r": eff.get("blast_r", 0), "stun": eff.get("stun")}
                     if eff["hazard"] == "fire":
                         self._cell_tag(p, "fire")        # огонь по маслу — вспышка
             return
@@ -1638,8 +1700,8 @@ class Combat:
                 if eff.get("pct"):                 # лечение в процентах от HP цели
                     amount = int(round(v.max_hp * eff["pct"] * PS.heal_mult(self, caster)))
                 else:
-                    amount = int(round(eff["amount"] * caster.power * caster.proto.get("scale", {}).get("heal", 1.0)
-                                       * PS.heal_mult(self, caster)))
+                    hs = 1.0 if self._flat else caster.proto.get("scale", {}).get("heal", 1.0)
+                    amount = int(round(eff["amount"] * caster.power * hs * PS.heal_mult(self, caster)))
                 real = self.heal(v, amount, caster)
                 if real > 0 and v is not caster:
                     self.gain(caster, "heal_given")
@@ -1651,12 +1713,16 @@ class Combat:
                     v.shield_src = self.credit(caster)
                     self.emit("shield", unit=v, amount=excess)
             elif t == "shield":
-                amount = int(round(eff["amount"] * caster.power * caster.proto.get("scale", {}).get("heal", 1.0)))
+                hs = 1.0 if self._flat else caster.proto.get("scale", {}).get("heal", 1.0)
+                amount = int(round(eff["amount"] * caster.power * hs))
                 v.shield, v.shield_time = amount, eff["duration"]
                 v.shield_src = self.credit(caster)
                 self.emit("shield", unit=v, amount=amount)
             elif t == "buff":
-                self.add_buff(v, eff["stat"], eff["value"], eff["duration"])
+                val = eff["value"]
+                if self._flat and eff["stat"] in ("regen", "bleed") and isinstance(val, (int, float)):
+                    val = round(val * caster.power, 2)        # реген и кровотечение навыка — от стата героя
+                self.add_buff(v, eff["stat"], val, eff["duration"])
             elif t == "stun":
                 self.apply_stun(v, eff["duration"], eff.get("look") or self.cfg["control_looks"].get(self._skill))
             elif t == "knockback":
@@ -1720,6 +1786,12 @@ class Combat:
             amount *= ex["mult"]
             self.emit("execute", unit=v)
         dealt = self.damage(v, amount, caster, eff.get("tag"), eff.get("kind", "spell"))
+        ok = eff.get("on_kill")
+        if ok and not v.alive and caster.alive:     # «Охотник за головами»: убил — AP и сброс перезарядки
+            caster.ap = min(caster.ap_max, caster.ap + ok.get("ap", 0))
+            if ok.get("reset"):
+                caster.cooldowns.pop(ok["reset"], None)
+            self.emit("refresh", unit=caster, ap=ok.get("ap", 0))
         if eff.get("lifesteal") and dealt and caster.alive:
             self.heal(caster, int(round(dealt * eff["lifesteal"])))
         p = caster.passive
@@ -1765,6 +1837,30 @@ class Combat:
             self.emit("reveal", unit=u)
         return u.ambush
 
+    def group_limit(self, caster, group):
+        """Сколько призванных группы (тотемов) держит герой: по уровню (config.summon_groups) + вещи."""
+        lvl = caster.proto.get("level", 1)
+        return max(n for lv, n in self.cfg["summon_groups"][group] if lvl >= lv)             + int(caster.proto.get("totem_limit_add", 0))
+
+    def totem_use(self, s):
+        """Польза тотема сейчас: сколько целей в его зоне (боевой — врагов, бафающий/лечащий — союзников)."""
+        aura = s.aura or {}
+        r = aura.get("radius") or s.atk_range or 2
+        effs = aura.get("effects", [])
+        hostile = s.atk_damage > 0 or any(e["type"] in ("damage", "taunt", "stun") for e in effs)
+        n = sum(1 for v in self.units if v.alive and not v.obj and v is not s and not v.summon
+                and cheb(v.cell, s.cell) <= r and (s.is_enemy(v) if hostile else v.team == s.team))
+        return n
+
+    def worst_totem(self, caster, group):
+        """Кого заменить новым тотемом: самый бесполезный сейчас, при равенстве — самый побитый."""
+        mine = self.group_members(caster, group)
+        return min(mine, key=lambda s: (self.totem_use(s), s.hp / max(1, s.max_hp), s.id)) if mine else None
+
+    def group_members(self, caster, group):
+        return [s for s in self.units if s.alive and s.owner is caster and s.proto.get("group") == group
+                and not getattr(s, "extra", False)]
+
     def summon(self, caster, eff, center):
         """Призыв на клетку (или ближайшую свободную рядом). Сила призыва растёт с силой навыков призывателя."""
         proto = self.data.summons[eff["unit"]]
@@ -1775,6 +1871,15 @@ class Combat:
             return None
         limit = eff.get("limit", 1)
         mine = [s for s in self.units if s.alive and s.owner is caster and s.proto_id == eff["unit"]]
+        group = proto.get("group")
+        if group and not eff.get("extra"):     # тотемы шамана: общий лимит, растёт с уровнем (2 → 3 → 4)
+            limit = self.group_limit(caster, group) + eff.get("limit_add", 0)
+            mine = self.group_members(caster, group)
+        if group and not eff.get("extra"):     # сверх лимита уходит самый бесполезный, а не самый старый
+            while len(mine) >= limit and mine:
+                old = self.worst_totem(caster, group)
+                mine.remove(old)
+                self._kill(old, expire=True)
         for old in mine[:max(0, len(mine) - limit + 1)]:
             self._kill(old, expire=True)
         u = self._spawn(caster.team, eff["unit"], proto, cell)
@@ -1784,11 +1889,17 @@ class Combat:
             u.atk_damage = int(round(u.atk_damage * sm))
         u.owner = caster
         u.life = eff.get("duration", proto.get("life", 10))
+        if proto.get("permanent") and not eff.get("timed"):
+            u.life = None                      # тотемы, нежить, духи, знамя — без срока, только лимит по числу
+        u.extra = bool(eff.get("extra"))       # сверх лимита (Предки, Тотем-пленитель)
         k = caster.power * eff.get("power", 1.0)
         os_ = proto.get("owner_scale")
         if os_:                                # нежить некроманта: доля здоровья, урона и брони хозяина
-            u.max_hp = u.hp = max(u.max_hp, int(round(caster.max_hp * os_.get("hp", 0) * sm)))
-            dmg = max(caster.atk_damage, 1) * os_.get("atk", 0) * k * sm
+            if self._flat:                     # навык от стата героя: доля хозяина и так растёт с ним
+                k = eff.get("power", 1.0)
+            u.max_hp = u.hp = max(u.max_hp, int(round(caster.max_hp * os_.get("hp", 0) * sm
+                                                      * (eff.get("power", 1.0) if self._flat else 1.0))))
+            dmg = max(caster.atk_damage, 1) * (caster.proto.get("scale") or {}).get("basic", 1.0)                 * os_.get("atk", 0) * k * sm
             u.atk_damage = max(u.atk_damage, int(round(dmg)))
             u.armor = max(u.armor, int(round(caster.total_armor() * os_.get("armor", 0))))
         else:
@@ -1800,6 +1911,12 @@ class Combat:
         if u.aura:
             scaled = [dict(e, amount=int(round(e["amount"] * k))) if "amount" in e else e for e in u.aura["effects"]]
             u.aura = {**u.aura, "effects": scaled}
+        if eff.get("taunt"):                   # приманка: враги вокруг бьют призванного
+            for v in self.units_in_radius(u.cell, eff.get("taunt_radius", 2)):
+                if v.alive and caster.is_enemy(v) and not v.obj and not v.boss:
+                    v.taunted_by, v.taunt_time = u, eff["taunt"]
+                    v.ai_timer = 0.0
+                    self.emit("taunt", unit=v, src=u)
         self.emit("summon", unit=u, owner=caster)
         return u
 
@@ -1967,12 +2084,40 @@ class Combat:
                 continue
             if "hazard" in cr and c.hazard != cr["hazard"]:
                 continue
+            if tag == "fire" and c.hazard == "oil":   # масло: вспыхивает вся лужа, горит сильнее и дольше
+                self.ignite_oil(pos)
+                return
             if cr.get("clear_hazard"):
                 c.hazard = None
+                c.blaze = False
             if cr.get("set_hazard"):
                 c.hazard, c.hazard_time = cr["set_hazard"], cr["duration"]
+                c.blaze = False
             self.emit("cell_reaction", pos=pos, name=cr["name"], tag=tag)
             return
+
+    def ignite_oil(self, pos):
+        """Огонь коснулся масла: загорается вся связная лужа (8 соседей) — горящее масло жжёт сильнее и дольше."""
+        cfg = self.cfg["blaze"]
+        todo, seen = [tuple(pos)], set()
+        while todo:
+            p = todo.pop()
+            if p in seen:
+                continue
+            seen.add(p)
+            cell = self.grid.get(p)
+            if cell is None or cell.hazard != "oil":
+                continue
+            cell.hazard, cell.hazard_time, cell.blaze = "fire", cfg["duration"], True
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    q = (p[0] + dx, p[1] + dy)
+                    if q not in seen:
+                        todo.append(q)
+        burnt = [p for p in seen if self.grid.get(p) is not None and self.grid.get(p).blaze]
+        if burnt:
+            self.emit("cell_reaction", pos=tuple(pos), name="Масло вспыхнуло", tag="fire")
+            self.emit("oil_blaze", cells=burnt)
 
     # ---------- урон, теги, реакции ----------
 
@@ -1984,6 +2129,8 @@ class Combat:
         sc = attacker.proto.get("scale") if attacker is not None and not self._intercepting else None
         if sc:                                 # режим героев: урон растёт от атрибута своего вида
             school = "basic" if self._basic else (kind if kind in self.data.stats_mode["schools"] else None)
+            if self._flat and not self._basic:
+                school = None                  # навык от стата героя: атрибут уже в множителе (stat_k)
             amount *= sc.get(school, 1.0) if school else 1.0
             if kind in DIRECT and attacker.proto.get("crit") and self.rng.random() < attacker.proto["crit"]:
                 amount *= attacker.proto.get("crit_mult", 1.75)
@@ -2005,6 +2152,8 @@ class Combat:
             return 0
         if target.obj:
             return self._hit_object(target, amount, attacker, tag)
+        if "reactive" in target.buffs and attacker is not None and kind in DIRECT and attacker.is_enemy(target)                 and not self._intercepting and self.time >= getattr(target, "reactive_t", 0.0):
+            kit.reactive_blast(self, target, attacker)
         if attacker is not None and (target.marks or attacker.marks):
             amount *= kit.duel_mult(self, target, attacker)
             if any(m["src"] is attacker for mid, m in target.marks.items() if mid in ("challenge", "duel")):
@@ -2158,7 +2307,15 @@ class Combat:
             o = self.spawn_object(eff["object"], center)
             o.owner = caster
             o.blast_mult = eff.get("_powder", 1.0)
+            if eff.get("blast"):               # заряд героя: урон — % силы навыков, прочность — % его здоровья
+                o.blast_dmg = eff["blast"] * self.stat_k(caster, "sp", True) * o.blast_mult
+                o.blast_r = eff.get("blast_r")
+                o.blast_stun = eff.get("stun")
+            if eff.get("hp_pct"):
+                o.max_hp = o.hp = max(1, int(round(caster.max_hp * eff["hp_pct"])))
             self.emit("summon", unit=o, owner=caster)
+        elif t == "fuse" and eff.get("chain"):     # Фитиль-кнопка: все свои заряды — цепочкой за ~1 сек
+            kit.fuse_chain(self, caster, eff)
         elif t == "fuse":                  # фитиль: свои бочки в радиусе взорвутся через delay сек
             for o in self.units:
                 if o.alive and o.obj and o.obj.get("volatile") is not None and o.owner is caster \
@@ -2535,6 +2692,24 @@ class Combat:
             if d.get("blast"):                # взрыв мутатора «взрывной»
                 MU.blast(self, *d["blast"])
                 continue
+            if d.get("charge"):               # Фитиль дошёл до заряда в клетке или бомбы
+                kit.blow_charge(self, *d["charge"])
+                continue
+            if d.get("ball"):                 # шаровая молния прошла клетку
+                kit.ball_step(self, *d["ball"])
+                continue
+            if d.get("storm_tick"):           # «Грозовой фронт»: удар с неба у шамана и тотемов
+                kit.storm_tick(self, *d["storm_tick"])
+                continue
+            if d.get("rain_barrel"):          # «Дождь бочек»: бочка упала
+                kit.rain_barrel_land(self, *d["rain_barrel"])
+                continue
+            if d.get("shot"):                 # очередная стрела «Шквала»: вылетает, попадает через полёт
+                kit.fire_shot(self, *d["shot"])
+                continue
+            if d.get("shot_hit"):
+                kit.land_shot(self, *d["shot_hit"])
+                continue
             if d.get("fn"):
                 d["fn"]()
                 continue
@@ -2698,7 +2873,12 @@ class Combat:
         o.hp = 0
         d = o.obj
         eff = d.get("on_ignite") if ignite and "on_ignite" in d else d.get("on_break")
-        self.emit("object_break", unit=o, ignite=ignite, fx=eff)
+        own = getattr(o, "blast_dmg", None)
+        fx = eff
+        if eff and own is not None:            # заряд героя: свой урон и радиус — и на картинке
+            fx = dict(eff, damage=round(own), radius=o.blast_r if getattr(o, "blast_r", None) is not None
+                      else eff.get("radius", 0))
+        self.emit("object_break", unit=o, ignite=ignite, fx=fx)
         src = o.igniter if o.igniter is not None and o.igniter.alive else None
         if d.get("guard"):
             self.log(f"{o.name} потерян(а)!", (255, 110, 110))
@@ -2711,14 +2891,31 @@ class Combat:
             for p in self.grid.in_radius(o.cell, r):
                 c = self.grid.get(p)
                 if c.passable and c.terrain not in ("water", "chasm"):
+                    if eff["hazard"] == "fire" and c.hazard == "oil":
+                        self.ignite_oil(p)        # взрыв на масле — горит вся лужа
+                        continue
                     c.hazard, c.hazard_time = eff["hazard"], eff.get("hazard_time", 5)
+                    c.blaze = False
                     c.hazard_team = src.team if src is not None else None
-        if eff.get("damage"):
-            for v in self.units_in_radius(o.cell, r):
-                if v is not o:
-                    if v.obj:
-                        v.igniter = o.igniter
-                    self.damage(v, eff["damage"] * getattr(o, "blast_mult", 1.0), src, eff.get("tag"), "reaction")
+        if own is not None and getattr(o, "owner", None) is not None:
+            self.gain(o.owner, "blast")
+        if eff.get("damage") or own is not None:
+            if own is not None and getattr(o, "blast_r", None) is not None:
+                r = o.blast_r
+            flat = self._flat
+            self._flat = own is not None       # заряд героя: урон уже от его силы навыков
+            try:
+                for v in self.units_in_radius(o.cell, r):
+                    if v is not o:
+                        if v.obj:
+                            v.igniter = o.igniter
+                        dmg = own if own is not None else eff["damage"] * getattr(o, "blast_mult", 1.0)
+                        self.damage(v, dmg, src or getattr(o, "owner", None), eff.get("tag"), "reaction")
+                        st = getattr(o, "blast_stun", None)
+                        if st and v.alive and not v.obj and o.owner is not None and o.owner.is_enemy(v):
+                            self.apply_stun(v, st, "stun")
+            finally:
+                self._flat = flat
 
     def _collide(self, u, other, left, pusher=None):
         """Удар при толчке о стену, юнит или объект: урон растёт с непройденными клетками, тот, в кого врезались,

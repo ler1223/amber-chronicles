@@ -43,7 +43,7 @@ def measure(data, cls, proto, seconds=10.0):
     """Урон, полученный урон и лечение героя за seconds сек боя с манекенами."""
     c = dummy_fight(preview_data(data), cls, proto)
     hero = c.heroes(PLAYER)[0]
-    while c.time < seconds and hero.alive:
+    while c.time < seconds and hero.alive and not c.result:     # манекены могут пасть раньше — бой окончен
         c.step()
     t = hero.tally
     return {"dealt": t["dealt"], "taken": t["taken"] + t["absorbed"], "absorbed": t["absorbed"], "healed": t["healed"],
@@ -79,5 +79,5 @@ class GiftPreview(SkillPreview):
         self.view.consume(c.events)
         c.events.clear()
         self.view.update(dt, dt)
-        if self.t >= CYCLE or not self.caster.alive:
+        if self.t >= CYCLE or not self.caster.alive or (c.result and self.t >= 1.5):
             self.restart()

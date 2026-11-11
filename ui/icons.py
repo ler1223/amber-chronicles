@@ -27,7 +27,8 @@ BUFF_NAMES = {"armor": "броня", "atk_mult": "урон", "atk_speed": "бы�
               "banner": "у знамени: приказы сильнее", "zoc_free": "стойка часового", "zoc_range": "длинное древко",
               "collide_stun": "стенобой: столкновения оглушают", "billiard": "бильярд: толчки по цепочке",
               "all_arrows": "все стрелы сразу", "inferno": "инферно: огонь не гаснет",
-              "stable": "стабилизатор: теги не реагируют"}
+              "stable": "стабилизатор: теги не реагируют", "armor_shred": "пробита броня",
+              "fletch": "оперение: атаки несут стрелы лучника"}
 MARK_GLYPH = {"challenge": "duel", "duel": "duel", "cold": "ice", "bomb": "bomb"}
 
 _cache = {}
@@ -321,9 +322,6 @@ def unit_states(u, data, combat=None):
     if mut and mut in getattr(data, "mutators", {}):     # механика врага — первой, чтобы её видели
         d = data.mutators[mut]
         out.insert(0, (d.get("icon", "other"), tuple(d["color"]), 1.0, f"{d['name']}: {d['desc']}"))
-    if getattr(u, "quiver", None):
-        q = data.config.get("quiver", {}).get(u.quiver, {})
-        out.append(("atk_tag", (255, 220, 150), 1.0, f"Колчан: {q.get('name', u.quiver)}"))
     if combat is not None:
         for name, left, total in combat.pending_on(u):
             out.append(("regen", (255, 240, 170), left / max(total, 0.01), f"{name} через {left:.1f} с"))

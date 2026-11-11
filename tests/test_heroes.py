@@ -113,7 +113,8 @@ def test_pull_brings_target_next_to_caster():
     assert f.cell == (3, 3)
 
 
-def test_totems_heal_expire_and_do_not_count_as_squad():
+def test_totems_heal_stay_within_limit_and_do_not_count_as_squad():
+    """Тотемы без срока жизни: остаются, пока их не сломают; сверх лимита (2 на 1 уровне) уходит самый бесполезный."""
     c = Combat(DATA, 1, squad=squad_of(["shaman", "warrior", "mage", "priest"]))
     s = unit(c, "shaman")
     w = unit(c, "warrior")
@@ -124,9 +125,12 @@ def test_totems_heal_expire_and_do_not_count_as_squad():
     for _ in range(int(1.5 / c.dt)):
         c.step()
     assert w.hp > 50
-    for _ in range(int(1.0 / c.dt)):
+    for _ in range(int(3.0 / c.dt)):
         c.step()
-    assert not t.alive
+    assert t.alive                               # срок жизни больше не ограничивает
+    t2 = c.summon(s, {"unit": "totem_storm"}, (0, 0))
+    t3 = c.summon(s, {"unit": "totem_storm"}, (0, 1))
+    assert t.alive and t3.alive and not t2.alive  # сверх лимита ушёл бесполезный (гроза без врагов), а не лекарь
     for u in c.heroes(PLAYER):
         u.alive = False
     c._check_end()

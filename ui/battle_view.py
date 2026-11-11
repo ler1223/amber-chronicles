@@ -23,7 +23,7 @@ from ui.sprites import DRAWERS, SpriteBank
 from ui.vfx import Light, VfxWorld, resolve_color
 from ui.vfx_textures import make_textures
 
-SKILL_KEYS = "QWERDFTYUI"     # одиночка: пятый и шестой навык — D и F
+SKILL_KEYS = "QWERDGTYUI"     # одиночка: пятый и шестой навык — D и G (F — кнопка механики класса)
 RIGHT_X = 924
 BOTTOM_Y = 608
 PANEL_Y = 64
@@ -42,8 +42,9 @@ BUFF_TEXT = {
     "zoc_free": lambda v: "стойка", "zoc_range": lambda v: "длинное древко", "collide_stun": lambda v: "стенобой",
     "billiard": lambda v: "бильярд", "all_arrows": lambda v: "все стрелы", "inferno": lambda v: "инферно",
     "stable": lambda v: "стабилизатор", "banner": lambda v: "у знамени",
+    "armor_shred": lambda v: f"−{v:g} брони", "fletch": lambda v: "оперение",
 }
-BUFF_GOOD = {"atk_speed", "thorns", "regen", "immune", "stealth", "ap_rate", "atk_tag"}
+BUFF_GOOD = {"atk_speed", "thorns", "regen", "immune", "stealth", "ap_rate", "atk_tag", "fletch"}
 ARROW = (235, 225, 200)
 LUNGE_T, HIT_T = 0.18, 0.16
 TOSS_T = 0.32              # бросок тарана: столько летит брошенный
@@ -138,6 +139,7 @@ class BattleView:
         self._prop_imgs = {}
         self.squad_rects = []
         self.skill_rects = []
+        self.prio_rect = None         # кнопка «Приоритет (P)» над навыками героя
         self.auto_rects = []
         self.start_button = None
         self.clock = 0.0
@@ -269,11 +271,27 @@ class BattleView:
         if u.form:                     # облик друида: свой спрайт (druid_bear.png / bear.png) или заглушка зверя
             return self.sprites.get([f"{u.proto_id}_{u.form}", u.form], u.form, u.color, u.boss, flip, flash)
         names = [u.proto.get("path"), u.proto_id, SPRITE_ALIAS.get(u.proto_id), u.proto.get("sprite_fallback")]
+        if u.proto.get("mirror") and u.owner is not None:     # отражение лучника — его же фигурка
+            names = [u.owner.proto.get("path"), u.owner.proto_id] + names
         if u.proto_id in SKELETONS:                  # поднятые скелеты — 4 вида вразнобой
             names.insert(0, f"skeleton_minion_{u.id % 4 + 1}")
         look = u.proto.get("look")
         kind = u.proto_id if u.proto_id in DRAWERS or look else u.role
         return self.sprites.get(names, kind, u.color, u.boss, flip, flash, look)
+
+    def _water(self, img, seed=0):
+        """Фигурка-отражение: голубоватая, полупрозрачная, строки колышутся синусоидой (искажение воды)."""
+        w, h = img.get_size()
+        out = pygame.Surface((w + 8, h), pygame.SRCALPHA)
+        t = self.clock * 3.2 + seed
+        step = 2
+        for y in range(0, h, step):
+            dx = 4 + math.sin(t + y * 0.21) * 2.6 + math.sin(t * 1.7 + y * 0.07) * 1.4
+            out.blit(img, (int(dx), y), pygame.Rect(0, y, w, step))
+        out.fill((150, 200, 255, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        out.fill((70, 100, 130, 0), special_flags=pygame.BLEND_RGBA_ADD)     # светлее: блик воды
+        out.set_alpha(165 + int(30 * math.sin(self.clock * 2.3 + seed)))
+        return out
 
     def unit_h(self, u):
         return self.sprite_of(u).get_height() * self.depth(u)
@@ -301,7 +319,14 @@ class BattleView:
         f.age = min(f.age, 0.15)                  # число «подпрыгивает» и живёт дольше
         return True
 
-    def float_text(self, u_or_pos, s, color, size=16, ttl=1.0, dy=0):
+    TEXT_KINDS = {"status": "text_status", "skill": "text_skills", "number": "text_numbers"}
+
+    def float_text(self, u_or_pos, s, color, size=16, ttl=1.0, dy=0, kind="status"):
+        """Всплывающая надпись. kind — группа для настроек: status (криты, состояния, эффекты), skill (названия
+        навыков), number (урон и лечение); выключенная группа не показывается. Возвращает Fx или None."""
+        from ui import settings
+        if not settings.SETTINGS.get(self.TEXT_KINDS.get(kind, "text_status"), True):
+            return None
         if isinstance(u_or_pos, tuple):
             x, y = u_or_pos
         else:
@@ -309,7 +334,9 @@ class BattleView:
             y -= self.unit_h(u_or_pos) * 0.3
         # раскладываем одновременные надписи над юнитом, чтобы не слипались
         busy = sum(1 for f in self.fx if f.kind == "text" and f.age < 0.25 and abs(f.x - x) < 30 and abs(f.y0 - y) < 60)
-        self.fx.append(Fx("text", ttl, x=x, y0=y - 20 - dy - busy * 16, s=s, color=color, size=size))
+        f = Fx("text", ttl, x=x, y0=y - 20 - dy - busy * 16, s=s, color=color, size=size)
+        self.fx.append(f)
+        return f
 
     def _face(self, u, target_x):
         x, _ = self.feet_pos(u)
@@ -425,7 +452,7 @@ class BattleView:
                        or self.pix.handles(sid, sk))      # пиксельный стиль сам ведёт замах, полёт и удар
         if sk:
             name = sk["name"] + (" ·авто" if e.get("auto") else "")
-            self.float_text(u, name, (255, 235, 170), 14, ttl=1.0, dy=10)
+            self.float_text(u, name, (255, 235, 170), 14, ttl=1.0, dy=10, kind="skill")
             if hit > 0 and not natural and far:          # метка: куда ударит — заполняется к моменту удара
                 for p in cells or [center]:
                     self.fx.append(Fx("tele", hit, pos=p, color=color))
@@ -494,8 +521,9 @@ class BattleView:
             if e.get("cover"):
                 s += " (укр.)"
             if not self._merge_damage(u, e, col):
-                self.float_text(u, s, col, 18 if e["amount"] >= 15 else 15)
-                self.fx[-1].dmg = (u, e["amount"], col)
+                f = self.float_text(u, s, col, 18 if e["amount"] >= 15 else 15, kind="number")
+                if f is not None:
+                    f.dmg = (u, e["amount"], col)
             if e["kind"] in ("melee", "ranged", "spell"):
                 self.anim(u).hit = HIT_T
                 if e["tag"] and not pix:
@@ -505,7 +533,7 @@ class BattleView:
             elif e["kind"] in ("dot", "hazard") and not pix:
                 V.emit("burn", *self.unit_pos(u), count=3)
         elif t == "heal" and e["amount"] > 0:
-            self.float_text(e["unit"], f"+{e['amount']}", T.HEAL, 16)
+            self.float_text(e["unit"], f"+{e['amount']}", T.HEAL, 16, kind="number")
             V.play("heal_small", self._ctx(target=e["unit"], color=(140, 255, 170)))
         elif t == "status":
             tag = self.data.tags[e["tag"]]
@@ -521,8 +549,10 @@ class BattleView:
             x, y = self.unit_pos(u)
             if not pix:
                 V.play(f"reaction_{e['id']}", self._ctx(target=u, color=T.mix(c1, c2, 0.5)))
-            self.fx.append(Fx("text", 1.4, x=x, y0=y - 70, s=e["name"].upper() + "!", color=T.mix(c1, c2, 0.5),
-                              size=24))
+            from ui import settings
+            if settings.SETTINGS.get("text_status", True):      # «ПАР!» и т. п. — в группе состояний
+                self.fx.append(Fx("text", 1.4, x=x, y0=y - 70, s=e["name"].upper() + "!", color=T.mix(c1, c2, 0.5),
+                                  size=24))
         elif t == "passive":
             u = e["unit"]
             same = next((f for f in self.fx if f.kind == "badge" and f.unit is u and f.name == e["name"]), None)
@@ -781,6 +811,12 @@ class BattleView:
             V.play("refresh_fx", self._ctx(target=e["unit"], color=(240, 210, 120)))
         elif t == "stasis":
             self.float_text(e["unit"], "Стазис!", (240, 205, 110), 17, ttl=1.0, dy=8)
+        elif t == "shackle":                           # связывающая стрела: прибиты оба
+            for u in (e["unit"], e.get("other")):
+                if u is not None:
+                    self.float_text(u, "Прибит!", (220, 200, 150), 16, ttl=1.0, dy=8)
+        elif t == "leap":                              # отскок лучника: послеобраз на старой клетке
+            self.add_ghost(e["unit"], 0.35, (200, 230, 255))
         elif t in ("mark", "mark_max", "zone_pulse", "quiver", "corpse_make"):
             self._kit_event(e, pix)
         elif t == "mutator":                           # механика врага сработала по герою
@@ -829,6 +865,32 @@ class BattleView:
                 V.play("great_heal", self._ctx(target=e["unit"], color=(255, 240, 170)))
         elif t == "fuse":
             self.float_text(e["unit"], "Фитиль!", (255, 170, 80), 14, ttl=0.9)
+        elif t == "fuse_chain":                       # Фитиль-кнопка: огонёк бежит от подрывника по зарядам
+            pts = [T.cell_feet(e["unit"].cell)] + [T.cell_feet(p) for p in e["cells"]]
+            for a, b in zip(pts, pts[1:]):
+                V.emit_line("light_motes", a, b, (255, 190, 90), step=6)
+            self.float_text(e["unit"], "Фитиль!", (255, 170, 80), 16, ttl=1.0)
+        elif t == "barrel_rain":                      # бочки падают с неба на свои клетки
+            for i, p in enumerate(e["cells"]):
+                gx, gy = T.cell_feet(p)
+                self.vfx.projectile((gx - 60, gy - 520), (gx, gy), 900, None, None, (200, 140, 80), 0, 1.0,
+                                    prop="barrel", dur=0.25 + 0.15 * i, spin=math.radians(240))
+        elif t == "ball_start":                       # шаровая молния: медленный шар по прямой
+            a = self.unit_pos(e["unit"])
+            gx, gy = T.cell_feet(e["cells"][-1])
+            self.vfx.projectile(a, (gx, gy - 24), 300, None, None, (170, 175, 255), 0, 1.4, sfx="energy_orb",
+                                ribbon="bolt_trail", dur=len(e["cells"]) / e["speed"])
+        elif t == "sky_bolt":                         # грозовой фронт: молния с неба в клетку
+            gx, gy = T.cell_feet(e["pos"])
+            V.bolt((gx + 30, gy - 420), (gx, gy - 20), (170, 175, 255), 9, 0.28, 0.2, 0)
+            V.emit("hit_sparks", gx, gy - 20, color=(190, 200, 255))
+        elif t == "storm_front":
+            self.float_text(e["unit"], "Грозовой фронт!", (170, 175, 255), 18, ttl=1.4)
+            self.vfx.screen_fx(dim=0.2, dim_time=e["duration"])
+        elif t == "ancestors":
+            self.float_text(e["unit"], "Предки!", (200, 220, 150), 18, ttl=1.4)
+        elif t == "powder_trail":
+            self.float_text(e["unit"], "Порох!", (200, 170, 120), 14, ttl=0.9)
         elif t == "toss":
             self.anim(e["unit"]).toss = TOSS_T
         elif t == "rush":
@@ -949,7 +1011,7 @@ class BattleView:
     def _aura(self, u, radius):
         """Пульс ауры призыва: кольцо; боевая аура бьёт молниями во врагов вокруг, провокация — красными кольцами."""
         V = self.vfx
-        kinds = {e["type"] for e in u.aura["effects"]}
+        kinds = {e["type"] for e in (u.aura or {}).get("effects", [])}   # мутаторы шлют пульс без своей ауры
         ctx = self._ctx(caster=u, color=u.color)
         V.play("aura_pulse", dict(ctx, scale=max(0.5, radius / 2)))
         if "damage" in kinds:
@@ -1020,6 +1082,12 @@ class BattleView:
                     V.play("fire_explosion", {"target": (gx, gy - 24), "target_ground": (gx, gy), "cells": [(gx, gy)],
                                               "color": (255, 140, 50), "scale": P.scale_at(u.cell[1] + 0.5)})
                 self.vfx.screen_fx(shake=4)
+        elif t == "zone_pulse" and e.get("kind") == "arrows":     # дождь стрел: залп по всем клеткам зоны
+            cells = self._fx_cells(e["center"], e["radius"]) or [e["center"]]
+            src = e.get("src")
+            ctx = self._ctx(src if src is not None and src.alive else None, None, e["center"], cells,
+                            (230, 220, 180), 1.0)
+            self.vfx.play("volley_rain", ctx)
         elif t == "zone_pulse" and pix:
             x, y = e["center"][0] + 0.5, e["center"][1] + 0.5
             self.pix.arch.ring(x, y, e["radius"] + 0.3, self.ZONE_PAL.get(e.get("kind"), "spirit"), n=90, life=0.5,
@@ -1149,8 +1217,11 @@ class BattleView:
                 if cell.hazard in ("fire", "ice") and pix:
                     pass
                 elif cell.hazard == "fire":
-                    for _ in range(self._rate(("hz", pos), 7, dt)):
-                        V.emit("flame_fb", x, y - 22)
+                    for _ in range(self._rate(("hz", pos), 14 if cell.blaze else 7, dt)):
+                        V.emit("flame_fb", x, y - (34 if cell.blaze else 22), color=(255, 210, 90) if cell.blaze else None)
+                    if cell.blaze:                    # горящее масло: выше пламя и чёрный дым
+                        for _ in range(self._rate(("hs", pos), 3, dt)):
+                            V.emit("smoke", x, y - 40, count=1)
                     for _ in range(self._rate(("he", pos), 4, dt)):
                         V.emit("heat_embers", x, y - 6)
                 elif cell.hazard == "ice":
@@ -1658,8 +1729,28 @@ class BattleView:
                 pygame.draw.rect(self.overlay, (255, 230, 120, 38), FR(pos))
         hover = scene.hover_cell
         if hover:
-            for p in self._cells_around(hover, sk.get("radius", 0)):
+            path, near = self._skill_shape(u, sk, hover)
+            for p in near:
+                pygame.draw.rect(self.overlay, (255, 220, 80, 45), FR(p))
+            for p in path:
                 pygame.draw.rect(self.overlay, (255, 220, 80, 90), FR(p))
+            if len(path) > 1:                         # путь по прямой — линией от героя до конца
+                pts = [self.flat_feet(u)] + [P.ground_to_flat(*P.cell_ground(p)) for p in path]
+                pygame.draw.lines(self.overlay, (255, 235, 140, 210), False, pts, 3)
+
+    def _skill_shape(self, u, sk, center):
+        """Клетки навыка: (путь/зона, клетки рядом слабее). По прямой летят шар, дорожка, линии — путь до конца
+        дальности навыка от героя через точку; остальное — круг радиуса навыка."""
+        from sim import kit
+        for e in sk.get("effects", []):
+            if e["type"] in ("ball", "trail", "line"):
+                path = [p for p in kit.line_cells(u.cell, tuple(center), e.get("length", 5))
+                        if self.grid.in_bounds(p)]
+                near = []
+                if e.get("radius"):
+                    near = sorted({q for p in path for q in self._cells_around(p, e["radius"])} - set(path))
+                return path, near
+        return list(self._cells_around(center, sk.get("radius", 0))), []
 
     def _draw_telegraphs(self, c):
         for u in c.alive():
@@ -1672,7 +1763,8 @@ class BattleView:
                 center = u.cell
             col = (255, 70, 60) if u.team != PLAYER else (90, 170, 255)
             k = 1 - u.cast["left"] / u.cast["total"]
-            for p in self._cells_around(center, sk.get("radius", 0)):
+            path, near = self._skill_shape(u, sk, center)
+            for p in path + near:
                 r = FR(p)
                 pygame.draw.rect(self.overlay, (*col, 50 + int(70 * k)), r)
                 pygame.draw.rect(self.overlay, (*col, 220), r.inflate(-int(60 * (1 - k)), -int(50 * (1 - k))), 2)
@@ -1789,6 +1881,8 @@ class BattleView:
         if "stealth" in u.buffs:                     # в тени — едва видно (свой отряд видит силуэт)
             img = img.copy()
             img.set_alpha(80 + int(30 * math.sin(self.clock * 5)))
+        if u.proto.get("mirror"):                    # отражение: полупрозрачное, плывёт, как в воде
+            img = self._water(img, u.id)
         w0, h0 = img.get_size()
         # дыхание, сжатие от удара, подскок при шаге, выпад к цели, дрожь
         ph = self.clock * 2.4 + u.id * 1.7
@@ -2774,6 +2868,7 @@ class BattleView:
         self.skill_rects = []
         self.auto_rects = []
         self.queue_rects = []
+        self.prio_rect = None
         u = scene.selected
         if not u:
             if self.simple:
@@ -2834,12 +2929,14 @@ class BattleView:
                 y += 16
 
         cx = panel.x + 262
-        n = max(1, len(u.skills))
+        cards = [i for i, s in enumerate(u.skills) if not u.skill_defs[s].get("mech")]   # механика — кнопкой выше
+        n = max(1, len(cards))
         compact = n > 4
         cw = max(48, (panel.right - cx - 10 - (n - 1) * 8) // n)
-        for i, sid in enumerate(u.skills):
+        for slot, i in enumerate(cards):
+            sid = u.skills[i]
             sk = u.skill_defs[sid]
-            r = pygame.Rect(cx + i * (cw + 8), panel.y + 10, cw, panel.h - 20)
+            r = pygame.Rect(cx + slot * (cw + 8), panel.y + 10, cw, panel.h - 20)
             self.skill_rects.append((r, i))
             active = scene.targeting == sid
             ult = bool(sk.get("ult"))
@@ -2917,6 +3014,9 @@ class BattleView:
                     pygame.draw.rect(surf, (110, 220, 130) if on else T.PANEL_EDGE, strip, 1, border_radius=5)
                 label = fit(AC.setting_label(st, self.data.tags), 12, strip.w - 10)
                 T.text(surf, label, strip.center, 12, (200, 255, 210) if on else T.TEXT_DIM, on, center=True)
+        self._draw_quivers(surf, scene, u, pygame.Rect(cx, panel.y, panel.right - cx - 10, panel.h))
+        self._draw_mech(surf, scene, u, pygame.Rect(cx, panel.y, panel.right - cx - 10, panel.h))
+        self._draw_prio(surf, scene, u, panel)
         self._draw_queue_chips(surf, scene, panel)
         tip = getattr(self, "_skill_tip", None)
         if tip:
@@ -2932,6 +3032,118 @@ class BattleView:
                                       BOTTOM_Y - h - 6, w, h)
                     ed["rect"] = box
                     ed["editor"].draw(surf, box, scene.mouse)
+
+    def _draw_quivers(self, surf, scene, u, area):
+        """Колчаны лучника — вкладками над его навыками: стрелы по очереди, следующая подсвечена; закрытый слот —
+        уровень, на котором откроется. Иконка assets/icons/arrow_<вид>.png (лист Q промптов), иначе — стрела цвета."""
+        from sim import story_meta
+        if not story_meta.cfg(self.data)["classes"].get(u.proto_id, {}).get("quivers") or u.team != PLAYER:
+            return
+        arrows = self.data.config.get("arrows", {})
+        levels = self.data.config.get("quiver_levels", [1, 6, 11])
+        lvl = u.proto.get("level", 1)
+        boost = u.proto.get("quiver_boost")
+        w, h = min(190, (area.w - 16) // 3), 28
+        y = area.y - h - 2
+        nxt = u.quivers[u.arrow_i % len(u.quivers)] if u.quivers else None
+        tip = None
+        for n in range(len(levels)):
+            r = pygame.Rect(area.x + n * (w + 8), y, w, h)
+            aid = u.quivers[n] if n < len(u.quivers) else None
+            a = arrows.get(aid) if aid else None
+            col = tuple(a["color"]) if a else (90, 80, 70)
+            on = aid is not None and aid == nxt and len(u.quivers) > 0
+            pygame.draw.rect(surf, T.mix((22, 16, 12), col, 0.22 if a else 0.05), r, border_radius=6)
+            pygame.draw.rect(surf, T.SELECT if on else T.mix(col, (0, 0, 0), 0.35), r, 2 if on else 1,
+                             border_radius=6)
+            if a:
+                self._arrow_icon(surf, aid, col, (r.x + 4, r.y + 3), 22)
+                label = a["name"].replace(" стрелы", "")
+                T.text(surf, fit(label, 13, w - 52), (r.x + 30, r.y + 6), 13, T.TEXT if on else col, True)
+                if on:
+                    T.text(surf, "»", (r.right - 14, r.y + 5), 15, T.SELECT, True)
+                if r.collidepoint(scene.mouse):
+                    tip = (r, [(a["name"] + ("  (усилены ×1.5)" if boost else ""), col), (a["desc"], T.TEXT),
+                               ("Стрелы колчанов чередуются: каждый выстрел — следующая", T.TEXT_DIM)])
+            else:
+                T.text(surf, fit(f"колчан: с {levels[n]} ур." if lvl < levels[n] else "колчан не выбран",
+                                 12, w - 12), (r.x + 8, r.y + 7), 12, T.TEXT_DIM)
+        if tip:
+            r, lines = tip
+            bw = max(T.font(13).size(s)[0] for s, _ in lines) + 20
+            box = pygame.Rect(min(r.x, T.SCREEN_W - bw - 8), r.y - 12 - 20 * len(lines), bw, 20 * len(lines) + 8)
+            pygame.draw.rect(surf, (14, 12, 10), box, border_radius=6)
+            pygame.draw.rect(surf, T.PANEL_EDGE, box, 1, border_radius=6)
+            for k, (s, c) in enumerate(lines):
+                T.text(surf, s, (box.x + 10, box.y + 5 + k * 20), 13, c, k == 0)
+
+    def _draw_mech(self, surf, scene, u, area):
+        """Кнопка механики класса (F) над навыками: Фитиль подрывника — сколько зарядов на поле, автокаст."""
+        mi = next((i for i, s in enumerate(u.skills) if u.skill_defs[s].get("mech")), None)
+        if mi is None or u.team != PLAYER:
+            return
+        sid = u.skills[mi]
+        sk = u.skill_defs[sid]
+        tint = self.tint(u)
+        n = kit.LIVE["charges"](self.combat, u) if self.combat else 0
+        r = pygame.Rect(area.x, area.y - 32, min(330, area.w), 30)
+        self.skill_rects.append((r, mi))
+        hot = r.collidepoint(scene.mouse)
+        ready = n > 0
+        T.frame(surf, r, 245, accent=tint["accent"] if ready else tint["dim"], corners=False,
+                fill=T.mix(tint["fill"], tint["accent"], 0.18 if hot else 0.06))
+        T.badge(surf, "F", (r.x + 14, r.centery), 14, bg=tint["accent"] if ready else tint["dim"])
+        T.text(surf, f"{sk['name']}  ·  зарядов: {n}", (r.x + 30, r.y + 6), 15, T.TEXT if ready else T.TEXT_DIM, True)
+        st = u.autocast.get(sid)
+        if st is not None:
+            lab = fit(AC.setting_label(st, self.data.tags), 12, 130)
+            T.text(surf, lab, (r.right - 8 - T.font(12, st["on"]).size(lab)[0], r.y + 8), 12,
+                   (200, 255, 210) if st["on"] else T.TEXT_DIM, st["on"])
+        if hot:
+            self._skill_tip = (r, sk)
+
+    def _draw_prio(self, surf, scene, u, panel):
+        """Кнопка «Приоритет (P)» над навыками справа и сама панель приоритета автокаста, когда открыта."""
+        self.prio_rect = None
+        if u.team != PLAYER or not hasattr(scene, "prio"):
+            return
+        r = pygame.Rect(panel.right - 196, panel.y - 32, 186, 30)
+        self.prio_rect = r
+        hot = r.collidepoint(scene.mouse)
+        T.frame(surf, r, 245, accent=(240, 200, 110) if (hot or scene.prio_open) else T.PANEL_EDGE, corners=False,
+                fill=(60, 46, 32) if hot or scene.prio_open else (36, 28, 22))
+        T.text(surf, "Приоритет (P)", r.center, 14, (240, 200, 110), True, center=True)
+        if scene.prio_open:
+            p = scene.prio
+            p.set_source(u.skill_defs, u.autocast, u.ac_order, u.ac_reserve)
+            h = p.height()
+            p.rect = pygame.Rect(panel.right - 470, max(70, panel.y - 40 - h), 460, h)
+            p.mouse = scene.mouse
+            p.draw(surf, f"Приоритет автокаста: {self.names.get(u.proto_id) or u.name}")
+
+    _ARROW_ICONS = {}
+
+    def _arrow_icon(self, surf, aid, col, pos, size):
+        key = (aid, size)
+        if key not in self._ARROW_ICONS:
+            import os
+            path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "icons",
+                                f"arrow_{aid}.png")
+            img = None
+            if os.path.exists(path):
+                try:
+                    img = pygame.transform.scale(pygame.image.load(path), (size, size))
+                except pygame.error:
+                    img = None
+            if img is None:                           # заглушка: стрела по диагонали цвета колчана
+                img = pygame.Surface((size, size), pygame.SRCALPHA)
+                s = size
+                pygame.draw.line(img, (230, 215, 180), (3, s - 4), (s - 6, 5), 2)
+                pygame.draw.polygon(img, col, [(s - 2, 1), (s - 10, 4), (s - 5, 9)])
+                pygame.draw.line(img, col, (3, s - 4), (2, s - 10), 2)
+                pygame.draw.line(img, col, (3, s - 4), (9, s - 3), 2)
+            self._ARROW_ICONS[key] = img
+        surf.blit(self._ARROW_ICONS[key], pos)
 
     def _cooldown_pie(self, surf, r, k):
         """Затемнение карточки сектором: k — доля оставшейся перезарядки (1 — только начата)."""

@@ -423,6 +423,17 @@ class Hero:
         self.perks = list(d.get("perks") or [])         # личные последствия событий: {"name", "mods"}
         self.solo = bool(d.get("solo"))                 # герой режима «Одиночка»: до 5 навыков + ультимейт
         self.vet = dict(d.get("vet") or {})             # ветеран таверны: {"runs", "wins", "chapters"}
+        self.quivers = list(d.get("quivers") or [])     # лучник: выбранные колчаны (1 / 6 / 11 уровень)
+        self.ac_order = list(d.get("ac_order") or [])   # приоритет автокаста (порядок навыков)
+        self.ac_reserve = dict(d.get("ac_reserve") or {})   # резерв AP под навыки выше: {навык: AP}
+        self.falls = int(d.get("falls", 0))              # падений в этом походе: третье — гибель
+        self.chronicle = list(d.get("chronicle") or [])  # летопись героя (навсегда): [{"text", "kind", "run"}]
+        self.feats = dict(d.get("feats") or {})          # счётчики подвигов (навсегда): убийства, боссы…
+        self.titles = list(d.get("titles") or [])        # прозвища за подвиги (навсегда), последнее — главное
+        self.dorm = bool(d.get("dorm"))                  # живёт в общежитии таверны (выкуплен)
+        self.task = d.get("task")                        # на поручении: {"id", "left", "chance", "with": [uid]}
+        self.rest = int(d.get("rest", 0))                # ранен на поручении: пропускает столько походов
+        self.arts = list(d.get("arts") or [])            # надетые артефакты: uid из хранилища таверны
 
     def to_dict(self):
         return {"uid": self.uid, "name": self.name, "cls": self.cls, "rank": self.rank, "trait": self.trait,
@@ -430,7 +441,10 @@ class Hero:
                 "points": self.points, "sp": self.sp, "ranks": self.ranks,
                 "branches": {k: list(v) for k, v in self.branches.items()}, "gear": self.gear, "hp": self.hp,
                 "wounded": self.wounded, "autocast": self.autocast, "gifts": self.gifts, "perks": self.perks,
-                "uses": self.uses, "pick_offer": self.pick_offer, "solo": self.solo, "vet": self.vet}
+                "uses": self.uses, "pick_offer": self.pick_offer, "solo": self.solo, "vet": self.vet,
+                "quivers": self.quivers, "ac_order": self.ac_order, "ac_reserve": self.ac_reserve,
+                "falls": self.falls, "chronicle": self.chronicle, "feats": self.feats, "titles": self.titles,
+                "dorm": self.dorm, "task": self.task, "rest": self.rest, "arts": self.arts}
 
     @property
     def rpg(self):
@@ -470,8 +484,10 @@ def fix_kit(data, h):
     """Набор героя под нынешние навыки класса: старый или сломанный набор (нет механики, нет облика к навыкам
     медведя, нет тотема к пульсу…) пересобирается; ультимейт — всегда четвёртым."""
     pool = set(story_meta.all_skills(data, h.cls)) | set(story_meta.notes_of(data, h.cls))
-    ult = story_meta.ult_of(data, h.cls)
-    slot = [s for s in h.skills if s in pool and s != ult]
+    ults = story_meta.ults_of(data, h.cls)
+    ult = next((s for s in h.skills if s in ults), None) or (
+        random.Random(f"ult:{h.uid}").choice(ults) if ults else None)      # свой ультимейт: старый — случайный
+    slot = [s for s in h.skills if s in pool and s not in ults]
     n = story_meta.slots(data)
     extra = 2                                  # слоты D, F одиночки: выученные навыки остаются и у ветерана
     if not n <= len(slot) <= n + extra or not story_meta.kit_ok(data, h.cls, slot[:n]):
@@ -518,8 +534,10 @@ def auto_points(data, h, points=None):
 
 class Expedition:
     def __init__(self, data, heroes, seed=None, gold=None, chapter="swamp", tier=0, solo=False, vows=None,
-                 build=None):
+                 build=None, arts=None):
         self.data = data                       # expedition_data(...)
+        self.arts = dict(arts or {})           # артефакты отряда (копии из хранилища): {uid: артефакт}
+        self.loot = {}                         # материалы для мастерских, добытые в походе
         self.chapter = chapter if chapter in data.expedition.get("chapters", {"swamp": 1}) else "swamp"
         self.xd = chapter_view(data.expedition, self.chapter)
         self.solo = solo                       # режим «Одиночка»: один герой, меньше врагов, камера за героем
@@ -557,6 +575,14 @@ class Expedition:
         self.stage = None                    # где сейчас игрок внутри узла (для продолжения после выхода)
         self.uid_n = 0
         self.saves = 0
+        self.autocast_mode = "default"         # начальный автокаст навыков: default | on | off (выбор в таверне)
+        self.dead = []                         # погибшие в походе (третье падение): их записи для зала славы
+        for h in self.heroes:
+            h.falls = 0
+            self.note(h, "start", f"Ушёл в поход: {self.xd['chapters'].get(self.chapter, {}).get('name', self.chapter)}"
+                                  f", {self.xd['config']['tiers'][self.tier]['name'].lower()}")
+        for h in self.heroes:                  # лучник: выбор колчанов, положенных по уровню
+            self.fix_quivers(h)
         self.new_map()
         for _ in range(int(vow_sum(self.xd, self.vows, "curses"))):     # обет рока: поход начинается с проклятиями
             free = [c for c in sorted(self.xd["curses"]) if c not in self.curses]
@@ -575,7 +601,8 @@ class Expedition:
                 "after_battle": self.after_battle, "stage": self.stage, "uid_n": self.uid_n,
                 "saves": self.saves + 1, "tier": self.tier, "heat": self.heat, "heat_hits": self.heat_hits,
                 "lava_next": self.lava_next, "mats": self.mats, "solo": self.solo, "vows": self.vows,
-                "build": self.build, "trophies": self.trophies}
+                "build": self.build, "trophies": self.trophies, "autocast_mode": self.autocast_mode,
+                "dead": self.dead, "arts": self.arts, "loot": self.loot}
 
     @classmethod
     def from_dict(cls, data, d):
@@ -585,6 +612,7 @@ class Expedition:
         x.xd = chapter_view(data.expedition, x.chapter)
         x.solo = d.get("solo", False)
         x.vows, x.build, x.trophies = d.get("vows", {}), d.get("build", {}), d.get("trophies", {})
+        x.arts, x.loot = dict(d.get("arts") or {}), dict(d.get("loot") or {})
         x.cfg = run_cfg(x.xd, x.solo, x.vows, x.build)
         x.seed = d["seed"]
         x.saves = d.get("saves", 0)
@@ -597,12 +625,16 @@ class Expedition:
         x.heat, x.heat_hits = d.get("heat", 0), d.get("heat_hits", 0)
         x.lava_next, x.mats = d.get("lava_next", []), d.get("mats", {})
         x.news = []
+        x.autocast_mode = d.get("autocast_mode", "default")
+        x.dead = list(d.get("dead") or [])
         for key in ("gold", "act", "nodes", "node", "path", "flags", "curses", "bag", "pending",
                     "boss_override", "seen_events", "result", "counts", "formation", "after_battle", "stage",
                     "uid_n"):
             setattr(x, key, copy.deepcopy(d.get(key)))
         x.after_battle = x.after_battle or []
         x.formation = x.formation or None
+        for h in x.heroes:                     # старое сохранение: лучнику — выбор колчанов
+            x.fix_quivers(h)
         return x
 
     def new_uid(self, prefix="i"):
@@ -829,12 +861,16 @@ class Expedition:
 
     def battle_skills(self, h):
         """Навыки героя в бой: слоты и ультимейт (клавиша R), когда герой дорос до него."""
-        ult = story_meta.ult_of(self.data, h.cls)
+        ult = story_meta.ult_of(self.data, h.cls, h.skills)
         regular = [s for s in h.skills if s != ult]
         if not self.solo:                          # в отряде — три навыка и ультимейт (D, F — только в одиночке)
             regular = regular[:story_meta.slots(self.data)]
         out = regular[:story_meta.slots(self.data)] + ([ult] if ult in h.skills and ult_open(self.data, h) else [])
-        return out + regular[story_meta.slots(self.data):]
+        out += regular[story_meta.slots(self.data):]
+        mech = story_meta.mech_of(self.data, h.cls)    # кнопка механики класса (Фитиль) — всегда, клавиша F
+        if mech and mech in self.data.skills and mech not in out:
+            out.append(mech)
+        return out
 
     @property
     def difficulty(self):
@@ -888,11 +924,27 @@ class Expedition:
         gear += tr.get("mods", [])
         for pk in h.perks:                         # последствия событий (жертва, благословение, шрам)
             gear += pk.get("mods", [])
+        titles = self.data.expedition.get("chronicle", {}).get("titles", {})
+        for tid in h.titles:                       # прозвища за подвиги — небольшой бонус навсегда
+            gear += titles.get(tid, {}).get("mods", [])
         if self.solo:                              # одиночка: один за отряд — здоровье, урон, AP
             gear += self.cfg["solo"]["hero_mods"]
             role = self.data.classes[h.cls].get("role", "melee")   # стрелку и магу не за кем прятаться
             gear += self.cfg["solo"].get("role_mods", {}).get(role, [])
         mods += merge_bonus(gear)
+        worn = [self.arts[u] for u in h.arts if u in self.arts]
+        if worn:                                   # артефакты таверны — отдельный слой (×) поверх роста похода
+            from . import artifacts as AR
+            am, ae, ar = AR.effects(self.xd, worn, h.uid)
+            mods += am
+            rules += ar
+            for k, v in ae.items():
+                if k.startswith("vs:"):
+                    vs[k[3:]] = vs.get(k[3:], 1.0) + v
+                elif k == "reaction":
+                    react += v
+                else:
+                    extra[k] = extra.get(k, 0) + v
         for k, v in tr.get("extra", {}).items():
             extra[k] = extra.get(k, 0) + v
         for sid, r in h.ranks.items():
@@ -904,7 +956,7 @@ class Expedition:
             mods += [{"stat": "atk_damage", "mult": k}, {"stat": "power", "mult": k}, {"stat": "hp", "mult": k}]
         p = build_proto(self.data, h.cls, (), (), h.branches, mods, None, None, skills=self.battle_skills(h),
                         doctrine=None)        # доктрины — только в сюжете
-        stats.apply_to_proto(p, der)
+        stats.apply_to_proto(p, der, self.data, h.cls)
         p["crit"] = round(min(0.75, p["crit"] + extra.get("crit", 0)), 3)
         p["dodge"] = round(min(0.45, p["dodge"] + extra.get("dodge", 0)), 3)
         p["crit_mult"] = round(p["crit_mult"] + extra.get("crit_mult", 0), 3)
@@ -914,6 +966,9 @@ class Expedition:
         if react != 1.0:
             p["reaction_mult"] = round(react, 3)
         p["level"] = h.level
+        if h.quivers:                              # лучник: колчаны в бой, с 15 уровня — сильнее
+            p["quivers"] = list(h.quivers)
+            p["quiver_boost"] = h.level >= self.data.config["quiver_boost_level"]
         p["start_ap"] = max(0.0, self.data.config.get("start_ap", 0.5) + vow_sum(self.xd, self.vows, "start_ap"))
         if story_meta.notes_of(self.data, h.cls):
             p["melodies"] = story_meta.melodies(self.data, h.cls, h.level)
@@ -929,8 +984,26 @@ class Expedition:
         return mx if h.hp is None else max(1, min(mx, h.hp))
 
     def combat_squad(self):
-        return [{"cls": h.cls, "proto": self.proto(h), "hp": self.hp_of(h), "autocast": h.autocast or None}
-                for h in self.heroes]
+        out = []
+        for h in self.heroes:
+            p = self.proto(h)
+            self.preset_autocast(h, p["skill_defs"])
+            out.append({"cls": h.cls, "proto": p, "hp": self.hp_of(h), "autocast": h.autocast or None,
+                        "ac_order": h.ac_order, "ac_reserve": h.ac_reserve})
+        return out
+
+    def preset_autocast(self, h, skill_defs=None):
+        """Режим похода «всё включено / выключено»: навыкам без своей настройки — начальное состояние по режиму.
+        Уже настроенные (переключённые в бою) не трогает; новые навыки похода получают тот же режим."""
+        if self.autocast_mode not in ("on", "off"):
+            return
+        from . import autocast as AC
+        defs = skill_defs if skill_defs is not None else self.proto(h)["skill_defs"]
+        for sid, sk in defs.items():
+            if sid not in h.autocast:
+                st = AC.default_setting(sk)
+                st["on"] = self.autocast_mode == "on"
+                h.autocast[sid] = st
 
     def heal_all(self, pct):
         for h in self.heroes:
@@ -951,6 +1024,26 @@ class Expedition:
             if h.hp is not None:
                 h.hp = max(1, int(round(self.max_hp(h) * frac[h.uid])))
 
+    # ---------- колчаны лучника ----------
+
+    def has_quivers(self, h):
+        return bool(story_meta.cfg(self.data)["classes"].get(h.cls, {}).get("quivers"))
+
+    def quivers_due(self, h):
+        """Сколько колчанов положено герою на его уровне (выбор на 1 / 6 / 11)."""
+        if not self.has_quivers(h):
+            return 0
+        return sum(1 for lv in self.data.config["quiver_levels"] if h.level >= lv)
+
+    def quiver_pending(self, h):
+        return max(0, self.quivers_due(h) - len(h.quivers))
+
+    def fix_quivers(self, h):
+        """Выборов хватает на положенные колчаны (новичок 1 уровня — сразу выбор первого)."""
+        need = self.quiver_pending(h)
+        if need > h.sp:
+            h.sp = need
+
     # ---------- опыт и рост ----------
 
     def xp_next(self, h):
@@ -970,6 +1063,8 @@ class Expedition:
                 h.sp += self.cfg["hero"]["skill_points"]
             if self.solo and h.level in self.cfg["solo"]["slot_levels"]:   # одиночка: открылся слот — новый навык
                 h.sp += 1
+            if self.has_quivers(h) and h.level in self.data.config["quiver_levels"]:   # лучник: новый колчан
+                h.sp += 1
             h.points = auto_points(self.data, h, h.points)
             if h.hp is not None:
                 h.hp = max(1, int(round(self.max_hp(h) * frac)))
@@ -986,7 +1081,7 @@ class Expedition:
         """Сколько применений навыка нужно до ранга rank (ультимейт — в несколько раз меньше)."""
         hc = self.cfg["hero"]
         need = hc["rank_uses"][rank - 2]
-        if sid == story_meta.ult_of(self.data, h.cls):
+        if sid == story_meta.ult_of(self.data, h.cls, h.skills):
             need = max(1, need // hc["ult_uses_div"])
         return need
 
@@ -1023,6 +1118,11 @@ class Expedition:
         n = hc["pick_cards_big"] if h.level % hc["pick_big_every"] == 0 else hc["pick_cards"]
         n += self.library_cards().get("cards", 0)
         rng = random.Random(f"{self.seed}:{h.uid}:{h.level}:{h.sp}:{len(h.branches)}:{self.flag('reroll')}")
+        if self.quiver_pending(h):                 # лучник: колчан на выбор — 1 из 2 ещё не взятых
+            free = [a for a in self.data.config["arrows"] if a not in h.quivers]
+            rng.shuffle(free)
+            h.pick_offer = [{"type": "quiver", "arrow": a} for a in free[:2]]
+            return h.pick_offer
         learn = self.learnable(h)
         if learn:                                  # одиночка: свободный слот — сначала новый навык
             rng.shuffle(learn)
@@ -1065,7 +1165,7 @@ class Expedition:
         """Навыки класса, которые одиночка может выучить в свободный слот."""
         if not self.solo or story_meta.notes_of(self.data, h.cls):
             return []
-        ult = story_meta.ult_of(self.data, h.cls)
+        ult = story_meta.ult_of(self.data, h.cls, h.skills)
         have = [s for s in h.skills if s != ult]
         if len(have) >= self.slots_open(h):
             return []
@@ -1092,6 +1192,8 @@ class Expedition:
             hh.ranks[card["skill"]] = h.rank_of(card["skill"]) + 1
         elif card["type"] == "learn":
             hh.skills.append(card["skill"])
+        elif card["type"] == "quiver":
+            hh.quivers.append(card["arrow"])
         else:
             hh.perks.append({"name": "", "mods": [{"stat": card["stat"], "mult": 1.08}]})
         return hh
@@ -1100,10 +1202,10 @@ class Expedition:
         """(заголовок, строки) карты улучшения для экрана."""
         sk = self.data.skills.get(card.get("skill"), {})
         if card["type"] == "learn":
-            keys = "QWER" + "DF"
-            ult = story_meta.ult_of(self.data, h.cls)
+            keys = "QWER" + "DG"
+            ult = story_meta.ult_of(self.data, h.cls, h.skills)
             k = len([s for s in h.skills if s != ult])
-            return f"Новый навык: {sk.get('name', '')}", [f"в слот {('D', 'F')[min(1, k - 3)] if k >= 3 else keys[k]}",
+            return f"Новый навык: {sk.get('name', '')}", [f"в слот {('D', 'G')[min(1, k - 3)] if k >= 3 else keys[k]}",
                                                          sk.get("desc", "")]
         if card["type"] == "branch":
             br = self.data.branches[card["skill"]][card["branch"]]
@@ -1116,6 +1218,11 @@ class Expedition:
             if full and full != now:
                 return head, [sub, f"Сейчас: {now}", f"Станет: {full}"]
             return head, [sub, tier.get("desc", "")]
+        if card["type"] == "quiver":
+            a = self.data.config["arrows"][card["arrow"]]
+            n = len(h.quivers) + 1
+            return f"Колчан {n}: {a['name']}", [a["desc"], "Стрелы колчанов чередуются: каждый выстрел — следующий",
+                                                "Числа — от силы навыков лучника"]
         if card["type"] == "rank":
             r = h.rank_of(card["skill"])
             hc = self.cfg["hero"]
@@ -1132,6 +1239,13 @@ class Expedition:
         if not 0 <= i < len(cards):
             return False
         c = cards[i]
+        if c["type"] == "quiver":
+            if not self.quiver_pending(h) or c["arrow"] in h.quivers:
+                return False
+            h.quivers.append(c["arrow"])
+            h.sp -= 1
+            h.pick_offer = None
+            return True
         if c["type"] == "learn":
             if c["skill"] not in self.learnable(h):
                 return False
@@ -1327,6 +1441,54 @@ class Expedition:
 
     # ---------- бой ----------
 
+    # ---------- летопись, подвиги, гибель ----------
+
+    def chron_cfg(self):
+        return self.data.expedition.get("chronicle", {})
+
+    def max_falls(self):
+        return int(self.chron_cfg().get("max_falls", 3))
+
+    def note(self, h, kind, text):
+        """Запись в летопись героя (навсегда): что, где, в каком по счёту походе."""
+        h.chronicle.append({"kind": kind, "text": text, "run": h.vet.get("runs", 0) + 1, "chapter": self.chapter})
+        if len(h.chronicle) > 200:
+            h.chronicle = h.chronicle[-200:]
+
+    def count_feats(self, h, u, node, won):
+        f = h.feats
+        t = u.tally
+        for k in ("kills", "dealt", "healed", "shielded"):
+            f[k] = f.get(k, 0) + int(t.get(k, 0))
+        f["battles"] = f.get("battles", 0) + 1
+        if won and node["type"] in ("elite", "boss"):
+            f[node["type"] + "_kills"] = f.get(node["type"] + "_kills", 0) + 1
+        if not u.alive:
+            f["falls"] = f.get("falls", 0) + 1
+
+    def award_titles(self):
+        """Новые прозвища за подвиги: [(герой, прозвище)]. Бонус прозвища — навсегда (в прототипе)."""
+        out = []
+        for h in self.heroes:
+            for tid, td in self.chron_cfg().get("titles", {}).items():
+                if tid in h.titles:
+                    continue
+                if all(h.feats.get(k, 0) >= v for k, v in td["need"].items()):
+                    self._keep_hp(lambda h=h, tid=tid: h.titles.append(tid))
+                    self.note(h, "title", f"Получил прозвище «{td['name']}»: {td['desc']}")
+                    out.append((h.name, td["name"]))
+        return out
+
+    def bury(self, h, reason):
+        """Третье падение: герой погибает насовсем. Вещи — в сумку отряда, дары — наследием живым (на выбор)."""
+        self.note(h, "death", f"Погиб: {reason}, акт {self.act + 1}")
+        for item in h.gear.values():
+            self.bag.append(item)
+        rec = {"hero": h.to_dict(), "name": h.name, "reason": reason, "act": self.act + 1, "gifts": list(h.gifts)}
+        self.dead.append(rec)
+        self.heroes = [x for x in self.heroes if x is not h]
+        return rec
+
     def player_units(self, combat):
         return [u for u in combat.units if u.team == PLAYER and not u.summon and not u.obj][:len(self.heroes)]
 
@@ -1339,18 +1501,30 @@ class Expedition:
         units = self.player_units(combat)
         fallen = []
         learned = []
+        dying = []                                   # третье падение за поход — гибель насовсем
         for h, u in zip(self.heroes, units):
             h.autocast = u.autocast
+            h.ac_order, h.ac_reserve = list(u.ac_order), dict(u.ac_reserve)     # приоритет, поправленный в бою
             if combat.result == "victory":
                 learned += [(h.name, self.data.skills[sid]["name"], r) for sid, r in self.learn_from(h, u.uses)]
+            self.count_feats(h, u, node, combat.result == "victory")
             if u.alive:
                 h.hp = u.hp
             else:
                 h.hp = 1
+                h.falls += 1
+                enc = self.data.encounters[node["encounter"]]["name"] if node.get("encounter") is not None else "бою"
+                if h.falls >= self.max_falls() and combat.result == "victory":
+                    dying.append(h)
+                    continue
                 if not h.wounded:
                     self._keep_hp(lambda h=h: setattr(h, "wounded", True))
                     h.hp = 1
+                self.note(h, "fall", f"Пал в бою «{enc}» (акт {self.act + 1}) — рана, падений: {h.falls}/"
+                                     f"{self.max_falls()}")
                 fallen.append(h)
+        legacy = [self.bury(h, f"погиб в бою «{self.data.encounters[node['encounter']]['name']}»"
+                               if node.get("encounter") is not None else "погиб в бою") for h in dying]
         self.last_stats = combat.battle_stats()
         if combat.result != "victory":
             self.result = "defeat"
@@ -1386,14 +1560,26 @@ class Expedition:
             if node.get("molten"):
                 gold = int(gold * 1.5)
         self.gold += gold
+        got = self.drop_loot(kind, node)
         self.heal_all(self.cfg["post_battle_heal"])
         extra = self.apply_ops(self.after_battle, None) if self.after_battle else []
         self.after_battle = []
         out = {"result": "victory", "kind": kind, "xp": xp, "gold": gold, "level_ups": ups, "fallen": fallen,
-               "extra": extra, "learned": learned, "stats": self.last_stats}
+               "extra": extra, "learned": learned, "stats": self.last_stats,
+               "dead": [x["name"] for x in legacy], "legacy_gifts": [g for x in legacy for g in x["gifts"]],
+               "titles": self.award_titles()}
+        if kind in ("elite", "boss"):
+            enc = self.data.encounters[node["encounter"]]["name"] if node.get("encounter") is not None else ""
+            for h in self.heroes:
+                self.note(h, kind, ("Одолел босса: " if kind == "boss" else "Разбил элиту: ") + enc)
         if ore:
             out["extra"] = [f"Руда +{ore}" + (f", {self.xd['mats'][out_metal]['name'].lower()} +1"
                                               if (node.get("molten") or kind in ("elite", "boss")) else "")] + extra
+        if got:
+            out["loot"] = got
+            names = self.xd.get("materials", {})
+            out["extra"] = list(out["extra"]) + ["Материалы: " + ", ".join(
+                f"{names[k]['name']} +{v}" for k, v in got.items())]
         if self.heat_on() and kind != "boss":      # бой разогревает кузню
             out["extra"] = out["extra"] + self.add_heat(self.heat_cfg()["battle"])
         if kind == "boss":
@@ -1402,6 +1588,46 @@ class Expedition:
                 self.result = "victory"
         self.stage = {"node": self.node, "kind": "reward"}
         return out
+
+    def drop_loot(self, kind, node):
+        """Материалы для мастерских: общие — за бои, редкие главы — с элиты и боссов, звёздная пыль — с боссов
+        (чаще на высоких ступенях). Количество растёт со ступенью."""
+        md = self.cfg.get("mat_drops")
+        mats = self.xd.get("materials", {})
+        if not md:
+            return {}
+        rng = random.Random(f"{self.seed}:loot:{node['id']}:{self.act}")
+        t = self.tier_def
+        k = t.get("mats", 1.0)
+        got = {}
+
+        def add(m, n):
+            if n > 0 and m in mats:
+                got[m] = got.get(m, 0) + n
+        final = kind == "boss" and self.act >= len(self.xd["acts"]) - 1
+        spec = md.get(kind, md["battle"])
+        weights = md["common"].get(self.chapter) or {m: 1 for m, v in mats.items() if not v.get("rare")}
+        lo, hi = spec.get("common", [0, 0])
+        n = rng.randint(lo, hi)
+        n = int(n * k) + (1 if rng.random() < n * k - int(n * k) else 0)
+        keys = sorted(weights)
+        for _ in range(n):
+            add(rng.choices(keys, [weights[x] for x in keys])[0], 1)
+        rare = next((m for m, v in mats.items() if v.get("rare") and v.get("chapter") == self.chapter), None)
+        r = spec.get("rare")
+        if rare and r:
+            add(rare, rng.randint(*r) if isinstance(r, list) else (1 if rng.random() < r * k else 0))
+        if kind == "boss":
+            if rng.random() < t.get("stardust", 0.1):
+                add("stardust", 1)
+            if final:
+                fs = md.get("final", {})
+                if rare and fs.get("rare"):
+                    add(rare, rng.randint(*fs["rare"]))
+                add("stardust", fs.get("stardust", 0))
+        for m, v in got.items():
+            self.loot[m] = self.loot.get(m, 0) + v
+        return got
 
     def gold_mult(self):
         return max(0.2, 1 + sum(self.xd["tavern"]["traits"].get(h.trait, {}).get("gold", 0) for h in self.heroes)
@@ -2147,7 +2373,7 @@ class Expedition:
 
 def ult_open(data, h):
     """Ультимейт героя похода открывается с уровнем (как в сюжете — data/story_progression.json)."""
-    ult = story_meta.ult_of(data, h.cls)
+    ult = story_meta.ult_of(data, h.cls, h.skills)
     return ult is not None and h.level >= story_meta.skill_level(data, h.cls, ult)
 
 
@@ -2162,7 +2388,7 @@ class ExpeditionProfile:
         self.solo = solo                         # режим «Одиночка»: свой профиль, в поход — один герой
         self.mode = "solo" if solo else "expedition"
         self.glory = 0
-        self.tier_open = 2 if sandbox else 0     # открытая сложность Болота (песочница — все)
+        self.tier_open = 9 if sandbox else 0     # открытая ступень Болота (песочница — все)
         self.chapter_tiers = {}                  # открытая сложность остальных глав
         self.chapter_wins = {}                   # победы по главам: открывают следующие
         self.trophies = {}                       # трофеи глав (янтарь болота, сердце горна…) — на постройки
@@ -2177,12 +2403,108 @@ class ExpeditionProfile:
         self.run_state = None
         self.uid_n = 0
         self.seed_n = 0
+        self.mats = {}                           # материалы для мастерских: руда, кожа, травы, самоцветы
+        self.offers = []                         # доска поручений: заказы на выбор [{"id", "seed"}]
+        self.news = []                           # вести с поручений после последнего похода
+        self.away = []                           # ушедшие ветераны (могут вернуться в таверну)
+        self.stash = {}                          # хранилище артефактов таверны: {uid: артефакт}
+        self.gems = []                           # огранённые самоцветы: [{"uid", "id", "q", "size", "shape"}]
+        self.rough = []                          # необработанные самоцветы: [{"uid", "id", "seed", "size"}]
+        self.smith = {}                          # кузня: куски, пакеты, части, инструменты, заказы (sim/smithing.py)
+        self.market = {}                         # товар рынка: {"key", "rough": [...], "cut": [...]}
+        self.art_n = 0
+        self.glory = self.xd["tavern"].get("start_treasury", 0)     # новая таверна: стартовая казна на найм
         if path and os.path.exists(path):
             self._load()
-        if sandbox:
-            self.glory = max(self.glory, 999)
+        if not self.offers:
+            self.refresh_offers()
+        if not self.market:
+            self.refresh_market()
+        for k in ("pieces", "billets", "parts", "tools", "orders"):
+            self.smith.setdefault(k, [])
+        if not self.smith["orders"] and self.xd.get("smithing"):
+            self.refresh_orders()
         if not self.roster:
             self.roll_roster()
+        if sandbox:
+            self.sandbox_fill()
+
+    def sandbox_fill(self):
+        """Песочница: открыта вся прокачка таверны и всё для проверки — золото, материалы, трофеи, постройки и
+        мастерские на максимуме, камни, артефакты в сундуке, ветераны 5-го ранга в общежитии, павшие на кладбище."""
+        from . import artifacts as AR
+        xd = self.xd
+        self.glory = max(self.glory, 99999)
+        for k in xd.get("materials", {}):
+            self.mats[k] = max(self.mats.get(k, 0), 999)
+        for k in xd.get("trophies", {}):
+            self.trophies[k] = max(self.trophies.get(k, 0), 99)
+        for bid, b in xd.get("buildings", {}).items():
+            self.buildings[bid] = len(b["levels"])
+        grown = False
+        for uid, up in xd["tavern"]["upgrades"].items():
+            if self.upgrades.get(uid, 0) < len(up["costs"]):
+                self.upgrades[uid] = len(up["costs"])
+                grown = True
+        if grown:
+            self.roll_roster(keep=True)
+        if len(self.gems) < len(xd["artifacts"]["gems"]):
+            for gid in xd["artifacts"]["gems"]:
+                for q in (0.9, 1.15):
+                    self.art_n += 1
+                    self.gems.append({"uid": f"g{self.art_n}", "id": gid, "q": q, "size": 1.0})
+        if xd.get("smithing"):                        # кузня: все инструменты и запас кусков всех металлов
+            from . import smithing as SM
+            for tk in SM.cfg(xd)["tools"]:
+                if tk not in self.smith["tools"]:
+                    self.smith["tools"].append(tk)
+            if len(self.smith["pieces"]) < 8:
+                rng = random.Random("sandbox-metal")
+                for m in SM.cfg(xd)["metals"]:
+                    for _ in range(3):
+                        self.smith["pieces"].append(SM.new_piece(xd, self.suid("p"), m, rng))
+            if not self.market.get("smith"):
+                self.market["smith"] = SM.roll_wanderer(dict(xd, smithing=dict(SM.cfg(xd), wanderer=dict(
+                    SM.cfg(xd)["wanderer"], chance=1.0))), random.Random(1), [], lambda: self.suid("p"))
+        if len(self.rough) < len(xd["artifacts"]["gems"]):
+            rng = random.Random("sandbox-rough")
+            for gid in xd["artifacts"]["gems"]:
+                for _ in range(2):
+                    self.add_rough(gid, rng)
+        if not self.stash:
+            a = xd["artifacts"]
+            for sid, s_ in a["sets"].items():
+                kinds = list(a["kinds"]) if s_["rarity"] in ("legendary", "epic") else list(a["kinds"])[:2]
+                for kind in kinds:
+                    self.art_n += 1
+                    art = AR.make(xd, f"a{self.art_n}", kind, sid, 1.0 + 0.05 * (self.art_n % 5),
+                                  random.Random(self.art_n))
+                    art["level"] = {"legendary": 10, "epic": 6, "rare": 3}.get(s_["rarity"], 0)
+                    art["gems"] = [{"id": g, "q": 1.1} for g in list(a["gems"])[:AR.sockets(xd, art)]]
+                    self.stash[art["uid"]] = art
+        if not any(h.dorm for h in self.roster):
+            free = [h for h in self.roster if not h.task][-2:]
+            legend = [u for u, art in self.stash.items() if art["rarity"] == "legendary"]
+            sets = sorted({self.stash[u]["set"] for u in legend})
+            for h, sid in zip(free, sets):
+                h.rank = max(int(k) for k in xd["tavern"]["ranks"])
+                h.vet = dict(h.vet, wins=h.vet.get("wins", 0) + 4, runs=h.vet.get("runs", 0) + 4,
+                             chapters=sorted(xd.get("chapters", {})))
+                h.dorm = True
+                h.arts = [u for u in legend if self.stash[u]["set"] == sid][:self.art_slots(h)]
+                h.feats.update(kills=160, battles=30, boss_kills=3, elite_kills=6, runs_won=4)
+                h.chronicle.append({"kind": "win", "text": "Песочница: прошёл все главы", "run": 4, "chapter": "swamp"})
+        if not self.fallen:
+            classes = [c for c in self.classes() if c in self.data.classes][:5]
+            for i, cls in enumerate(classes):
+                self.fallen.append({
+                    "name": xd["tavern"]["names"][i % len(xd["tavern"]["names"])], "cls": cls, "level": 4 + i * 2,
+                    "chapter": "swamp", "act": 1 + i % 3, "reason": "погиб в бою (песочница)", "solo": False,
+                    "wins": i % 3, "titles": [],
+                    "chronicle": [{"kind": "start", "text": "Ушёл в поход: Болото", "run": 1, "chapter": "swamp"},
+                                  {"kind": "death", "text": "Погиб в бою", "run": 1, "chapter": "swamp"}],
+                    "feats": {"kills": 10 * (i + 1), "battles": 3 + i}})
+        self.save()
 
     @property
     def uses_stats(self):
@@ -2193,7 +2515,7 @@ class ExpeditionProfile:
     def squad(self):
         if self.run_state:
             return [h["cls"] for h in self.run_state.get("heroes", [])][:4]
-        return [h.cls for h in self.hall()[:4]]
+        return [h.cls for h in self.recruitable()[:4]]
 
     @property
     def expeditions(self):
@@ -2218,9 +2540,28 @@ class ExpeditionProfile:
             return
         if d.get("mode") != "expedition":
             return
-        self.glory = d.get("glory", 0)
-        self.tier_open = d.get("tier_open", 0)
-        self.chapter_tiers = d.get("chapter_tiers", {})
+        self.glory = d.get("glory", 0)            # казна: золото таверны (до 2026-11-11 — «слава», ×5)
+        if not d.get("econ"):
+            self.glory *= 5
+        self.mats = dict(d.get("mats") or {})
+        self.offers = list(d.get("offers") or [])
+        self.news = list(d.get("news") or [])
+        self.away = list(d.get("away") or [])
+        self.stash = dict(d.get("stash") or {})
+        self.gems = list(d.get("gems") or [])
+        self.rough = list(d.get("rough") or [])
+        self.smith = dict(d.get("smith") or {})
+        self.market = dict(d.get("market") or {})
+        self.art_n = d.get("art_n", 0)
+        if not d.get("tiers10"):                 # старые 3 сложности → 10 ступеней
+            mig = self.xd["config"].get("tier_migrate", {})
+            self.tier_open = mig.get(str(d.get("tier_open", 0)), 0)
+            self.chapter_tiers = {k: mig.get(str(v), 0) for k, v in d.get("chapter_tiers", {}).items()}
+            if d.get("run"):
+                d["run"]["tier"] = mig.get(str(d["run"].get("tier", 0)), 0)
+        if d.get("tiers10"):
+            self.tier_open = d.get("tier_open", 0)
+            self.chapter_tiers = d.get("chapter_tiers", {})
         self.chapter_wins = d.get("chapter_wins", {})
         self.trophies = d.get("trophies", {})
         self.buildings = {k: v for k, v in d.get("buildings", {}).items() if k in self.xd.get("buildings", {})}
@@ -2249,7 +2590,9 @@ class ExpeditionProfile:
              "seed_n": self.seed_n, "roster": [h.to_dict() for h in self.roster], "run": self.run_state,
              "tier_open": self.tier_open, "chapter_tiers": self.chapter_tiers, "chapter_wins": self.chapter_wins,
              "trophies": self.trophies, "buildings": self.buildings, "vows": self.vows, "fallen": self.fallen,
-             "solo": self.solo}
+             "solo": self.solo, "econ": 1, "mats": self.mats, "offers": self.offers, "news": self.news,
+             "away": self.away, "stash": self.stash, "gems": self.gems, "art_n": self.art_n, "tiers10": 1,
+             "rough": self.rough, "market": self.market, "smith": self.smith}
         tmp = self.path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(d, f, ensure_ascii=False)
@@ -2299,10 +2642,552 @@ class ExpeditionProfile:
         return bool(h.vet.get("solo"))
 
     def hall(self, solo=None):
-        """Кого видно в таверне в этом режиме: ветераны-одиночки (6 навыков) — только в одиночке; новички и
-        ветераны отряда — в обоих режимах. Не больше размера зала."""
+        """Гости таверны (зал): ветераны-одиночки (6 навыков) — только в одиночке; новички и ветераны отряда — в
+        обоих режимах. Не больше размера зала. Жильцы общежития и герои на поручении в зале не стоят."""
         solo = self.solo if solo is None else solo
-        return [h for h in self.roster if solo or not self.solo_vet(h)][:self.hall_size()]
+        return [h for h in self.roster if not h.task and not h.dorm and (solo or not self.solo_vet(h))][:self.hall_size()]
+
+    def lodgers(self, solo=None):
+        """Жильцы общежития, что дома (не на поручении): живут отдельно от зала и мест в нём не занимают."""
+        solo = self.solo if solo is None else solo
+        return [h for h in self.roster if h.dorm and not h.task and (solo or not self.solo_vet(h))]
+
+    def recruitable(self, solo=None):
+        """Кого можно взять в поход или на поручение: жильцы общежития и гости зала."""
+        return self.lodgers(solo) + self.hall(solo)
+
+    def ready(self, h):
+        """Можно ли взять героя в поход: не на поручении и не отдыхает после раны."""
+        return not h.task and h.rest <= 0
+
+    # ---------- казна, найм, общежитие ----------
+
+    def hire_cost(self, h):
+        """Новичок рангом выше стоит золота при выходе в поход; ветераны (свои герои) — бесплатно."""
+        if h.dorm or h.vet:
+            return 0
+        return int(self.xd["tavern"].get("hire_cost", {}).get(str(h.rank), 0))
+
+    def dorm_slots(self):
+        return building_value(self.xd, self.buildings, "dorm") or self.xd["tavern"].get("dorm_base", 0)
+
+    def dorm_heroes(self):
+        return [h for h in self.roster if h.dorm]
+
+    def dorm_cost(self, h):
+        c = self.xd["tavern"]["dorm_cost"]
+        return int(c["base"] + c["per_rank"] * (h.rank - 1) + c["per_title"] * len(h.titles)
+                   + c["per_win"] * h.vet.get("wins", 0))
+
+    def keep_in_dorm(self, h):
+        """Выкупить ветерана в общежитие: останется в таверне, пока не отпустите."""
+        if h.dorm or not h.vet or len(self.dorm_heroes()) >= self.dorm_slots():
+            return False
+        cost = self.dorm_cost(h)
+        if self.glory < cost:
+            return False
+        self.glory -= cost
+        h.dorm = True
+        h.vet.pop("stay", None)
+        self.save()
+        return True
+
+    def release(self, h):
+        """Отпустить из общежития: ветеран уйдёт из таверны после следующего похода."""
+        if not h.dorm:
+            return False
+        h.dorm = False
+        h.vet["stay"] = self.xd["tavern"].get("vet_stay", 1)
+        self.save()
+        return True
+
+    def _vet_returns(self):
+        """Ушедший ветеран может снова заглянуть в таверну (тогда его можно выкупить в общежитие)."""
+        chance = self.xd["tavern"].get("vet_return", 0.3)
+        rng = random.Random(f"vetback:{self.seed_n}:{self.runs}")
+        if not self.away or rng.random() >= chance:
+            return []
+        d = self.away.pop(rng.randrange(len(self.away)))
+        if d.get("cls") not in self.data.classes:
+            return []
+        h = fix_kit(self.data, Hero(dict(d, solo=False)))
+        h.vet["stay"] = self.xd["tavern"].get("vet_stay", 1)
+        h.vet["back"] = True                       # «вернулся» — пометка в таверне
+        return [h]
+
+    def add_mats(self, mats):
+        for k, v in (mats or {}).items():
+            if v:
+                self.mats[k] = self.mats.get(k, 0) + v
+
+    # ---------- артефакты: хранилище, ячейки, мастерские ----------
+
+    def art_slots(self, h):
+        """Ячеек артефактов у героя — по рангу (1–5)."""
+        return int(self.xd["tavern"]["ranks"].get(str(h.rank), {}).get("slots", h.rank))
+
+    def art_owner(self, uid):
+        return next((h for h in self.roster if uid in h.arts), None)
+
+    def art_locked(self, uid):
+        """Артефакт на герое в идущем походе — не снять."""
+        st = self.run_state or {}
+        return any(uid in (h.get("arts") or []) for h in st.get("heroes", []))
+
+    def worn(self, h):
+        return [self.stash[u] for u in h.arts if u in self.stash]
+
+    def equip(self, h, uid):
+        """Надеть артефакт из хранилища: свободная ячейка, один вид — одна вещь; с другого героя — снимается."""
+        art = self.stash.get(uid)
+        if not art or self.art_locked(uid) or uid in h.arts:
+            return False
+        same = [u for u in h.arts if self.stash.get(u, {}).get("kind") == art["kind"]]
+        if same:
+            h.arts.remove(same[0])                 # тот же вид — замена
+        elif len(h.arts) >= self.art_slots(h):
+            return False
+        other = self.art_owner(uid)
+        if other and other is not h:
+            other.arts.remove(uid)
+        h.arts.append(uid)
+        self.save()
+        return True
+
+    def unequip(self, h, uid):
+        if uid not in h.arts:
+            return False
+        h.arts.remove(uid)
+        self.save()
+        return True
+
+    def workshop_level(self, ws):
+        return self.building_level(ws)
+
+    def can_craft(self, ws, set_id):
+        from . import artifacts as AR
+        a = self.xd["artifacts"]
+        rk = a["rarities"][a["sets"][set_id]["rarity"]]["rank"]
+        return (building_value(self.xd, self.buildings, ws) or 0) >= rk and self.can_pay(AR.craft_cost(self.xd, ws, set_id))
+
+    def craft(self, ws, kind, set_id, q, seed=None):
+        """Ковка: цена рецепта, качество — из мини-игры. Возвращает артефакт или None."""
+        from . import artifacts as AR
+        a = self.xd["artifacts"]
+        if a["kinds"][kind]["workshop"] != ws or not self.can_craft(ws, set_id):
+            return None
+        self.pay(AR.craft_cost(self.xd, ws, set_id))
+        self.art_n += 1
+        uid = f"a{self.art_n}"
+        art = AR.make(self.xd, uid, kind, set_id, q, random.Random(f"art:{uid}:{seed}"))
+        self.stash[uid] = art
+        self.save()
+        return art
+
+    def upgrade_cap(self):
+        return building_value(self.xd, self.buildings, "ws_alchemy") or 0
+
+    def upgrade_art(self, uid):
+        """Улучшение +1 в алхимии (потолок — уровень мастерской)."""
+        from . import artifacts as AR
+        art = self.stash.get(uid)
+        if not art or self.art_locked(uid) or art["level"] >= min(self.upgrade_cap(), self.xd["artifacts"]["max_level"]):
+            return False
+        if not self.pay(AR.upgrade_cost(self.xd, art)):
+            return False
+        art["level"] += 1
+        self.save()
+        return True
+
+    def enchant(self, uid, q, seed=None):
+        """Зачарование: новое свойство (качество — из мини-игры смешивания)."""
+        from . import artifacts as AR
+        art = self.stash.get(uid)
+        if not art or self.art_locked(uid) or not self.upgrade_cap():
+            return None
+        if not self.pay(AR.enchant_cost(self.xd, art)):
+            return None
+        a = self.xd["artifacts"]
+        rng = random.Random(f"ench:{uid}:{art['level']}:{seed}")
+        old = (art.get("extra") or {}).get("id")
+        pool = [x for x in a["extras"] if x != old]
+        lo, hi = a["quality"]
+        art["extra"] = {"id": rng.choice(pool), "q": round(max(lo, min(hi, q)), 3)}
+        self.save()
+        return art["extra"]
+
+    def new_rough(self, gid, rng, size=None):
+        """Новый необработанный самоцвет: вид, свой seed (форма заготовки), размер."""
+        m = self.xd["market"]
+        self.art_n += 1
+        return {"uid": f"r{self.art_n}", "id": gid, "seed": rng.randrange(1, 10 ** 6),
+                "size": round(size if size is not None else rng.uniform(*m["size"]), 2)}
+
+    def add_rough(self, gid, rng=None, size=None):
+        r = self.new_rough(gid, rng or random.Random(f"rough:{self.art_n}"), size)
+        self.rough.append(r)
+        return r
+
+    def find_rough(self, src):
+        """Камень по uid или первый камень этого вида."""
+        return next((r for r in self.rough if r["uid"] == src), None) or \
+            next((r for r in self.rough if r["id"] == src), None)
+
+    def cut_gem(self, src, q, shape=None, cut=None):
+        """Огранка (ювелирная): именно этот необработанный камень (uid или вид) — в огранённый, качество из мини-игры."""
+        a = self.xd["artifacts"]
+        r = self.find_rough(src)
+        if not (building_value(self.xd, self.buildings, "ws_jewel") or 0) or r is None:
+            return None
+        if not self.pay({"glory": a["gem_cost"]["gold"]}):
+            return None
+        self.rough.remove(r)
+        self.art_n += 1
+        lo, hi = a["quality"]
+        g = {"uid": f"g{self.art_n}", "id": r["id"], "q": round(max(lo, min(hi, q)), 3), "size": r.get("size", 1.0)}
+        if shape:                                  # форма огранённого камня — для витрины в инвентаре
+            g["shape"], g["cut"] = shape, cut
+        self.gems.append(g)
+        self.save()
+        return g
+
+    # ---------- кузня (sim/smithing.py) ----------
+
+    def suid(self, pre):
+        self.art_n += 1
+        return f"{pre}{self.art_n}"
+
+    def has_tool(self, tid):
+        return tid in self.smith.get("tools", [])
+
+    def smelt(self, carbon, heat_ok, slag, seed=0):
+        """Плавка: руда → куски (железо/сталь), чистота — от удержания жара и снятого шлака."""
+        from . import smithing as SM
+        cost = {"ore": SM.cfg(self.xd)["smelt"]["ore"]}
+        if not self.pay(cost):
+            return None
+        out = SM.smelt_result(self.xd, carbon, heat_ok, slag, random.Random(f"smelt:{seed}:{self.art_n}"),
+                              lambda: self.suid("p"))
+        self.smith["pieces"] += out
+        self.save()
+        return out
+
+    def stack(self, grid, used_uids):
+        """Пакет со стола: куски уходят в пакет."""
+        from . import smithing as SM
+        used = [p for p in self.smith["pieces"] if p["uid"] in used_uids]
+        if not used:
+            return None
+        b = SM.billet_from(self.xd, self.suid("b"), grid, used)
+        self.smith["pieces"] = [p for p in self.smith["pieces"] if p["uid"] not in used_uids]
+        self.smith["billets"].append(b)
+        self.save()
+        return b
+
+    def fold_max(self):
+        from . import smithing as SM
+        return SM.cfg(self.xd)["weld"]["fold_max"] + (2 if self.has_tool("tongs") else 0)
+
+    def store_billet(self, b):
+        """Сварка закончена: пакет обновлён в сундуке."""
+        self.smith["billets"] = [b if x["uid"] == b["uid"] else x for x in self.smith["billets"]]
+        self.save()
+
+    def cut_parts(self, b_uid, cuts, cold, wide=False):
+        """Разделка: брусок — на части любой массы (cuts — массы, остаток — последней частью)."""
+        from . import smithing as SM
+        b = next((x for x in self.smith["billets"] if x["uid"] == b_uid), None)
+        if b is None:
+            return None
+        parts = [SM.cut_part(self.xd, self.suid("c"), b, m, cold, wide) for m in cuts if m >= 5]
+        self.smith["parts"] += parts
+        self.smith["billets"].remove(b)
+        self.save()
+        return parts
+
+    def forge_item(self, kind, set_id, part_uids, shape_scores, quench, seed=None):
+        """Ковка вещи из частей: цена рецепта, качество — подготовка металла и ковка, металл — в артефакт."""
+        from . import artifacts as AR, smithing as SM
+        a = self.xd["artifacts"]
+        ws = a["kinds"][kind]["workshop"]
+        parts = [p for uid in part_uids for p in self.smith["parts"] if p["uid"] == uid]
+        if len(parts) != len(SM.parts_for(self.xd, kind)) or not self.can_craft(ws, set_id):
+            return None
+        self.pay(AR.craft_cost(self.xd, ws, set_id))
+        parts = SM.match_parts(self.xd, kind, parts) or parts
+        q = SM.final_quality(self.xd, parts, shape_scores, kind)
+        self.art_n += 1
+        uid = f"a{self.art_n}"
+        art = AR.make(self.xd, uid, kind, set_id, q, random.Random(f"art:{uid}:{seed}"))
+        art["metal"] = SM.merge_props(parts, quench)
+        art["metal"]["mass"] = sum(p["mass"] for p in parts)
+        art["metal"]["heavy"] = SM.mass_bonus(parts, SM.parts_for(self.xd, kind))
+        art["look"] = parts[0].get("look")                  # узор металла — для вида вещи
+        self.stash[uid] = art
+        self.smith["parts"] = [p for p in self.smith["parts"] if p["uid"] not in part_uids]
+        self.save()
+        return art
+
+    def refresh_orders(self):
+        from . import smithing as SM
+        if not self.xd.get("smithing"):
+            return
+        self.smith["orders"] = SM.roll_orders(self.xd, random.Random(f"orders:{self.seed_n}:{self.runs}"))
+
+    def fulfil(self, order_id, art_uid):
+        """Сдать вещь по заказу: вещь уходит, награда — золото (и материалы)."""
+        from . import smithing as SM
+        o = next((x for x in self.smith["orders"] if x["id"] == order_id), None)
+        art = self.stash.get(art_uid)
+        if o is None or art is None or self.art_locked(art_uid) or not SM.order_ok(self.xd, o, art):
+            return False
+        owner = self.art_owner(art_uid)
+        if owner:
+            owner.arts.remove(art_uid)
+        del self.stash[art_uid]
+        self.glory += o["gold"]
+        self.add_mats(o.get("mats", {}))
+        self.smith["orders"].remove(o)
+        self.save()
+        return True
+
+    def buy_tool(self, tid):
+        """Инструмент или урок у бродячего кузнеца."""
+        from . import smithing as SM
+        w = self.market.get("smith") or {}
+        t = SM.cfg(self.xd)["tools"].get(tid)
+        if t is None or tid not in w.get("tools", []) or self.has_tool(tid) or not self.pay({"glory": t["price"]}):
+            return False
+        self.smith["tools"].append(tid)
+        w["tools"].remove(tid)
+        self.save()
+        return True
+
+    def buy_piece(self, uid):
+        w = self.market.get("smith") or {}
+        p = next((x for x in w.get("pieces", []) if x["uid"] == uid), None)
+        if p is None or not self.pay({"glory": p["price"]}):
+            return False
+        w["pieces"].remove(p)
+        self.smith["pieces"].append({k: v for k, v in p.items() if k != "price"})
+        self.save()
+        return True
+
+    # ---------- рынок ----------
+
+    def refresh_market(self):
+        """Новый товар рынка (после похода): несколько необработанных камней и иногда — огранённые."""
+        m = self.xd.get("market")
+        if not m:
+            return
+        rng = random.Random(f"market:{self.seed_n}:{self.runs}")
+        ids = sorted(self.xd["artifacts"]["gems"])
+        weights = [1.0 / self.xd["artifacts"]["gems"][g].get("price", 200) for g in ids]   # дорогие — реже
+        rough = [self.new_rough(rng.choices(ids, weights)[0], rng) for _ in range(rng.randint(*m["rough_stock"]))]
+        cut = []
+        for _ in range(rng.randint(*m["cut_stock"])):
+            r = self.new_rough(rng.choices(ids, weights)[0], rng)
+            self.art_n += 1
+            cut.append({"uid": f"g{self.art_n}", "id": r["id"], "q": round(rng.uniform(0.85, 1.15), 2),
+                        "size": r["size"], "cut": rng.choice(["baguette", "emerald", "cushion", "oval", "brilliant"])})
+        from . import smithing as SM
+        smith = SM.roll_wanderer(self.xd, rng, self.smith.get("tools", []), lambda: self.suid("p")) \
+            if self.xd.get("smithing") else None
+        self.market = {"key": self.runs, "rough": rough, "cut": cut, "smith": smith}
+
+    def market_price(self, kind, item):
+        from . import artifacts as AR
+        return AR.rough_value(self.xd, item) if kind == "rough" else AR.cut_value(self.xd, item)
+
+    def sell_price(self, kind, item):
+        return int(self.market_price(kind, item) * self.xd["market"]["sell_k"])
+
+    def buy(self, kind, uid):
+        """Купить камень с рынка (kind: rough | cut)."""
+        lot = self.market.get(kind, [])
+        item = next((x for x in lot if x["uid"] == uid), None)
+        if item is None or not self.pay({"glory": self.market_price(kind, item)}):
+            return False
+        lot.remove(item)
+        (self.rough if kind == "rough" else self.gems).append(item)
+        self.save()
+        return True
+
+    def sell(self, kind, uid):
+        """Продать свой камень рынку за половину цены."""
+        own = self.rough if kind == "rough" else self.gems
+        item = next((x for x in own if x["uid"] == uid), None)
+        if item is None:
+            return False
+        self.glory += self.sell_price(kind, item)
+        own.remove(item)
+        self.market.setdefault(kind, []).append(item)       # рынок перепродаёт
+        self.save()
+        return True
+
+    def rough_drops(self, run):
+        """Вылазка: за каждую добытую крошку — небольшой шанс найти настоящий самоцвет (один на поход)."""
+        m = self.xd.get("market")
+        if not m:
+            return None
+        chips = getattr(run, "loot", {}).get("gems", 0)
+        chance = min(m["rough_drop_max"], m["rough_drop_per_chip"] * chips)
+        rng = random.Random(f"roughdrop:{run.seed}:{self.runs}")
+        if chips <= 0 or rng.random() >= chance:
+            return None
+        ids = sorted(self.xd["artifacts"]["gems"])
+        weights = [1.0 / self.xd["artifacts"]["gems"][g].get("price", 200) for g in ids]
+        r = self.new_rough(rng.choices(ids, weights)[0], rng)
+        self.rough.append(r)
+        return r
+
+    def socket(self, uid, gem_uid):
+        """Вставить самоцвет в свободное гнездо (насовсем)."""
+        from . import artifacts as AR
+        art = self.stash.get(uid)
+        g = next((x for x in self.gems if x["uid"] == gem_uid), None)
+        if not art or not g or self.art_locked(uid) or len(art["gems"]) >= AR.sockets(self.xd, art):
+            return False
+        art["gems"].append({"id": g["id"], "q": g["q"]})
+        self.gems.remove(g)
+        self.save()
+        return True
+
+    # ---------- поручения ----------
+
+    def board_slots(self):
+        return building_value(self.xd, self.buildings, "board") or self.xd.get("contracts", {}).get("base_slots", 0)
+
+    def tasks(self):
+        """Идущие поручения: {id: [герои]}."""
+        out = {}
+        for h in self.roster:
+            if h.task:
+                out.setdefault(h.task["key"], []).append(h)
+        return out
+
+    def refresh_offers(self):
+        """Новые заказы на доске (после каждого похода): шаблоны поручений — случайно, без повторов."""
+        cfg = self.xd.get("contracts")
+        if not cfg:
+            return
+        rng = random.Random(f"offers:{self.seed_n}:{self.runs}")
+        ids = sorted(cfg["templates"])
+        rng.shuffle(ids)
+        self.offers = [{"id": i, "key": f"{i}:{self.runs}:{k}"} for k, i in enumerate(ids[:cfg["offers"]])]
+
+    def contract_chance(self, cid, heroes):
+        """Шанс успеха: риск, подходящие герои (класс/роль/атрибут), ранг."""
+        cfg = self.xd["contracts"]
+        t = cfg["templates"][cid]
+        ch = cfg["chance"]
+        p = ch[t["risk"]]
+        fit = t.get("fit", {})
+        for h in heroes:
+            c = self.data.classes[h.cls]
+            ok = (h.cls in fit.get("classes", []) or c.get("role") in fit.get("roles", [])
+                  or (fit.get("attr") and self.data.stats_mode["classes"][h.cls]["primary"] == fit["attr"]))
+            p += ch["fit"] if ok else 0.0
+            p += ch["rank"] * (h.rank - 1)
+        return round(min(ch["max"], p), 2)
+
+    def send(self, offer, uids):
+        """Отправить героев на поручение. Нужно свободное место на доске и ровно столько героев, сколько просят."""
+        cfg = self.xd["contracts"]
+        t = cfg["templates"][offer["id"]]
+        heroes = [h for h in self.roster if h.uid in uids and self.ready(h)]
+        if len(heroes) != t["heroes"] or len(self.tasks()) >= self.board_slots():
+            return False
+        chance = self.contract_chance(offer["id"], heroes)
+        for h in heroes:
+            h.task = {"id": offer["id"], "key": offer["key"], "left": t["runs"], "chance": chance,
+                      "with": [x.uid for x in heroes]}
+            h.vet.pop("stay", None)                # на поручении из таверны не уходит
+        self.offers = [o for o in self.offers if o["key"] != offer["key"]]
+        self.save()
+        return True
+
+    def tick_tasks(self):
+        """Прошёл поход: поручения продвигаются; закончившиеся — развязка. Возвращает вести [{...}]."""
+        cfg = self.xd.get("contracts")
+        news = []
+        for key, heroes in self.tasks().items():
+            task = heroes[0].task
+            for h in heroes:
+                h.task["left"] -= 1
+            if task["left"] > 0:
+                continue
+            t = cfg["templates"][task["id"]]
+            rng = random.Random(f"task:{key}:{self.runs}")
+            roll = rng.random()
+            res = "success" if roll < task["chance"] else (
+                "partial" if roll < task["chance"] + cfg["chance"]["partial"] else "fail")
+            got = self._task_reward(t, rng, 1.0 if res == "success" else 0.5 if res == "partial" else 0.0)
+            item = {"name": t["name"], "result": res, "heroes": [h.name for h in heroes], "reward": got,
+                    "hurt": [], "dead": []}
+            for h in heroes:
+                h.task = None
+                h.feats["tasks"] = h.feats.get("tasks", 0) + (1 if res != "fail" else 0)
+                if res == "fail":
+                    if t["risk"] == "high" and rng.random() < cfg["death"].get("high", 0):
+                        item["dead"].append(h.name)
+                        self._task_death(h, t)
+                        continue
+                    h.rest = 1
+                    item["hurt"].append(h.name)
+                self._task_note(h, t, res)
+            news.append(item)
+            back = [h for h in heroes if h in self.roster]
+            self.roster = back + [h for h in self.roster if h not in back]
+        for h in self.roster:
+            if not h.task and h.rest > 0 and not any(h.name in n["hurt"] for n in news):
+                h.rest -= 1
+        return news
+
+    def _task_reward(self, t, rng, k):
+        r = t["reward"]
+        got = {}
+        if not k:
+            return got
+        if r.get("gold"):
+            got["gold"] = int(rng.randint(*r["gold"]) * k)
+            self.glory += got["gold"]
+        mats = {m: int(round(rng.randint(*v) * k)) for m, v in r.get("mats", {}).items()}
+        mats = {m: v for m, v in mats.items() if v}
+        if mats:
+            got["mats"] = mats
+            self.add_mats(mats)
+        if r.get("trophy") and k >= 1:
+            got["trophy"] = dict(r["trophy"])
+            for tk, v in r["trophy"].items():
+                self.trophies[tk] = self.trophies.get(tk, 0) + v
+        if r.get("recruit") and k >= 1:
+            self.uid_n += 1
+            h = new_recruit(self.data, self.xd, rng, f"h{self.uid_n}", self.classes(),
+                            {str(r["recruit"]): 1}, [x.name for x in self.roster])
+            self.roster.insert(0, h)
+            got["recruit"] = h.name
+        return got
+
+    def _task_note(self, h, t, res):
+        word = {"success": "выполнил", "partial": "наполовину выполнил", "fail": "провалил"}[res]
+        h.chronicle.append({"kind": "task" if res != "fail" else "fall",
+                            "text": f"Поручение «{t['name']}»: {word}" + (" — ранен" if res == "fail" else ""),
+                            "run": h.vet.get("runs", 0) + 1, "chapter": "tavern"})
+        titles = self.xd.get("chronicle", {}).get("titles", {})
+        for tid, td in titles.items():
+            if tid not in h.titles and all(h.feats.get(k, 0) >= v for k, v in td["need"].items()):
+                h.titles.append(tid)
+
+    def _task_death(self, h, t):
+        h.chronicle.append({"kind": "death", "text": f"Погиб на поручении «{t['name']}»",
+                            "run": h.vet.get("runs", 0) + 1, "chapter": "tavern"})
+        titles = self.xd.get("chronicle", {}).get("titles", {})
+        self.fallen.append({"name": h.name, "cls": h.cls, "level": h.level, "chapter": "tavern", "act": 0,
+                            "reason": f"погиб на поручении «{t['name']}»", "solo": False,
+                            "wins": h.vet.get("wins", 0), "titles": [titles[x]["name"] for x in h.titles if x in titles],
+                            "chronicle": list(h.chronicle), "feats": dict(h.feats)})
+        self.roster = [x for x in self.roster if x is not h]
 
     def roll_roster(self, keep=False):
         """Новый зал таверны. keep — оставить уже сидящих, добрать до размера зала (в обоих режимах)."""
@@ -2312,23 +3197,28 @@ class ExpeditionProfile:
         n = self.hall_size()
 
         def short():
-            squad = sum(1 for h in roster if not self.solo_vet(h))
-            return squad < n or len(roster) < n
+            free = [h for h in roster if not (h.dorm or h.task)]
+            squad = sum(1 for h in free if not self.solo_vet(h))
+            return squad < n or len(free) < n
         while short():
             self.uid_n += 1
             h = new_recruit(self.data, self.xd, rng, f"h{self.uid_n}", self.classes(), self.value("renown"),
                             [h.name for h in roster])
             roster.append(h)
+        fixed = [h for h in roster if h.dorm or h.task]               # общежитие и поручения — не место в зале
+        roster = [h for h in roster if not (h.dorm or h.task)]
         solo_vets = [h for h in roster if self.solo_vet(h)][:n]       # ветераны-одиночки ждут своего режима
         rest = [h for h in roster if not self.solo_vet(h)][:n]
-        self.roster = solo_vets + rest
+        self.roster = fixed + solo_vets + rest
 
     def reroll(self):
         cost = self.xd["tavern"]["reroll_cost"]
         if self.glory < cost:
             return False
         self.glory -= cost
+        keep = [h for h in self.roster if h.dorm or h.task]
         self.roll_roster()
+        self.roster = keep + self.roster
         self.save()
         return True
 
@@ -2343,18 +3233,32 @@ class ExpeditionProfile:
         lv = self.building_level(bid)
         return dict(b["levels"][lv]["cost"]) if lv < len(b["levels"]) else None
 
-    def can_pay(self, cost):
-        return all((self.glory if k == "glory" else self.trophies.get(k, 0)) >= v for k, v in cost.items())
+    def have(self, k):
+        if k == "glory":
+            return self.glory
+        if k in self.xd.get("materials", {}):
+            return self.mats.get(k, 0)
+        return self.trophies.get(k, 0)
 
-    def build(self, bid):
-        cost = self.building_cost(bid)
-        if cost is None or not self.can_pay(cost):
+    def can_pay(self, cost):
+        return all(self.have(k) >= v for k, v in cost.items())
+
+    def pay(self, cost):
+        if not self.can_pay(cost):
             return False
         for k, v in cost.items():
             if k == "glory":
                 self.glory -= v
+            elif k in self.xd.get("materials", {}):
+                self.mats[k] = self.mats.get(k, 0) - v
             else:
-                self.trophies[k] -= v
+                self.trophies[k] = self.trophies.get(k, 0) - v
+        return True
+
+    def build(self, bid):
+        cost = self.building_cost(bid)
+        if cost is None or not self.pay(cost):
+            return False
         self.buildings[bid] = self.building_level(bid) + 1
         self.save()
         return True
@@ -2426,7 +3330,7 @@ class ExpeditionProfile:
             vet["solo"] = bool(run.solo)               # одиночка (6 навыков) — только для одиночных походов
             d.update(rank=rank, level=rk["level"], xp=0, points=None, sp=max(0, rk["level"] // 3), ranks={}, uses={},
                      branches={best[0]: [best[1][0], 1]} if best else {}, gear={}, hp=None, wounded=False, gifts=[],
-                     perks=[], pick_offer=None, solo=False, vet=vet)
+                     perks=[], pick_offer=None, solo=False, vet=vet, falls=0)    # летопись и прозвища — с ним
             v = fix_kit(self.data, Hero(d))
             v.points = auto_points(self.data, v)
             out.append(v)
@@ -2434,10 +3338,22 @@ class ExpeditionProfile:
 
     def to_hall(self, run, reason):
         for h in run.heroes:
-            self.fallen.append({"name": h.name, "cls": h.cls, "level": h.level, "chapter": run.chapter,
-                                "act": run.act + 1, "reason": reason, "solo": run.solo,
-                                "wins": h.vet.get("wins", 0)})
+            run.note(h, "death", f"Погиб: поход проигран, акт {run.act + 1}")
+            self._hall_entry(run, h, reason, run.act + 1)
         self.fallen = self.fallen[-60:]
+
+    def _hall_entry(self, run, h, reason, act):
+        titles = self.xd.get("chronicle", {}).get("titles", {})
+        self.fallen.append({"name": h.name, "cls": h.cls, "level": h.level, "chapter": run.chapter,
+                            "act": act, "reason": reason, "solo": run.solo, "wins": h.vet.get("wins", 0),
+                            "titles": [titles[t]["name"] for t in h.titles if t in titles],
+                            "chronicle": list(h.chronicle), "feats": dict(h.feats)})
+
+    def bury_dead(self, run):
+        """Погибшие в походе (третье падение) — в зал славы с летописью."""
+        for rec in run.dead:
+            self._hall_entry(run, Hero(rec["hero"]), rec["reason"], rec["act"])
+        run.dead = []
 
     def squad_cfg(self):
         """Сколько героев берут в поход (одиночка — одного)."""
@@ -2457,24 +3373,36 @@ class ExpeditionProfile:
 
     def tier_open_of(self, cid):
         if self.sandbox:
-            return 2
+            return len(self.xd["config"]["tiers"]) - 1
         return self.tier_open if cid == "swamp" else self.chapter_tiers.get(cid, 0)
 
-    def start(self, uids, seed=None, tier=0, chapter="swamp"):
+    def start(self, uids, seed=None, tier=0, chapter="swamp", autocast="default"):
         """Поход с выбранными героями (2–3) на открытой сложности открытой главы."""
         if not self.chapter_open(chapter):
             chapter = "swamp"
         tier = max(0, min(tier, self.tier_open_of(chapter)))
         cfg = self.squad_cfg()
-        picked = [h for h in self.hall() if h.uid in uids]
+        picked = [h for h in self.recruitable() if h.uid in uids and self.ready(h)]
         if not cfg["squad_min"] <= len(picked) <= cfg["squad_start"]:
             raise ValueError("нужно 2–3 героя" if not self.solo else "нужен один герой")
+        cost = sum(self.hire_cost(h) for h in picked)
+        if cost > self.glory:
+            raise ValueError("не хватает золота на найм")
+        self.glory -= cost                          # новички рангом выше — за золото казны
         seed = seed if seed is not None else random.randrange(1_000_000)
         gold = cfg["start_gold"] + self.value("provisions")
+        for h in picked:                           # артефакты: не больше ячеек ранга и только из хранилища
+            h.arts = [u for u in h.arts if u in self.stash][:self.art_slots(h)]
+        arts = {u: dict(self.stash[u]) for h in picked for u in h.arts}
         run = Expedition(self.data, [Hero(dict(h.to_dict(), solo=self.solo)) for h in picked], seed, gold,
-                         chapter=chapter, tier=tier, solo=self.solo, vows=self.vows if self.vows_open() else {},
-                         build=self.buildings)
+                         chapter=chapter, tier=tier, solo=self.solo, vows={},     # обеты убраны (2026-11-11)
+                         build=self.buildings, arts=arts)
         run.uid_n = 1000
+        run.autocast_mode = autocast if autocast in ("on", "off") else "default"
+        if run.autocast_mode != "default":            # начало похода: все навыки — по выбранному режиму
+            for h in run.heroes:
+                h.autocast = {}
+                run.preset_autocast(h)
         self.apply_buildings(run)
         self.roster = [h for h in self.roster if h.uid not in uids]
         self.runs += 1
@@ -2502,8 +3430,8 @@ class ExpeditionProfile:
 
     def finish(self, run):
         """Конец похода: слава, рекорд, новый зал таверны."""
-        glory = run.glory()
-        self.glory += glory
+        glory = run.glory() + int(max(0, run.gold) * self.xd["config"].get("treasury_share", 0.25))
+        self.glory += glory                         # казна: награда похода + доля оставшегося золота
         if run.result == "victory":
             self.wins += 1
             self.chapter_wins[run.chapter] = self.chapter_wins.get(run.chapter, 0) + 1   # открывает следующие главы
@@ -2516,15 +3444,43 @@ class ExpeditionProfile:
         self.best_act = max(self.best_act, run.act + (1 if run.result == "victory" else 0))
         for k, v in run.trophies.items():          # трофеи глав остаются и после поражения
             self.trophies[k] = self.trophies.get(k, 0) + v
+        keep = 1.0 if run.result == "victory" else self.xd["config"].get("mat_drops", {}).get("defeat_keep", 1.0)
+        self.add_mats({k: int(v * keep) for k, v in getattr(run, "loot", {}).items()})   # материалы — в мастерские
+        found = self.rough_drops(run)                # редкость: настоящий самоцвет среди крошки
         vets = []
+        self.bury_dead(run)
         if run.result == "victory":
+            for h in run.heroes:
+                run.note(h, "win", f"Победа: {self.xd['chapters'].get(run.chapter, {}).get('name', run.chapter)} пройдена")
+                h.feats["runs_won"] = h.feats.get("runs_won", 0) + 1
+            run.award_titles()
             vets = self.return_veterans(run)
         else:
             self.to_hall(run, "пал")
         self.run_state = None
-        self.roster = vets + list(self.roster)      # ветераны — первыми в зале (лишних отрежет roll_roster)
+        stay = self.xd["tavern"].get("vet_stay", 1)
+        old = []
+        for h in self.roster:                       # ветеран вне общежития и не на поручении — уходит в свой срок
+            if h.vet and not h.dorm and not h.task:
+                left = h.vet.get("stay", stay)
+                if left <= 1:
+                    h.vet.pop("stay", None)
+                    self.away = (self.away + [h.to_dict()])[-20:]     # ушёл странствовать — может вернуться
+                    continue
+                h.vet["stay"] = left - 1
+            old.append(h)
+        for v in vets:
+            if not v.dorm:
+                v.vet["stay"] = stay
+        back = self._vet_returns()
+        self.roster = vets + back + old             # ветераны — первыми в зале (лишних отрежет roll_roster)
+        self.news = self.tick_tasks()
+        self.refresh_offers()
+        self.refresh_market()
+        self.refresh_orders()
         self.roll_roster(keep=True)
         self.save()
         return {"glory": glory, "result": run.result, "act": run.act, "counts": dict(run.counts), "chapter": run.chapter,
-                "trophies": dict(run.trophies), "veterans": [h.name for h in vets],
+                "trophies": dict(run.trophies), "veterans": [h.name for h in vets], "news": list(self.news),
+                "loot": dict(getattr(run, "loot", {})), "rough": found,
                 "heroes": [(h.name, h.cls, h.level) for h in run.heroes]}

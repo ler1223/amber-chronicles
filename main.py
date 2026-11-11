@@ -11,7 +11,7 @@ python main.py --sandbox        — песочница: открыто всё (�
 python main.py --screenshot out.png --seconds 3
                                 — без окна: таверна, прокрутить и сохранить кадр
 
-Старые режимы (основная игра на карте биома, режим героев, сюжет, песочница боёв) — python legacy.py.
+Старые режимы и нейросети — в archive/ (не поддерживаются, см. archive/README.md).
 Сохранение одно на оба режима — общая таверна: save/expedition.json (песочница — save/sandbox_expedition.json).
 """
 import argparse
@@ -27,7 +27,7 @@ parser.add_argument("--solo", action="store_true")
 parser.add_argument("--expedition", action="store_true")
 parser.add_argument("--screenshot")
 parser.add_argument("--seconds", type=float, default=3.0)
-args = parser.parse_args()
+args = parser.parse_args() if __name__ == "__main__" else parser.parse_args([])   # тесты импортируют dispatch
 
 if args.screenshot:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -54,6 +54,21 @@ def make_app(data):
     app = App(data, args.seed, args.autoplay, prof, start="hub" if args.screenshot else "title", launcher="main")
     app._base_path = None if args.screenshot else base
     return app
+
+
+def dispatch(scene, ev):
+    """Событие → сцена. Сцена-колонка (stage, 1280×800 по центру широкого окна): мышь сдвигается в её координаты,
+    а обработка идёт в размере 1280×800 — в тех же координатах, в которых сцена рисуется (иначе кнопки и области,
+    посчитанные от ширины экрана, «уезжают» от курсора)."""
+    if not getattr(scene, "stage", False):
+        scene.handle(ev)
+        return
+    if ev.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and "pos" in ev.dict:
+        d = dict(ev.dict)
+        d["pos"] = (d["pos"][0] - T.content_ox(), d["pos"][1])
+        ev = pygame.event.Event(ev.type, d)
+    with T.design():
+        scene.handle(ev)
 
 
 def main():
@@ -100,17 +115,12 @@ def main():
             elif ev.type in (pygame.VIDEORESIZE, pygame.WINDOWRESIZED, pygame.WINDOWSIZECHANGED):
                 disp.sync()                      # пересчитать холст: ширина сцен следует за окном
             else:
-                ev = disp.to_logical(ev)
-                scene = holder.scene
-                if getattr(scene, "stage", False) and ev.type in (
-                        pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
-                    ox = T.content_ox()          # сцена-колонка 1280: сдвигаем мышь в её координаты
-                    d = dict(ev.dict)
-                    if "pos" in d:
-                        d["pos"] = (d["pos"][0] - ox, d["pos"][1])
-                    ev = pygame.event.Event(ev.type, d)
-                scene.handle(ev)
-        holder.scene.update(dt)
+                dispatch(holder.scene, disp.to_logical(ev))
+        if getattr(holder.scene, "stage", False):
+            with T.design():
+                holder.scene.update(dt)
+        else:
+            holder.scene.update(dt)
         if holder.quit:
             running = False
             continue

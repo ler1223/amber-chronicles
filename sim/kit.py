@@ -16,7 +16,9 @@ import math
 
 from sim.grid import cheb
 
-TYPES = {"mark", "quiver", "zone", "totem_pulse", "totem_move", "totem_link", "shadow_dance", "trap_pull",
+TYPES = {"mark", "zone", "vault", "barrage", "shackle", "fletch", "trail", "ignite_charges", "barrel_rain",
+         "ball", "storm_front", "ancestors",
+         "reactive", "totem_pulse", "totem_move", "totem_link", "shadow_dance", "trap_pull",
          "time_theft", "detonate_charges", "song_notes", "inferno", "consume_fire", "bleed_feast", "raise_all",
          "song_tempo", "song_finale", "corpse_pulse", "reagent_area", "cut_tethers", "tether_heal", "tether_all",
          "terrain_wave", "note", "finale"}
@@ -73,10 +75,10 @@ def tick_marks(c, u, dt):
             del u.marks[mid]
             d = mark_def(c, mid)
             c.emit("mark_end", unit=u, mark=mid)
-            if d.get("on_expire"):
+            if m.get("on_expire") or d.get("on_expire"):
                 c.emit("mark_max", unit=u, mark=mid, src=m["src"])
-                c.apply_effects(m["src"] or u, [dict(e, _n=m["n"], _powder=m.get("mult", 1.0)) for e in d["on_expire"]],
-                                u.cell, u)
+                c.apply_effects(m["src"] or u, [dict(e, _n=m["n"], _powder=m.get("mult", 1.0))
+                                                for e in m.get("on_expire") or d["on_expire"]], u.cell, u)
 
 
 def consume_mark(c, v, mid):
@@ -86,10 +88,10 @@ def consume_mark(c, v, mid):
         return 0
     d = mark_def(c, mid)
     c.emit("mark_end", unit=v, mark=mid)
-    if d.get("on_expire") and d.get("burst_on_consume"):
+    if (m.get("on_expire") or d.get("on_expire")) and d.get("burst_on_consume"):
         c.emit("mark_max", unit=v, mark=mid, src=m["src"])
-        c.apply_effects(m["src"] or v, [dict(e, _n=m["n"], _powder=m.get("mult", 1.0)) for e in d["on_expire"]],
-                        v.cell, v)
+        c.apply_effects(m["src"] or v, [dict(e, _n=m["n"], _powder=m.get("mult", 1.0))
+                                        for e in m.get("on_expire") or d["on_expire"]], v.cell, v)
     return m["n"]
 
 
@@ -149,48 +151,521 @@ def hit_mult(c, caster, v, eff):
 
 def after_hit(c, caster, v, eff, dealt):
     if eff.get("arrow") and v.alive:
-        arrow_rider(c, caster, v, eff.get("arrow_mult", 1.0))
+        n = eff.get("arrows", 1)                    # «В голову»: две стрелы подряд
+        for _ in range(n):
+            arrow_rider(c, caster, v, eff.get("arrow_mult", 1.0))
     if eff.get("mark_on_hit") and v.alive:
         mo = eff["mark_on_hit"]
         add_mark(c, v, mo["mark"], mo.get("stacks", 1), mo.get("duration", 6), caster)
 
 
-# ---------- колчан ----------
+# ---------- колчаны лучника ----------
+#
+# У лучника до трёх колчанов (u.quivers, выбор 1 из 2 на 1 / 6 / 11 уровне, на 15 — все сильнее). Стрелы
+# чередуются: каждый выстрел (обычная атака или навык с "arrow": true) берёт следующий колчан по кругу.
+# Числа стрел — доли силы навыков лучника (data/config.json "arrows"); полный Разгон — эффект ×2.
 
-def arrow_rider(c, u, t, mult=1.0):
-    """Эффект стрелы из колчана на цели: огонь, холод, кровотечение, оглушение."""
-    a = c.cfg["quiver"].get(u.quiver or "")
-    if not a or not t.alive:
+def arrow_owner(c, u):
+    """Чьи стрелы несёт атака u: свои (лучник), хозяина (зеркальный клон) или лучника «Оперения отряда»."""
+    if u.quivers:
+        return u
+    if u.owner is not None and getattr(u.owner, "quivers", None) and u.proto.get("mirror"):
+        return u.owner
+    fid = u.buff("fletch", None)
+    if fid is not None:
+        return next((v for v in c.units if v.id == fid and v.alive), None)
+    return None
+
+
+def next_arrow(u):
+    if not u.quivers:
+        return None
+    a = u.quivers[u.arrow_i % len(u.quivers)]
+    u.arrow_i += 1
+    return a
+
+
+def arrow_rider(c, src, t, mult=1.0, arrow=None, owner=None):
+    """Стрела долетела до t: эффект колчана. src — кто стрелял (лечение вампирских — ему), owner — чьи колчаны и
+    сила навыков (лучник)."""
+    owner = owner or arrow_owner(c, src)
+    if owner is None or not t.alive or t.obj:
+        return
+    arrow = arrow or next_arrow(owner)
+    a = c.cfg["arrows"].get(arrow or "")
+    if not a:
         return
     from sim import passives as PS
-    if PS.arrow_mult(u) > 1 and mult == 1.0:       # полный разгон: эффект стрел двойной
-        mult = 2.0
-        if a.get("mark"):
-            add_mark(c, t, a["mark"], a.get("stacks", 1), a.get("duration", 5), u)
-    c.gain(u, "arrow")
-    if a.get("tag"):
-        c.apply_status(t, a["tag"], u)
-    if a.get("mark"):
-        add_mark(c, t, a["mark"], a.get("stacks", 1), a.get("duration", 5), u)
-    if a.get("bleed"):
-        value = max(a["bleed"], u.atk_damage * a.get("bleed_pct", 0))
-        c.add_buff(t, "bleed", round(value * mult, 1), a.get("duration", 4), src=u)
-    if a.get("knockback") and not t.boss:
-        c.knockback(u.cell, t, a["knockback"], u)
-    if a.get("interrupt"):
-        c._interrupt(t)
+    if PS.arrow_mult(owner) > 1:                    # полный Разгон: эффект стрел двойной
+        mult *= 2.0
+    if owner.proto.get("quiver_boost"):             # 15 уровень: все колчаны сильнее
+        mult *= c.cfg["arrows_boost"]
+    sp = c.stat_k(owner, "sp", True) * mult
+    c.gain(owner, "arrow")
+    c.emit("arrow", unit=t, src=src, arrow=arrow)
+    flat = c._flat
+    c._flat = True                                  # числа уже от силы навыков: атрибут второй раз не умножать
+    try:
+        if a.get("dmg"):
+            c.damage(t, a["dmg"] * sp, src, a.get("tag"), "spell")
+        if a.get("tag") and t.alive:
+            c.apply_status(t, a["tag"], src)
+        if a.get("mark") and t.alive:
+            add_mark(c, t, a["mark"], a.get("stacks", 1), a.get("duration", 5), owner)
+        if a.get("bleed") and t.alive:
+            c.add_buff(t, "bleed", round(a["bleed"] * sp, 1), a.get("duration", 4), src=src)
+        if a.get("knockback") and t.alive and not t.boss:
+            c.knockback(src.cell, t, a["knockback"], src)
+        if a.get("interrupt") and t.alive:
+            c._interrupt(t)
+        if a.get("heal") and src.alive:
+            c.heal(src, int(round(a["heal"] * sp)), owner)
+        if a.get("shred") and t.alive:              # бронебойные: −1 брони за стрелу (до shred_max) на время
+            cur = t.buff("armor_shred", 0)
+            c.add_buff(t, "armor_shred", min(a["shred_max"], cur + a["shred"]), a.get("duration", 6))
+        if a.get("blast"):                          # взрывные: урон всем врагам рядом с целью
+            for v in c.units_in_radius(t.cell, a["blast"]):
+                if v.alive and v is not t and src.is_enemy(v) and not v.obj:
+                    c.damage(v, a["blast_dmg"] * sp, src, a.get("tag"), "spell")
+        if a.get("jump"):                           # грозовые / отскакивающие: следующему врагу рядом
+            near = sorted((v for v in c.alive() if src.is_enemy(v) and v is not t and not v.obj
+                           and cheb(v.cell, t.cell) <= a["jump"]), key=lambda v: (cheb(v.cell, t.cell), v.id))
+            if near:
+                v = near[0]
+                amount = a["jump_dmg"] * (c.stat_k(owner, "atk", True) * mult if a.get("jump_of") == "atk" else sp)
+                c.emit("chain", src=t, dst=v, tag=a.get("tag"))
+                c.damage(v, amount, src, a.get("tag"), "spell")
+                if a.get("jump_tag") and v.alive:
+                    c.apply_status(v, a["jump_tag"], src)
+    finally:
+        c._flat = flat
 
 
 def basic_rider(c, u, t):
-    if u.quiver and t.alive and not t.obj:
-        arrow_rider(c, u, t)
-    if "all_arrows" in u.buffs and t.alive and not t.obj:      # «Все стрелы»: каждая атака — всеми видами
-        keep = u.quiver
-        for a in c.cfg["quiver"]:
-            if a != keep:
-                u.quiver = a
-                arrow_rider(c, u, t, 0.6)
-        u.quiver = keep
+    if t.obj or not t.alive:
+        return
+    owner = arrow_owner(c, u)
+    if owner is None:
+        return
+    if "all_arrows" in owner.buffs and owner is u:     # «Все стрелы»: каждая атака — всеми колчанами сразу
+        for a in owner.quivers:
+            arrow_rider(c, u, t, 1.0, a, owner)
+        return
+    arrow_rider(c, u, t, 1.0, None, owner)
+    k = owner.proto.get("arrow_double")
+    if k and owner is u and owner.arrow_i % int(k) == 0 and t.alive:    # «Колчан с секретом»: стрела дважды
+        arrow_rider(c, u, t, 1.0, owner.quivers[(owner.arrow_i - 1) % len(owner.quivers)], owner)
+
+
+# ---------- молнии и тотемы шамана ----------
+
+def own_totems(c, u):
+    return [s for s in c.units if s.alive and s.owner is u and s.proto.get("group") == "totem"]
+
+
+def ball_lightning(c, caster, eff, center):
+    """Шаровая молния: медленный шар по прямой; бьёт током каждого врага рядом с путём (каждого — один раз)."""
+    cells = line_cells(caster.cell, tuple(center), eff.get("length", 6))
+    if not cells:
+        c.emit("fizzle", unit=caster, skill=None)
+        return
+    dmg = eff["amount"] * caster.power          # power — уже от силы навыков (of: sp)
+    hit = []                                    # общий список задетых — данными (бой можно копировать)
+    speed = eff.get("speed", 4.0)
+    c.emit("ball_start", unit=caster, cells=cells, speed=speed)
+    for i, p in enumerate(cells):
+        t = round((i + 1) / speed, 2)
+        c.delayed.append({"left": t, "total": t, "ball": (caster, p, dmg, eff.get("radius", 1), hit,
+                                                          eff.get("stun", 0)), "tunit": None})
+
+
+def ball_step(c, caster, pos, dmg, r, hit, stun):
+    if not caster.alive:
+        return
+    c.emit("ball_step", pos=pos, src=caster)
+    flat = c._flat
+    c._flat = True
+    try:
+        for v in c.units_in_radius(pos, r):
+            if v.alive and not v.obj and caster.is_enemy(v) and v.id not in hit:
+                hit.append(v.id)
+                c.emit("chain", src=caster, dst=v, tag="storm")
+                c.damage(v, dmg, caster, "storm", "spell")
+                if v.alive:
+                    c.apply_status(v, "storm", caster)
+                if stun and v.alive:
+                    c.apply_stun(v, stun, "shock")
+    finally:
+        c._flat = flat
+
+
+def storm_front(c, caster, eff):
+    """Грозовой фронт: каждую секунду молния с неба бьёт врага рядом с шаманом и с каждым его тотемом."""
+    dmg = eff["amount"] * caster.power
+    for i in range(int(eff.get("duration", 8))):
+        t = float(i + 1)
+        c.delayed.append({"left": t, "total": t, "storm_tick": (caster, dmg, eff.get("radius", 2),
+                                                                eff.get("strikes", 1)), "tunit": None})
+    c.emit("storm_front", unit=caster, duration=eff.get("duration", 8))
+
+
+def storm_tick(c, caster, dmg, r, strikes):
+    if not caster.alive:
+        return
+    flat = c._flat
+    c._flat = True
+    try:
+        for src in [caster] + own_totems(c, caster):
+            foes = sorted((v for v in c.alive() if caster.is_enemy(v) and not v.obj and cheb(v.cell, src.cell) <= r),
+                          key=lambda v: (v.hp, v.id))
+            for v in foes[:strikes]:
+                c.emit("sky_bolt", pos=v.cell, src=caster)
+                c.damage(v, dmg, caster, "storm", "spell")
+                if v.alive:
+                    c.apply_status(v, "storm", caster)
+    finally:
+        c._flat = flat
+
+
+def ancestors(c, caster, eff):
+    """Предки: по тотему каждого своего вида вокруг шамана (сверх лимита), все тотемы неуязвимы."""
+    kinds = []
+    for sid in caster.skills:
+        for e in caster.skill_defs[sid].get("effects", []):
+            if e["type"] == "summon" and c.data.summons.get(e["unit"], {}).get("group") == "totem" \
+                    and e["unit"] not in kinds:
+                kinds.append(e["unit"])
+    for unit in kinds or ["totem_storm"]:
+        c.summon(caster, {"unit": unit, "extra": True, "power": eff.get("power", 1.0)}, caster.cell)
+    for s in own_totems(c, caster):
+        c.add_buff(s, "dmg_taken", 0.0, eff.get("guard", 6))
+    c.emit("ancestors", unit=caster)
+
+
+# ---------- заряды подрывника ----------
+#
+# Заряды: свои бочки и ящики (объекты с volatile), мины и пороховая дорожка (клетки с charge), липкие бомбы на врагах.
+# Фитиль (кнопка F) рвёт их цепочкой от ближнего к дальнему за ~1 сек; граната и взрыв заряда поджигают соседние.
+
+def own_charges(c, u, armed=False):
+    """[(вид, ссылка, клетка)] — заряды подрывника на поле. armed — только те, что ещё не горят (фитиль не дошёл)."""
+    lit = set()
+    if armed:
+        lit = {(d["charge"][1], d["charge"][2] if d["charge"][1] == "cell" else d["charge"][2].id)
+               for d in c.delayed if d.get("charge") and d["charge"][0] is u}
+    out = [("obj", o, o.cell) for o in c.units
+           if o.alive and o.obj and o.owner is u and (o.obj.get("volatile") is not None or o.obj.get("on_ignite"))
+           and not (armed and o.fuse > 0)]
+    out += [("cell", p, p) for p, cell in c.grid.cells.items()
+            if cell.hazard in ("mine", "powder") and cell.hazard_owner is u and ("cell", p) not in lit]
+    out += [("bomb", v, v.cell) for v in c.units if v.alive and "bomb" in v.marks and v.marks["bomb"]["src"] is u
+            and ("bomb", v.id) not in lit]
+    return out
+
+
+def fuse_chain(c, caster, eff):
+    ch = sorted(own_charges(c, caster, armed=True), key=lambda x: (cheb(x[2], caster.cell), x[2]))
+    if not ch:
+        c.emit("fizzle", unit=caster, skill=None)
+        return
+    first, span = eff.get("first", 0.3), eff.get("span", 0.7)
+    n = len(ch)
+    c.emit("fuse_chain", unit=caster, cells=[x[2] for x in ch], time=first + span)
+    for i, (kind, ref, cell) in enumerate(ch):
+        t = round(first + (span * i / (n - 1) if n > 1 else 0.0), 2)
+        if kind == "obj":
+            ref.fuse = min(ref.fuse, t) if ref.fuse > 0 else t
+            ref.igniter = caster
+            c.emit("fuse", unit=ref)
+        else:
+            c.delayed.append({"left": t, "total": t, "charge": (caster, kind, ref), "tunit": None})
+
+
+def blow_charge(c, caster, kind, ref):
+    """Заряд в клетке (мина, порох) или липкая бомба — взрыв от фитиля / соседнего взрыва."""
+    if kind == "cell":
+        cell = c.grid.get(ref)
+        if cell is None or cell.hazard not in ("mine", "powder") or cell.hazard_owner is not caster:
+            return
+        ch = cell.charge or {"dmg": c.cfg["hazards"]["mine"]["trigger"]["damage"] * cell.mine_mult, "r": 1}
+        was = cell.hazard
+        if was == "mine":                         # мина от Фитиля рвётся вокруг себя, а не только под ногой
+            ch = dict(ch, r=max(1, ch.get("r", 0)))
+        cell.hazard, cell.hazard_owner, cell.charge = None, None, None
+        if was == "powder":                       # дорожка прогорает: огонь на клетке (по маслу — горящее масло)
+            if ch.get("oil"):
+                cell.hazard = "oil"
+                c.ignite_oil(ref)
+            else:
+                cell.hazard, cell.hazard_time, cell.hazard_team = "fire", 3.0, caster.team
+                cell.blaze = False
+        blow_cell(c, caster, ref, ch, "fire")
+    elif kind == "bomb" and ref.alive and "bomb" in ref.marks and ref.marks["bomb"]["src"] is caster:
+        consume_mark(c, ref, "bomb")
+        if caster is not None:
+            c.gain(caster, "blast")
+
+
+def blow_cell(c, caster, pos, ch, tag=None, first=None):
+    """Взрыв заряда в клетке: урон врагам в радиусе (от силы навыков героя), оглушение, соседние заряды — следом."""
+    c.emit("detonate", pos=pos, src=caster)
+    if caster is not None:
+        c.gain(caster, "blast")
+    if tag == "fire":                             # огненный взрыв поджигает масло в радиусе
+        for p in c.grid.in_radius(pos, ch.get("r", 0)):
+            if c.grid.get(p) is not None and c.grid.get(p).hazard == "oil":
+                c.ignite_oil(p)
+    flat = c._flat
+    c._flat = True
+    try:
+        for v in c.units_in_radius(pos, ch.get("r", 0)):
+            if v.alive and not v.obj and (caster is None or caster.is_enemy(v)):
+                c.damage(v, ch["dmg"], caster, tag, "reaction")
+                if ch.get("stun") and v.alive and v is not first:
+                    c.apply_stun(v, ch["stun"], "stun")
+    finally:
+        c._flat = flat
+    if caster is not None and ch.get("chain", True):
+        ignite_charges(c, caster, pos, 1, skip=pos)
+
+
+def ignite_charges(c, caster, center, radius, skip=None):
+    """Огонь рядом: свои бочки, мины, порох и бомбы в радиусе — взрываются (цепная реакция)."""
+    for kind, ref, cell in own_charges(c, caster):
+        if cell == skip or cheb(cell, center) > radius:
+            continue
+        if kind == "obj":
+            if ref.fuse <= 0 or ref.fuse > 0.15:
+                ref.fuse, ref.igniter = 0.15, caster
+        else:
+            c.delayed.append({"left": 0.12, "total": 0.12, "charge": (caster, kind, ref), "tunit": None})
+
+
+def line_cells(a, b, length):
+    """Клетки по прямой от a к b (без a), не длиннее length."""
+    (x0, y0), (x1, y1) = a, b
+    n = max(abs(x1 - x0), abs(y1 - y0))
+    if n == 0:
+        return []
+    out = []
+    for i in range(1, max(n, length) + 1):
+        p = (round(x0 + (x1 - x0) * i / n), round(y0 + (y1 - y0) * i / n))
+        if p not in out:
+            out.append(p)
+        if len(out) >= length:
+            break
+    return out
+
+
+def powder_trail(c, caster, eff, center):
+    """Пороховая дорожка: линия пороха от подрывника к клетке; Фитиль или огонь бегут по ней, взрывая соседей."""
+    k = c.stat_k(caster, "sp", True) * eff.get("_powder", 1.0)
+    laid = 0
+    for p in line_cells(caster.cell, tuple(center), eff.get("length", 5)):
+        cell = c.grid.get(p)
+        if cell is None or not cell.passable or cell.terrain == "water" or cell.hazard in ("mine", "fire"):
+            continue
+        oil = cell.hazard == "oil"                  # порох по маслу: прогорит горящим маслом
+        cell.hazard, cell.hazard_time = "powder", eff.get("duration", 20)
+        cell.hazard_team, cell.hazard_owner = caster.team, caster
+        cell.charge = {"dmg": eff["blast"] * k, "r": eff.get("blast_r", 1), "stun": eff.get("stun"), "oil": oil}
+        laid += 1
+    if not laid:
+        c.emit("fizzle", unit=caster, skill=None)
+    else:
+        c.emit("powder_trail", unit=caster, center=tuple(center))
+        if eff.get("lit"):                        # ветка «Огненная стена»: дорожка сразу вспыхивает
+            fuse_chain(c, caster, {"first": 0.2, "span": 0.5})
+
+
+def barrel_rain(c, caster, eff, center):
+    """Дождь бочек: на врагов в радиусе падают бочки и сразу рвутся (без подготовки)."""
+    r = eff.get("radius", 3)
+    foes = sorted((v for v in c.alive() if caster.is_enemy(v) and not v.obj and cheb(v.cell, center) <= r),
+                  key=lambda v: (cheb(v.cell, center), v.id))
+    cells = [v.cell for v in foes]
+    free = [p for p in c.grid.in_radius(center, r) if c.grid.get(p).passable]
+    n = eff.get("barrels", 5)
+    while len(cells) < n and free:
+        cells.append(free[(len(cells) * 7) % len(free)])
+    dmg = eff["blast"] * c.stat_k(caster, "sp", True)
+    for i, p in enumerate(cells[:n]):
+        t = round(0.25 + 0.15 * i, 2)
+        c.delayed.append({"left": t, "total": t, "rain_barrel": (caster, tuple(p), dmg, eff.get("blast_r", 1)),
+                          "tunit": None})
+    c.emit("barrel_rain", unit=caster, cells=[tuple(p) for p in cells[:n]])
+
+
+def rain_barrel_land(c, caster, pos, dmg, r):
+    if not caster.alive:
+        return
+    cell = c.grid.get(pos)
+    if cell is not None and cell.passable and cell.terrain != "water" and not cell.hazard:
+        cell.hazard, cell.hazard_time, cell.hazard_team = "fire", 3.0, caster.team
+    blow_cell(c, caster, pos, {"dmg": dmg, "r": r}, "fire")
+
+
+def reactive_armor(c, caster, eff):
+    """Реактивная броня: отряду щит от здоровья подрывника; удар по союзнику рвёт на нём заряд (раз в секунду)."""
+    shield = int(round(caster.max_hp * eff["shield_hp"]))
+    dmg = eff["blast"] * c.stat_k(caster, "sp", True)
+    for v in c.alive(caster.team):
+        if v.obj or v.summon:
+            continue
+        v.shield, v.shield_time, v.shield_src = max(v.shield, shield), eff["duration"], c.credit(caster)
+        c.emit("shield", unit=v, amount=shield)
+        c.add_buff(v, "reactive", round(dmg, 1), eff["duration"])
+        v.reactive_src = caster
+        v.reactive_t = 0.0
+
+
+def reactive_blast(c, target, attacker):
+    target.reactive_t = c.time + 1.0
+    src = getattr(target, "reactive_src", None)
+    c.emit("detonate", pos=attacker.cell, src=src)
+    flat = c._flat
+    c._flat = True
+    try:
+        c.damage(attacker, target.buff("reactive", 0), src if src is not None and src.alive else None, "fire",
+                 "reaction")
+    finally:
+        c._flat = flat
+    if attacker.alive and not attacker.boss:
+        c.knockback(target.cell, attacker, 1, target)
+
+
+# ---------- выстрелы лучника ----------
+
+def _foes_by_dist(c, u, cell, reach=99):
+    return sorted((v for v in c.alive() if u.is_enemy(v) and not v.obj and cheb(v.cell, cell) <= reach),
+                  key=lambda v: (cheb(v.cell, cell), v.hp, v.id))
+
+
+def _shot_flight(c, u, t):
+    h = c.cfg.get("hit") if c.hit_timing else None
+    if not h:
+        return 0.0
+    sp = h["attack_speed"]
+    speed = sp.get(u.proto_id) or sp.get("ranged", 10.0)
+    return round(min(h["max"], max(0.06, cheb(u.cell, t.cell) / speed)), 2)
+
+
+def fire_shot(c, u, t, shot, extra=None):
+    """Стрела вылетает (видна как выстрел); долетит через полёт — land_shot."""
+    if not u.alive or not t.alive:
+        return
+    flight = _shot_flight(c, u, t)
+    c.emit("attack", src=u, dst=t, kind="ranged", tag=None, hit=flight)
+    if flight > 0:
+        c.delayed.append({"left": flight, "total": flight, "shot_hit": (u, t, shot, extra), "tunit": None})
+    else:
+        land_shot(c, u, t, shot, extra)
+
+
+def land_shot(c, u, t, shot, extra=None):
+    if not t.alive:
+        return
+    c.apply_effects(u, [shot], t.cell, t)
+    extra = extra or {}
+    if t.alive and extra.get("interrupt"):
+        c._interrupt(t)
+    if t.alive and extra.get("stun"):
+        c.apply_stun(t, extra["stun"])
+
+
+def barrage(c, caster, eff, tunit):
+    """Шквал (на себя): очередь стрел в свою цель — текущую или ближайшего врага в досягаемости; веер — в разных
+    врагов рядом с ней."""
+    reach = eff.get("reach", 5)
+    if tunit is None or tunit is caster or not tunit.alive:
+        cur = caster.order.get("target") if caster.order and caster.order["type"] == "attack" else caster.last_target
+        if cur is not None and cur.alive and caster.is_enemy(cur) and cheb(cur.cell, caster.cell) <= reach:
+            tunit = cur
+        else:
+            near = _foes_by_dist(c, caster, caster.cell, reach)
+            tunit = near[0] if near else None
+    if tunit is None:
+        c.emit("fizzle", unit=caster, skill=None)
+        return
+    n, gap = eff.get("shots", 3), eff.get("gap", 0.16)
+    targets = [tunit]
+    if eff.get("spread"):
+        targets = [tunit] + [v for v in _foes_by_dist(c, caster, tunit.cell, eff["spread"]) if v is not tunit]
+    for i in range(n):
+        t = targets[i % len(targets)]
+        extra = {}
+        if i == n - 1 and eff.get("last_interrupt"):
+            extra = {"interrupt": True, "stun": eff.get("last_stun", 0)}
+        if i == 0:
+            fire_shot(c, caster, t, eff["shot"], extra)
+        else:
+            c.delayed.append({"left": i * gap, "total": i * gap, "shot": (caster, t, eff["shot"], extra),
+                              "tunit": None})
+
+
+def vault(c, caster, eff):
+    """Отскок: прыжок прочь от ближайшего врага (до cells клеток), сеть на старом месте, выстрел(ы)."""
+    foes = _foes_by_dist(c, caster, caster.cell)
+    if not foes:
+        c.emit("fizzle", unit=caster, skill=None)
+        return
+    near = foes[0]
+    old = caster.cell
+    best, best_k = None, None
+    for p in c.grid.in_radius(old, eff.get("cells", 3)):
+        if p == old or not c.is_free(p):
+            continue
+        k = (min(cheb(p, f.cell) for f in foes), cheb(p, near.cell), -cheb(p, old))
+        if best_k is None or k > best_k:
+            best, best_k = p, k
+    if best is not None and best_k[0] > min(cheb(old, f.cell) for f in foes):
+        c.emit("leap", unit=caster, src=old, dst=best)
+        c._place(caster, best, 0.25)
+    if eff.get("net"):
+        for v in _foes_by_dist(c, caster, old, 1):
+            c.apply_stun(v, eff["net"], "net")
+    for t in _foes_by_dist(c, caster, caster.cell)[:eff.get("targets", 1)]:
+        fire_shot(c, caster, t, eff["shot"])
+
+
+def shackle(c, caster, eff, tunit):
+    """Связывающая стрела: за целью (по линии выстрела) враг, стена или укрытие — оба прибиты; иначе замедление."""
+    if tunit is None or not tunit.alive:
+        return
+    dx = (tunit.cell[0] > caster.cell[0]) - (tunit.cell[0] < caster.cell[0])
+    dy = (tunit.cell[1] > caster.cell[1]) - (tunit.cell[1] < caster.cell[1])
+    anchor, other = False, None
+    p = tunit.cell
+    for _ in range(eff.get("reach", 2)):
+        p = (p[0] + dx, p[1] + dy)
+        if not c.grid.in_bounds(p) or not c.grid.get(p).passable:
+            anchor = True
+            break
+        w = c.unit_at(p)
+        if w is not None and w.alive:
+            anchor = True
+            if caster.is_enemy(w) and not w.obj:
+                other = w
+            break
+    if anchor:
+        c.emit("shackle", unit=tunit, src=caster, other=other)
+        c.apply_stun(tunit, eff.get("stun", 2.5), "net")
+        if other is not None:
+            c.apply_stun(other, eff.get("stun", 2.5), "net")
+    else:
+        c.add_buff(tunit, "slow", 1.6, eff.get("slow", 2.0))
+
+
+def fletch(c, caster, eff):
+    """Оперение отряда: атаки союзников несут стрелы лучника (по очереди из его колчанов) и сильнее."""
+    for v in c.alive(caster.team):
+        if v.obj or (v.summon and not v.atk_damage):
+            continue
+        if v is not caster:
+            c.add_buff(v, "fletch", caster.id, eff["duration"])
+        c.add_buff(v, "atk_mult", eff.get("atk_mult", 1.25), eff["duration"])
+        if eff.get("atk_speed"):
+            c.add_buff(v, "atk_speed", eff["atk_speed"], eff["duration"])
 
 
 # ---------- проверки навыка ----------
@@ -200,9 +675,7 @@ LIVE = {
     "totems": lambda c, u: len(own(c, u, totem=True)),
     "corpses": lambda c, u: len(c.corpses),
     "song_notes": lambda c, u: u.song["notes"] if u.song else 0,
-    "charges": lambda c, u: (sum(1 for o in c.units if o.alive and o.obj and o.owner is u and o.obj.get("volatile") is not None)
-                             + sum(1 for cell in c.grid.cells.values() if cell.hazard == "mine" and cell.hazard_team == u.team)
-                             + sum(1 for v in c.units if v.alive and "bomb" in v.marks and v.marks["bomb"]["src"] is u)),
+    "charges": lambda c, u: len(own_charges(c, u)),
     "traps": lambda c, u: sum(1 for cell in c.grid.cells.values()
                               if cell.hazard in ("snare", "bear_trap") and cell.hazard_owner is u),
     "cold": lambda c, u: sum(1 for v in c.units if v.alive and u.is_enemy(v) and ("cold" in v.marks or
@@ -307,7 +780,29 @@ def tick_zones(c, dt):
 def special(c, caster, eff, center, tunit):
     t = eff["type"]
     center = tuple(center)
-    if t == "mark":
+    if t == "barrage":
+        barrage(c, caster, eff, tunit)
+    elif t == "ball":
+        ball_lightning(c, caster, eff, center)
+    elif t == "storm_front":
+        storm_front(c, caster, eff)
+    elif t == "ancestors":
+        ancestors(c, caster, eff)
+    elif t == "trail":
+        powder_trail(c, caster, eff, center)
+    elif t == "ignite_charges":
+        ignite_charges(c, caster, center, eff.get("radius", 1))
+    elif t == "barrel_rain":
+        barrel_rain(c, caster, eff, center)
+    elif t == "reactive":
+        reactive_armor(c, caster, eff)
+    elif t == "vault":
+        vault(c, caster, eff)
+    elif t == "shackle":
+        shackle(c, caster, eff, tunit)
+    elif t == "fletch":
+        fletch(c, caster, eff)
+    elif t == "mark":
         aff = eff.get("affects", "enemies")
         for v in c._select(caster, center, eff.get("radius", 0), aff, tunit):
             if eff.get("if_mark") and eff["if_mark"] not in v.marks:
@@ -316,11 +811,8 @@ def special(c, caster, eff, center, tunit):
                 add_mark(c, v, eff["mark"], eff.get("stacks", 1), eff.get("duration", 6), caster)
                 if eff.get("_powder") and eff["mark"] in v.marks:      # бомба с Порохом — ×2, без — ×0.6
                     v.marks[eff["mark"]]["mult"] = eff["_powder"]
-    elif t == "quiver":
-        caster.quiver = eff["arrow"]
-        if eff.get("shots"):                       # первые выстрелы новыми стрелами сильнее
-            c.add_buff(caster, "atk_mult", eff.get("mult", 1.3), eff["shots"] * caster.atk_cd + 0.5)
-        c.emit("quiver", unit=caster, arrow=eff["arrow"])
+                if eff.get("on_expire") and eff["mark"] in v.marks:    # ветка навыка: свой взрыв метки
+                    v.marks[eff["mark"]]["on_expire"] = eff["on_expire"]
     elif t == "zone":
         z = {"center": center, "radius": eff.get("radius", 1), "left": eff["duration"], "every": eff.get("every", 1.0),
              "t": eff.get("every", 1.0) if eff.get("now") else 0.0, "effects": eff["effects"], "caster": caster,

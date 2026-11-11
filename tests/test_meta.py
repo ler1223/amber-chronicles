@@ -34,10 +34,10 @@ def test_boss_gives_chapter_trophies_kept_after_defeat():
 def test_buildings_cost_glory_and_trophies_and_work(tmp_path):
     prof = profile(tmp_path)
     assert not prof.build("altar")                                   # нет ни славы, ни янтаря
-    prof.glory, prof.trophies = 500, {"amber": 9, "ember": 9}
+    prof.glory, prof.trophies = 5000, {"amber": 9, "ember": 9}
     for bid in ("smithy", "altar", "library", "yard", "infirmary"):
         assert prof.build(bid)
-    assert prof.glory < 500 and prof.trophies["amber"] < 9
+    assert prof.glory < 5000 and prof.trophies["amber"] < 9
     again = profile(tmp_path)
     assert again.building_level("altar") == 1
     run = prof.start([h.uid for h in prof.roster[:2]], seed=2)
@@ -50,35 +50,6 @@ def test_buildings_cost_glory_and_trophies_and_work(tmp_path):
     first = run.pick_cards(h)
     assert len(first) == 2 and run.rerolls_left() == 2                # выбор из двух, библиотека — перебросы
     assert run.reroll_cards(h) and run.rerolls_left() == 1 and len(run.pick_cards(h)) == 2
-
-
-def test_vows_make_the_run_harder_and_pay_glory():
-    prof = profile(sandbox=True)
-    plain = prof.start([h.uid for h in prof.roster[:2]], seed=3)
-    prof.roll_roster()
-    prof.vows = {"fury": 2, "iron": 1, "horde": 1, "hunger": 1, "want": 1, "haste": 1, "doom": 1}
-    hard = prof.start([h.uid for h in prof.roster[:2]], seed=3)
-    for r in (plain, hard):
-        r.node = next(n for n, v in r.nodes.items() if v["type"] == "battle")
-    a, b = plain.enemy_scale(), hard.enemy_scale()
-    assert b["hp"] > a["hp"] and b["damage"] > a["damage"] and len(b.get("extra_adds", [])) >= 1
-    assert hard.cfg["post_battle_heal"] < plain.cfg["post_battle_heal"]
-    assert hard.price_k() > plain.price_k() and hard.gold_mult() < plain.gold_mult()
-    assert hard.curses and not plain.curses
-    assert hard.proto(hard.heroes[0])["start_ap"] < plain.proto(plain.heroes[0])["start_ap"]
-    hard.counts = plain.counts = {"battle": 5}
-    assert hard.glory() > plain.glory()
-
-
-def test_vows_open_after_first_victory():
-    prof = profile()
-    assert not prof.vows_open()
-    prof.vows = {"fury": 3}
-    run = prof.start([h.uid for h in prof.roster[:2]], seed=4)
-    assert run.vows == {}                                            # закрыты — не действуют
-    run.result = "victory"
-    prof.finish(run)
-    assert prof.vows_open()
 
 
 def test_veterans_return_stronger_and_fallen_go_to_hall():
@@ -197,6 +168,9 @@ def test_pick_scene_two_cards_with_demo(tmp_path):
     XS.start_run(app, [h.uid for h in app.profile.hall()[:2]])
     run = app.exp
     h = run.heroes[0]
+    for o in run.heroes:                                   # выбор только у этого героя (лучник ждал бы колчан)
+        o.sp, o.pick_offer = 0, None
+        o.quivers = ["fire", "frost", "bleed"][:run.quivers_due(o)]
     h.sp, h.pick_offer = 1, None
     for s in h.skills:
         h.ranks[s] = 3

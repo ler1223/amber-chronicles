@@ -37,6 +37,13 @@ _SPRITES = SpriteBank()
 _ICONS = {}
 
 
+def title_of(xd, h):
+    """Последнее прозвище героя («Гроза боссов») или пусто."""
+    titles = (xd.get("chronicle") or {}).get("titles", {})
+    t = next((titles[x]["name"] for x in reversed(getattr(h, "titles", []) or []) if x in titles), None)
+    return f"«{t}»" if t else ""
+
+
 def icon(name, size=32):
     """Иконка assets/icons/<name>.png (вещь — item_<база> / unique_<id>, дар — gift_<id>) или None."""
     key = (name, size)
@@ -130,8 +137,10 @@ def hero_sprite(data, cls, k=1.0):
 # ---------- переходы между экранами (вызываются из App) ----------
 
 def to_tavern(app):
+    """Таверна — комнаты (game/tavern_rooms.py): начинаем с Зала."""
+    from game.tavern_rooms import HallRoom
     app.exp = None
-    app.switch(TavernScene(app))
+    app.switch(HallRoom(app))
 
 
 def save(app):
@@ -141,13 +150,20 @@ def save(app):
 
 def start_run(app, uids, tier=0, chapter="swamp"):
     seed = None if app.seed is None else app.seed + app.profile.runs
-    app.exp = app.profile.start(uids, seed, tier=tier, chapter=chapter)
+    from ui import settings
+    app.exp = app.profile.start(uids, seed, tier=tier, chapter=chapter,
+                                autocast=settings.SETTINGS.get("autocast_start", "default"))
     offers = getattr(app.exp, "start_offers", None)
     if offers:                                   # алтарь таверны: дар на выбор ещё до первого шага
-        app.switch(RewardScene(app, {}, [{"type": "gift", "id": g} for g in offers],
-                               then=lambda: app.switch(ActScene(app)), title="Дар алтаря"))
+        nxt = lambda: app.switch(RewardScene(app, {}, [{"type": "gift", "id": g} for g in offers],
+                                             then=lambda: app.switch(ActScene(app)), title="Дар алтаря"))
     else:
-        app.switch(ActScene(app))
+        nxt = lambda: app.switch(ActScene(app))
+    run = app.exp
+    if any(run.quiver_pending(h) for h in run.heroes):     # лучник выбирает колчан ещё до похода
+        app.switch(PickScene(app, then=nxt))
+    else:
+        nxt()
 
 
 def resume(app):
@@ -233,14 +249,18 @@ def neural_args(app):
 def battle_done(app, combat, formation):
     run = app.exp
     summary = run.finish_battle(combat, formation)
-    if summary["result"] != "victory":
-        finish(app)
+    if summary["result"] != "victory" or run.result == "victory":   # поражение или последний босс: сразу итог
+        finish(app, summary.get("stats"))
         return
     kind = run.node_kind(run.nodes[run.node])
     offers = run.reward_offers(kind)
     bonus = run.bonus_item(kind) if kind in ("elite", "boss") else None
     if bonus:
         run.bag.append(bonus)
+    extra = list(summary["extra"])
+    extra += [f"Погиб навсегда: {n} — вещи в сумке, дары — наследием" for n in summary.get("dead", [])]
+    extra += [f"{hn} получает прозвище «{t}»" for hn, t in summary.get("titles", [])]
+    summary = dict(summary, extra=extra)
     run.stage = {"node": run.node, "kind": "reward", "offers": offers, "bonus": bonus,
                  "summary": {"result": "victory", "kind": kind, "xp": summary["xp"], "gold": summary["gold"],
                              "ups": sorted({h.name for h in summary["level_ups"]}),
@@ -250,10 +270,14 @@ def battle_done(app, combat, formation):
                              "stats": summary.get("stats")}}
     save(app)
     reward = lambda: app.switch(RewardScene(app, run.stage["summary"], offers, bonus))
-    if any(h.sp > 0 for h in run.heroes):          # ключевой уровень — сначала карты улучшения, прямо после боя
-        app.switch(PickScene(app, then=reward, summary=run.stage["summary"]))
+    after = (lambda: app.switch(PickScene(app, then=reward, summary=run.stage["summary"]))) \
+        if any(h.sp > 0 for h in run.heroes) else reward     # ключевой уровень — сначала карты улучшения
+    legacy = [g for g in summary.get("legacy_gifts", []) if g in run.xd["gifts"]]
+    if legacy and run.heroes:                   # наследие павшего: его дар — живому, на выбор
+        app.switch(RewardScene(app, {}, [{"type": "gift", "id": g} for g in legacy[:3]], then=after,
+                               title="Наследие павшего"))
     else:
-        reward()
+        after()
 
 
 def after_reward(app, summary):
@@ -269,11 +293,12 @@ def after_reward(app, summary):
         to_map(app)
 
 
-def finish(app):
+def finish(app, stats=None):
+    """Итог похода. stats — статистика последнего боя (кнопка на экране итога)."""
     if getattr(app, "neural", None) is not None:
         app.neural.after_run(app.exp)              # опыт героев — в школы их классов
     end = app.profile.finish(app.exp)
-    app.switch(EndScene(app, end))
+    app.switch(EndScene(app, end, stats))
 
 
 # ---------- общий каркас экрана ----------
@@ -287,6 +312,68 @@ class XScene:
         self.hits = []          # (rect, action, tip)
         self.toast = None
         self.clock = 0.0
+        self.scroll_pos = {}    # прокрутка списков: {ключ: первый видимый элемент}
+        self.scroll_regs = {}   # списки, нарисованные в этом кадре: {ключ: (область, дорожка, всего, видно, вид)}
+        self.scroll_drag = None
+        self.frame_n = 0
+
+    # ---------- прокрутка списков ----------
+
+    def scroll_list(self, surf, key, area, total, visible, horizontal=False):
+        """Список с полосой прокрутки: колесо над областью, перетаскивание ползунка, клик по дорожке.
+        Возвращает первый видимый элемент (строку). Полоса — справа (или снизу у горизонтального)."""
+        mx = max(0, total - visible)
+        pos = max(0, min(mx, self.scroll_pos.get(key, 0)))
+        self.scroll_pos[key] = pos
+        if mx <= 0:
+            self.scroll_regs.pop(key, None)
+            return 0
+        area = pygame.Rect(area)
+        track = pygame.Rect(area.x + 4, area.bottom + 4, area.w - 8, 10) if horizontal else \
+            pygame.Rect(area.right + 4, area.y + 2, 10, area.h - 4)
+        long_ = track.w if horizontal else track.h
+        size = max(28, int(long_ * visible / total))
+        off = int((long_ - size) * pos / mx)
+        thumb = pygame.Rect(track.x + off, track.y, size, track.h) if horizontal else \
+            pygame.Rect(track.x, track.y + off, track.w, size)
+        hot = track.collidepoint(self.mouse) or (self.scroll_drag or (None,))[0] == key
+        pygame.draw.rect(surf, (24, 18, 13), track, border_radius=5)
+        pygame.draw.rect(surf, (80, 60, 40), track, 1, border_radius=5)
+        pygame.draw.rect(surf, (230, 180, 100) if hot else (170, 130, 80), thumb, border_radius=5)
+        pygame.draw.rect(surf, (60, 40, 24), thumb, 1, border_radius=5)
+        self.scroll_regs[key] = (area, track, total, visible, horizontal, self.frame_n)
+        return pos
+
+    def scroll_event(self, ev):
+        """Колесо и перетаскивание полос прокрутки. True — событие съедено."""
+        regs = {k: v for k, v in self.scroll_regs.items() if v[5] >= self.frame_n - 1}
+        if ev.type == pygame.MOUSEWHEEL:
+            for key, (area, track, total, vis, hor, _) in regs.items():
+                if area.collidepoint(self.mouse) or track.collidepoint(self.mouse):
+                    self.scroll_pos[key] = max(0, min(total - vis, self.scroll_pos.get(key, 0) - ev.y))
+                    return True
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            for key, (area, track, total, vis, hor, _) in regs.items():
+                if track.inflate(6, 6).collidepoint(ev.pos):
+                    self.scroll_drag = (key,)
+                    self._scroll_to(key, ev.pos)
+                    return True
+        elif ev.type == pygame.MOUSEMOTION and self.scroll_drag:
+            self.mouse = ev.pos
+            self._scroll_to(self.scroll_drag[0], ev.pos)
+            return True
+        elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and self.scroll_drag:
+            self.scroll_drag = None
+            return True
+        return False
+
+    def _scroll_to(self, key, pos):
+        reg = self.scroll_regs.get(key)
+        if not reg:
+            return
+        area, track, total, vis, hor, _ = reg
+        k = (pos[0] - track.x) / max(1, track.w) if hor else (pos[1] - track.y) / max(1, track.h)
+        self.scroll_pos[key] = max(0, min(total - vis, int(round(k * total - vis / 2))))
 
     @property
     def run(self):
@@ -302,6 +389,7 @@ class XScene:
 
     def update(self, dt):
         self.clock += dt
+        self.frame_n = getattr(self, "frame_n", 0) + 1
         if self.toast:
             self.toast = (self.toast[0], self.toast[1] - dt) if self.toast[1] > dt else None
 
@@ -309,6 +397,8 @@ class XScene:
         self.hits.append((rect, action, tip))
 
     def handle(self, ev):
+        if self.scroll_event(ev):
+            return
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEBUTTONDOWN:
@@ -376,7 +466,7 @@ class XScene:
         T.text(surf, title, (24, 14), 28, T.TEXT, True)
         if sub:
             T.text(surf, sub, (26, 52), 15, T.TEXT_DIM)
-        if self.run:
+        if self.run and not getattr(self, "preview", False):      # таверна: похода ещё нет — без золота
             g = f"Золото: {self.run.gold}"
             T.text(surf, g, (T.SCREEN_W - 26 - T.font(22, True).size(g)[0], 16), 22, GOLD, True)
 
@@ -424,6 +514,11 @@ class XScene:
                 yy += 21
             if hero.wounded:
                 T.text(surf, "ранен — до лагеря", (x, yy), 13, CURSE, True)
+                yy += 17
+            if hero.falls:                            # третье падение за поход — гибель насовсем
+                mf = run.max_falls()
+                T.text(surf, fit(f"падений {hero.falls}/{mf}" + (" — на краю гибели" if hero.falls >= mf - 1 else ""),
+                                 13, w - 96), (x, yy), 13, CURSE, True)
                 yy += 17
             for gid in hero.gifts[:2]:
                 T.text(surf, "дар: " + self.xd["gifts"][gid]["name"], (x, yy), 13, BLESS, True)
@@ -473,552 +568,70 @@ class XScene:
 
 # ---------- таверна ----------
 
-class TavernScene(XScene):
-    def __init__(self, app):
-        super().__init__(app)
-        self.picked = []
-        prof = app.profile
-        self.chapter = next((c for c, _, ok in reversed(prof.chapters()) if ok), "swamp")             if hasattr(prof, "chapters") else "swamp"                  # глава похода — последняя открытая
-        self.tier = prof.tier_open_of(self.chapter) if hasattr(prof, "tier_open_of") else             getattr(prof, "tier_open", 0)                              # сложность — высшая открытая
-
-    def act(self, action, button=1):
-        prof = self.app.profile
-        kind = action[0] if isinstance(action, tuple) else action
-        if kind == "recruit":
-            uid = action[1]
-            if uid in self.picked:
-                self.picked.remove(uid)
-            elif len(self.picked) < self.squad_cfg()["squad_start"]:
-                self.picked.append(uid)
-            elif self.squad_cfg()["squad_start"] == 1:        # одиночка: клик по другому — замена
-                self.picked = [uid]
-            else:
-                self.say("В поход берут не больше трёх героев — остальные присоединятся в пути")
-        elif kind == "go":
-            start_run(self.app, self.picked, self.tier, self.chapter)
-        elif kind == "tier":
-            if action[1] <= prof.tier_open_of(self.chapter):
-                self.tier = action[1]
-            else:
-                self.say("Откроется победой на предыдущей сложности")
-        elif kind == "chapter":
-            if prof.chapter_open(action[1]):
-                self.chapter = action[1]
-                self.tier = min(self.tier, prof.tier_open_of(self.chapter))
-            else:
-                self.say("Глава откроется победой в предыдущей")
-        elif kind == "chapters":
-            self.app.switch(ChapterScene(self.app, self))
-        elif kind == "resume":
-            resume(self.app)
-        elif kind == "abandon":
-            prof.abandon()
-            self.say("Поход брошен. Слава за него не начислена")
-        elif kind == "upgrades":
-            self.app.switch(UpgradeScene(self.app))
-        elif kind == "vows":
-            self.app.switch(VowsScene(self.app))
-        elif kind == "hall":
-            self.app.switch(HallScene(self.app))
-        elif kind == "party_mode":                 # общая таверна: в поход отрядом или одним героем
-            prof.solo = action[1]
-            prof.mode = "solo" if prof.solo else "expedition"
-            seen = {h.uid for h in prof.hall()}
-            self.picked = [u for u in self.picked if u in seen][:1 if prof.solo else 3]
-            from game.app import remember_mode
-            if getattr(self.app, "_base_path", None):
-                remember_mode(prof.mode, self.app._base_path)
-            prof.save()
-        elif kind == "reroll":
-            if prof.reroll():
-                self.picked = []
-            else:
-                self.say("Не хватает славы")
-        elif kind == "menu":
-            self.app.to_title()
-
-    def squad_cfg(self):
-        prof = self.app.profile
-        return prof.squad_cfg() if hasattr(prof, "squad_cfg") else self.xd["config"]
-
-    def key(self, k):
-        cfg = self.squad_cfg()
-        if k == pygame.K_SPACE:
-            if self.app.profile.run_state:
-                resume(self.app)
-            elif cfg["squad_min"] <= len(self.picked) <= cfg["squad_start"]:
-                start_run(self.app, self.picked, self.tier, self.chapter)
-        elif k == pygame.K_u:
-            self.app.switch(UpgradeScene(self.app))
-        elif k == pygame.K_v:
-            self.app.switch(VowsScene(self.app))
-        elif k == pygame.K_ESCAPE:
-            self.app.to_title()
-
-    def draw(self, surf):
-        prof = self.app.profile
-        self.hits = []
-        surf.fill((20, 16, 14))
-        self.backdrop(surf, "tavern", "tavern", dim=120 if prof.run_state else 40)
-        band = pygame.Surface((T.SCREEN_W, 80), pygame.SRCALPHA)
-        band.fill((10, 8, 6, 170))
-        surf.blit(band, (0, 0))
-        T.text(surf, self.xd["tavern"]["name"], (24, 14), 30, GLORY, True, shadow=True)
-        solo = getattr(prof, "solo", False)
-        T.text(surf, "Одиночка: выберите одного героя — он пройдёт главу сам. Наведите — подробности." if solo else
-               "Выберите 2–3 героев для похода, наведите — подробности.", (26, 54), 15, (220, 210, 190), shadow=True)
-        g = f"Слава: {prof.glory}"
-        T.text(surf, g, (T.SCREEN_W - 26 - T.font(22, True).size(g)[0], 18), 22, GLORY, True)
-        if prof.run_state:
-            self._draw_resume(surf)
-        else:
-            self._draw_roster(surf)
-            self._draw_tiers(surf)
-        y = T.SCREEN_H - 66
-        cfg = self.squad_cfg()
-        if not prof.run_state:
-            ok = cfg["squad_min"] <= len(self.picked) <= cfg["squad_start"]
-            self.button(surf, pygame.Rect(T.SCREEN_W - 300, y, 270, 46), f"В поход ({len(self.picked)})  Пробел",
-                        "go", ok, GOLD)
-            cost = self.xd["tavern"]["reroll_cost"]
-            self.button(surf, pygame.Rect(564, y, 176, 46), f"Новые лица · {cost}", "reroll",
-                        prof.glory >= cost, (170, 160, 210), f"Все новички в зале сменятся ({cost} славы); ветераны "
-                                                             f"остаются")
-        self.button(surf, pygame.Rect(30, y, 190, 46), "Стройка (U)", "upgrades", True, GLORY,
-                    "Постройки таверны за славу и трофеи глав")
-        vk = prof.vow_glory() if hasattr(prof, "vow_glory") else 1.0
-        self.button(surf, pygame.Rect(228, y, 170, 46), f"Обеты ×{vk:.2f}" if vk > 1 else "Обеты (V)", "vows", True,
-                    (230, 110, 120), "Обеты тяжести: поход труднее — славы больше")
-        self.button(surf, pygame.Rect(406, y, 150, 46), "Зал славы", "hall", True, (170, 160, 210),
-                    "Павшие герои и ветераны таверны")
-        self.button(surf, pygame.Rect(T.SCREEN_W - 300 - 230, y, 210, 46), "Меню (Esc)", "menu", True)
-        self.draw_tip(surf)
-        self.draw_toast(surf, T.SCREEN_H - 90)
-
-    def _draw_tiers(self, surf):
-        """Сложность похода: Странник / Ветеран / Легенда (следующая — победой на предыдущей)."""
-        prof = self.app.profile
-        tiers = self.xd["config"]["tiers"]
-        w, x0, y = 182, T.SCREEN_W - 26 - 3 * 182 - 12, 90
-        chs = prof.chapters()
-        if len(chs) > 1:                       # глава похода — карточка с картинкой; клик — экран выбора главы
-            meta = self.xd["chapters"][self.chapter]
-            col = tuple(meta.get("color", GLORY))
-            r = pygame.Rect(x0, y, 3 * w + 12, 58)
-            hot = r.collidepoint(self.mouse)
-            T.frame(surf, r, 235, accent=col if hot else T.mix(col, (0, 0, 0), 0.3), corner=col)
-            from ui import illustrations as IL
-            thumb = IL.get(meta.get("art", "act_0"), "act", (78, 52))
-            surf.blit(thumb, (r.x + 4, r.y + 3))
-            pygame.draw.rect(surf, col, (r.x + 4, r.y + 3, 78, 52), 1)
-            T.text(surf, "Глава похода", (r.x + 92, r.y + 6), 12, T.TEXT_DIM, True)
-            T.text(surf, meta["name"], (r.x + 92, r.y + 22), 20, col, True)
-            T.text(surf, "сменить" if hot else "клик — сменить", (r.right - 110, r.y + 24), 13, T.TEXT_DIM)
-            self.hit(r, "chapters", [(meta["name"], col), meta.get("desc", ""), "Клик — выбор главы"])
-            y += 80
-        T.text(surf, "Сложность похода", (x0, y - 2), 14, (220, 210, 190), True, shadow=True)
-        for i, t in enumerate(tiers):
-            r = pygame.Rect(x0 + i * (w + 6), y + 18, w, 44)
-            open_ = i <= prof.tier_open_of(self.chapter)
-            col = (120, 220, 140) if i == 0 else (240, 180, 80) if i == 1 else (240, 100, 90)
-            label = ("» " if i == self.tier else "") + t["name"] + ("" if open_ else " · закрыто")
-            tip = [(t["name"], col), (t["desc"], T.TEXT), (f"Слава ×{t['glory']:g}", GLORY)]
-            if not open_:
-                tip.append(("Откроется победой на предыдущей сложности", CURSE))
-            self.button(surf, r, label, ("tier", i), open_, col if i == self.tier else T.mix(col, (0, 0, 0), 0.4), tip)
-        if hasattr(prof, "squad_cfg"):           # общая таверна: отряд или одиночка
-            y += 70
-            T.text(surf, "Поход", (x0, y - 2), 14, (220, 210, 190), True, shadow=True)
-            mw = (3 * w + 12 - 6) // 2
-            for i, (solo, label, tip) in enumerate(((False, "Отряд (2–3 героя)", "Экспедиция: поход отряда"),
-                                                    (True, "Одиночка (1 герой)", "Один герой, камера за ним, 6 "
-                                                                                 "навыков, врагов меньше"))):
-                on = bool(prof.solo) == solo
-                r = pygame.Rect(x0 + i * (mw + 6), y + 18, mw, 40)
-                col = (150, 200, 255) if solo else GLORY
-                self.button(surf, r, ("» " if on else "") + label, ("party_mode", solo), True,
-                            col if on else T.mix(col, (0, 0, 0), 0.45), tip)
-
-    def _draw_resume(self, surf):
-        st = self.app.profile.run_state
-        r = pygame.Rect(240, 160, 800, 380)
-        pygame.draw.rect(surf, (34, 30, 28), r, border_radius=14)
-        pygame.draw.rect(surf, GLORY, r, 2, border_radius=14)
-        acts = X.chapter_view(self.xd, st.get("chapter", "swamp"))["acts"]
-        act = acts[min(st.get("act", 0), len(acts) - 1)]["name"]
-        T.text(surf, "Отряд в походе", (r.centerx, r.y + 30), 28, T.TEXT, True, center=True)
-        T.text(surf, act, (r.centerx, r.y + 68), 18, GLORY, True, center=True)
-        x = r.x + 60
-        for h in st.get("heroes", []):
-            img = hero_sprite(self.app.profile.data, h["cls"], 1.5)
-            surf.blit(img, (x, r.y + 110))
-            T.text(surf, h["name"], (x + img.get_width() // 2, r.y + 220), 16, T.TEXT, True, center=True)
-            T.text(surf, f"ур. {h['level']}", (x + img.get_width() // 2, r.y + 242), 14, T.TEXT_DIM, center=True)
-            x += 175
-        self.button(surf, pygame.Rect(r.centerx - 290, r.bottom - 80, 300, 50), "Продолжить поход (Пробел)",
-                    "resume", True, GOLD)
-        self.button(surf, pygame.Rect(r.centerx + 30, r.bottom - 80, 260, 50), "Бросить поход", "abandon", True,
-                    CURSE, "Поход закончится без славы, герои не вернутся")
-
-    # места в зале таверны (иллюстрация tavern): доля ширины, линия земли (доля высоты картинки), смотрит влево
-    SPOTS = [(0.10, 0.86, False), (0.35, 0.85, True), (0.57, 0.87, True), (0.22, 0.71, False),
-             (0.46, 0.69, False), (0.64, 0.71, True), (0.03, 0.70, False), (0.33, 0.65, True),
-             (0.53, 0.63, False), (0.76, 0.66, True)]
-
-    def _draw_roster(self, surf):
-        """Герои стоят по залу таверны; клик — в отряд / из отряда, наведение — всё о герое."""
-        prof = self.app.profile
-        data = prof.data
-        img_h = T.SCREEN_W * 2 // 3
-        top = (T.SCREEN_H - img_h) // 2
-        px = T.SCREEN_W / 192                       # пикселей экрана на пиксель картинки
-        placed = []
-        for i, h in enumerate(prof.hall()[:len(self.SPOTS)]):
-            sx, gy, flip = self.SPOTS[i]
-            depth = 0.62 + 0.26 * (gy - 0.62) / 0.24      # дальше от зрителя — мельче
-            img = hero_sprite(data, h.cls, px / 2 * depth)
-            if flip:
-                img = pygame.transform.flip(img, True, False)
-            x = int(sx * T.SCREEN_W - img.get_width() / 2)
-            placed.append((gy, h, img, x, int(top + gy * img_h)))
-        placed.sort(key=lambda p: p[0])
-        hover = None
-        for gy, h, img, x, ground in placed:          # спереди стоящий перекрывает дальнего
-            w = img.get_width()
-            if pygame.Rect(x + w // 5, ground - img.get_height(), w * 3 // 5, img.get_height()).collidepoint(
-                    self.mouse):
-                hover = (h, img, x, ground)
-        for gy, h, img, x, ground in placed:
-            on = h.uid in self.picked
-            hot = hover is not None and hover[0] is h
-            w = img.get_width()
-            sh = pygame.Surface((int(w * 0.7), max(8, w // 10)), pygame.SRCALPHA)
-            pygame.draw.ellipse(sh, (*GOLD, 150) if on else (0, 0, 0, 120), sh.get_rect())
-            if on:
-                pygame.draw.ellipse(sh, (*GOLD, 255), sh.get_rect(), 3)
-            surf.blit(sh, (x + w * 0.15, ground - sh.get_height() * 0.6))
-            if hot:
-                m = pygame.mask.from_surface(img)
-                outline = m.to_surface(setcolor=(255, 240, 200, 255), unsetcolor=(0, 0, 0, 0))
-                for dx, dy in ((-3, 0), (3, 0), (0, -3), (0, 3)):
-                    surf.blit(outline, (x + dx, ground - img.get_height() + dy))
-            dimg = img
-            if not on and not hot:
-                dimg = img.copy()
-                dimg.fill((205, 195, 185, 255), special_flags=pygame.BLEND_RGBA_MULT)
-            surf.blit(dimg, (x, ground - img.get_height()))
-            self.hit(pygame.Rect(x + w // 5, ground - img.get_height(), w * 3 // 5, img.get_height()),
-                     ("recruit", h.uid))
-            if on or hot:
-                tw = T.font(16, True).size(h.name)[0] + 16
-                tr = pygame.Rect(x + w // 2 - tw // 2, ground - img.get_height() * 5 // 6 - 30, tw, 24)
-                tn = tint_of(prof.data, h.cls)
-                pygame.draw.rect(surf, T.mix((20, 16, 12), tn["accent"], 0.15), tr, border_radius=6)
-                pygame.draw.rect(surf, tn["accent"] if on else tn["dim"], tr, 2 if on else 1, border_radius=6)
-                T.text(surf, h.name, tr.center, 16, tn["accent"] if on else T.TEXT, True, center=True)
-        names = [h.name for h in prof.hall() if h.uid in self.picked]
-        solo = getattr(prof, "solo", False)
-        msg = (("Идёт в поход: " if solo else "В отряде: ") + ", ".join(names)) if names else \
-            ("Кликните по герою в зале, чтобы выбрать его" if solo else "Кликните по героям в зале, чтобы взять их в поход")
-        T.text(surf, msg, (T.SCREEN_W - 26 - T.font(16, True).size(msg)[0], 54), 16, GOLD if names else T.TEXT, True,
-               shadow=True)
-        if hover:
-            self._draw_info(surf, *hover)
-
-    def _draw_info(self, surf, h, img, x, ground):
-        """Карточка героя при наведении: класс, ранг, черта, навыки, доктрина, вещь."""
-        data, xd = self.app.profile.data, self.xd
-        rk = xd["tavern"]["ranks"][str(h.rank)]
-        tr = xd["tavern"]["traits"][h.trait]
-        rows = [(h.name, T.TEXT, 22, True),
-                (f"{data.classes[h.cls]['name']} · {rk['name']} (ранг {h.rank}) · ур. {h.level}", GLORY, 15, True),
-                None, (f"{tr['name']}: {tr['desc']}", (220, 200, 160), 14, False),
-                None, ("Навыки", T.TEXT_DIM, 13, True)]
-        if h.vet:                                  # ветеран таверны: сколько походов и где
-            names = ", ".join(xd["chapters"].get(c, {}).get("name", c) for c in h.vet.get("chapters", []))
-            rows.insert(2, (f"Ветеран{'-одиночка' if h.vet.get('solo') else ''}: побед {h.vet.get('wins', 0)}"
-                            + (f" ({names})" if names else ""), (150, 220, 170), 14, True))
-        ult = story_meta.ult_of(data, h.cls)
-        for k, sid in enumerate(h.skills):
-            sk = data.skills[sid]
-            key = "QWER"[k] if k < 4 else "·"
-            if sid == ult:
-                rows.append((f"{key} · ультимейт {sk['name']} — {sk.get('desc', '')}", GOLD, 13, False))
-            else:
-                rows.append((f"{key} · {sk['name']} — {sk.get('desc', '')}", T.TEXT, 13, False))
-        if h.doctrine:
-            pd = data.paths[h.doctrine]
-            rows += [None, (f"Доктрина «{pd['name']}»: {pd['passive'].get('desc', '')}", (200, 170, 255), 13, False)]
-        for item in h.gear.values():
-            rows += [None, (X.item_name(item), rarity_color(xd, item), 14, True)]
-            rows += [(ln, T.TEXT, 13, False) for ln in X.item_lines(xd, item)]
-        w = 420
-        lines = []
-        for row in rows:
-            if row is None:
-                lines.append(None)
-                continue
-            text, col, size, bold = row
-            lines += [(ln, col, size, bold) for ln in T.wrap(text, size, w - 28, bold)]
-        hgt = 20 + sum(8 if ln is None else ln[2] + 5 for ln in lines)
-        bx = x + img.get_width() * 3 // 4 + 10
-        if bx + w > T.SCREEN_W - 10:
-            bx = x + img.get_width() // 4 - w - 10
-        by = max(80, min(ground - img.get_height(), T.SCREEN_H - 120 - hgt))
-        box = pygame.Surface((w, hgt), pygame.SRCALPHA)
-        pygame.draw.rect(box, (16, 13, 11, 240), box.get_rect(), border_radius=10)
-        tn = tint_of(data, h.cls)
-        pygame.draw.rect(box, (*(tn["accent"] if h.uid in self.picked else tn["dim"]), 255), box.get_rect(), 2,
-                         border_radius=10)
-        surf.blit(box, (bx, by))
-        y = by + 12
-        for ln in lines:
-            if ln is None:
-                y += 8
-                continue
-            T.text(surf, ln[0], (bx + 14, y), ln[2], ln[1], ln[3])
-            y += ln[2] + 5
-        hint = "клик — убрать из отряда" if h.uid in self.picked else "клик — взять в поход"
-        T.text(surf, hint, (bx + w - 14 - T.font(12).size(hint)[0], by + 14), 12, T.TEXT_DIM)
+HALL_SCALE = 0.72          # размер героев в зале таверны (доля пикселя картинки)
+TIER_COLORS = ((120, 220, 140), (240, 180, 80), (240, 100, 90), (200, 120, 255))
 
 
-def cost_chips(scene, surf, prof, cost, x, y):
-    """Цена: слава и трофеи глав чипами; нехватка — красным."""
-    xd = prof.xd
-    for k, v in cost.items():
-        have = prof.glory if k == "glory" else prof.trophies.get(k, 0)
-        name = "Слава" if k == "glory" else xd["trophies"][k]["name"]
-        col = GLORY if k == "glory" else tuple(xd["trophies"][k]["color"])
-        label = f"{name} {v}"
-        w = T.font(14, True).size(label)[0] + 16
-        r = pygame.Rect(x, y, w, 24)
-        pygame.draw.rect(surf, T.PANEL_DARK, r, border_radius=6)
-        pygame.draw.rect(surf, col if have >= v else CURSE, r, 1, border_radius=6)
-        T.text(surf, label, (r.x + 8, r.y + 4), 14, col if have >= v else CURSE, True)
-        x += w + 6
-    return x
+def tier_color(i, n=10):
+    """Цвет ступени: зелёный → янтарь → красный → фиолетовый (10 ступеней)."""
+    t = i / max(1, n - 1) * (len(TIER_COLORS) - 1)
+    k = min(len(TIER_COLORS) - 2, int(t))
+    return T.mix(TIER_COLORS[k], TIER_COLORS[k + 1], t - k)
 
 
-class UpgradeScene(XScene):
-    """Стройка таверны: улучшения за славу и постройки за славу и трофеи глав (общие у Экспедиции и Одиночки)."""
-
-    def act(self, action, button=1):
-        prof = self.app.profile
-        if action == "back":
-            to_tavern(self.app)
-        elif action[0] == "buy":
-            if not prof.buy_upgrade(action[1]):
-                self.say("Не хватает славы")
-        elif action[0] == "build":
-            if not prof.build(action[1]):
-                self.say("Не хватает славы или трофеев глав")
-
-    def key(self, k):
-        if k in (pygame.K_ESCAPE, pygame.K_u):
-            to_tavern(self.app)
-
-    def draw(self, surf):
-        prof = self.app.profile
-        if not prof.xd.get("buildings"):
-            return self._draw_old(surf)
-        self.hits = []
-        surf.fill((20, 16, 14))
-        self.backdrop(surf, "tavern", "tavern", dim=200)
-        self.header(surf, "Стройка таверны", "Слава — за бои и акты (даже в проигранном походе), трофеи глав — за "
-                                             "боссов. Таверна общая у Экспедиции и Одиночки.")
-        x = T.SCREEN_W - 26
-        chips = [("glory", prof.glory)] + [(k, prof.trophies.get(k, 0)) for k in prof.xd["trophies"]]
-        for k, v in reversed(chips):
-            name = "Слава" if k == "glory" else prof.xd["trophies"][k]["name"]
-            col = GLORY if k == "glory" else tuple(prof.xd["trophies"][k]["color"])
-            label = f"{name}: {v}"
-            w = T.font(16, True).size(label)[0] + 18
-            x -= w
-            r = pygame.Rect(x, 16, w, 28)
-            pygame.draw.rect(surf, T.PANEL_DARK, r, border_radius=7)
-            pygame.draw.rect(surf, col, r, 1, border_radius=7)
-            T.text(surf, label, (r.x + 9, r.y + 5), 16, col, True)
-            if k != "glory":
-                self.hit(r, None, [(name, col), prof.xd["trophies"][k]["desc"]])
-            x -= 8
-        items = []
-        for uid, up in self.xd["tavern"]["upgrades"].items():
-            lv, top = prof.level(uid), len(up["costs"])
-            cost = prof.upgrade_cost(uid)
-            items.append((up["name"], up["desc"], lv, top, self._value_text(uid, lv),
-                          self._value_text(uid, lv + 1) if cost is not None else None,
-                          {"glory": cost} if cost is not None else None, ("buy", uid)))
-        for bid, b in self.xd["buildings"].items():
-            lv, top = prof.building_level(bid), len(b["levels"])
-            items.append((b["name"], b["desc"], lv, top, b["levels"][lv - 1]["text"] if lv else "не построено",
-                          b["levels"][lv]["text"] if lv < top else None, prof.building_cost(bid), ("build", bid)))
-        cw, ch = (T.SCREEN_W - 72) // 3, 150
-        for i, (name, desc, lv, top, now, nxt, cost, action) in enumerate(items):
-            r = pygame.Rect(24 + (i % 3) * (cw + 12), 92 + (i // 3) * (ch + 10), cw, ch)
-            done = nxt is None
-            T.frame(surf, r, 235, accent=GLORY if lv else T.PANEL_EDGE, corner=GLORY if lv else T.PANEL_EDGE)
-            T.text(surf, name, (r.x + 14, r.y + 10), 18, T.TEXT, True)
-            for k in range(top):
-                pygame.draw.circle(surf, GLORY if k < lv else (70, 62, 54), (r.right - 20 - (top - 1 - k) * 16, r.y + 20), 6)
-            T.text(surf, fit(desc, 13, r.w - 28), (r.x + 14, r.y + 34), 13, T.TEXT_DIM)
-            T.text(surf, fit("Сейчас: " + now, 14, r.w - 28), (r.x + 14, r.y + 56), 14, T.TEXT)
-            if not done:
-                T.text(surf, fit("Дальше: " + nxt, 14, r.w - 28), (r.x + 14, r.y + 78), 14, BLESS)
-                cost_chips(self, surf, prof, cost, r.x + 14, r.y + 106)
-                ok = prof.can_pay(cost) if action[0] == "build" else prof.glory >= cost["glory"]
-                b = pygame.Rect(r.right - 120, r.y + 104, 106, 32)
-                self.button(surf, b, "Построить" if action[0] == "build" else "Купить", action, ok, GLORY)
-            else:
-                T.text(surf, "построено полностью", (r.x + 14, r.y + 110), 14, GLORY, True)
-        self.button(surf, pygame.Rect(30, T.SCREEN_H - 66, 220, 46), "Назад (Esc)", "back")
-        self.draw_tip(surf)
-        self.draw_toast(surf)
-
-    def _draw_old(self, surf):
-        prof = self.app.profile
-        self.hits = []
-        surf.fill((20, 16, 14))
-        T.text(surf, "Улучшения таверны", (24, 14), 30, GLORY, True)
-        T.text(surf, "Слава даётся за бои, элиту, боссов и пройденные акты — даже если поход проигран.", (26, 54),
-               15, T.TEXT_DIM)
-        g = f"Слава: {prof.glory}"
-        T.text(surf, g, (T.SCREEN_W - 26 - T.font(22, True).size(g)[0], 18), 22, GLORY, True)
-        y = 100
-        for uid, up in self.xd["tavern"]["upgrades"].items():
-            r = pygame.Rect(60, y, T.SCREEN_W - 120, 110)
-            pygame.draw.rect(surf, (36, 32, 30), r, border_radius=10)
-            pygame.draw.rect(surf, T.PANEL_EDGE, r, 1, border_radius=10)
-            lv, top = prof.level(uid), len(up["costs"])
-            T.text(surf, up["name"], (r.x + 20, r.y + 14), 22, T.TEXT, True)
-            T.text(surf, f"ступень {lv}/{top}", (r.x + 20 + T.font(22, True).size(up['name'])[0] + 16, r.y + 20), 15,
-                   GLORY)
-            T.text(surf, up["desc"], (r.x + 20, r.y + 46), 15, T.TEXT_DIM)
-            T.text(surf, "Сейчас: " + self._value_text(uid, lv), (r.x + 20, r.y + 72), 15, T.TEXT)
-            cost = prof.upgrade_cost(uid)
-            if cost is not None:
-                T.text(surf, "Дальше: " + self._value_text(uid, lv + 1), (r.x + 460, r.y + 72), 15, BLESS)
-                self.button(surf, pygame.Rect(r.right - 230, r.y + 30, 200, 48), f"Купить: {cost}", ("buy", uid),
-                            prof.glory >= cost, GLORY)
-            y += 124
-        self.button(surf, pygame.Rect(30, T.SCREEN_H - 66, 220, 46), "Назад (Esc)", "back")
-        self.draw_toast(surf)
-
-    def _value_text(self, uid, lv):
-        up = self.xd["tavern"]["upgrades"][uid]
-        v = up["values"][min(lv, len(up["values"]) - 1)]
-        if uid == "hall":
-            return f"героев в зале: {v}"
-        if uid == "renown":
-            return f"ветераны {v['2']}%, герои {v['3']}%"
-        if uid == "provisions":
-            return f"+{v} золота в начале похода"
-        if uid == "guests":
-            classes = []
-            for k in range(1, lv + 1):
-                classes += up["values"][min(k, len(up["values"]) - 1)]
-            data = self.app.profile.data
-            return ", ".join(data.classes[c]["name"] for c in classes) or "только 8 основных классов"
-        return str(v)
+def autocast_label():
+    from ui import settings
+    cur = settings.SETTINGS.get("autocast_start", "default")
+    return next((label for m, label, _ in AUTOCAST_MODES if m == cur), AUTOCAST_MODES[0][1])
 
 
-class VowsScene(XScene):
-    """Обеты тяжести: поход труднее (враги сильнее, лечения меньше…) — славы больше. Действуют с первой победы."""
-
-    def act(self, action, button=1):
-        prof = self.app.profile
-        if action == "back":
-            to_tavern(self.app)
-        elif action[0] in ("vow+", "vow-") and prof.vows_open():
-            vid = action[1]
-            prof.set_vow(vid, prof.vows.get(vid, 0) + (1 if action[0] == "vow+" else -1))
-        elif action == "clear":
-            prof.vows = {}
-            prof.save()
-
-    def key(self, k):
-        if k in (pygame.K_ESCAPE, pygame.K_v):
-            to_tavern(self.app)
-
-    def draw(self, surf):
-        prof = self.app.profile
-        self.hits = []
-        surf.fill((18, 12, 12))
-        self.backdrop(surf, "tavern", "tavern", dim=215)
-        self.header(surf, "Обеты тяжести", "Перед походом можно дать обеты: поход станет труднее, слава — больше. "
-                                           "Действуют вместе со сложностью.")
-        k = prof.vow_glory()
-        T.text(surf, f"Слава похода ×{k:.2f}", (T.SCREEN_W - 260, 20), 22, (230, 110, 120), True)
-        if not prof.vows_open():
-            T.text(surf, "Обеты откроются после первой победы в любой главе.", (T.SCREEN_W // 2, 300), 22, CURSE, True,
-                   center=True, shadow=True)
-        y = 96
-        for vid, v in self.xd["vows"].items():
-            r = pygame.Rect(60, y, T.SCREEN_W - 120, 70)
-            rank = prof.vows.get(vid, 0)
-            col = (230, 110, 120) if rank else T.PANEL_EDGE
-            T.frame(surf, r, 235, accent=col, corner=col)
-            T.text(surf, v["name"], (r.x + 16, r.y + 10), 19, T.TEXT if prof.vows_open() else T.TEXT_DIM, True)
-            T.text(surf, f"{v['desc']} · за ступень: {v['text']}, слава +{v['glory'] * 100:.0f}%", (r.x + 16, r.y + 40),
-                   14, T.TEXT_DIM)
-            for i in range(v["ranks"]):
-                pygame.draw.circle(surf, (230, 110, 120) if i < rank else (70, 50, 50), (r.right - 210 + i * 22, r.centery), 8)
-            ok = prof.vows_open()
-            self.button(surf, pygame.Rect(r.right - 120, r.y + 17, 46, 36), "−", ("vow-", vid), ok and rank > 0,
-                        (230, 110, 120))
-            self.button(surf, pygame.Rect(r.right - 66, r.y + 17, 46, 36), "+", ("vow+", vid), ok and rank < v["ranks"],
-                        (230, 110, 120))
-            y += 80
-        self.button(surf, pygame.Rect(30, T.SCREEN_H - 66, 220, 46), "Назад (Esc)", "back")
-        self.button(surf, pygame.Rect(270, T.SCREEN_H - 66, 220, 46), "Снять все обеты", "clear", bool(prof.vows),
-                    (170, 160, 210))
-        self.draw_tip(surf)
+AUTOCAST_MODES = (("default", "Как задумано", "У каждого навыка — его обычная настройка автокаста"),
+                  ("on", "Всё включено", "Автокаст включён у всех навыков героев"),
+                  ("off", "Всё выключено", "Автокаст выключен у всех навыков: всё применяете сами"))
 
 
-class HallScene(XScene):
-    """Зал славы: павшие герои (и брошенные походы); ветераны, что ждут в таверне."""
+RISK = {"low": ("безопасно", (120, 220, 140)), "mid": ("рискованно", (240, 180, 80)),
+        "high": ("опасно — можно погибнуть", (240, 100, 90))}
+ROLE_NAMES = {"melee": "ближний бой", "ranged": "стрелки", "support": "поддержка", "caster": "маги"}
+RESULT_WORDS = {"success": ("выполнено", BLESS), "partial": ("наполовину", (240, 180, 80)), "fail": ("провал", CURSE)}
 
-    def act(self, action, button=1):
-        to_tavern(self.app)
 
-    def key(self, k):
-        if k in (pygame.K_ESCAPE, pygame.K_SPACE, pygame.K_RETURN):
-            to_tavern(self.app)
+def reward_text(xd, r):
+    """Награда поручения строкой: золото, материалы, трофеи, новобранец."""
+    parts = []
+    g = r.get("gold")
+    if g:
+        parts.append(f"{g[0]}–{g[1]} золота" if isinstance(g, list) else f"{g} золота")
+    for m, v in (r.get("mats") or {}).items():
+        name = xd.get("materials", {}).get(m, {}).get("name", m)
+        parts.append(f"{name} {v[0]}–{v[1]}" if isinstance(v, list) else f"{name} {v}")
+    for t, v in (r.get("trophy") or {}).items():
+        parts.append(f"{xd['trophies'].get(t, {}).get('name', t)} {v}")
+    rec = r.get("recruit")
+    if rec:
+        parts.append(f"новобранец ранга {rec}" if not isinstance(rec, str) else f"новобранец {rec}")
+    return ", ".join(parts) or "ничего"
 
-    def draw(self, surf):
-        prof = self.app.profile
-        data, xd = prof.data, prof.xd
-        self.hits = []
-        surf.fill((14, 12, 16))
-        self.backdrop(surf, "defeat", "act", dim=210)
-        self.header(surf, "Зал славы", "Имена тех, кто не вернулся. Справа — ветераны, что ждут в таверне.")
-        y = 92
-        if not prof.fallen:
-            T.text(surf, "Пока никто не пал.", (60, y + 10), 18, T.TEXT_DIM)
-        for f in list(reversed(prof.fallen))[:13]:
-            img = hero_sprite(data, f["cls"], 0.6)
-            surf.blit(pygame.transform.grayscale(img), (40, y))
-            ch = xd["chapters"].get(f["chapter"], {}).get("name", f["chapter"])
-            T.text(surf, f"{f['name']} · {data.classes[f['cls']]['name']} · ур. {f['level']}", (90, y + 4), 16,
-                   T.TEXT, True)
-            T.text(surf, f"{ch}, акт {f['act']} · {f['reason']}" + (" · в одиночку" if f.get("solo") else "")
-                   + (f" · побед до того: {f['wins']}" if f.get("wins") else ""), (90, y + 24), 13, T.TEXT_DIM)
-            y += 46
-        vets = [h for h in prof.roster if h.vet]
-        x = T.SCREEN_W // 2 + 40
-        T.text(surf, "Ветераны таверны", (x, 92), 18, (150, 220, 170), True)
-        y = 122
-        for h in vets[:12]:
-            img = hero_sprite(data, h.cls, 0.6)
-            surf.blit(img, (x, y))
-            rk = xd["tavern"]["ranks"][str(h.rank)]["name"]
-            T.text(surf, f"{h.name} · {data.classes[h.cls]['name']} · {rk}", (x + 50, y + 4), 16, T.TEXT, True)
-            T.text(surf, f"побед {h.vet.get('wins', 0)} · старт с ур. {h.level}"
-                   + (" · только в одиночке" if h.vet.get("solo") else ""), (x + 50, y + 24), 13, T.TEXT_DIM)
-            y += 46
-        if not vets:
-            T.text(surf, "Победите — и выжившие вернутся сюда ветеранами.", (x, 122), 15, T.TEXT_DIM)
-        self.button(surf, pygame.Rect(30, T.SCREEN_H - 66, 220, 46), "Назад (Esc)", "back")
-        self.draw_tip(surf)
+
+def news_line(xd, n):
+    word, col = RESULT_WORDS[n["result"]]
+    line = f"«{n['name']}» ({', '.join(n['heroes'])}): {word}"
+    if n.get("reward"):
+        line += " — " + reward_text(xd, n["reward"])
+    if n.get("hurt"):
+        line += " · ранен: " + ", ".join(n["hurt"])
+    if n.get("dead"):
+        line += " · погиб: " + ", ".join(n["dead"])
+        col = CURSE
+    return line, col
+
+
+def fit_text(data, fit):
+    parts = [ROLE_NAMES.get(r, r) for r in fit.get("roles", [])]
+    parts += [data.classes[c]["name"] for c in fit.get("classes", []) if c in data.classes]
+    if fit.get("attr"):
+        parts.append(ATTR_NAMES[fit["attr"]])
+    return ", ".join(parts) or "любые"
 
 
 # ---------- акт ----------
@@ -1055,124 +668,6 @@ class ActScene(XScene):
                T.TEXT_DIM, center=True)
         r = pygame.Rect(T.SCREEN_W - 300, T.SCREEN_H - 84, 260, 50)
         self.button(surf, r, "В путь (Пробел)", "go", True, GOLD)
-
-
-# ---------- выбор главы ----------
-
-class ChapterScene(XScene):
-    """Выбор главы похода: карточки с картинкой акта, описанием, механиками, типичными врагами и боссом.
-    Закрытая глава видна, но не выбирается (откроется победой в предыдущей)."""
-
-    def __init__(self, app, tavern):
-        super().__init__(app)
-        self.tavern = tavern
-
-    def act(self, action, button=1):
-        if action[0] == "pick":
-            self.tavern.act(("chapter", action[1]))
-            if self.tavern.chapter == action[1]:
-                self.app.switch(self.tavern)
-            else:
-                self.say("Глава откроется победой в предыдущей")
-        elif action == "back":
-            self.app.switch(self.tavern)
-
-    def key(self, k):
-        chs = self.app.profile.chapters()
-        if k == pygame.K_ESCAPE:
-            self.act("back")
-        elif pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(chs):
-            self.act(("pick", chs[k - pygame.K_1][0]))
-
-    def _enemy(self, surf, eid, x, ground, ok, boss=False, glow=None):
-        """Враг главы на земле картинки, лицом к отряду (влево). Возвращает ширину."""
-        e = self.app.profile.data.enemies.get(eid)
-        if not e:
-            return 0
-        spr = _SPRITES.get([eid, e.get("sprite_fallback")], e.get("role", "melee"), tuple(e["color"]), boss)
-        spr = pygame.transform.flip(spr, True, False)
-        if not ok:
-            spr = pygame.transform.grayscale(spr)
-        w, h = spr.get_size()
-        sh = pygame.Surface((w * 3 // 4 + (20 if glow else 0), 12 if glow else 9), pygame.SRCALPHA)
-        pygame.draw.ellipse(sh, (*glow, 110) if glow else (0, 0, 0, 140), sh.get_rect())
-        surf.blit(sh, (x + w // 2 - sh.get_width() // 2, ground - sh.get_height() // 2))
-        surf.blit(spr, (x, ground - h))
-        self.hit(pygame.Rect(x, ground - h, w, h), None, [(e["name"], glow or T.TEXT), "Босс главы" if boss else
-                                                           "Враг главы"])
-        return w
-
-    def draw(self, surf):
-        prof, xd = self.app.profile, self.app.profile.xd
-        self.hits = []
-        surf.fill(T.BG)
-        self.backdrop(surf, "tavern", "tavern", dim=205)
-        T.text(surf, "Куда идёт отряд?", (T.SCREEN_W // 2, 40), 34, GLORY, True, center=True, shadow=True)
-        chs = prof.chapters()
-        n = len(chs)
-        cw = min(600, (T.SCREEN_W - 60 - (n - 1) * 24) // n)
-        x0 = (T.SCREEN_W - (n * cw + (n - 1) * 24)) // 2
-        from ui import illustrations as IL
-        for i, (cid, name, ok) in enumerate(chs):
-            meta = xd["chapters"][cid]
-            col = tuple(meta.get("color", GLORY))
-            r = pygame.Rect(x0 + i * (cw + 24), 84, cw, 652)
-            on = cid == self.tavern.chapter
-            hot = ok and r.collidepoint(self.mouse)
-            T.frame(surf, r, 240, accent=col if (on or hot) else T.mix(col, (0, 0, 0), 0.45), corner=col,
-                    fill=T.mix(T.PANEL, col, 0.12 if hot else 0.05))
-            iw = cw - 24
-            full = iw * 2 // 3
-            ih = full - 60                                 # верх картинки (небо, своды) срезан — больше места тексту
-            img = IL.get(meta.get("art", "act_0"), "act", (iw, full), hd=True).subsurface((0, 40, iw, ih))
-            if not ok:
-                img = pygame.transform.grayscale(img)
-            surf.blit(img, (r.x + 12, r.y + 12))
-            pygame.draw.rect(surf, col if ok else T.TEXT_DIM, (r.x + 12, r.y + 12, iw, ih), 2)
-            ground = r.y + 12 + ih - 12                    # враги стоят на земле картинки, босс справа — крупнее
-            gx = r.x + 26
-            for eid in meta.get("enemies", []):
-                gx += self._enemy(surf, eid, gx, ground, ok) - 6
-            b = xd and prof.data.enemies.get(meta.get("boss"))
-            if b:
-                spr_w = _SPRITES.get([meta["boss"], b.get("sprite_fallback")], b.get("role", "melee"),
-                                     tuple(b["color"]), True).get_width()
-                self._enemy(surf, meta["boss"], r.x + 12 + iw - spr_w - 12, ground, ok, True, col)
-            y = r.y + 24 + ih
-            T.text(surf, f"{i + 1}. {name}", (r.x + 16, y), 26, col if ok else T.TEXT_DIM, True)
-            y += 36
-            for ln in T.wrap(meta.get("desc", ""), 15, cw - 32)[:3]:
-                T.text(surf, ln, (r.x + 16, y), 15, T.TEXT)
-                y += 19
-            y += 8
-            for m in meta.get("mechanics", []):
-                pygame.draw.polygon(surf, col, [(r.x + 20, y + 3), (r.x + 25, y + 8), (r.x + 20, y + 13),
-                                                (r.x + 15, y + 8)])
-                lines = T.wrap(m, 14, cw - 48)[:2]
-                for k, ln in enumerate(lines):
-                    T.text(surf, ln, (r.x + 32, y + k * 17), 14, T.TEXT_DIM)
-                y += 17 * len(lines) + 6
-            y += 6
-            acts = X.chapter_view(xd, cid)["acts"]
-            path = " → ".join(a["name"].split(". ", 1)[-1] for a in acts)
-            for k, ln in enumerate(T.wrap("Путь: " + path, 14, cw - 32)[:2]):
-                T.text(surf, ln, (r.x + 16, y + k * 18), 14, T.TEXT if ok else T.TEXT_DIM, k == 0)
-            b = prof.data.enemies.get(meta.get("boss"))
-            if b:
-                T.text(surf, f"В конце пути: {b['name']}", (r.x + 16, y + 42), 14, col, True)
-            tiers = xd["config"]["tiers"]
-            if ok:
-                status = (f"Открыто сложностей: {prof.tier_open_of(cid) + 1} из {len(tiers)} · "
-                          f"побед: {prof.chapter_wins.get(cid, 0)}")
-            else:
-                status = f"Закрыто — откроется победой в главе «{xd['chapters'][meta['unlock']]['name']}»"
-            T.text(surf, status, (r.x + 16, r.bottom - 32), 14, BLESS if ok else CURSE, True)
-            if on:
-                T.text(surf, "выбрана", (r.right - 86, r.bottom - 32), 14, col, True)
-            self.hit(r, ("pick", cid), [(name, col), "Клик — выбрать главу" if ok else "Глава ещё закрыта"])
-        self.button(surf, pygame.Rect(T.SCREEN_W // 2 - 110, T.SCREEN_H - 54, 220, 42), "Назад (Esc)", "back")
-        self.draw_tip(surf)
-        self.draw_toast(surf, T.SCREEN_H - 74)
 
 
 # ---------- карта ----------
@@ -1220,13 +715,22 @@ class MapScene(XScene):
             save(self.app)
             to_tavern(self.app)
 
+    def open_nodes(self):
+        """Доступные узлы сверху вниз — их номера на клавишах 1–3."""
+        return sorted((n for n in self.run.available() if n in self.node_pos), key=lambda n: self.node_pos[n][1])
+
     def key(self, k):
         if k == pygame.K_h:
             self.act(("hero", 0))
         elif k == pygame.K_ESCAPE:
             self.act("tavern")
-        elif pygame.K_1 <= k <= pygame.K_4 and k - pygame.K_1 < len(self.run.heroes):
-            self.act(("hero", k - pygame.K_1))
+        elif pygame.K_1 <= k <= pygame.K_9 or pygame.K_KP1 <= k <= pygame.K_KP9:
+            i = k - (pygame.K_1 if k <= pygame.K_9 else pygame.K_KP1)
+            opts = self.open_nodes()
+            if i < len(opts):
+                enter(self.app, opts[i])
+        elif pygame.K_F1 <= k <= pygame.K_F4 and k - pygame.K_F1 < len(self.run.heroes):
+            self.act(("hero", k - pygame.K_F1))
 
     def draw(self, surf):
         run = self.run
@@ -1236,7 +740,7 @@ class MapScene(XScene):
         surf.fill(T.BG)
         self.backdrop(surf, run.act_def.get("art", f"act_{run.act}"), "act", dim=200)
         self.header(surf, run.act_def["name"], f"Сложность: {run.data.config['difficulties'][run.difficulty]['name']}"
-                    f"  ·  выберите узел (подсвечены)  ·  1–4 / H — лист героя  ·  Esc — в таверну (сохранено)")
+                    f"  ·  выберите узел: клик или 1–3  ·  F1–F4 / H — лист героя  ·  Esc — в таверну (сохранено)")
         x = self.draw_buffs(surf, 26, 78)
         if run.bag:
             msg = f"В сумке вещей: {len(run.bag)} — наденьте в листе героя"
@@ -1264,6 +768,7 @@ class MapScene(XScene):
                 MA.draw_trail(surf, self.node_pos[n["id"]], self.node_pos[nxt], state, self.clock,
                               rad[n["id"]], rad[nxt])
         hover = self.node_at(self.mouse)
+        keys = {nid: i + 1 for i, nid in enumerate(self.open_nodes())}
         for n in run.nodes.values():
             x, y = self.node_pos[n["id"]]
             nid = n["id"]
@@ -1276,6 +781,11 @@ class MapScene(XScene):
             label = n.get("label") or NODE_NAMES[n["type"]]
             MA.ribbon(surf, label, (x, y + r + 5), GLORY if n.get("thread") else col, bool(n.get("thread")),
                       dim=state == "future")
+            if state == "open" and nid in keys:              # номер клавиши у доступного узла
+                bx, by = int(x - r - 4), int(y - r - 4)
+                pygame.draw.circle(surf, (20, 16, 10), (bx, by), 11)
+                pygame.draw.circle(surf, GOLD, (bx, by), 11, 2)
+                T.text(surf, str(keys[nid]), (bx, by), 15, GOLD, True, center=True)
         if run.node in self.node_pos and run.heroes:           # отряд стоит на текущем узле
             x, y = self.node_pos[run.node]
             img = hero_sprite(run.data, run.heroes[0].cls, 0.7)
@@ -1365,6 +875,8 @@ class MapScene(XScene):
 class HeroScene(XScene):
     """Навыки (ранги и ветки — только в походе), снаряжение и сумка. В лагере — сброс очков навыков."""
 
+    preview = False               # таверна: лист только для просмотра (TavernHeroScene)
+
     def __init__(self, app, idx, back, respec=False):
         super().__init__(app)
         self.idx = idx
@@ -1398,6 +910,11 @@ class HeroScene(XScene):
             run.unequip(h, action[1])
         elif kind == "respec":
             run.respec(h)
+        elif kind == "autocast":
+            idx = self.idx
+            self.app.switch(AutocastScene(self.app, idx, back=lambda: self.app.switch(self)))
+        elif kind == "chronicle":
+            self.app.switch(ChronicleScene(self.app, self.hero, back=lambda: self.app.switch(self)))
         elif kind == "back":
             save(self.app)
             self.back()
@@ -1405,6 +922,10 @@ class HeroScene(XScene):
     def key(self, k):
         if k in (pygame.K_ESCAPE, pygame.K_h):
             self.act("back")
+        elif k == pygame.K_a and not self.preview:
+            self.act("autocast")
+        elif k == pygame.K_l:
+            self.act("chronicle")
         elif pygame.K_1 <= k <= pygame.K_4 and k - pygame.K_1 < len(self.run.heroes):
             self.idx = k - pygame.K_1
         elif k == pygame.K_TAB:
@@ -1414,19 +935,25 @@ class HeroScene(XScene):
         run, h, data, xd = self.run, self.hero, self.run.data, self.xd
         self.hits = []
         surf.fill(T.BG)
-        self.header(surf, "Отряд", "Ранги и ветки навыков действуют только в этом походе. Вещи — клик по вещи "
-                                   "в сумке (надеть) или в слоте (снять).")
+        if self.preview:
+            self.header(surf, "Герои таверны", "Просмотр: навыки, ультимейт, характеристики и вещь героя. "
+                                               "Tab / ←→ — следующий, Esc — в таверну.")
+        else:
+            self.header(surf, "Отряд", "Ранги и ветки навыков действуют только в этом походе. Вещи — клик по вещи "
+                                       "в сумке (надеть) или в слоте (снять).")
         x = 24
+        tw = min(200, (T.SCREEN_W - 48) // max(1, len(run.heroes)) - 10)
         for i, hh in enumerate(run.heroes):
-            r = pygame.Rect(x, 80, 200, 34)
+            r = pygame.Rect(x, 80, tw, 34)
             on = i == self.idx
             tn = tint_of(data, hh.cls)               # вкладка — в цвете класса героя
             pygame.draw.rect(surf, tn["hot"] if on else tn["fill"], r, border_radius=8)
             pygame.draw.rect(surf, tn["accent"] if on else tn["dim"], r, 2 if on else 1, border_radius=8)
-            T.text(surf, f"{i + 1}. {hh.name}" + (f"  ({hh.sp})" if hh.sp else ""), (r.x + 12, r.y + 7), 16,
+            label = hh.name if self.preview else f"{i + 1}. {hh.name}" + (f"  ({hh.sp})" if hh.sp else "")
+            T.text(surf, fit(label, 16, tw - 16), (r.x + 8 if self.preview else r.x + 12, r.y + 7), 16,
                    T.TEXT if on else T.TEXT_DIM, True)
-            self.hit(r, ("tab", i))
-            x += 210
+            self.hit(r, ("tab", i), [hh.name, run.data.classes[hh.cls]["name"]])
+            x += tw + 10
         p = run.proto(h, party=False)          # чистые числа: прокачка и вещи, без проклятий отряда и боя
         # портрет и статы
         left = pygame.Rect(24, 128, 330, 600)
@@ -1435,6 +962,9 @@ class HeroScene(XScene):
         surf.blit(img, (left.x + 10, left.y + 6))
         tx = left.x + img.get_width() + 18
         T.text(surf, h.name, (tx, left.y + 14), 22, T.TEXT, True)
+        tt = title_of(self.xd, h)
+        if tt:
+            T.text(surf, tt, (tx + T.font(22, True).size(h.name)[0] + 8, left.y + 19), 14, (230, 200, 140), True)
         T.text(surf, data.classes[h.cls]["name"], (tx, left.y + 42), 15, T.TEXT_DIM)
         T.text(surf, f"{xd['tavern']['ranks'][str(h.rank)]['name']} · ранг {h.rank}", (tx, left.y + 62), 14, GLORY,
                True)
@@ -1466,6 +996,24 @@ class HeroScene(XScene):
             T.text(surf, f"{at[a]:.0f}", (left.x + 140, y), 14, tuple(data.stats_mode["attrs"][a]["color"]), True)
             y += 20
         T.text(surf, "Атрибуты растут с уровнем сами (основной — быстрее).", (left.x + 14, y + 4), 12, T.TEXT_DIM)
+        if run.has_quivers(h):                    # лучник: колчаны (выбор на 1 / 6 / 11, с 15 — сильнее)
+            arrows = data.config["arrows"]
+            qy = y + 48
+            T.text(surf, "Колчаны (стрелы по очереди)" + ("  ·  усилены" if h.level >= data.config["quiver_boost_level"]
+                                                     else ""), (left.x + 14, qy), 13, T.TEXT_DIM, True)
+            qy += 18
+            for n in range(3):
+                a = arrows.get(h.quivers[n]) if n < len(h.quivers) else None
+                lv = data.config["quiver_levels"][n]
+                r = pygame.Rect(left.x + 14, qy, 300, 18)
+                if a:
+                    pygame.draw.circle(surf, tuple(a["color"]), (r.x + 6, r.y + 8), 5)
+                    T.text(surf, a["name"], (r.x + 16, r.y), 13, tuple(a["color"]), True)
+                    self.hit(r, None, [(a["name"], tuple(a["color"])), a["desc"]])
+                else:
+                    T.text(surf, f"— откроется на {lv} уровне" if h.level < lv else "— выбор ждёт (улучшение)",
+                           (r.x + 16, r.y), 13, T.TEXT_DIM)
+                qy += 18
         if h.doctrine:
             pd = data.paths[h.doctrine]
             dr = pygame.Rect(left.x + 14, y + 26, 300, 18)
@@ -1478,6 +1026,17 @@ class HeroScene(XScene):
             draw_progress(surf, pygame.Rect(24, T.SCREEN_H - 200, 330, 128), self.app.neural.agent(h).stats,
                           title="Сеть героя")
         self.button(surf, pygame.Rect(T.SCREEN_W - 230, T.SCREEN_H - 62, 206, 44), "Назад (Esc)", "back")
+        if self.preview:
+            self.draw_preview_buttons(surf)
+            self.draw_tip(surf)
+            self.draw_toast(surf, T.SCREEN_H - 80)
+            return
+        bx = T.SCREEN_W - 230 - 236 - (240 if self.respec else 0)
+        self.button(surf, pygame.Rect(bx, T.SCREEN_H - 62, 226, 44),
+                    "Автокаст (A)", "autocast", True, (150, 220, 170),
+                    "Приоритет автокаста: порядок навыков и резерв AP (то же в бою — P)")
+        self.button(surf, pygame.Rect(bx - 200, T.SCREEN_H - 62, 190, 44), "Летопись (L)", "chronicle", True,
+                    (230, 200, 140), "История героя: походы, боссы, падения, прозвища — навсегда")
         if self.respec:
             self.button(surf, pygame.Rect(T.SCREEN_W - 470, T.SCREEN_H - 62, 226, 44), "Сбросить ветки", "respec",
                         h.sp_spent(xd) > 0, SP, "Лагерь: взятые ветки вернутся выборами улучшений, "
@@ -1504,7 +1063,7 @@ class HeroScene(XScene):
             T.text(surf, f"выборов: {h.sp}", (box.right - 120, box.y + 12), 16, SP, True)
         y = box.y + 38
         rh = min(132, (box.bottom - y - 6) // max(1, len(h.skills)) - 6)       # 3 навыка + ультимейт — карточки ниже
-        ult = story_meta.ult_of(data, h.cls)
+        ult = story_meta.ult_of(data, h.cls, h.skills)
         for k_, sid in enumerate(h.skills):
             sk = p["skill_defs"].get(sid, data.skills[sid])
             r = pygame.Rect(box.x + 10, y, box.w - 20, rh)
@@ -1514,20 +1073,23 @@ class HeroScene(XScene):
                 pygame.draw.rect(surf, GOLD, r, 1, border_radius=8)
             key = "QWER"[k_] if k_ < 4 else ""
             T.text(surf, key, (r.x + 10, r.y + 7), 17, GOLD if is_ult else T.SELECT, True)
-            locked = is_ult and not X.ult_open(data, h)
+            locked = is_ult and not X.ult_open(data, h) and not self.preview   # таверна: ультимейт виден сразу
             T.text(surf, sk["name"] + ("  · ультимейт" if is_ult else ""), (r.x + 30, r.y + 8), 17,
                    T.TEXT_DIM if locked else T.TEXT, True)
             if locked:
                 lv = story_meta.skill_level(data, h.cls, sid)
                 T.text(surf, f"откроется на {lv} уровне", (r.x + 260, r.y + 30), 13, (230, 150, 110), True)
             T.text(surf, f"AP {sk['ap']} · перезарядка {sk['cooldown']:.1f} с", (r.x + 12, r.y + 30), 13, T.TEXT_DIM)
-            vals = stats.skill_values(p, sk)
+            vals = [] if locked else stats.skill_values(p, sk)     # закрытый ультимейт — без цифр (не налезают)
             vx = r.x + 12 + T.font(13).size(f"AP {sk['ap']} · перезарядка {sk['cooldown']:.1f} с")[0] + 14
             for what, v, c in vals[:2]:
                 txt = f"{what} {v}" + (f" · крит {c}" if c else "")
                 col = (255, 170, 120) if what == "урон" else (130, 230, 160)
                 T.text(surf, txt, (vx, r.y + 29), 14, col, True)
                 vx += T.font(14, True).size(txt)[0] + 14
+            if is_ult and self.preview and not X.ult_open(data, h):      # таверна: ультимейт виден, но с 10 ур.
+                lv = story_meta.skill_level(data, h.cls, sid)
+                T.text(surf, f"в походе — с {lv} уровня", (vx, r.y + 30), 13, GOLD, True)
             rank = h.rank_of(sid)                          # ранг растёт сам от применения навыка в боях
             for k in range(hc["max_rank"]):
                 pygame.draw.circle(surf, GOLD if k < rank else (70, 70, 80), (r.right - 150 + k * 18, r.y + 18), 6)
@@ -1593,8 +1155,11 @@ class HeroScene(XScene):
         y += 8
         T.text(surf, f"Сумка ({len(run.bag)})", (box.x + 12, y), 16, T.TEXT, True)
         y += 24
-        for item in run.bag[:12]:
-            r = pygame.Rect(box.x + 10, y, box.w - 20, 24)
+        rows = max(1, (box.bottom - 8 - y) // 27)
+        first = self.scroll_list(surf, "bag", pygame.Rect(box.x + 10, y, box.w - 34, rows * 27 - 3), len(run.bag),
+                                 rows)
+        for item in run.bag[first:first + rows]:
+            r = pygame.Rect(box.x + 10, y, box.w - 34 if len(run.bag) > rows else box.w - 20, 24)
             hot = r.collidepoint(self.mouse)
             pygame.draw.rect(surf, (70, 52, 34) if hot else (46, 35, 26), r, border_radius=5)
             ic = item_icon(item, 20)
@@ -1607,11 +1172,228 @@ class HeroScene(XScene):
                 tip.append((f"вместо: {X.item_name(old)}", T.TEXT_DIM))
             self.hit(r, ("equip", item["uid"]), tip)
             y += 27
-        if len(run.bag) > 12:
-            T.text(surf, f"и ещё {len(run.bag) - 12}", (box.x + 12, y), 13, T.TEXT_DIM)
 
 
 # ---------- событие ----------
+
+class ChronicleScene(XScene):
+    """Летопись героя: прозвища, подвиги и записи всех его походов (живого — из листа, павшего — из зала славы)."""
+
+    FEATS = [("kills", "убийств"), ("battles", "боёв"), ("boss_kills", "боссов"), ("elite_kills", "элит"),
+             ("falls", "падений пережито"), ("runs_won", "победных походов"), ("dealt", "урона нанесено"),
+             ("healed", "вылечено"), ("shielded", "поглощено щитами")]
+    KIND_COL = {"death": CURSE, "fall": (230, 140, 110), "title": (230, 200, 140), "boss": GLORY, "win": BLESS,
+                "elite": (210, 190, 150), "start": T.TEXT_DIM}
+
+    def __init__(self, app, hero, back, entry=None):
+        super().__init__(app)
+        self.hero, self.back, self.entry = hero, back, entry    # entry — запись зала славы (павший)
+        self.scroll = 0
+
+    def act(self, action, button=1):
+        if action == "back":
+            self.back()
+
+    def key(self, k):
+        if k in (pygame.K_ESCAPE, pygame.K_l, pygame.K_RETURN):
+            self.back()
+        elif k == pygame.K_DOWN:
+            self.scroll += 1
+        elif k == pygame.K_UP:
+            self.scroll = max(0, self.scroll - 1)
+
+    def handle(self, ev):
+        if ev.type == pygame.MOUSEWHEEL:
+            self.scroll = max(0, self.scroll - ev.y)
+            return
+        super().handle(ev)
+
+    def draw(self, surf):
+        xd = self.app.profile.xd
+        data = self.app.profile.data
+        e = self.entry
+        name = e["name"] if e else self.hero.name
+        cls = e["cls"] if e else self.hero.cls
+        chron = e.get("chronicle", []) if e else self.hero.chronicle
+        feats = e.get("feats", {}) if e else self.hero.feats
+        titles = e.get("titles") if e else [xd.get("chronicle", {}).get("titles", {}).get(t, {}).get("name", t)
+                                            for t in self.hero.titles]
+        self.hits = []
+        surf.fill((16, 13, 11))
+        self.backdrop(surf, "defeat" if e else "tavern", "act", dim=215)
+        self.header(surf, f"Летопись: {name}" + (" (павший)" if e else ""), "Путь героя через все походы — навсегда.")
+        img = hero_sprite(data, cls, 1.6)
+        if e:
+            img = pygame.transform.grayscale(img)
+        surf.blit(img, (40, 90))
+        y = 90
+        x = 60 + img.get_width()
+        T.text(surf, data.classes[cls]["name"], (x, y), 18, T.TEXT, True)
+        y += 28
+        if titles:
+            T.text(surf, "Прозвища: " + ", ".join(f"«{t}»" for t in titles), (x, y), 15, (230, 200, 140), True)
+            y += 22
+        if e:
+            T.text(surf, f"Пал: {e['reason']} · {xd['chapters'].get(e['chapter'], {}).get('name', e['chapter'])}, "
+                         f"акт {e['act']}", (x, y), 15, CURSE, True)
+            y += 22
+        fy = max(y + 10, 90 + img.get_height() + 10)
+        T.text(surf, "Подвиги", (40, fy), 16, GLORY, True)
+        fy += 24
+        for key, label in self.FEATS:
+            v = feats.get(key, 0)
+            if v:
+                T.text(surf, f"{v:,}".replace(",", " ") + f" {label}", (40, fy), 14, T.TEXT)
+                fy += 19
+        box = pygame.Rect(420, 90, T.SCREEN_W - 460, T.SCREEN_H - 180)
+        T.frame(surf, box, 235, accent=(230, 200, 140), corner=(230, 200, 140))
+        T.text(surf, "Записи", (box.x + 14, box.y + 10), 17, (230, 200, 140), True)
+        rows = list(reversed(chron))
+        per = (box.h - 50) // 22
+        self.scroll = min(self.scroll, max(0, len(rows) - per))
+        yy = box.y + 40
+        run_no = None
+        for rec in rows[self.scroll:self.scroll + per]:
+            if rec.get("run") != run_no:
+                run_no = rec.get("run")
+                ch = xd["chapters"].get(rec.get("chapter"), {}).get("name", rec.get("chapter", ""))
+                T.text(surf, f"Поход {run_no} · {ch}", (box.x + 14, yy), 13, T.TEXT_DIM, True)
+                yy += 20
+                if yy > box.bottom - 24:
+                    break
+            T.text(surf, fit("• " + rec["text"], 15, box.w - 40), (box.x + 24, yy), 15,
+                   self.KIND_COL.get(rec.get("kind"), T.TEXT))
+            yy += 22
+            if yy > box.bottom - 24:
+                break
+        if not rows:
+            T.text(surf, "Пока пусто: летопись пишется в походах.", (box.x + 14, box.y + 44), 15, T.TEXT_DIM)
+        self.button(surf, pygame.Rect(T.SCREEN_W - 230, T.SCREEN_H - 62, 206, 44), "Назад (Esc)", "back")
+        self.draw_tip(surf)
+
+
+class AutocastScene(XScene):
+    """Приоритет автокаста героев отряда между боями: порядок навыков перетаскиванием, резерв AP, вкл/выкл.
+    То же, что в бою по P; настройка хранится у героя на весь поход."""
+
+    def __init__(self, app, idx, back):
+        super().__init__(app)
+        from ui.autocast_priority import PriorityPanel
+        self.idx, self.back = idx, back
+        self.panel = PriorityPanel(self.run.data.tags)
+        self._load()
+
+    def _load(self):
+        from sim import autocast as AC
+        run = self.run
+        h = run.heroes[self.idx]
+        p = run.proto(h)
+        skills = run.battle_skills(h)
+        defs = {s: p["skill_defs"][s] for s in skills if s in p["skill_defs"]}
+        run.preset_autocast(h, defs)
+        h.autocast = AC.settings_for(defs, h.autocast)
+        order, res = AC.priority_for(list(defs), h.ac_order, h.ac_reserve)
+        h.ac_order, h.ac_reserve = order, res          # те же объекты меняет панель
+        self.panel.set_source(defs, h.autocast, h.ac_order, h.ac_reserve)
+
+    def handle(self, ev):
+        if ev.type == pygame.MOUSEMOTION:
+            self.panel.mouse = ev.pos
+        if self.panel.handle(ev):
+            return
+        super().handle(ev)
+
+    def act(self, action, button=1):
+        if isinstance(action, tuple) and action[0] == "tab":
+            self.idx = action[1]
+            self._load()
+        elif action == "back":
+            save(self.app)
+            self.back()
+
+    def key(self, k):
+        if k in (pygame.K_ESCAPE, pygame.K_a, pygame.K_RETURN):
+            self.act("back")
+        elif pygame.K_1 <= k <= pygame.K_4 and k - pygame.K_1 < len(self.run.heroes):
+            self.act(("tab", k - pygame.K_1))
+
+    def draw(self, surf):
+        run = self.run
+        self.hits = []
+        surf.fill(T.BG)
+        self.header(surf, "Автокаст отряда", "Перетаскивайте навыки: выше — применяются раньше. Между ними — резерв "
+                                             "AP под навыки выше. То же в бою — клавиша P.")
+        x = 24
+        for i, hh in enumerate(run.heroes):
+            r = pygame.Rect(x, 80, 200, 34)
+            on = i == self.idx
+            tn = tint_of(run.data, hh.cls)
+            pygame.draw.rect(surf, tn["hot"] if on else tn["fill"], r, border_radius=8)
+            pygame.draw.rect(surf, tn["accent"] if on else tn["dim"], r, 2 if on else 1, border_radius=8)
+            T.text(surf, f"{i + 1}. {hh.name}", (r.x + 12, r.y + 7), 16, T.TEXT if on else T.TEXT_DIM, True)
+            self.hit(r, ("tab", i))
+            x += 210
+        p = self.panel
+        h = p.height()
+        p.rect = pygame.Rect(T.SCREEN_W // 2 - 260, 130, 520, h)
+        p.mouse = self.mouse
+        p.draw(surf, f"Приоритет автокаста: {run.heroes[self.idx].name}")
+        self.button(surf, pygame.Rect(T.SCREEN_W - 230, T.SCREEN_H - 62, 206, 44), "Готово (Esc)", "back")
+        self.draw_tip(surf)
+
+
+class TavernHeroScene(HeroScene):
+    """Лист героя таверны (ПКМ по герою в зале): навыки с ультимейтом, характеристики, вещь — только смотреть.
+    Числа — как на старте похода в выбранной главе; кнопка — взять в поход / убрать из отряда."""
+
+    preview = True
+
+    def __init__(self, app, tavern, uid):
+        prof = app.profile
+        self.tavern = tavern
+        self.heroes = prof.recruitable() if hasattr(prof, "recruitable") else prof.hall()
+        idx = next((i for i, h in enumerate(self.heroes) if h.uid == uid), 0)
+        solo = getattr(prof, "solo", False)
+        self._run = X.Expedition(prof.data, [X.Hero(dict(h.to_dict(), solo=solo)) for h in self.heroes], seed=0,
+                                 chapter=tavern.chapter, solo=solo)
+        super().__init__(app, idx, back=lambda: app.switch(tavern))
+
+    @property
+    def run(self):
+        return self._run
+
+    @property
+    def xd(self):
+        return self._run.xd
+
+    def act(self, action, button=1):
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "tab":
+            self.idx = action[1]
+        elif kind == "pick":
+            self.tavern.act(("recruit", self.heroes[self.idx].uid))
+            self.toast = self.tavern.toast or self.toast
+            self.tavern.toast = None
+        elif kind == "back":
+            self.back()
+
+    def key(self, k):
+        n = len(self.heroes)
+        if k in (pygame.K_ESCAPE, pygame.K_h):
+            self.act("back")
+        elif k in (pygame.K_TAB, pygame.K_RIGHT):
+            self.idx = (self.idx + 1) % n
+        elif k == pygame.K_LEFT:
+            self.idx = (self.idx - 1) % n
+        elif k in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+            self.act("pick")
+
+    def draw_preview_buttons(self, surf):
+        on = self.heroes[self.idx].uid in self.tavern.picked
+        self.button(surf, pygame.Rect(T.SCREEN_W - 500, T.SCREEN_H - 62, 256, 44),
+                    "Убрать из отряда (Enter)" if on else "Взять в поход (Enter)", "pick", True,
+                    (170, 160, 210) if on else GOLD)
+
 
 class EventScene(XScene):
     """Событие: иллюстрация и текст, варианты → (кто бросает → кубик d20 в 3D) → исход → следующий шаг / конец.
@@ -2464,6 +2246,11 @@ class PickScene(XScene):
         self.run.take_card(h, self.sel)
         self.sel, self.after, self.shown = 0, True, None
         save(self.app)
+        if self.only is not None and self.only.sp <= 0:     # с карточки героя: дальше — следующий с выбором
+            hs = self.run.heroes
+            i = next((k for k, x in enumerate(hs) if x is self.only), -1)
+            self.only = next((hs[(i + d) % len(hs)] for d in range(1, len(hs) + 1) if hs[(i + d) % len(hs)].sp > 0),
+                             None)
         if self.hero is None:
             self.then()
 
@@ -2556,6 +2343,8 @@ class PickScene(XScene):
         if card:
             sid = card.get("skill")
             name = self.run.data.skills[sid]["name"] if sid else ""
+            if card["type"] == "quiver":
+                name = self.run.data.config["arrows"][card["arrow"]]["name"].lower()
             when = "станет" if (self.after or card["type"] == "learn") else "сейчас"
             T.text(surf, f"Демонстрация: {name} — {when}", (r.x + 10, r.y + 8), 14, T.TEXT, True, shadow=True)
 
@@ -2588,7 +2377,8 @@ class PickScene(XScene):
             r = pygame.Rect(24, y, left_w, 150)
             head, lines = run.card_text(h, c)
             accent = {"branch": (255, 150, 90), "rank": GOLD, "learn": SP}.get(c["type"], BLESS)
-            kind = {"branch": "Ветка навыка", "rank": "Мастерство", "learn": "Новый навык"}.get(c["type"], "Закалка")
+            kind = {"branch": "Ветка навыка", "rank": "Мастерство", "learn": "Новый навык",
+                    "quiver": "Колчан"}.get(c["type"], "Закалка")
             on = i == self.sel
             T.frame(surf, r, 240, accent=accent if on else T.mix(accent, (0, 0, 0), 0.5), corner=accent,
                     fill=T.mix(T.PANEL, accent, 0.16 if on else 0.04))
@@ -2981,8 +2771,11 @@ class ShopScene(XScene):
         pygame.draw.rect(surf, T.PANEL, box, border_radius=10)
         T.text(surf, "Сумка — ПКМ продать", (box.x + 10, box.y + 8), 15, T.TEXT, True)
         y = box.y + 32
-        for item in run.bag[:9]:
-            r = pygame.Rect(box.x + 8, y, box.w - 16, 26)
+        rows = (box.bottom - 6 - y) // 29
+        first = self.scroll_list(surf, "shop_bag", pygame.Rect(box.x + 8, y, box.w - 30, rows * 29 - 3),
+                                 len(run.bag), rows)
+        for item in run.bag[first:first + rows]:
+            r = pygame.Rect(box.x + 8, y, box.w - 30 if len(run.bag) > rows else box.w - 16, 26)
             pygame.draw.rect(surf, (46, 35, 26), r, border_radius=5)
             T.text(surf, X.item_name(item), (r.x + 8, r.y + 5), 13, rarity_color(xd, item), True)
             self.hit(r, ("sell", item["uid"]), self.item_tip(item) + [(f"ПКМ — продать за "
@@ -2999,6 +2792,8 @@ class ShopScene(XScene):
         self.draw_toast(surf, 440)
 
     def handle(self, ev):
+        if self.scroll_event(ev):
+            return
         if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3:
             for r, action, _ in self.hits:
                 if isinstance(action, tuple) and action[0] == "sell" and r.collidepoint(ev.pos):
@@ -3015,15 +2810,23 @@ class ShopScene(XScene):
 # ---------- итоги ----------
 
 class EndScene(XScene):
-    def __init__(self, app, end):
+    """Итог похода: победа или поражение; статистика последнего боя — кнопкой (Tab)."""
+
+    def __init__(self, app, end, stats=None):
         super().__init__(app)
         self.end = end
+        self.stats = stats
 
     def act(self, action, button=1):
+        if action == "stats" and self.stats:
+            self.app.switch(StatsScene(self.app, self.stats, back=lambda: self.app.switch(self)))
+            return
         to_tavern(self.app)
 
     def key(self, k):
-        if k in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_ESCAPE):
+        if k == pygame.K_TAB and self.stats:
+            self.act("stats")
+        elif k in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_ESCAPE):
             to_tavern(self.app)
 
     def draw(self, surf):
@@ -3032,7 +2835,7 @@ class EndScene(XScene):
         surf.fill((12, 12, 14))
         win = e["result"] == "victory"
         self.backdrop(surf, "victory" if win else "defeat", "thread" if win else "act", dim=70)
-        band = pygame.Surface((T.SCREEN_W, 230), pygame.SRCALPHA)
+        band = pygame.Surface((T.SCREEN_W, 250 + 22 * len((e.get("news") or [])[:4])), pygame.SRCALPHA)
         band.fill((8, 8, 10, 160))
         surf.blit(band, (0, 140))
         cv = X.chapter_view(self.app.profile.xd, e.get("chapter", "swamp"))
@@ -3045,11 +2848,18 @@ class EndScene(XScene):
         c = e["counts"]
         T.text(surf, f"Боёв {c.get('battle', 0)} · элиты {c.get('elite', 0)} · боссов {c.get('boss', 0)} · "
                      f"событий {c.get('event', 0)}", (T.SCREEN_W // 2, 286), 17, T.TEXT_DIM, center=True)
-        T.text(surf, f"Слава: +{e['glory']}", (T.SCREEN_W // 2, 340), 30, GLORY, True, center=True)
+        T.text(surf, f"Золото в казну: +{e['glory']}", (T.SCREEN_W // 2, 340), 30, GLORY, True, center=True)
         extra = []
         trophies = self.app.profile.xd.get("trophies", {})
         for k, v in (e.get("trophies") or {}).items():
             extra.append(f"{trophies.get(k, {}).get('name', k)} +{v}")
+        mats = self.app.profile.xd.get("materials", {})
+        loot = e.get("loot") or {}
+        if e.get("rough"):
+            gd = self.app.profile.xd["artifacts"]["gems"][e["rough"]["id"]]
+            extra.append(f"найден самоцвет: {gd['name']} ({e['rough']['size']:.2f} кар.)!")
+        if loot:
+            extra.append("материалы: " + ", ".join(f"{mats.get(k, {}).get('name', k)} +{v}" for k, v in loot.items()))
         if e.get("veterans"):
             extra.append("в таверну ветеранами: " + ", ".join(e["veterans"]))
         elif e["result"] != "victory":
@@ -3057,6 +2867,11 @@ class EndScene(XScene):
         if extra:
             T.text(surf, " · ".join(extra), (T.SCREEN_W // 2, 376), 17, BLESS if win else T.TEXT_DIM, True,
                    center=True, shadow=True)
+        y = 410
+        for n in (e.get("news") or [])[:4]:                  # вести с поручений: развязка за этот поход
+            line, col = news_line(self.app.profile.xd, n)
+            T.text(surf, line, (T.SCREEN_W // 2, y), 16, col, True, center=True, shadow=True)
+            y += 22
         img_h = T.SCREEN_W * 2 // 3                  # отряд на земле сцены, в её масштабе
         k = T.SCREEN_W / 192 / 2
         ground = (T.SCREEN_H - img_h) // 2 + int(img_h * 0.95)
@@ -3073,3 +2888,6 @@ class EndScene(XScene):
             x += int(56 * k)
         self.button(surf, pygame.Rect(T.SCREEN_W - 320, T.SCREEN_H - 84, 280, 50), "В таверну (Пробел)", "go", True,
                     GOLD)
+        if self.stats:
+            self.button(surf, pygame.Rect(T.SCREEN_W - 320 - 290, T.SCREEN_H - 84, 270, 50), "Статистика боя (Tab)",
+                        "stats", True, SP, "Урон, полученный урон, лечение, убийства и навыки каждого героя")

@@ -53,7 +53,7 @@ def test_mutators_work():
 
 
 def test_boss_phases_call_help_and_enrage():
-    run = run_on(1)
+    run = run_on(next(i for i, t in enumerate(ED.expedition["config"]["tiers"]) if t["boss_phases"]))
     c = battle(run, "boss")
     boss = next(u for u in c.alive(ENEMY) if u.phases_left)
     assert boss.phases_left == [0.7, 0.35]
@@ -74,8 +74,9 @@ def test_victory_opens_next_tier_and_glory_scales():
     assert prof.tier_open == 1
     r = run_on(2)
     r.result, r.counts = "victory", {"battle": 3}
-    assert r.glory() == round(run_on(0).glory() * 0 + (3 * ED.expedition["config"]["glory"]["battle"]
-                                                       + ED.expedition["config"]["glory"]["victory"]) * 2.0)
+    k = ED.expedition["config"]["tiers"][2]["glory"]
+    assert k > 1 and r.glory() == round((3 * ED.expedition["config"]["glory"]["battle"]
+                                         + ED.expedition["config"]["glory"]["victory"]) * k)
 
 
 def test_custom_brain_is_used():

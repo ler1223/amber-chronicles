@@ -67,24 +67,28 @@
      "level": 1
     },
     {
-     "id": "quiver_fire",
+     "id": "barrage",
      "level": 2
     },
     {
-     "id": "quiver_frost",
+     "id": "vault_shot",
      "level": 3
     },
     {
-     "id": "volley",
+     "id": "rain_of_arrows",
      "level": 5
     },
     {
-     "id": "quiver_barbed",
+     "id": "headshot",
      "level": 7
     },
     {
-     "id": "quiver_blunt",
+     "id": "shackle_shot",
      "level": 9
+    },
+    {
+     "id": "mirror_arrow",
+     "level": 12
     },
     {
      "id": "all_arrows",
@@ -92,8 +96,14 @@
      "ult": true
     },
     {
-     "id": "headshot",
-     "level": 12
+     "id": "arrow_storm",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "fletching",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -106,13 +116,9 @@
      "level": 4
     }
    ],
-   "core": [
-    "quiver_fire",
-    "quiver_frost",
-    "quiver_barbed",
-    "quiver_blunt"
-   ],
-   "requires": {}
+   "core": [],
+   "requires": {},
+   "quivers": true
   },
   "mage": {
    "skills": [
@@ -445,29 +451,47 @@
      "level": 2
     },
     {
-     "id": "ward_totem",
+     "id": "rage_totem",
      "level": 3
     },
     {
-     "id": "totem_pulse",
+     "id": "chain_lightning",
      "level": 5
     },
     {
-     "id": "totem_move",
+     "id": "totem_pulse",
+     "level": 6
+    },
+    {
+     "id": "stoneskin_totem",
      "level": 7
+    },
+    {
+     "id": "ball_lightning",
+     "level": 8
     },
     {
      "id": "totem_link",
      "level": 9
     },
     {
-     "id": "spirit_circle",
+     "id": "spirit_totem",
+     "level": 12
+    },
+    {
+     "id": "storm_front",
      "level": 10,
      "ult": true
     },
     {
-     "id": "chain_lightning",
-     "level": 12
+     "id": "thunder_idol",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "ancestors",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -483,28 +507,24 @@
    "core": [
     "storm_totem",
     "healing_totem",
-    "ward_totem"
+    "rage_totem",
+    "stoneskin_totem",
+    "spirit_totem"
    ],
    "requires": {
     "totem_pulse": [
      "storm_totem",
      "healing_totem",
-     "ward_totem"
-    ],
-    "totem_move": [
-     "storm_totem",
-     "healing_totem",
-     "ward_totem"
+     "rage_totem",
+     "stoneskin_totem",
+     "spirit_totem"
     ],
     "totem_link": [
      "storm_totem",
      "healing_totem",
-     "ward_totem"
-    ],
-    "spirit_circle": [
-     "storm_totem",
-     "healing_totem",
-     "ward_totem"
+     "rage_totem",
+     "stoneskin_totem",
+     "spirit_totem"
     ]
    }
   },
@@ -569,11 +589,11 @@
      "level": 1
     },
     {
-     "id": "mine",
+     "id": "grenade",
      "level": 2
     },
     {
-     "id": "fuse",
+     "id": "mine",
      "level": 3
     },
     {
@@ -581,21 +601,35 @@
      "level": 5
     },
     {
-     "id": "kick_barrel",
+     "id": "powder_trail",
      "level": 7
     },
     {
-     "id": "oil_flask",
+     "id": "kick_barrel",
      "level": 9
     },
     {
-     "id": "big_bang",
+     "id": "oil_flask",
+     "level": 11
+    },
+    {
+     "id": "dynamite",
+     "level": 12
+    },
+    {
+     "id": "barrel_rain",
      "level": 10,
      "ult": true
     },
     {
-     "id": "detonator",
-     "level": 12
+     "id": "reactive_armor",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "powder_plate",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -611,26 +645,16 @@
    "core": [
     "powder_keg",
     "mine",
-    "sticky_bomb"
+    "sticky_bomb",
+    "dynamite"
    ],
    "requires": {
-    "fuse": [
-     "powder_keg"
-    ],
     "kick_barrel": [
-     "powder_keg"
-    ],
-    "detonator": [
      "powder_keg",
-     "mine",
-     "sticky_bomb"
-    ],
-    "big_bang": [
-     "powder_keg",
-     "mine",
-     "sticky_bomb"
+     "dynamite"
     ]
-   }
+   },
+   "mech": "fuse"
   },
   "ram": {
    "skills": [

@@ -153,7 +153,7 @@ class TitleScene(CampBackdrop):
         prof = self.app.profile
         if self.has_progress:
             if prof.mode == "expedition":
-                info = (f"Слава {prof.glory} · походов {prof.runs} · побед {prof.wins}"
+                info = (f"Золото {prof.glory} · походов {prof.runs} · побед {prof.wins}"
                         + (" · поход не окончен" if prof.run_state else ""))
             else:
                 info = (f"Янтарь {prof.amber} · регионов захвачено {len(prof.captured)} · "
@@ -167,7 +167,7 @@ class TitleScene(CampBackdrop):
 
 class MainTitleScene(TitleScene):
     """Главный экран main.py: фон плавно сменяет иллюстрации глав (медленный наезд камеры), слева — меню в стиле
-    «янтарь и тёмное дерево», внизу — что ждёт в таверне (слава, трофеи, ветераны) и какая глава на фоне."""
+    «янтарь и тёмное дерево», внизу — что ждёт в таверне (золото, трофеи, ветераны) и какая глава на фоне."""
 
     SHOW = 7.0                    # сек на картинку
     FADE = 1.6                    # сек перехода
@@ -288,7 +288,7 @@ class MainTitleScene(TitleScene):
         # что ждёт в таверне
         chips = []
         if hasattr(prof, "glory"):
-            chips.append((f"Слава {prof.glory}", (255, 196, 96)))
+            chips.append((f"Золото {prof.glory}", (255, 196, 96)))
             for k, t in prof.xd.get("trophies", {}).items():
                 if prof.trophies.get(k):
                     chips.append((f"{t['name']} {prof.trophies[k]}", tuple(t["color"])))
@@ -324,10 +324,16 @@ class SettingsScene(CampBackdrop):
     def relayout(self):
         super().relayout()
         self.rows = []
-        y = 230
-        for key, name, _, _ in S.OPTIONS:
-            self.rows.append((pygame.Rect(T.SCREEN_W // 2 - 260, y, 520, 48), key, name))
-            y += 58
+        opts = S.OPTIONS
+        cols = 2 if len(opts) > 8 else 1           # много настроек — в две колонки
+        per = (len(opts) + cols - 1) // cols
+        w = 520 if cols == 1 else 450
+        x0 = T.SCREEN_W // 2 - (w * cols + 20 * (cols - 1)) // 2
+        for i, (key, name, _, _) in enumerate(opts):
+            col, row = divmod(i, per)
+            self.rows.append((pygame.Rect(x0 + col * (w + 20), 210 + row * 54, w, 46), key, name))
+        y = 210 + per * 54
+        self.box = pygame.Rect(x0 - 30, 190, w * cols + 20 * (cols - 1) + 60, y - 190 + 80)
         self.back = pygame.Rect(T.SCREEN_W // 2 - 110, y + 16, 220, 46)
 
     def handle(self, ev):
@@ -356,7 +362,7 @@ class SettingsScene(CampBackdrop):
 
     def draw_ui(self, surf):
         T.text(surf, "Настройки", (T.SCREEN_W // 2, 150), 44, GOLD, True, center=True, shadow=True)
-        self.panel(surf, pygame.Rect(T.SCREEN_W // 2 - 290, 210, 580, 60 * len(self.rows) + 100))
+        self.panel(surf, self.box)
         for r, key, name in self.rows:
             hot = r.collidepoint(self.mouse)
             pygame.draw.rect(surf, (70, 52, 34) if hot else (46, 35, 26), r, border_radius=8)

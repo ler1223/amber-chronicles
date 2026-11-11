@@ -15,6 +15,8 @@
 | Иконки: новые дары, часть 1 (22) — готово | Лист G1 | `python tools/import_sheet.py assets/art_src/sheet_icons_gifts2.png --set icons_gifts2 --preview p.png` | `assets/icons` |
 | Иконки: новые дары, часть 2 (23) — готово | Лист G2 | `python tools/import_sheet.py assets/art_src/sheet_icons_gifts3.png --set icons_gifts3 --preview p.png` | `assets/icons` |
 | Иконки: новые базы и уникальные вещи (16) — готово | Лист I1 | `python tools/import_sheet.py assets/art_src/sheet_icons_items2.png --set icons_items2 --preview p.png` | `assets/icons` |
+| Тотемы шамана (5) — готово | Лист S | `python tools/import_sheet.py assets/art_src/sheet_totems_shaman.png --set totems_shaman --preview p.png` | `assets/sprites` |
+| Иконки: стрелы колчанов лучника (10) — готово | Лист Q | `python tools/import_sheet.py assets/art_src/sheet_icons_arrows.png --set icons_arrows --preview p.png` | `assets/icons` |
 | Иконки: новые уникальные вещи (16) — готово | Лист I2 | `python tools/import_sheet.py assets/art_src/sheet_icons_items3.png --set icons_items3 --preview p.png` | `assets/icons` |
 
 Пока картинки нет, игра рисует заглушку: враг берёт спрайт родственника (`sprite_fallback` в
@@ -832,4 +834,516 @@ Row 3:
 9. A large magical hourglass standing upright, about 40x56 pixels: dark brass frame with two pillars and round
    caps, clear glass bulbs with golden sand, the middle of both bulbs mostly EMPTY so a small figure would be
    visible through the glass; soft golden glow on the glass edges.
+```
+
+---
+
+## Лист Q — стрелы колчанов лучника (`--set icons_arrows`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_arrows.png --set icons_arrows --preview p.png
+```
+
+Иконки ложатся в `assets/icons/arrow_<вид>.png`; пока их нет, панель колчанов над навыками лучника рисует простую
+стрелу цвета колчана.
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is ONE arrow drawn diagonally from bottom-left to top-right (head at the top right),
+filling most of its square, readable when tiny; the arrowhead and fletching show what kind of arrow it is.
+No text, no letters, no frames, no background plates, no circles behind the objects.
+10 icons in 2 rows (5, 5), in EXACTLY this order (left to right, top row first).
+Wide empty magenta space between icons: nothing may touch.
+
+Row 1:
+1. Fire arrow: the arrowhead wrapped in a bright orange-yellow flame, a few embers trailing behind the shaft.
+2. Frost arrow: a pale-blue ice-crystal arrowhead, a thin rime of frost along the shaft, two tiny snowflakes.
+3. Poison arrow: a dark arrowhead dripping bright green venom, green-tinted fletching, one falling drop.
+4. Bleeding arrow: a cruel barbed serrated steel arrowhead with dark red blood on the barbs, red fletching.
+5. Storm arrow: a violet-blue arrowhead crackling with a small zigzag lightning bolt around it.
+
+Row 2:
+6. Blunt arrow: a heavy round wooden knob instead of a point, thick brown shaft, plain grey fletching.
+7. Vampire arrow: a dark crimson fang-shaped arrowhead, purple-black bat-wing fletching, a small red glow.
+8. Explosive arrow: a small black round bomb with a lit sparking fuse tied behind a short arrowhead.
+9. Piercing arrow: a long narrow polished steel bodkin point, slightly gleaming, cracking a tiny armor plate.
+10. Bouncing arrow: a golden arrowhead with a curved motion trail looping behind it, as if ricocheting.
+```
+
+---
+
+## Лист S — тотемы шамана (`--set totems_shaman`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_totems_shaman.png --set totems_shaman --preview p.png
+```
+
+Пока моделей нет, новые тотемы рисуются спрайтом тотема грозы; варианты из веток (боевой, неистовства, мудрости,
+силы, скалы, щитов, родники) берут модель своего тотема с этого листа.
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game sprites in the exact same style as the previous sheets (the existing storm totem and healing totem):
+true pixel art on a 32x32 grid per figure, crisp square pixels, no anti-aliasing, no blur, no gradients, limited
+palette, 1-pixel dark outline, light from top-left, 2-3 tone shading. Three-quarter view, every totem stands upright
+on an invisible ground line, no ground shadow, no text, no labels. Carved wooden and stone shaman totem poles for a
+dark fantasy tactics RPG, each about 3/4 of a human's height unless noted.
+5 figures in 1 row, in EXACTLY this order (left to right). Wide empty magenta space between figures: nothing may touch.
+
+1. Rage totem: a dark red wooden pole with a snarling carved boar face, two crossed bone axes tied on top, glowing
+   orange-red eyes, a few red war paint stripes, small embers floating up.
+2. Spirit totem: a pale grey-violet pole with three stacked serene carved faces, a ring of small floating violet
+   spirit wisps around the top, glowing lavender runes.
+3. Stoneskin totem: a squat totem of stacked grey boulders bound with rope, a carved bear face in the middle stone,
+   a few glowing amber cracks, moss on the base.
+4. Lightning rod totem: a tall thin dark wooden pole wrapped in copper bands with a copper spike on top, small blue
+   sparks crackling around the spike, a carved eagle face.
+5. (Big) Thunder idol: a large ancient stone idol about 1.4x a human's height, a stern carved thunder-god face,
+   glowing blue-white eyes and runes, lightning arcs between two horn-like stone spikes on its head.
+```
+
+
+---
+
+## Лист A1 — артефакты таверны (`--set icons_artifacts`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_artifacts.png --set icons_artifacts --preview p.png
+```
+
+Иконки ложатся в `assets/icons/art_<вид>_<редкость>.png`; пока их нет, хранилище и мастерские рисуют простой силуэт
+вида в рамке цвета редкости. Ряд — редкость (обычный, редкий, эпический, легендарный), колонка — вид.
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is ONE wearable artifact of a dark fantasy tactics RPG, filling most of its square,
+readable when tiny. No text, no letters, no frames, no background plates, no circles behind the objects.
+20 icons in 4 rows (5, 5, 5, 5), in EXACTLY this order (left to right, top row first).
+Columns are always: 1. a pair of bracers, 2. a belt with a buckle, 3. a ring with a stone, 4. an amulet on a cord,
+5. a talisman (a carved bone and leather charm with a feather).
+Wide empty magenta space between icons: nothing may touch.
+
+Row 1 (common): plain iron and brown leather, dull grey stone, simple and worn, no glow.
+Row 2 (rare): polished steel with blue-teal trim, small pale-green pearls, a faint teal shine.
+Row 3 (epic): dark bronze with amber inlays and violet runes, a soft violet glow on the stones.
+Row 4 (legendary): ornate gold with a great orange-amber gem, beast fangs and ember accents, a warm golden glow.
+```
+
+## Лист A2 — самоцветы и материалы мастерских (`--set icons_workshop`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_workshop.png --set icons_workshop --preview p.png
+```
+
+Иконки: `assets/icons/gem_<камень>.png` (огранённые камни ювелирной) и `assets/icons/mat_<материал>.png`
+(руда — уже есть, `mat_ore`).
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is ONE object filling most of its square, readable when tiny.
+No text, no letters, no frames, no background plates, no circles behind the objects.
+11 icons in 2 rows (5, 6), in EXACTLY this order (left to right, top row first).
+Wide empty magenta space between icons: nothing may touch.
+
+Row 1 (cut gems, faceted, with a small sparkle):
+1. Ruby: deep red cushion-cut gem.
+2. Sapphire: royal blue oval gem.
+3. Emerald: green rectangular step-cut gem.
+4. Topaz: golden-yellow pear-shaped gem.
+5. Amethyst: violet hexagonal gem.
+
+Row 2 (crafting materials):
+6. Leather: a rolled brown hide tied with a cord.
+7. Herbs: a small bundle of green swamp herbs and a purple flower tied with twine.
+8. Raw gems: three rough uncut crystals (red, blue, green) on a lump of grey rock.
+9. Toad pearl: a large lustrous pale-teal pearl with a greenish sheen, a drop of swamp water.
+10. Embersteel: a small ingot of dark steel with glowing orange cracks and a wisp of smoke.
+11. Stardust: a tiny cloth pouch spilling glittering pale-violet star dust with sparkles.
+```
+
+---
+
+## Таверна из комнат: иллюстрации, объекты, значки вкладок
+
+Таверна разбита на комнаты (полоса внизу: Зал, Сборы, Мастерская, Двор, Стройка, Зал славы). Пока картинок нет,
+комнаты рисуются на фоне зала, двор — ночной улицей, объекты — простыми заглушками.
+
+### Лист 32 — комнаты таверны, часть 1 (`--sheet 32`)
+
+```
+python tools/import_illustrations.py assets/art_src/ill_32.png --sheet 32 --preview p.png
+```
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR separate illustrations of equal size, each with a thin
+black border, separated by wide black gutters. Pixel art scene illustrations, true pixel art on a 192x128 grid
+per illustration, crisp square pixels, no anti-aliasing, limited palette of about 32 colors, dithering allowed.
+Dark fantasy, painterly pixel art like classic adventure games (Loom, Darkest Dungeon mood), warm amber
+lamplight and dark wood, one clear light source, moody but readable. No text, no UI, no letters anywhere.
+IMPORTANT: EMPTY rooms — no people, no adventurers, no animals. The game draws its own heroes and objects on top,
+so keep the central and lower areas calm and uncluttered (plain floor, plain walls), details at the edges.
+Order: top-left, top-right, bottom-left, bottom-right.
+1. "Muster room": the armory by the tavern's back gate before an expedition — weapon racks and hanging cloaks on
+   the side walls, a big wooden map table pushed against the back wall under a lantern, travel packs by the door,
+   a wide empty plank floor in the middle and front.
+2. "Masters' workshop": a long empty workshop hall with a stone wall and soot, shelves with tools, tongs and
+   jars along the back wall, hanging herbs and leather strips, a chimney hood; the whole lower third is a clear
+   empty stone floor (the game places four work stations along it).
+3. "Tavern backyard at night": a cobbled courtyard under a starry night sky with a pale moon, a wooden fence and
+   a crooked tree on the left, lantern on a post; the RIGHT HALF is an empty dark area of sky and cobbles (the
+   game draws a tall timber dormitory building there).
+4. "Hall of glory": a solemn stone hall with banners and candles, two tall arched passages in the back wall side
+   by side — the left arch opens onto a misty moonlit graveyard, the right arch onto a warm candle-lit library;
+   empty stone floor in front.
+```
+
+### Лист 33 — комнаты таверны, часть 2 (`--sheet 33`)
+
+```
+python tools/import_illustrations.py assets/art_src/ill_33.png --sheet 33 --preview p.png
+```
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR separate illustrations of equal size, each with a thin
+black border, separated by wide black gutters. Pixel art scene illustrations, true pixel art on a 192x128 grid
+per illustration, crisp square pixels, no anti-aliasing, limited palette of about 32 colors, dithering allowed.
+Dark fantasy, painterly pixel art like classic adventure games (Loom, Darkest Dungeon mood), one clear light
+source, moody but readable. No text, no UI, no letters anywhere. EMPTY scenes — no people, no animals.
+Order: top-left, top-right, bottom-left, bottom-right.
+1. "Building yard": the side of the tavern under construction at dusk — wooden scaffolding, stacks of timber and
+   stone blocks, a hoist with a rope, buckets of mortar, warm light from the tavern windows; calm muted colors.
+2. "Graveyard panorama": a WIDE misty swamp graveyard at night, seen from the side — dead trees, a crooked iron
+   fence, distant crypt silhouettes, a big pale moon, fog banks; the LOWER THIRD is an empty dark earth path
+   with NO gravestones (the game draws the graves itself). Calm, melancholic, cold blue light.
+3. "Library of chronicles": a candle-lit archive room, tall shelves of old books and scrolls, a reading lectern
+   with a huge open book, warm candle glow, dust in the light.
+4. "Dormitory room": a small cozy timber bedroom at night — a simple bed with a red blanket on the LEFT, a small
+   window with the moon above it, a wall lamp on the right; the RIGHT HALF of the floor is empty (the game puts
+   a hero standing there).
+```
+
+### Лист O — объекты комнат (`--set room_objects`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_room_objects.png --set room_objects --preview p.png
+```
+
+Спрайты ложатся в `assets/sprites/obj_*.png` и `grave_*.png`; игра ставит их в комнаты крупно (×3–5).
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game sprites in the exact same style as the previous sheets: true pixel art, crisp square pixels,
+no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left, 2-3 tone shading.
+Three-quarter view, every object stands on an invisible ground line, no ground shadow, no text, no letters.
+Furniture and props of a dark fantasy tavern. 10 objects in 2 rows (5, 5), in EXACTLY this order
+(left to right, top row first). Wide empty magenta space between objects: nothing may touch.
+
+Row 1:
+1. Notice board: a big wooden board on two posts with a small shingle roof, several pinned parchment notes and
+   one red wax seal, a lantern hanging from the corner.
+2. Storage chest: a sturdy wooden chest with iron bands and a golden lock, lid closed, a faint glint (smaller
+   than the others, about half their height).
+3. Forge station: a stone forge with glowing coals and a chimney, bellows on the side, an anvil with a hammer
+   in front.
+4. Jeweler's bench: a small wooden table with a magnifying lens on a stand, tiny tools and three sparkling gems
+   (red, blue, green), a candle.
+5. Leatherworker's rack: a wooden frame with a stretched hide, a cutting table with a knife and rolled leather,
+   a few hanging straps.
+
+Row 2:
+6. Alchemy table: a wooden table with three bubbling flasks (green, violet, blue), an alembic with a small
+   flame under it, scattered herbs.
+7. Bed: a simple timber bed with a red wool blanket and a white pillow, seen from the side (wide and low).
+8. Gravestone 1: a weathered rounded headstone with a carved cross, moss at the base.
+9. Gravestone 2: a leaning slab with a carved sword and a small candle at its foot.
+10. Gravestone 3: a small stone obelisk with an iron wreath, a few wild flowers.
+```
+
+### Лист T — значки комнат для полосы вкладок (`--set icons_tabs`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_tabs.png --set icons_tabs --preview p.png
+```
+
+Иконки `assets/icons/tab_<комната>.png`; пока их нет, полоса берёт значки узлов карты.
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading, warm amber and dark wood palette. Each icon is ONE object filling most of its square, readable
+when tiny. No text, no letters, no frames, no background plates.
+6 icons in 1 row, in EXACTLY this order (left to right). Wide empty magenta space between icons.
+1. Hall: a foaming amber ale mug.
+2. Muster: two crossed swords over a small travel pack.
+3. Workshop: a hammer resting on an anvil with a spark.
+4. Yard: a parchment notice pinned with a red pin.
+5. Building: a saw crossed with a hammer over a wooden plank.
+6. Hall of glory: a laurel wreath around a small skull.
+```
+
+---
+
+## Общежитие из модулей и двор слоями
+
+Дом во дворе собирается снизу вверх: **основание со входом → этажи 1–6 (у каждого свой вид) → крыша**. Внутри
+каждого этажа — проём, сквозь который видна комната (иллюстрации `room_dorm*`, у каждого этажа своя). Модули
+ставятся друг на друга вплотную, поэтому у всех ОДИНАКОВАЯ ширина и стены продолжаются по вертикали без швов.
+Задник двора — слоями, которые при листании вверх сдвигаются с разной скоростью (параллакс): небо из трёх
+стыкующихся частей, дальние крыши города, кроны деревьев, передний план двора. Пока картинок нет — заглушки.
+
+### Лист D — модули дома (`--set dorm_house`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_dorm_house.png --set dorm_house --preview p.png
+```
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game sprites in the exact same style as the previous sheets: true pixel art, crisp square pixels,
+no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left, 2-3 tone shading,
+warm amber window light, night colors. STRAIGHT FRONT VIEW (orthographic, no perspective), no text, no letters.
+These are stackable MODULES of ONE tall timber-and-stone dormitory house of a dark fantasy tavern.
+CRITICAL: every module has EXACTLY THE SAME WIDTH and the same left and right outer wall edges (vertical corner
+posts at the very left and right), so they can be stacked on top of each other seamlessly. Flat horizontal top and
+bottom edges (except the top of the roof). Nothing sticks out of the wall edges except the roof eaves.
+8 modules, in EXACTLY this order: left column top to bottom = 1, 2, 3, 4; right column top to bottom = 5, 6, 7, 8.
+Each module is a wide horizontal strip about 3 times wider than tall (the roof and the base may be a bit taller).
+Wide empty magenta space between modules: nothing may touch.
+
+STOREYS (modules 2-7): each is one storey of the house facade with ONE LARGE RECTANGULAR CUT-AWAY OPENING in the
+middle, about 84% of the width and 80% of the height, filled with FLAT SOLID MAGENTA (#FF00FF) - the game shows the
+room inside through it. Around the opening: that storey's own facade frame (beams, stones, sill below, lintel
+above). Each storey looks DIFFERENT, the house getting older and more patched-up toward the top:
+
+1. Roof: a steep dark red shingle roof with wide eaves, a stone chimney with a wisp of smoke, a small round attic
+   window glowing amber, a weather vane; flat bottom edge as wide as the walls plus the eaves.
+2. Storey 1: heavy grey stone masonry frame, a carved wooden lintel, an iron lamp bracket on the left post.
+3. Storey 2: half-timbered frame (dark oak beams, cream plaster), a flower box under the opening.
+4. Storey 3: plank boards frame with diagonal braces, a small hanging sign with a moon, ivy climbing a post.
+5. Storey 4: half-timbered with red-brown plaster, a little wooden balcony rail under the opening.
+6. Storey 5: weathered planks patched with mismatched boards and metal plates, a bird nest on the lintel.
+7. Storey 6: a low attic storey of dark beams under the eaves, cobwebs, a hanging lantern.
+8. Base (ground floor): wide stone foundation with stone steps, a big arched oak door with iron hinges in the
+   center, two small barred windows glowing amber at the sides, a lantern above the door, moss at the bottom.
+```
+
+### Лист L — слои двора для параллакса (`--set yard_layers`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_yard_layers.png --set yard_layers --preview p.png
+```
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art in the same style as the previous tavern illustrations (night, warm amber lamp light, cold blue
+moonlight), crisp square pixels, no anti-aliasing, no text. Three WIDE HORIZONTAL LAYERS for a parallax background;
+each layer spans the FULL WIDTH of the image edge to edge, with magenta above it (that is sky, the game fills it).
+Layers are placed one under another, separated by wide magenta gaps; nothing may touch.
+Order from top to bottom:
+1. Far layer: silhouettes of distant town rooftops at night - steep roofs, chimneys, a bell tower, a few tiny lit
+   windows; dark blue-violet, low contrast, flat bottom edge.
+2. Middle layer: dark tree crowns and bare branch silhouettes, a few lanterns hanging between the trees,
+   deep blue-green, a little lighter than the far layer, flat bottom edge.
+3. Near layer (the yard itself): a cobbled courtyard strip with a wooden fence, a big crooked oak at the far LEFT,
+   barrels and a lamp post with a glowing lantern; the RIGHT third is just open cobbles (the game puts the dorm
+   house there); flat bottom edge, cobbles reach the bottom.
+```
+
+### Лист 34 — комнаты общежития (`--sheet 34`)
+
+```
+python tools/import_illustrations.py assets/art_src/ill_34.png --sheet 34 --preview p.png
+```
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR separate illustrations of equal size, each with a thin
+black border, separated by wide black gutters. Pixel art scene illustrations, true pixel art on a 192x128 grid
+per illustration, crisp square pixels, no anti-aliasing, limited palette of about 32 colors, dithering allowed.
+Dark fantasy, cozy, night, warm lamp light. No text, no UI. EMPTY rooms - no people, no animals.
+Straight front view into the room (like a dollhouse cut-away); the RIGHT HALF of the floor is empty (the game puts a
+hero standing there); furniture on the left and on the back wall. Every room is DIFFERENT.
+Order: top-left, top-right, bottom-left, bottom-right.
+1. Soldier room: a narrow cot, a weapon rack with a spear and a shield, a chest, a map pinned to the wall.
+2. Scholar room: a bed under a slanted shelf of books, a writing desk with a candle and scrolls, a globe.
+3. Hunter room: a fur-covered bed, antlers and pelts on the wall, a bow on hooks, drying herbs.
+4. Healer room: a clean bed with white linen, shelves of jars and bandages, a basin and a pitcher, a lamp.
+```
+
+### Лист 35 — небо двора слоями и чердак (`--sheet 35`)
+
+```
+python tools/import_illustrations.py assets/art_src/ill_35.png --sheet 35 --preview p.png
+```
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR separate illustrations of equal size, each with a thin
+black border, separated by wide black gutters. Pixel art, true pixel art on a 192x128 grid per illustration,
+crisp square pixels, no anti-aliasing, limited palette, dithering allowed. Night. No text, no UI.
+The first three are parts of ONE TALL NIGHT SKY stacked vertically by the game (low part at the bottom, the middle
+part repeated several times, the high part on top). Colors and gradients MUST MATCH at the joins: the TOP edge of
+part 1 continues into the BOTTOM edge of part 2; the TOP edge of part 2 matches its own BOTTOM edge (it repeats)
+and the BOTTOM edge of part 3. NO ground, NO buildings, NO trees in them - only sky.
+Order: top-left, top-right, bottom-left, bottom-right.
+1. Sky, low: the sky just above the horizon - a faint warm amber town glow at the very bottom fading up into deep
+   blue, a few thin clouds.
+2. Sky, middle (repeats seamlessly top-to-bottom): deep blue-violet night sky, scattered small stars, a couple of
+   thin wispy clouds, the same color at the top and bottom edges.
+3. Sky, high: the darkest sky with many stars and a big pale moon with a soft halo in the upper area; bottom edge
+   matching part 2.
+4. Attic room: a cozy attic bedroom under slanted roof beams, a small round window with the moon, a narrow bed and
+   old trunks on the left; the right half of the floor empty.
+```
+
+---
+
+## Огранка: станок и верстаки мастерских
+
+Камень рисуется кодом (трассировка лучей), картинки нужны только для станка и фона. Пока их нет — рисуются
+простые формы.
+
+### Лист J — детали гранильного станка (`--set facet_machine`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_facet_machine.png --set facet_machine --preview p.png
+```
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game sprites in the exact same style as the previous sheets: true pixel art, crisp square pixels,
+no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left, 2-3 tone shading.
+Parts of an old-world gem FACETING MACHINE (a jeweler's lapidary), brass, steel and dark wood, STRAIGHT SIDE
+VIEW (orthographic, no perspective), no text, no letters, no numbers. 7 parts in 2 rows (4, 3), in EXACTLY this
+order (left to right, top row first). Wide empty magenta space between parts: nothing may touch.
+
+Row 1:
+1. Lap disk seen exactly edge-on: a very wide flat horizontal grinding disk (about 7 times wider than tall),
+   dark grey cast iron rim with a fine diamond-grit top surface (light speckles), a thin bright edge on top.
+2. Lap stand: a squat cast-iron pedestal with a wooden base plate and a little water drip can, wider at the
+   bottom, flat top (the disk sits on it).
+3. Mast: a TALL thin vertical steel column (about 7 times taller than wide) with a brass height-adjust screw
+   and a few ring marks, flat bottom.
+4. Quadrant head: a round brass protractor dial with an engraved 0-90 quarter-circle scale (only tick marks,
+   NO numbers), a pivot knob in the center.
+
+Row 2:
+5. Index gear: a round brass gear wheel seen face-on with many small teeth around the rim and a hole in the center.
+6. Loupe ring: a round brass magnifier frame seen face-on, thick ornate rim with rivets; the INSIDE of the ring is
+   FLAT SOLID MAGENTA (#FF00FF) - empty, the game shows the gem through it.
+7. Diagram plate: a round dark slate disc with a thin brass bezel and faint engraved concentric guide rings and
+   radial lines (no numbers).
+```
+
+### Лист 36 — верстаки мини-игр мастерских (`--sheet 36`)
+
+```
+python tools/import_illustrations.py assets/art_src/ill_36.png --sheet 36 --preview p.png
+```
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR separate illustrations of equal size, each with a thin
+black border, separated by wide black gutters. Pixel art scene illustrations, true pixel art on a 192x128 grid
+per illustration, crisp square pixels, no anti-aliasing, limited palette of about 32 colors, dithering allowed.
+Dark fantasy, warm lamp light, close-up views of craftsmen's workbenches. No text, no UI, no people.
+The CENTER and LOWER-LEFT of every picture must be calm and fairly dark (the game draws its machine and UI there),
+details on the far edges and the back wall. Order: top-left, top-right, bottom-left, bottom-right.
+1. Jeweler's bench: a dark wooden workbench close-up, velvet cloth, tweezers, a candle and a hanging lamp,
+   small boxes of gems on a shelf on the back wall, a window with night outside.
+2. Blacksmith's forge corner: glowing forge on the right edge, tongs and hammers on the back wall, a quench
+   barrel with water, warm orange light, empty dark anvil area in the center.
+3. Alchemist's table: shelves of colored flasks and jars on the back wall, hanging dried herbs, a small brazier
+   on the side, an empty dark table surface in the center.
+4. Leatherworker's bench: hides stretched on frames on the back wall, rolls of leather, awls and thread on hooks,
+   a large empty work table surface in the center.
+```
+
+---
+
+## Рынок
+
+Седьмая комната таверны. Камни рисуются кодом; нужны фон и значок вкладки (пока — значок рубина и затемнённый зал).
+
+### Лист 37 — рынок (`--sheet 37`)
+
+```
+python tools/import_illustrations.py assets/art_src/ill_37.png --sheet 37 --preview p.png
+```
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR separate illustrations of equal size, each with a thin
+black border, separated by wide black gutters. Pixel art scene illustrations, true pixel art on a 192x128 grid
+per illustration, crisp square pixels, no anti-aliasing, limited palette of about 32 colors, dithering allowed.
+Dark fantasy town at dusk, warm lanterns, no text, no letters, no signs with writing. No people in the foreground;
+the CENTER of every picture is calm and darker (the game draws trade panels there), details at the edges.
+Order: top-left, top-right, bottom-left, bottom-right.
+1. Market square next to the tavern: wooden stalls with striped awnings around a cobbled square, lanterns on
+   strings, a well, crates and barrels, warm dusk light.
+2. Gem merchant's stall close-up: a dark velvet-covered counter, small glass cases and trays with sparkling rough
+   crystals and cut gems, a brass balance scale, a jeweler's loupe, a hanging lantern.
+3. General goods stall close-up: sacks, baskets of herbs, rolls of leather, ingots of ore, jars, a hanging lamp.
+4. The market square at night: closed stalls under covers, puddles reflecting lanterns, moonlight.
+```
+
+### Лист T2 — значок вкладки «Рынок» (`--set icons_tabs2`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_tabs2.png --set icons_tabs2 --preview p.png
+```
+
+```
+Make ONE icon sheet image, 1024x1024, plain flat solid magenta background (#FF00FF) everywhere.
+One pixel art game icon in the exact same style as the previous tab icons (32x32 grid, crisp pixels, 1-pixel dark
+outline, warm amber palette), centered: a small market stall awning with a coin purse and a red gem in front.
+No text, no frame, no background plate.
+```
+
+
+---
+
+## Кузня (Горн мастера): спрайты этапов
+
+Металл рисуется кодом (слои, блеск, каление); картинки нужны для инструментов и мебели кузни. Пока их нет —
+простые формы. Фон — верстак кузнеца (лист 36, уже есть).
+
+### Лист K — инструменты кузни (`--set forge_props`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_forge_props.png --set forge_props --preview p.png
+```
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Detailed pixel art game sprites in the exact same style as the previous sheets (the gem faceting machine parts):
+crisp square pixels, no anti-aliasing, no blur, rich but limited palette, 1-pixel dark outline, light from the
+top-left, 3-4 tone shading, worn iron, soot, warm forge light. STRAIGHT SIDE VIEW (orthographic), no text.
+Blacksmith's workshop equipment of a dark fantasy tavern. 12 objects in 3 rows (4, 4, 4), in EXACTLY this order
+(left to right, top row first). Wide empty magenta space between objects: nothing may touch.
+
+Row 1:
+1. Anvil: a heavy black iron anvil with a pointed horn on the LEFT, flat polished face, hardy hole, standing on a
+   thick wooden stump with iron bands. Wide (about twice wider than tall).
+2. Forge hearth: a stone and brick forge with a glowing coal bed, an OPEN FIRE MOUTH in the lower middle where a
+   bar can be put in, a sooty chimney hood on top.
+3. Crucible on a stand: a thick clay-and-iron crucible pot, OPEN TOP (seen slightly from above, the rim is an
+   empty dark oval — the game draws the molten metal), iron tripod legs, coals under it.
+4. Quench barrel: a wooden barrel full of dark water with a little steam, iron hoops.
+
+Row 2:
+5. Bellows: big leather forge bellows with wooden boards and a brass nozzle pointing RIGHT.
+6. Hot-cut chisel: a vertical blacksmith's chisel with a wooden handle on top and a sharp wedge tip at the bottom.
+7. Tongs: long blacksmith's tongs, horizontal, jaws on the RIGHT.
+8. Hand hammer: a blacksmith's hand hammer, head on top, handle down, slightly tilted.
+
+Row 3:
+9. Sledgehammer: a big two-handed sledgehammer, heavy square head on top, long handle down.
+10. Cross-peen hammer: a hammer with a narrow wedge-shaped peen on one side of the head.
+11. Flatter: a set hammer with a wide flat square face (a flatter), wooden handle.
+12. Work table: a sturdy wooden workbench with an iron-plated top (seen from the side), a few scattered metal
+    scraps.
 ```

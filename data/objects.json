@@ -49,5 +49,18 @@
   "barrel_big": {"name": "Большая бочка", "hp": 14, "color": [150, 96, 52], "art": "barrel", "pushable": true, "heavy": true, "cover": "full", "ignite": ["fire", "storm"], "volatile": true, "on_break": {"damage": 38, "radius": 1, "tag": "fire", "hazard": "fire", "hazard_time": 4}, "desc": "Тяжёлая: толчок на клетку меньше. Взрыв — 38 урона и Огонь вокруг"},
   "ice_wall": {"name": "Ледяная стена", "hp": 40, "color": [170, 220, 250], "art": "ice_block", "cover": "full", "ignite": ["fire"], "on_break": {"radius": 0, "hazard": "ice", "hazard_time": 4}, "desc": "Перекрывает путь и укрывает. Тает со временем, огонь растапливает сразу"},
   "bone_wall": {"name": "Костяная стена", "hp": 50, "color": [220, 210, 190], "art": "bones", "cover": "full", "desc": "Перекрывает путь и укрывает. Рассыпается со временем"},
-  "magma_vent": {"name": "Жерло", "hp": 8, "color": [220, 90, 40], "art": "furnace", "ignite": ["fire"], "volatile": true, "on_break": {"damage": 24, "radius": 1, "tag": "fire", "hazard": "fire", "hazard_time": 4}, "desc": "Трещина с магмой. Разбейте или подожгите — выбросит лаву вокруг: 24 урона и Огонь (задевает всех)"}
+  "magma_vent": {"name": "Жерло", "hp": 8, "color": [220, 90, 40], "art": "furnace", "ignite": ["fire"], "volatile": true, "on_break": {"damage": 24, "radius": 1, "tag": "fire", "hazard": "fire", "hazard_time": 4}, "desc": "Трещина с магмой. Разбейте или подожгите — выбросит лаву вокруг: 24 урона и Огонь (задевает всех)"},
+  "dynamite_crate": {
+    "name": "Ящик динамита",
+    "hp": 14,
+    "color": [170, 60, 40],
+    "art": "barrel",
+    "pushable": true,
+    "heavy": true,
+    "cover": "full",
+    "ignite": ["fire", "storm"],
+    "volatile": true,
+    "on_break": {"damage": 60, "radius": 2, "tag": "fire", "hazard": "fire", "hazard_time": 4},
+    "desc": "Огромный заряд подрывника: взрыв в радиусе 2"
+  }
 }

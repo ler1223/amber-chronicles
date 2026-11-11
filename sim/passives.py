@@ -123,11 +123,11 @@ def after_damage(c, a, t, dealt, kind_, tag, basic):
         _add(c, a)
         a.pass_t = 0.0
     elif ck == "ramp" and kind_ in ("ranged", "melee"):
-        if a.pass_target is t:
+        if a.pass_target is t or "all_arrows" in a.buffs:   # «Все стрелы»: смена цели Разгон не сбрасывает
             _add(c, a)
         else:
             _set(a, a.pp // 2)
-            a.pass_target = t
+        a.pass_target = t
         a.pass_t = 0.0
     elif ck == "wild" and a.form is not None and kind_ == "melee":
         a.wild = min(p["max"], a.wild + 1)
@@ -269,7 +269,7 @@ def tick(c, u, dt):
         if not has and u.pass_t > p["keep"] and u.pp > 0 and int(u.pass_t) != int(u.pass_t - dt):
             _add(c, u, -1)
     elif ck == "ramp":
-        if u.pass_t > p["keep"] and u.pp > 0:
+        if u.pass_t > p["keep"] and u.pp > 0 and "all_arrows" not in u.buffs:
             _set(u, 0)
             u.pass_target = None
     elif ck == "dig_in":
@@ -327,7 +327,8 @@ def powder_mult(c, u, sk):
     p = core(u)
     if not p or p["core"] != "powder" or not sk.get("powder"):
         return None
-    if u.pp >= 1:
-        _add(c, u, -1)
+    cost = sk.get("powder_cost", 1)           # ящик динамита — 3 Пороха разом
+    if u.pp >= cost:
+        _add(c, u, -cost)
         return p["with"]
     return p["without"]

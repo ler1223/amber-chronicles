@@ -39,6 +39,7 @@ ENV2 = ["dry_block", "dry_log", "dry_bush", "dry_rock",
         "marble_block", "marble_log", "marble_column", "marble_rock"]
 SETS = {
     "ch12": ORDER,
+    "totems_shaman": ["totem_rage", "totem_spirit", "totem_stone", "totem_rod", "totem_idol"],
     "heroes2": ["shaman", "bard", "alchemist", "ram", "trapper", "necro", "chrono",
                 "gravity", "geomancer", "brewer", "bloodrager", "tactician", "binder",
                 "druid_wolf", "spirit_tree", "ent", "totem_storm", "totem_heal", "skeleton_minion", "decoy"],
@@ -74,6 +75,23 @@ SETS = {
     "icons_gifts3": ["gift_kind_hands", "gift_warden", "gift_duel_honor", "gift_hot_string", "gift_flame_heart", "gift_undying_faith", "gift_knife_back", "gift_pack_call", "gift_spear_wall", "gift_ancestor_voice", "gift_perfect_pitch", "gift_double_charge", "gift_battering", "gift_prey", "gift_ice_bastion", "gift_bone_lord", "gift_spare_time", "gift_star_weight", "gift_mountain_roots", "gift_strong_brew", "gift_blood_thirst", "gift_marshal", "gift_fate_threads"],
     "icons_items2": ["item_dagger", "item_hammer", "item_wand", "item_leather", "item_cloak", "item_idol", "item_signet", "unique_thunder_maul", "unique_widow_dagger", "unique_frost_wand", "unique_ember_wand", "unique_mirror_cloak", "unique_leech_vest", "unique_hunter_cloak", "unique_thorn_crown", "unique_war_drum"],
     "icons_items3": ["unique_phoenix_feather", "unique_gambler_ring", "unique_king_seal", "unique_eel_band", "unique_marsh_lantern", "unique_toad_crown", "unique_storm_bow", "unique_bone_staff", "unique_headsman_axe", "unique_warden_plate", "unique_serpent_ring", "unique_sun_amulet", "unique_instant_ring", "unique_ash_cloak", "unique_tide_wand", "unique_obsidian_knife"],
+    "icons_arrows": ["arrow_fire", "arrow_frost", "arrow_poison", "arrow_bleed", "arrow_storm",
+                     "arrow_blunt", "arrow_vampire", "arrow_explosive", "arrow_piercing", "arrow_bounce"],
+    "icons_artifacts": ["art_bracers_common", "art_belt_common", "art_ring_common", "art_amulet_common", "art_talisman_common", "art_bracers_rare", "art_belt_rare", "art_ring_rare", "art_amulet_rare", "art_talisman_rare", "art_bracers_epic", "art_belt_epic", "art_ring_epic", "art_amulet_epic", "art_talisman_epic", "art_bracers_legendary", "art_belt_legendary", "art_ring_legendary", "art_amulet_legendary", "art_talisman_legendary"],
+    "icons_workshop": ["gem_ruby", "gem_sapphire", "gem_emerald", "gem_topaz", "gem_amethyst",
+                       "mat_leather", "mat_herbs", "mat_gems", "mat_pearl", "mat_embersteel", "mat_stardust"],
+    "room_objects": ["obj_board", "obj_chest", "obj_ws_forge", "obj_ws_jewel", "obj_ws_leather",
+                     "obj_ws_alchemy", "obj_bed", "grave_1", "grave_2", "grave_3"],
+    "dorm_house": ["dorm_roof", "dorm_floor_4", "dorm_floor_1", "dorm_floor_5", "dorm_floor_2", "dorm_floor_6",
+                   "dorm_floor_3", "dorm_base"],      # лист нарисован колонками, читается по строкам
+    "forge_props": ["frg_anvil", "frg_forge", "frg_crucible", "frg_barrel", "frg_bellows", "frg_chisel",
+                    "frg_tongs", "frg_hammer_hand", "frg_hammer_sledge", "frg_hammer_peen", "frg_hammer_flatter",
+                    "frg_table"],
+    "facet_machine": ["facet_lap", "facet_lap_base", "facet_mast", "facet_head", "facet_gear", "facet_loupe",
+                      "facet_plate"],
+    "yard_layers": ["layer_roofs", "layer_trees", "layer_yard"],
+    "icons_tabs2": ["tab_market"],
+    "icons_tabs": ["tab_hall", "tab_muster", "tab_workshop", "tab_yard", "tab_build", "tab_fame"],
     "icons_map": ["map_battle", "map_elite", "map_boss", "map_event", "map_camp", "map_shop", "map_thread"],
     "swamp_events": ["poacher", "reed_militia", "rust_merc", "rust_captain", "witch_hunter",
                      "fog_double", "bell_ringer", "old_tooth", "leech_mother", "kvaks"],
@@ -94,6 +112,18 @@ ENV_SIZE = {"tree": (32, 46), "pine": (28, 48), "deadtree": (28, 40), "column": 
 MATERIALS = ("grass", "ash", "dirt", "snow", "dry", "sand", "moss", "wet", "marble")
 FIT = {"druid_bear"}            # растянуть до холста (облик медведя — крупный зверь)
 MAGENTA = np.array([245, 5, 245])
+ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab")
+OBJ_SIZE = {"obj_board": (128, 120), "obj_chest": (80, 60), "obj_ws_forge": (128, 128), "obj_ws_jewel": (112, 104),
+            "obj_ws_leather": (112, 112), "obj_ws_alchemy": (112, 112), "obj_bed": (112, 64),
+            "grave_1": (56, 64), "grave_2": (56, 64), "grave_3": (56, 64),
+            "dorm_base": (288, 96), "dorm_roof": (312, 72), **{f"dorm_floor_{i}": (288, 104) for i in range(1, 7)},
+            "layer_yard": (768, 180), "layer_roofs": (768, 150), "layer_trees": (768, 180),
+            "facet_lap": (200, 28), "facet_lap_base": (128, 72), "facet_mast": (28, 180), "facet_head": (56, 56),
+            "facet_gear": (36, 36), "facet_loupe": (72, 72), "facet_plate": (72, 72),
+            "frg_anvil": (128, 72), "frg_forge": (112, 112), "frg_crucible": (96, 80), "frg_barrel": (80, 88),
+            "frg_bellows": (96, 56), "frg_chisel": (32, 96), "frg_tongs": (96, 40),
+            "frg_hammer_hand": (56, 56), "frg_hammer_sledge": (64, 72), "frg_hammer_peen": (56, 56),
+            "frg_hammer_flatter": (56, 56), "frg_table": (128, 80)}     # объекты комнат таверны (лист O)      # иконки: склейка частей, свой холст 32×32
 
 
 def canvas(name):
@@ -107,7 +137,9 @@ def canvas(name):
         return (40, 24), True
     if name == "fx_hourglass":                         # песочные часы вокруг юнита
         return (40, 56), True
-    if mat in ("item", "unique", "gift", "map"):         # иконки 32×32, каждая вписывается в свой холст
+    if name in OBJ_SIZE:                               # объект комнаты: свой холст, вписывается
+        return OBJ_SIZE[name], True
+    if mat in ICON_KINDS:                              # иконки 32×32, каждая вписывается в свой холст
         return (32, 32), True
     n = CANVAS.get(name, 32)
     return (n, n), name in CANVAS or name in FIT
@@ -124,6 +156,22 @@ def components(fg):
     for c in comps:
         m = pygame.surfarray.array_alpha(c.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))) > 0
         out.append((c.get_bounding_rects()[0], m.T, c.count()))
+    return out
+
+
+def enclosed(bg):
+    """Пиксели фона, не связанные с краем листа (дыры внутри фигур)."""
+    h, w = bg.shape
+    surf = pygame.Surface((w, h), pygame.SRCALPHA)
+    al = pygame.surfarray.pixels_alpha(surf)
+    al[:] = bg.T * 255
+    del al
+    out = np.zeros_like(bg)
+    for c in pygame.mask.from_surface(surf).connected_components():
+        r = c.get_bounding_rects()[0]
+        if r.left > 0 and r.top > 0 and r.right < w and r.bottom < h:
+            out |= pygame.surfarray.array_alpha(c.to_surface(setcolor=(255, 255, 255, 255),
+                                                             unsetcolor=(0, 0, 0, 0))).T > 0
     return out
 
 
@@ -219,8 +267,15 @@ def run(src, folder, preview=None, names=ORDER, res=1):
     pygame.init()
     img = pygame.image.load(src)
     a = pygame.surfarray.array3d(img).transpose(1, 0, 2).astype(float)
-    fg = np.abs(a - MAGENTA).sum(-1) > 120
-    if names and all(canvas(n)[1] and n.partition("_")[0] in ("item", "unique", "gift", "map", "mat") for n in names):
+    diff = np.abs(a - MAGENTA).sum(-1)
+    fg = diff > 120
+    scenic = names and all(n.startswith(("layer_", "dorm_")) for n in names)
+    if scenic:                                # слои и модули дома: просветы между ветками — фон, без розовой каймы
+        r_, g_, b_ = a[..., 0], a[..., 1], a[..., 2]
+        fg &= ~((g_ < 0.62 * np.minimum(r_, b_)) & (r_ > 110) & (b_ > 110))
+    else:
+        fg |= enclosed(~fg) & (diff > 45)    # фиолетовое внутри контура (аметист) — фигура, а не фон
+    if names and all(canvas(n)[1] and n.partition("_")[0] in ICON_KINDS for n in names):
         # иконки: искры, ноты, кольца и пары предметов — части одной иконки; склеиваем их расширенной маской
         # радиус склейки — самый большой, при котором иконок на листе ровно столько, сколько ждём
         comps = None

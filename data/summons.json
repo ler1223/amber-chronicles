@@ -9,7 +9,9 @@
     "move_time": 1.0,
     "attack": {"damage": 9, "range": 3, "cooldown": 1.0, "tag": "storm", "kind": "ranged"},
     "summon": true,
-    "static": true
+    "static": true,
+    "permanent": true,
+    "group": "totem"
   },
   "totem_thunder": {
     "name": "Тотем бури",
@@ -22,7 +24,9 @@
     "attack": {"damage": 0, "range": 0, "cooldown": 9},
     "aura": {"every": 2.0, "radius": 2, "effects": [{"type": "damage", "amount": 10, "kind": "spell", "radius": 2, "tag": "storm"}]},
     "summon": true,
-    "static": true
+    "static": true,
+    "permanent": true,
+    "group": "totem"
   },
   "totem_heal": {
     "name": "Тотем исцеления",
@@ -35,7 +39,9 @@
     "attack": {"damage": 0, "range": 0, "cooldown": 9},
     "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "heal", "amount": 5, "radius": 2}]},
     "summon": true,
-    "static": true
+    "static": true,
+    "permanent": true,
+    "group": "totem"
   },
   "totem_ward": {
     "name": "Тотем-страж",
@@ -48,7 +54,9 @@
     "attack": {"damage": 0, "range": 0, "cooldown": 9},
     "aura": {"every": 3.0, "radius": 2, "effects": [{"type": "taunt", "radius": 2, "duration": 3}]},
     "summon": true,
-    "static": true
+    "static": true,
+    "permanent": true,
+    "group": "totem"
   },
   "spirit_tree": {
     "name": "Древо жизни",
@@ -61,7 +69,8 @@
     "attack": {"damage": 0, "range": 0, "cooldown": 9},
     "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "heal", "amount": 7, "radius": 2}]},
     "summon": true,
-    "static": true
+    "static": true,
+    "permanent": true
   },
   "ent": {
     "name": "Энт",
@@ -74,9 +83,11 @@
     "attack": {"damage": 12, "range": 1, "cooldown": 1.4},
     "aura": {"every": 3.0, "radius": 2, "effects": [{"type": "taunt", "radius": 2, "duration": 3}]},
     "summon": true,
-    "static": true
+    "static": true,
+    "permanent": true
   },
-  "skeleton_minion": {"owner_scale": {"hp": 0.35, "atk": 0.8, "armor": 0.5}, 
+  "skeleton_minion": {
+    "owner_scale": {"hp": 0.35, "atk": 0.8, "armor": 0.5},
     "name": "Поднятый скелет",
     "label": "Ск",
     "color": [210, 205, 190],
@@ -89,7 +100,8 @@
     "ap_regen": 5.0,
     "skills": [],
     "look": {"body": "skeleton", "color": [210, 205, 190], "accent": [210, 205, 190], "head": "skull", "weapon": "sword"},
-    "summon": true
+    "summon": true,
+    "permanent": true
   },
   "mummy_risen": {"owner_scale": {"hp": 0.45, "atk": 0.8, "armor": 0.5}, 
     "name": "Восставшая мумия",
@@ -149,7 +161,8 @@
     "static": true,
     "thorns": 0.6
   },
-  "risen": {"owner_scale": {"hp": 0.3, "atk": 0.7, "armor": 0.4}, 
+  "risen": {
+    "owner_scale": {"hp": 0.3, "atk": 0.7, "armor": 0.4},
     "name": "Поднятый мертвец",
     "label": "М",
     "color": [200, 196, 170],
@@ -159,9 +172,11 @@
     "move_time": 0.6,
     "attack": {"damage": 8, "range": 1, "cooldown": 1.2},
     "summon": true,
-    "look": {"body": "skeleton", "color": [210, 205, 180], "accent": [140, 230, 120]}
+    "look": {"body": "skeleton", "color": [210, 205, 180], "accent": [140, 230, 120]},
+    "permanent": true
   },
-  "risen_knight": {"owner_scale": {"hp": 0.6, "atk": 1.1, "armor": 0.8}, 
+  "risen_knight": {
+    "owner_scale": {"hp": 0.6, "atk": 1.1, "armor": 0.8},
     "name": "Костяной рыцарь",
     "label": "Р",
     "color": [190, 186, 170],
@@ -171,48 +186,247 @@
     "move_time": 0.6,
     "attack": {"damage": 14, "range": 1, "cooldown": 1.3},
     "summon": true,
-    "look": {"body": "skeleton", "color": [190, 186, 170], "accent": [140, 230, 120], "head": "helm", "weapon": "sword"}
+    "look": {"body": "skeleton", "color": [190, 186, 170], "accent": [140, 230, 120], "head": "helm", "weapon": "sword"},
+    "permanent": true
   },
   "banner": {
-      "name": "Знамя",
-      "label": "З",
-      "color": [
-          230,
-          190,
-          90
-      ],
-      "role": "melee",
-      "hp": 60,
-      "armor": 2,
-      "move_time": 1.0,
-      "attack": {
-          "damage": 0,
-          "range": 0,
-          "cooldown": 9
-      },
-      "aura": {
-          "every": 1.0,
-          "radius": 2,
-          "effects": [
-              {
-                  "type": "buff",
-                  "stat": "banner",
-                  "value": 1,
-                  "duration": 1.5,
-                  "radius": 2,
-                  "affects": "allies"
-              },
-              {
-                  "type": "buff",
-                  "stat": "armor",
-                  "value": 1,
-                  "duration": 1.5,
-                  "radius": 2,
-                  "affects": "allies"
-              }
-          ]
-      },
-      "summon": true,
-      "static": true
+    "name": "Знамя",
+    "label": "З",
+    "color": [230, 190, 90],
+    "role": "melee",
+    "hp": 60,
+    "armor": 2,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "banner", "value": 1, "duration": 1.5, "radius": 2, "affects": "allies"}, {"type": "buff", "stat": "armor", "value": 1, "duration": 1.5, "radius": 2, "affects": "allies"}]},
+    "summon": true,
+    "static": true,
+    "permanent": true
+  },
+  "archer_clone": {
+    "name": "Отражение",
+    "label": "От",
+    "color": [190, 230, 255],
+    "role": "ranged",
+    "hp": 20,
+    "armor": 0,
+    "move_time": 99.0,
+    "attack": {"damage": 4, "range": 5, "cooldown": 1.0, "kind": "ranged"},
+    "owner_scale": {"hp": 0.4, "atk": 0.5},
+    "mirror": true,
+    "skills": [],
+    "summon": true,
+    "static": true,
+    "look": {"body": "fairy", "color": [190, 230, 255], "accent": [255, 255, 255], "head": "none", "weapon": "bow"},
+    "sprite_like": "archer"
+  },
+  "totem_rage": {
+    "name": "Тотем ярости",
+    "label": "Т",
+    "color": [230, 90, 70],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_storm",
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 1.3, "radius": 2}, {"type": "buff", "stat": "atk_speed", "value": 0.85, "duration": 1.3, "radius": 2}]}
+  },
+  "totem_rage_war": {
+    "name": "Боевой тотем",
+    "label": "Т",
+    "color": [240, 120, 60],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_rage",
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 1.3, "radius": 2}, {"type": "buff", "stat": "atk_speed", "value": 0.85, "duration": 1.3, "radius": 2}, {"type": "buff", "stat": "dmg_taken", "value": 1.15, "duration": 1.3, "radius": 2, "affects": "enemies"}]}
+  },
+  "totem_rage_close": {
+    "name": "Тотем неистовства",
+    "label": "Т",
+    "color": [200, 50, 50],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_rage",
+    "aura": {"every": 1.0, "radius": 1, "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.4, "duration": 1.3, "radius": 1}, {"type": "buff", "stat": "atk_speed", "value": 0.75, "duration": 1.3, "radius": 1}]}
+  },
+  "totem_spirit": {
+    "name": "Тотем духов",
+    "label": "Т",
+    "color": [170, 140, 255],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_storm",
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "skill_mult", "value": 1.2, "duration": 1.3, "radius": 2}, {"type": "buff", "stat": "cd_rate", "value": 1.3, "duration": 1.3, "radius": 2}]}
+  },
+  "totem_spirit_wise": {
+    "name": "Тотем мудрости",
+    "label": "Т",
+    "color": [150, 170, 255],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_spirit",
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "cd_rate", "value": 1.6, "duration": 1.3, "radius": 2}]}
+  },
+  "totem_spirit_might": {
+    "name": "Тотем силы",
+    "label": "Т",
+    "color": [200, 120, 255],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_spirit",
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "skill_mult", "value": 1.4, "duration": 1.3, "radius": 2}]}
+  },
+  "totem_stone": {
+    "name": "Тотем каменной кожи",
+    "label": "Т",
+    "color": [170, 160, 140],
+    "role": "support",
+    "hp": 60,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_storm",
+    "aura": {"every": 3.0, "radius": 2, "effects": [{"type": "buff", "stat": "armor", "value": 3, "duration": 3.2, "radius": 2}, {"type": "shield", "amount": 10, "duration": 3.2, "radius": 2}]}
+  },
+  "totem_stone_rock": {
+    "name": "Тотем скалы",
+    "label": "Т",
+    "color": [140, 130, 120],
+    "role": "support",
+    "hp": 80,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_stone",
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "armor", "value": 6, "duration": 1.3, "radius": 2}]}
+  },
+  "totem_stone_shield": {
+    "name": "Тотем щитов",
+    "label": "Т",
+    "color": [190, 200, 220],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_stone",
+    "aura": {"every": 3.0, "radius": 2, "effects": [{"type": "shield", "amount": 22, "duration": 3.2, "radius": 2}]}
+  },
+  "totem_rod": {
+    "name": "Тотем-громоотвод",
+    "label": "Т",
+    "color": [150, 140, 200],
+    "role": "support",
+    "hp": 90,
+    "armor": 3,
+    "move_time": 1.0,
+    "attack": {"damage": 9, "range": 3, "cooldown": 1.0, "tag": "storm", "kind": "ranged"},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_storm",
+    "aura": {"every": 3.0, "radius": 2, "effects": [{"type": "taunt", "radius": 2, "duration": 3}]}
+  },
+  "totem_heal_clean": {
+    "name": "Очищающий родник",
+    "label": "Т",
+    "color": [120, 220, 200],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_heal",
+    "aura": {"every": 1.0, "radius": 2, "effects": [{"type": "heal", "amount": 4, "radius": 2}, {"type": "cleanse", "radius": 2}]}
+  },
+  "totem_heal_burst": {
+    "name": "Источник жизни",
+    "label": "Т",
+    "color": [110, 240, 140],
+    "role": "support",
+    "hp": 40,
+    "armor": 1,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": true,
+    "sprite_fallback": "totem_heal",
+    "aura": {"every": 3.0, "radius": 3, "effects": [{"type": "heal", "amount": 16, "radius": 3}]}
+  },
+  "totem_idol": {
+    "name": "Тотем-пленитель",
+    "label": "Т",
+    "color": [130, 120, 255],
+    "role": "support",
+    "hp": 120,
+    "armor": 4,
+    "move_time": 1.0,
+    "attack": {"damage": 0, "range": 0, "cooldown": 9},
+    "summon": true,
+    "static": true,
+    "group": "totem",
+    "permanent": false,
+    "sprite_fallback": "totem_storm",
+    "aura": {"every": 1.5, "radius": 3, "effects": [{"type": "damage", "amount": 6, "kind": "spell", "radius": 3, "tag": "storm"}, {"type": "stun", "duration": 0.8, "radius": 3, "look": "shock"}]},
+    "life": 10
   }
 }

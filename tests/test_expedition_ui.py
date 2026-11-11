@@ -80,19 +80,23 @@ def walk(app, steps=60):
                 key(app, pygame.K_1 + i)
         elif name == "CampScene":
             key(app, pygame.K_1)
+        elif name == "PickScene":                          # карты улучшения / колчан лучника — первая
+            key(app, pygame.K_RETURN)
         elif name == "ShopScene":
             key(app, pygame.K_ESCAPE)
         elif name == "ActScene":
             key(app, pygame.K_SPACE)
-        elif name in ("EndScene", "TavernScene"):
+        elif name in ("EndScene", "HallRoom"):
             break
     return seen
 
 
 def test_tavern_start_walk_quit_and_resume(tmp_path):
     app = new_app(tmp_path)
-    assert type(app.scene).__name__ == "TavernScene"
+    assert type(app.scene).__name__ == "HallRoom"
     prof = app.profile
+    key(app, pygame.K_2)                     # комната «Сборы»
+    assert type(app.scene).__name__ == "MusterRoom"
     for h in prof.roster[:3]:
         click(app, ("recruit", h.uid))
     key(app, pygame.K_SPACE)
@@ -106,9 +110,11 @@ def test_tavern_start_walk_quit_and_resume(tmp_path):
         walk(app, 6)
     from game.expedition_scenes import HeroScene, MapScene, to_map
     to_map(app)
-    key(app, pygame.K_1)
+    key(app, pygame.K_F1)                    # 1–3 на карте — узлы, F1–F4 — листы героев
     assert isinstance(app.scene, HeroScene)
     h = run.heroes[0]
+    for o in run.heroes[1:]:                 # выбор у других героев — свой экран (автопереход), здесь не нужен
+        o.sp, o.pick_offer = 0, None
     h.sp = 1
     h.pick_offer = None
     click(app, "levelup")
@@ -126,7 +132,7 @@ def test_tavern_start_walk_quit_and_resume(tmp_path):
     # выход в таверну и продолжение
     level, path = h.level, list(run.path)
     key(app, pygame.K_ESCAPE)
-    assert type(app.scene).__name__ == "TavernScene" and app.profile.run_state
+    assert type(app.scene).__name__ == "HallRoom" and app.profile.run_state
     frame(app)
     again = App(DATA, seed=4)
     again.profile.path = str(tmp_path / "profile.json")
@@ -171,6 +177,7 @@ def test_event_camp_shop_screens(tmp_path):
     run.heroes[0].wounded = True
     click(app, "rest")
     assert not run.heroes[0].wounded and type(app.scene).__name__ == "MapScene"
-    for sc in (XS.UpgradeScene(app), XS.HeroScene(app, 0, back=lambda: None, respec=True), XS.ActScene(app)):
+    from game import tavern_rooms as R
+    for sc in (R.BuildRoom(app), XS.HeroScene(app, 0, back=lambda: None, respec=True), XS.ActScene(app)):
         app.switch(sc)
         frame(app)

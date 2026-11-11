@@ -206,17 +206,15 @@ def test_bot_walks_a_forge_run():
 
 
 def test_chapter_screen_in_tavern(tmp_path):
-    """Таверна → экран глав (картинка, враги, механики): закрытая глава не выбирается, открытая — выбирается."""
+    """Сборы: карточки глав — закрытая глава не выбирается, открытая — выбирается."""
     import test_expedition_ui as U
-    from game import expedition_scenes as XS
+    from game import tavern_rooms as R
     app = U.new_app(tmp_path)
-    tav = XS.TavernScene(app)
-    app.switch(tav)
-    U.click(app, "chapters")
-    assert type(app.scene).__name__ == "ChapterScene"
-    U.click(app, ("pick", "forge"))
-    assert type(app.scene).__name__ == "ChapterScene" and tav.chapter == "swamp"
+    R.go(app, "muster")
+    mus = app.scene
+    U.click(app, ("chapter", "forge"))
+    assert mus.chapter == "swamp"
     app.profile.chapter_wins = {"swamp": 1}
-    U.click(app, ("pick", "forge"))
-    assert app.scene is tav and tav.chapter == "forge"
+    U.click(app, ("chapter", "forge"))
+    assert mus.chapter == "forge"
     U.frame(app)

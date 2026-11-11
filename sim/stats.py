@@ -66,32 +66,125 @@ def derive(data, cls, rpg):
             "dodge": round(dodge, 3), "crit_mult": k["crit_mult"]}
 
 
-def apply_to_proto(p, der):
+def apply_to_proto(p, der, data=None, cls=None):
     p["scale"] = der["scale"]
     p["crit"], p["dodge"], p["crit_mult"] = der["crit"], der["dodge"], der["crit_mult"]
     p["attrs"] = der["attrs"]
+    if data is not None and cls is not None:   # навыки героя растут от своего стата (STAT_BASES)
+        c = data.classes[cls]
+        p["ref"] = {"atk": max(1, c["attack"]["damage"]), "hp": max(1, c["hp"])}
+        for sk in p.get("skill_defs", {}).values():
+            tag_skill(sk)
+
+
+# ---------- навыки от статов героя ----------
+#
+# У эффекта навыка героя есть база "of": от какого стата он растёт.
+#   atk — урон атаки героя (уровень, вещи, основной атрибут, бафы атаки);
+#   sp  — сила навыков (уровень, вещи на силу навыков, Интеллект);
+#   hp  — максимум здоровья героя.
+# Без "pct" числа эффекта (amount и всё, что умножается на силу навыков) — в единицах героя 1 уровня: на 1 уровне
+# навык бьёт ровно на столько, дальше растёт со статом. С "pct": true числа — доли стата (2.5 = 250% атаки).
+STAT_BASES = ("atk", "sp", "hp")
+STAT_NAMES = {"atk": "атаки", "sp": "силы навыков", "hp": "здоровья"}
+NESTED = ("effects",)
+WEAPON = ("melee", "ranged")
+
+
+def _walk(effs):
+    for e in effs or []:
+        yield e
+        for k in NESTED:
+            if isinstance(e.get(k), list):
+                yield from _walk(e[k])
+
+
+def default_base(sk):
+    """Старые навыки без своей базы: удары и выстрелы — от атаки, остальное (магия, лечение, призыв) — от силы."""
+    for e in _walk(sk.get("effects")):
+        if e.get("kind") in WEAPON or e["type"] in ("push", "rush", "toss", "leap_to", "shadow_dance"):
+            return "atk"
+    return "sp"
+
+
+def tag_skill(sk):
+    base = sk.get("of") or default_base(sk)
+    sk["of"] = base
+    for e in _walk(sk.get("effects")):
+        e.setdefault("of", base)
+
+
+def stat_k(p, of, pct=False, atk=None, hp=None, power=None):
+    """Множитель числа навыка от стата героя (по прототипу; в бою — текущие атака/HP/сила)."""
+    ref = p.get("ref") or {"atk": max(1, p["attack"]["damage"]), "hp": max(1, p["hp"])}
+    sc = p.get("scale") or {}
+    if of == "atk":
+        v = (atk if atk is not None else p["attack"]["damage"]) * sc.get("basic", 1.0)
+        return v if pct else v / ref.get("atk", v or 1)
+    if of == "hp":
+        v = hp if hp is not None else p["hp"]
+        return v if pct else v / ref.get("hp", v or 1)
+    k = (power if power is not None else p.get("power", 1.0)) * sc.get("spell", 1.0)
+    return k * ref.get("atk", 1) if pct else k
+
+
+def sp_value(p):
+    """Сила навыков героя числом (для листа героя): атака класса на 1 уровне × рост силы."""
+    return stat_k(p, "sp", True)
 
 
 DIRECT = ("melee", "ranged", "spell")
 
 
 def skill_values(p, sk, power=None):
-    """Чистые числа навыка для экрана: [(что, обычное, с критом или None)]. Учитывает силу героя, скейл атрибута
-    и крит (прокачка и вещи уже в прототипе); реакции, бафы в бою и бонусы отряда — нет."""
-    power = p.get("power", 1.0) if power is None else power
-    sc = p.get("scale") or {}
+    """Чистые числа навыка для экрана: [(что, обычное, с критом или None)]. Учитывает стат навыка (атака / сила /
+    здоровье), крит (прокачка и вещи уже в прототипе); реакции, бафы в бою и бонусы отряда — нет."""
     crit = p.get("crit_mult", 1.75) if p.get("crit") else None
     out = []
-    for eff in sk.get("effects", []):
+    for eff in _shown(sk.get("effects", [])):
         t = eff["type"]
-        if t in ("damage", "line", "chain", "push", "rush", "toss", "detonate", "shatter", "collapse")                 and eff.get("amount"):
+        if eff.get("of") and (p.get("ref") or eff.get("pct")):
+            k = stat_k(p, eff["of"], eff.get("pct"))
+        else:
+            pw = p.get("power", 1.0) if power is None else power
+            sc = p.get("scale") or {}
             kind = eff.get("kind", "melee" if t in ("push", "rush", "toss") else "spell")
-            v = eff["amount"] * power * sc.get(kind, 1.0)
+            k = pw * (sc.get("heal", 1.0) if t in ("heal", "shield") else sc.get(kind, 1.0))
+        if t in ("damage", "line", "chain", "push", "rush", "toss", "detonate", "shatter", "collapse") \
+                and eff.get("amount"):
+            kind = eff.get("kind", "melee" if t in ("push", "rush", "toss") else "spell")
+            v = eff["amount"] * k
             out.append(("урон", int(round(v)), int(round(v * crit)) if crit and kind in DIRECT else None))
         elif t in ("heal", "shield") and eff.get("amount"):
-            v = eff["amount"] * power * sc.get("heal", 1.0)
+            v = eff["amount"] * k
             out.append(("лечение" if t == "heal" else "щит", int(round(v)), None))
     return out
+
+
+def _shown(effs):
+    """Эффекты для цифр навыка: выстрел «Шквала»/«Отскока» и удар зоны — как обычный урон."""
+    for e in effs:
+        if isinstance(e.get("shot"), dict):
+            yield e["shot"]
+        elif e["type"] == "zone":
+            yield from _shown(e.get("effects", []))
+        else:
+            yield e
+
+
+def skill_base_label(p, sk):
+    """«250% атаки» — главное число навыка в процентах от его стата (для описаний и листа героя)."""
+    eff = next((e for e in _shown(sk.get("effects", [])) if e.get("amount") and e.get("of")), None)
+    if eff is None or not p.get("ref"):
+        return None
+    of = eff["of"]
+    if eff.get("pct"):
+        pct = eff["amount"]
+    elif of == "hp":
+        pct = eff["amount"] / p["ref"]["hp"]
+    else:
+        pct = eff["amount"] / p["ref"]["atk"]
+    return f"{pct * 100:.0f}% {STAT_NAMES[of]}"
 
 
 # ---------- опыт ----------

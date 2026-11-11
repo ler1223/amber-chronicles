@@ -43,13 +43,29 @@ def unlocked_skills(data, cls, lvl):
 
 # ---------- ультимейт, обязательные навыки и зависимости ----------
 
-def ult_of(data, cls):
-    """Ультимейт класса: не занимает слот, в бою всегда четвёртый (клавиша R)."""
-    return next((e["id"] for e in entries(data, cls) if e.get("ult")), None)
+def ults_of(data, cls):
+    """Ультимейты класса (до трёх — на разные способы игры). У героя — один, случайный (как набор навыков)."""
+    return [e["id"] for e in entries(data, cls) if e.get("ult")]
+
+
+def ult_of(data, cls, skills=None):
+    """Ультимейт героя: не занимает слот, в бою всегда четвёртый (клавиша R). skills — набор героя: его ультимейт
+    из них; без набора (или в наборе его нет) — первый ультимейт класса."""
+    ults = ults_of(data, cls)
+    if skills:
+        own = next((s for s in skills if s in ults), None)
+        if own:
+            return own
+    return ults[0] if ults else None
 
 
 def is_ult(data, cls, sid):
-    return sid is not None and sid == ult_of(data, cls)
+    return sid is not None and sid in ults_of(data, cls)
+
+
+def mech_of(data, cls):
+    """Кнопка механики класса (Фитиль подрывника): всегда в бою, вне слотов, клавиша F, без AP и перезарядки."""
+    return cfg(data)["classes"].get(cls, {}).get("mech")
 
 
 def notes_of(data, cls):
@@ -66,9 +82,12 @@ def battle_skills(data, cls, hero):
     """Навыки героя в бой: слоты и, когда открыт, ультимейт четвёртым (у барда — три ноты и финал)."""
     notes = notes_of(data, cls)
     load = notes if notes else [s for s in hero.get("skill_loadout", []) if not is_ult(data, cls, s)][:slots(data)]
-    ult = ult_of(data, cls)
+    ult = hero.get("ult") if is_ult(data, cls, hero.get("ult")) else ult_of(data, cls)
     if ult and is_unlocked(data, cls, ult, level(hero)):
         load.append(ult)
+    mech = mech_of(data, cls)
+    if mech and mech in data.skills:
+        load.append(mech)
     return load
 
 
@@ -97,7 +116,8 @@ def random_kit(data, cls, rng, n=None):
     """Случайный цельный набор для таверны: навык из обязательной группы + совместимые + ультимейт."""
     n = n or slots(data)
     if notes_of(data, cls):                   # бард: ноты и финал
-        return notes_of(data, cls) + [ult_of(data, cls)]
+        ults = ults_of(data, cls)
+        return notes_of(data, cls) + ([rng.choice(ults)] if ults else [])
     pool = [s for s in all_skills(data, cls) if not is_ult(data, cls, s)]
     core = [s for s in core_group(data, cls) if s in pool] or pool[:1]
     kit = [rng.choice(core)]
@@ -116,8 +136,8 @@ def random_kit(data, cls, rng, n=None):
             break
         if not requires(data, cls, s):
             kit.append(s)
-    ult = ult_of(data, cls)
-    return kit[:n] + ([ult] if ult else [])
+    ults = ults_of(data, cls)
+    return kit[:n] + ([rng.choice(ults)] if ults else [])
 
 
 def default_loadout(data, cls, lvl):

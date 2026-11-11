@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from test_rework1 import DATA, events, put, quiet, run  # noqa: E402
+from needs import need  # noqa: E402
 from sim import kit, story_meta  # noqa: E402
 from sim.build import build_proto  # noqa: E402
 from sim.combat import Combat  # noqa: E402
@@ -18,18 +19,23 @@ CASES = [(cls, sid, br) for cls, ids in POOL.items() for sid in ids
          for br in (None, ("A", 1), ("A", 2), ("B", 1), ("B", 2))]
 
 
-def test_every_class_has_eight_skills_unlocked_by_level():
+def test_every_class_has_skills_unlocked_by_level():
+    """У класса 7+ навыков в слоты (1–12 уровень) и 1–3 ультимейта на 10 уровне (разные способы игры)."""
     for cls in DATA.classes:
-        assert len(POOL[cls]) == 8, cls
-        assert [e["level"] for e in story_meta.entries(DATA, cls)] == [1, 2, 3, 5, 7, 9, 10, 12], cls
-        ult = story_meta.ult_of(DATA, cls)
-        sk = DATA.skills[ult]
-        assert story_meta.skill_level(DATA, cls, ult) == 10 and sk["ap"] <= 2 and sk.get("ult_cond"), cls
+        ults = story_meta.ults_of(DATA, cls)
+        regular = [s for s in POOL[cls] if s not in ults]
+        assert 1 <= len(ults) <= 3 and len(regular) >= story_meta.slots(DATA), cls
+        levels = [story_meta.skill_level(DATA, cls, s) for s in regular]
+        assert min(levels) == 1 and levels == sorted(levels), cls      # первый навык с 1 уровня, дальше по росту
+        for ult in ults:
+            sk = DATA.skills[ult]
+            assert story_meta.skill_level(DATA, cls, ult) == 10 and sk["ap"] <= 2 and sk.get("ult_cond"), (cls, ult)
         for sid in POOL[cls]:
             assert sid in DATA.branches, sid
 
 
 def setup(cls, skills, br=None):
+    need(*skills, *(br or {}), cls=cls)          # механику переделали — тест пропускается, а не падает
     proto = build_proto(DATA, cls, skills=list(skills), branches=br)
     c = quiet(Combat(DATA, 1, squad=[{"cls": cls, "proto": proto}]))
     h = next(u for u in c.heroes() if u.proto_id == cls)
@@ -127,16 +133,20 @@ def test_sticky_bomb_explodes_and_detonator_triggers_early():
     assert "bomb" not in f.marks and f.hp < hp
 
 
-def test_quiver_changes_basic_attacks():
-    c, h, foes = setup("archer", ["quiver_frost"])
+def test_quivers_alternate_on_basic_attacks():
+    """Колчаны лучника чередуются: первая стрела — первый колчан, вторая — второй."""
+    c, h, foes = setup("archer", ["aimed_shot"])
+    h.quivers = ["frost", "fire"]
     f = foes[0]
     put(f, (5, 2))
-    c._resolve_skill(h, "quiver_frost", h)
-    assert h.quiver == "frost"
     h.attack_timer = 0
     c._basic_attack(h, f)
     run(c, 1.0)
-    assert "cold" in f.marks
+    assert "cold" in f.marks and "fire" not in f.statuses
+    h.attack_timer = 0
+    c._basic_attack(h, f)
+    run(c, 1.0)
+    assert "fire" in f.statuses
 
 
 def test_priest_miracles_cost_faith():

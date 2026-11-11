@@ -136,7 +136,7 @@ class Run:
             if story_meta.notes_of(self.data, m.cls):
                 p["melodies"] = story_meta.melodies(self.data, m.cls, m.level)
         if self.stats:
-            stats.apply_to_proto(p, stats.derive(self.data, m.cls, m.rpg))
+            stats.apply_to_proto(p, stats.derive(self.data, m.cls, m.rpg), self.data, m.cls)
         return p
 
     def max_hp(self, m):

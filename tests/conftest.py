@@ -23,6 +23,19 @@ def _reset_screen_size():
 
 
 @pytest.fixture(autouse=True)
+def _private_settings(tmp_path, monkeypatch):
+    """Настройки игрока (save/settings.json) тесты не трогают: у каждого теста свой временный файл."""
+    from ui import settings
+    monkeypatch.setattr(settings, "PATH", str(tmp_path / "settings.json"))
+    old = dict(settings.SETTINGS)
+    try:
+        yield
+    finally:                                    # скорость боя, автокаст похода и др. — не перетекают в другие тесты
+        settings.SETTINGS.clear()
+        settings.SETTINGS.update(old)
+
+
+@pytest.fixture(autouse=True)
 def _instant_hits(request):
     old = Combat.HIT_TIMING
     Combat.HIT_TIMING = request.module.__name__.rsplit(".", 1)[-1] not in INSTANT_MODULES

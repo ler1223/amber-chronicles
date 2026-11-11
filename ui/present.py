@@ -12,6 +12,38 @@ from ui import layout as L
 from ui import theme as T
 
 
+def side_frames(w, h):
+    """Фон полей вокруг колонки 1280: тёмное дерево с досками, янтарная кайма у колонки, ромбики, виньетка."""
+    surf = pygame.Surface((w, h))
+    surf.fill((16, 12, 9))
+    ox = L.content_ox(w)
+    if ox <= 0:
+        return surf
+    for side in (0, 1):
+        x0 = 0 if side == 0 else ox + L.BASE_W
+        for i in range(0, ox, 46):                    # доски
+            r = pygame.Rect(x0 + i, 0, min(46, ox - i), h)
+            k = 0.85 + 0.15 * ((i // 46) % 3) / 2
+            pygame.draw.rect(surf, (int(34 * k), int(25 * k), int(18 * k)), r)
+            pygame.draw.line(surf, (12, 9, 7), (r.x, 0), (r.x, h), 2)
+            for y in range(40 + (i * 7) % 90, h, 160):    # сучки и гвозди
+                pygame.draw.circle(surf, (24, 17, 12), (r.centerx, y), 3)
+        for k in range(24):                           # тень к колонке
+            a = int(150 * (1 - k / 24))
+            sh = pygame.Surface((1, h), pygame.SRCALPHA)
+            sh.fill((0, 0, 0, a))
+            x = ox - 1 - k if side == 0 else ox + L.BASE_W + k
+            surf.blit(sh, (x, 0))
+        edge = ox - 4 if side == 0 else ox + L.BASE_W + 1
+        pygame.draw.rect(surf, (40, 28, 18), (edge, 0, 4, h))
+        pygame.draw.line(surf, T.AMBER_DIM, (edge + (3 if side == 0 else 0), 0), (edge + (3 if side == 0 else 0), h), 2)
+        cx = edge + 2
+        for y in range(60, h, 120):                   # янтарные ромбики по кайме
+            pygame.draw.polygon(surf, T.AMBER, [(cx, y - 6), (cx + 5, y), (cx, y + 6), (cx - 5, y)])
+            pygame.draw.polygon(surf, (90, 60, 30), [(cx, y - 6), (cx + 5, y), (cx, y + 6), (cx - 5, y)], 1)
+    return surf
+
+
 class Presenter:
     def __init__(self, screen, use_gl=True, window=True):
         self.screen = screen
@@ -69,12 +101,10 @@ class Presenter:
         return amb
 
     def _stage_background(self):
-        """Мягкий фон в полях stage-экрана: размытая копия сцены, обновляется не каждый кадр."""
+        """Поля stage-экрана на широком окне: статичные боковые рамки «тёмное дерево и янтарь» (без копии сцены)."""
         size = (T.SCREEN_W, T.SCREEN_H)
-        self._stage_tick += 1
-        if (self._stage_amb is None or self._stage_amb.get_size() != size
-                or self._stage_tick % 30 == 0):
-            self._stage_amb = self._ambient(self.stage, *size)
+        if self._stage_amb is None or self._stage_amb.get_size() != size:
+            self._stage_amb = side_frames(*size)
         return self._stage_amb
 
     # ---------- кадр ----------

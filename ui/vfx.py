@@ -207,7 +207,8 @@ class Screen:
 
     def fx_alpha(self):
         """Прозрачность полевых эффектов: на паузе 0.25, чтобы читались фигурки всех юнитов."""
-        return 1.0 - 0.75 * self.calm
+        from ui import settings
+        return (1.0 - 0.75 * self.calm) * settings.SETTINGS.get("fx_alpha", 1.0)   # + настройка «прозрачность»
 
 
 class VfxWorld:

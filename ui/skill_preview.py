@@ -100,8 +100,11 @@ class SkillPreview:
         self.scene.combat = c
         self.caster, self.ally = c.heroes()[0], c.heroes()[1]
         self.foes = c.fighters(ENEMY)
-        for f in self.foes:                  # манекены: крепкие и не бьют в ответ
-            f.max_hp = f.hp = 420
+        me = c.heroes()[0]
+        tough = max(420, int(40 * me.atk_damage * (me.proto.get("scale") or {}).get("basic", 1.0)),
+                    int(60 * c.stat_k(me, "sp", True)))
+        for f in self.foes:                  # манекены: крепкие (по силе героя — прокачанный не убьёт с удара), не бьют
+            f.max_hp = f.hp = tough
             f.atk_damage = 0
             f.atk_cd = f.attack_timer = 999.0
         self.caster.ap_max = max(self.caster.ap_max, sk["ap"])
@@ -164,6 +167,19 @@ class SkillPreview:
                 main.history = [(c.time - 3.0, (9, 3), main.hp)]
         if "toss" in types:
             self._put(main, (6, 3))
+        # условия механики класса: облик, тень, метка, тотем, знамя — иначе навык в демонстрации не сработал бы
+        if sk.get("form") and sk["form"] != "human":
+            c.set_form(me, sk["form"])
+        if sk.get("needs_shadow"):
+            c.add_buff(me, "stealth", 1.6, 5)
+            me.attack_timer = CAST_AT + 1.0      # обычная атака вывела бы из тени раньше навыка
+        if sk.get("needs_mark"):
+            from sim import kit
+            kit.add_mark(c, main, sk["needs_mark"], 1, 8, me)
+        if sk.get("needs_totem"):
+            c.summon(me, {"unit": "totem_storm"}, (4, 2))
+        if sk.get("needs_banner"):
+            c.summon(me, {"unit": "banner"}, (4, 4))
 
     def _target(self, sk):
         kind = sk["target"]
