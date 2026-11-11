@@ -409,6 +409,10 @@ class JewelCut(Game):
         except pygame.error:
             return False
 
+    def can_abort(self):
+        """Ещё ни одной готовой грани — можно уйти, камень останется необработанным."""
+        return self.phase == "choose" or all(x is None for x in self.scores)
+
     def stop(self):
         if self.phase == "choose":
             self.choose(0)

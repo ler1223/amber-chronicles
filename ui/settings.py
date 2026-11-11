@@ -22,6 +22,8 @@ OPTIONS = [
     ("text_status", "Надписи: криты и состояния", [True, False], ["вкл", "выкл"]),
     ("text_skills", "Надписи: названия навыков", [True, False], ["вкл", "выкл"]),
     ("text_numbers", "Числа урона и лечения", [True, False], ["вкл", "выкл"]),
+    ("gl_safe_upload", "Совместимость графики (Mac)", [False, True],
+     ["авто", "вкл"]),
     ("autocast_start", "Автокаст в начале похода", ["default", "on", "off"],
      ["как задумано", "всё включено", "всё выключено"]),
     ("fx_style", "Стиль огня и льда (F9)", ["old", "pixel", "flipbook", "shader", "mesh", "fluid"],
@@ -29,7 +31,8 @@ OPTIONS = [
 ]
 DEFAULTS = {"bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "window": "auto",
             "sprite_res": 32, "fx_style": "pixel", "autocast_start": "default", "battle_speed": 1,
-            "fx_alpha": 1.0, "text_status": True, "text_skills": True, "text_numbers": True}
+            "fx_alpha": 1.0, "text_status": True, "text_skills": True, "text_numbers": True,
+            "gl_safe_upload": False}
 STYLES = next(o[2] for o in OPTIONS if o[0] == "fx_style")
 
 

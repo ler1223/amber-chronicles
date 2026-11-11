@@ -233,10 +233,16 @@ def test_workshop_and_artifacts_screens(tmp_path):
     click(app, ("mode", "cut"))
     click(app, ("cut", rough["uid"]))
     g = app.scene.game
-    key(app, pygame.K_ESCAPE)                       # досрочно: остаток — промах, качество — минимум
-    assert g.done and g.quality == G.Q_LO
+    key(app, pygame.K_ESCAPE)                       # ни одной грани — выход без потерь, камень цел
+    assert app.scene is room and rough in prof.rough and not prof.gems
+    click(app, ("cut", rough["uid"]))
+    g = app.scene.game
+    key(app, pygame.K_1)                            # выбрать огранку и сделать грань — дальше Esc уже досрочно
+    g.scores[0] = 0.5
+    key(app, pygame.K_ESCAPE)
+    assert g.done and g.quality < 0.85
     key(app, pygame.K_RETURN)
-    assert prof.gems and prof.gems[0]["q"] == G.Q_LO
+    assert prof.gems and rough not in prof.rough
     room.overlay = None
     click(app, "chest")
     assert isinstance(room.overlay, R.ChestOverlay)

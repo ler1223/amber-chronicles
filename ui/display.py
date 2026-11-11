@@ -3,6 +3,7 @@
 тянуть мышью; F11 или Alt+Enter — полный экран; стартовый размер — в настройках («Окно»). Координаты
 мыши из событий переводятся обратно в логический холст, поэтому сцены про масштаб ничего не знают.
 """
+import sys
 import warnings
 
 import pygame
@@ -35,6 +36,11 @@ class Display:
         global CURRENT
         self.use_gl = use_gl
         self.flags = (pygame.OPENGL | pygame.DOUBLEBUF if use_gl else 0) | pygame.RESIZABLE
+        if use_gl and sys.platform == "darwin":     # macOS: шейдеры 3.3 — только в core-контексте (иначе 2.1)
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
+            pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, 1)
         self.screen = pygame.display.set_mode(self._wanted(), self.flags, vsync=1 if use_gl else 0)
         with warnings.catch_warnings():      # pygame-ce пока помечает from_display_module как устаревший
             warnings.simplefilter("ignore", DeprecationWarning)

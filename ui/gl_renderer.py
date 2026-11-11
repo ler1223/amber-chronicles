@@ -571,6 +571,52 @@ class GLRenderer:
         self.dummy = ctx.texture((1, 1), 4, bytes(4))
         self._alloc_targets()
         self.view = None           # (x, y, ширина, высота) кадра в окне; None — окно ровно с холст
+        # быстрая загрузка (память поверхности + swizzle текстуры) — только если драйвер её честно понимает;
+        # иначе (часть Mac на Intel, старые драйверы) — надёжный путь через RGBA-байты
+        self.safe_upload = SETTINGS.get("gl_safe_upload") or not self._swizzle_ok()
+
+    def _swizzle_ok(self):
+        """Самопроверка: прозрачный красный и непрозрачный синий пиксели загружаются быстрым путём и рисуются в
+        маленький буфер; прочитанное должно совпасть (цвета не перепутаны, прозрачность не потеряна)."""
+        ctx = self.ctx
+        try:
+            surf = pygame.Surface((2, 1), pygame.SRCALPHA)
+            surf.set_at((0, 0), (255, 0, 0, 0))
+            surf.set_at((1, 0), (0, 0, 255, 255))
+            if self._order(surf) is None:
+                return True                    # всё равно пойдёт через RGBA-байты
+            tex = ctx.texture((2, 1), 4)
+            tex.filter = (moderngl.NEAREST, moderngl.NEAREST)
+            order = self._order(surf)
+            tex.swizzle = order
+            tex.write(surf.get_view("1"))
+            out = ctx.texture((2, 1), 4)
+            fbo = ctx.framebuffer([out])
+            prev, vp = ctx.fbo, ctx.viewport
+            fbo.use()
+            ctx.viewport = (0, 0, 2, 1)
+            ctx.disable(moderngl.BLEND)
+            fbo.clear(0.0, 0.0, 0.0, 0.0)
+            tex.use(0)
+            self.prog_ui["u_tex"] = 0
+            self.prog_ui["u_flipv"] = 0.0
+            self.prog_ui["u_tint"] = (1.0, 1.0, 1.0, 1.0)
+            self.vao["ui"].render(moderngl.TRIANGLE_STRIP)
+            data = fbo.read(components=4)
+            if prev is not None:
+                prev.use()
+                ctx.viewport = vp
+            for item in (fbo, out, tex):
+                item.release()
+            a = tuple(data[0:4])
+            b = tuple(data[4:8])
+            good = a[3] < 40 and b[3] > 215 and b[2] > 200 and b[0] < 40
+            if not good:
+                print(f"OpenGL: быстрая загрузка текстур искажает цвета/прозрачность ({a}, {b}) — включён надёжный путь")
+            return good
+        except Exception as exc:               # драйвер не умеет swizzle — надёжный путь
+            print(f"OpenGL: swizzle текстур недоступен ({exc}) — включён надёжный путь")
+            return False
 
     def _alloc_targets(self):
         """Текстуры/FBO под текущий размер логического холста (создаются и при resize)."""
@@ -636,9 +682,11 @@ class GLRenderer:
     def _upload(self, tex, surf):
         """Память поверхности уходит в текстуру как есть (без копии через tobytes); порядок каналов
         выравнивает swizzle текстуры — обычно в памяти pygame лежит BGRA."""
-        order = self._order(surf)
+        safe = getattr(self, "safe_upload", False) or SETTINGS.get("gl_safe_upload")
+        order = None if safe else self._order(surf)
         if order is None:
-            tex.swizzle = "RGBA"
+            if tex.swizzle != "RGBA":
+                tex.swizzle = "RGBA"
             tex.write(pygame.image.tobytes(surf, "RGBA"))
             return
         if tex.swizzle != order:

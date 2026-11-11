@@ -103,6 +103,10 @@ class MiniGameScene(XScene):
         g = self.game
         if g.done:
             return
+        if hasattr(g, "can_abort") and g.can_abort():   # работа ещё не начата — выйти без потерь
+            self.finished = True
+            self.back()
+            return
         if hasattr(g, "stop"):
             g.stop()
             return
@@ -184,6 +188,8 @@ class MiniGameScene(XScene):
             self.button(surf, pygame.Rect(T.SCREEN_W // 2 - 140, T.SCREEN_H - 120, 280, 50), "Забрать (Enter)", "take",
                         True, GOLD)
         else:
-            T.text(surf, "Esc — закончить досрочно (остаток — как промах)", (T.SCREEN_W // 2, T.SCREEN_H - 90), 14,
+            free = hasattr(g, "can_abort") and g.can_abort()
+            T.text(surf, "Esc — выйти без потерь (работа не начата)" if free else
+                   "Esc — закончить досрочно (остаток — как промах)", (T.SCREEN_W // 2, T.SCREEN_H - 90), 14,
                    T.TEXT_DIM, center=True)
         self.draw_tip(surf)
