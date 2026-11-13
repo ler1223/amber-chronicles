@@ -136,6 +136,9 @@ Row 3:
 21. (B) Frost giant: giant with a beard of icicles, fur and iron armor, a huge club of ice.
 ```
 
+Новые боссы Склепа (`crypt_abbot`, `crypt_warden`), иконки главы 3 и три недостающие сцены — в
+`prompts_expedition.md`, раздел «Глава 3 «Склеп нежити» — недостающая графика».
+
 ## Лист 3 — Степь и Гробницы (`--set steppe_tomb`)
 
 ```

@@ -42,8 +42,8 @@ def box(r, z0, z1):
     return [{"pts": [v[i] for i in q], "n": n, "kind": "rough"} for q, n in quads]
 
 
-def clip(faces, n, h, kind="frost", eps=1e-7):
-    """Срез: остаётся часть p·n ≤ h; на месте среза — новая грань kind."""
+def clip(faces, n, h, kind="frost", eps=1e-7, grit=None):
+    """Срез: остаётся часть p·n ≤ h; на месте среза — новая грань kind (grit — шероховатость от диска 0–1)."""
     out, cap = [], []
     for f in faces:
         pts = f["pts"]
@@ -72,7 +72,10 @@ def clip(faces, n, h, kind="frost", eps=1e-7):
         w = cross(n, u)
         uniq.sort(key=lambda p: math.atan2(dot(sub(p, c), w), dot(sub(p, c), u)))
         out = [f for f in out if not (abs(dot(f["n"], n) - 1) < 1e-6 and abs(dot(f["pts"][0], n) - h) < 1e-4)]
-        out.append({"pts": uniq, "n": n, "kind": kind})
+        face = {"pts": uniq, "n": n, "kind": kind}
+        if grit is not None:
+            face["grit"] = grit
+        out.append(face)
     return out
 
 
@@ -221,12 +224,23 @@ def render(surf, faces, to_world, center, scale, color, t=0.0, sparkle=True):
 GIRDLE = 0.03                                  # полутолщина рундиста (доля радиуса)
 
 
-def make_stone(rng, R):
-    """Сырой камень: рундист (поясок из 16 граней) уже выточен, верх и низ — неровные сколы с запасом."""
+def girdle_planes(R, outline=None):
+    """Рундист: круг — 16 граней, фигурный контур (sim/gems.py) — опорная функция по 32 направлениям."""
+    from sim import gems as GM
+    o = GM.outline_planes(outline) if outline else None
+    if not o:
+        return [((math.cos(math.tau * k / 16), math.sin(math.tau * k / 16), 0.0), R) for k in range(16)]
+    return [((math.cos(a), math.sin(a), 0.0), R * h) for a, h in o[1]]
+
+
+def make_stone(rng, R, outline=None, chips=True):
+    """Заготовка: рундист (поясок по контуру огранки) уже выточен, верх и низ — неровные сколы с запасом
+    (chips=False — ровная заготовка: её затем режет форма настоящего кристалла)."""
     faces = box(R * 1.3, -0.62 * R, 1.12 * R)
-    for k in range(16):
-        a = math.tau * k / 16
-        faces = clip(faces, (math.cos(a), math.sin(a), 0.0), R, "girdle")
+    for n, off in girdle_planes(R, outline):
+        faces = clip(faces, n, off, "girdle")
+    if not chips:
+        return faces
     for side, depth in ((1, 1.02), (-1, 0.48)):
         for _ in range(7):                      # сколы: неровная форма, но не глубже нужного
             th = math.radians(rng.uniform(18, 55))
@@ -237,15 +251,53 @@ def make_stone(rng, R):
     return faces
 
 
+class DomeFaces(list):
+    """Грани кабошона + сглаживание кромок для шейдера: dome = (радиус скругления, 0, 0). Форма — та же."""
+    dome = None
+
+
+def smooth(faces, blend=14.0):
+    """Кабошон: форма камня не меняется, шейдер скругляет кромки между гранями верха (полировка купола)."""
+    res = DomeFaces(faces)
+    res.dome = (blend, 0.0, 0.0)
+    return res
+
+
+def dome(faces, R, outline=None, rings=6, az=18):
+    """Кабошон: верх огранённой заготовки (корона — в сторону −z, как на станке) становится гладким куполом
+    (эллипсоид над рундистом), дно (+z) — плоское."""
+    from sim import gems as GM
+    top = extent(faces, (0.0, 0.0, -1.0))
+    bottom = extent(faces, (0.0, 0.0, 1.0))
+    g = GIRDLE * R
+    H = max(R * 0.15, top - g)
+    out = box(R * 1.3, -top, bottom)
+    for n, off in girdle_planes(R, outline):
+        out = clip(out, n, off, "girdle")
+    for i in range(1, rings + 1):
+        th = math.radians(90.0 * i / (rings + 1))           # точки касания — равномерно по дуге купола
+        al = math.atan2(math.sin(th) / R, math.cos(th) / H)
+        for k in range(az):
+            ph = math.tau * (k + 0.5 * (i % 2)) / az
+            a = R * GM.support(outline, ph)
+            n = (math.sin(al) * math.cos(ph), math.sin(al) * math.sin(ph), -math.cos(al))
+            off = g * math.cos(al) + math.sqrt((a * math.sin(al)) ** 2 + (H * math.cos(al)) ** 2)
+            out = clip(out, n, off, "polish")
+    res = DomeFaces(dict(f, kind="polish") for f in out)
+    res.dome = (6.0, 0.0, 0.0)                        # превью: мелкие грани идеального купола
+    return res
+
+
 def planes(faces):
     """Форма камня для сохранения: [[nx, ny, nz, отступ, вид]]."""
     return [[round(f["n"][0], 5), round(f["n"][1], 5), round(f["n"][2], 5), round(dot(f["n"], f["pts"][0]), 4),
-             f["kind"]] for f in faces if f["pts"]]
+             f["kind"]] + ([round(f["grit"], 3)] if f.get("grit") else []) for f in faces if f["pts"]]
 
 
 def from_planes(pl, R=100.0):
     """Камень обратно из плоскостей (пересечение полупространств)."""
     faces = box(R * 3, -R * 3, R * 3)
-    for nx, ny, nz, off, kind in pl:
-        faces = clip(faces, (nx, ny, nz), off, kind)
+    for p_ in pl:
+        nx, ny, nz, off, kind = p_[:5]
+        faces = clip(faces, (nx, ny, nz), off, kind, grit=p_[5] if len(p_) > 5 else None)
     return faces

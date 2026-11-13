@@ -48,6 +48,7 @@ SETS = {
                    "death_knight", "lich",
                    "frost_wolf", "yeti", "ice_archer", "frost_shaman", "ice_golem", "frost_wyrmling",
                    "yeti_alpha", "frost_giant"],
+    "crypt_bosses": ["crypt_abbot", "crypt_warden"],
     "steppe_tomb": ["raider", "storm_hawk", "stormcaller", "steppe_ogre", "thunder_elemental", "wind_rider",
                     "warchief", "storm_khan",
                     "mummy", "scarab", "tomb_archer", "sand_priest", "sarcophagus", "sand_golem", "anubis_guard",
@@ -77,6 +78,9 @@ SETS = {
     "icons_items3": ["unique_phoenix_feather", "unique_gambler_ring", "unique_king_seal", "unique_eel_band", "unique_marsh_lantern", "unique_toad_crown", "unique_storm_bow", "unique_bone_staff", "unique_headsman_axe", "unique_warden_plate", "unique_serpent_ring", "unique_sun_amulet", "unique_instant_ring", "unique_ash_cloak", "unique_tide_wand", "unique_obsidian_knife"],
     "icons_arrows": ["arrow_fire", "arrow_frost", "arrow_poison", "arrow_bleed", "arrow_storm",
                      "arrow_blunt", "arrow_vampire", "arrow_explosive", "arrow_piercing", "arrow_bounce"],
+    "icons_effects": ["fx_fog", "fx_evasion", "fx_blind", "fx_heal_taken", "fx_tough", "fx_debuff_resist",
+                      "fx_heal_over_time", "fx_cleanse", "fx_prayer", "fx_meteor", "fx_fire_wall",
+                      "fx_phoenix_shield", "fx_sanctuary", "fx_spirit", "fx_holy_water", "fx_vow"],
     "icons_artifacts": ["art_bracers_common", "art_belt_common", "art_ring_common", "art_amulet_common", "art_talisman_common", "art_bracers_rare", "art_belt_rare", "art_ring_rare", "art_amulet_rare", "art_talisman_rare", "art_bracers_epic", "art_belt_epic", "art_ring_epic", "art_amulet_epic", "art_talisman_epic", "art_bracers_legendary", "art_belt_legendary", "art_ring_legendary", "art_amulet_legendary", "art_talisman_legendary"],
     "icons_workshop": ["gem_ruby", "gem_sapphire", "gem_emerald", "gem_topaz", "gem_amethyst",
                        "mat_leather", "mat_herbs", "mat_gems", "mat_pearl", "mat_embersteel", "mat_stardust"],
@@ -89,6 +93,41 @@ SETS = {
                     "frg_table"],
     "facet_machine": ["facet_lap", "facet_lap_base", "facet_mast", "facet_head", "facet_gear", "facet_loupe",
                       "facet_plate"],
+    "jewel_magnifier_hd": ["facet_magnifier_hd"],
+    "forge_props_hd": ["frg_anvil", "frg_forge", "frg_crucible", "frg_barrel", "frg_bellows", "frg_tongs",
+                       "frg_hammer_hand", "frg_hammer_sledge", "frg_hammer_flatter", "frg_mold", "frg_pyrometer",
+                       "frg_magnet"],
+    "ui_kit": ["ui_corner", "ui_corner_small", "ui_divider", "ui_flourish", "ui_scroll_thumb", "ui_close"],
+    "icons_forge_hd": ["fic_ingot_iron", "fic_ingot_copper", "fic_ingot_bronze", "fic_ingot_silver925",
+                       "fic_ingot_gold18", "fic_ingot_steel", "fic_ingot_spring", "fic_ingot_hc_steel",
+                       "fic_ingot_starsteel", "fic_ingot_embersteel", "fic_prim_rod", "fic_prim_strip",
+                       "fic_prim_sheet", "fic_prim_wire", "fic_book", "fic_tool_mold_wire",
+                       "fic_tool_bellows", "fic_tool_pyrometer", "fic_tool_magnet", "fic_tool_hourglass",
+                       "fic_tool_hardness", "fic_tool_hammer_sledge", "fic_tool_flatter", "fic_tool_anvil_steel",
+                       "fic_tool_anvil_master", "fic_tool_oil", "fic_tool_brine", "fic_tool_salamander",
+                       "fic_tool_glacier", "fic_tool_mold_rod", "fic_tool_mold_strip", "fic_tool_mold_sheet"],
+    "icons_forge_mats": ["mat_coal", "mat_copper", "mat_tin", "mat_silver", "mat_gold", "mat_meteor"],
+    "icons_items4": ["unique_duelist_banner", "unique_blood_gauntlet", "unique_trick_quiver", "unique_wind_string",
+                     "unique_smoldering_heart", "unique_spark_staff", "unique_faith_beads", "unique_holy_symbol",
+                     "unique_shadow_dagger", "unique_night_cloak", "unique_alpha_fang", "unique_grove_wreath",
+                     "unique_sentinel_spear", "unique_trench_shield"],
+    "icons_items5": ["unique_carved_totem", "unique_spirit_catcher", "unique_minstrel_lute", "unique_tuning_fork",
+                     "unique_powder_horn", "unique_fuse_ring", "unique_iron_horn", "unique_bison_hide",
+                     "unique_powder_musket", "unique_trap_bag", "unique_glacier_heart", "unique_blizzard_staff",
+                     "unique_leader_skull", "unique_reaper_scythe"],
+    "icons_items6": ["unique_hourglass", "unique_pendulum", "unique_weight_stone", "unique_orbit_ring",
+                     "unique_mountain_root", "unique_lava_staff", "unique_alembic", "unique_flask_belt",
+                     "unique_madman_axe", "unique_leech_bracelet", "unique_marshal_baton", "unique_regiment_flag",
+                     "unique_fate_thread", "unique_soul_knot"],
+    "icons_tabs3": ["tab_market", "tab_mine", "mat_amber", "mat_ember"],
+    "icons_crypt": ["mat_soul", "mat_bonedust", "unique_soulflame_blade", "unique_grave_ward",
+                    "unique_bone_bow", "unique_lich_crown", "unique_crypt_grail", "unique_crypt_idol"],
+    "mine_hd": ["mine_miner_1", "mine_miner_2", "mine_miner_3", "mine_cart"],
+    "npc_smith": ["npc_smith"],
+    "facet_machine_hd": ["facet_lap", "facet_lap_base", "facet_mast", "facet_head", "facet_gear", "facet_loupe",
+                         "facet_plate"],
+    "jewel_tools": ["facet_lever", "facet_magnifier", "npc_jeweler", "disc_coarse", "disc_medium", "disc_fine",
+                    "disc_diamond", "book_cut"],
     "yard_layers": ["layer_roofs", "layer_trees", "layer_yard"],
     "icons_tabs2": ["tab_market"],
     "icons_tabs": ["tab_hall", "tab_muster", "tab_workshop", "tab_yard", "tab_build", "tab_fame"],
@@ -112,7 +151,7 @@ ENV_SIZE = {"tree": (32, 46), "pine": (28, 48), "deadtree": (28, 40), "column": 
 MATERIALS = ("grass", "ash", "dirt", "snow", "dry", "sand", "moss", "wet", "marble")
 FIT = {"druid_bear"}            # растянуть до холста (облик медведя — крупный зверь)
 MAGENTA = np.array([245, 5, 245])
-ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab")
+ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab", "disc", "book")
 OBJ_SIZE = {"obj_board": (128, 120), "obj_chest": (80, 60), "obj_ws_forge": (128, 128), "obj_ws_jewel": (112, 104),
             "obj_ws_leather": (112, 112), "obj_ws_alchemy": (112, 112), "obj_bed": (112, 64),
             "grave_1": (56, 64), "grave_2": (56, 64), "grave_3": (56, 64),
@@ -120,10 +159,17 @@ OBJ_SIZE = {"obj_board": (128, 120), "obj_chest": (80, 60), "obj_ws_forge": (128
             "layer_yard": (768, 180), "layer_roofs": (768, 150), "layer_trees": (768, 180),
             "facet_lap": (200, 28), "facet_lap_base": (128, 72), "facet_mast": (28, 180), "facet_head": (56, 56),
             "facet_gear": (36, 36), "facet_loupe": (72, 72), "facet_plate": (72, 72),
+            "facet_lever": (40, 136), "facet_magnifier": (576, 576), "npc_jeweler": (104, 160),
+            "facet_magnifier_hd": (1024, 1024),
+            "ui_corner": (256, 256), "ui_corner_small": (128, 128), "ui_divider": (1024, 96),
+            "ui_flourish": (256, 64), "ui_scroll_thumb": (48, 256), "ui_close": (128, 128),
             "frg_anvil": (128, 72), "frg_forge": (112, 112), "frg_crucible": (96, 80), "frg_barrel": (80, 88),
             "frg_bellows": (96, 56), "frg_chisel": (32, 96), "frg_tongs": (96, 40),
             "frg_hammer_hand": (56, 56), "frg_hammer_sledge": (64, 72), "frg_hammer_peen": (56, 56),
-            "frg_hammer_flatter": (56, 56), "frg_table": (128, 80)}     # объекты комнат таверны (лист O)      # иконки: склейка частей, свой холст 32×32
+            "frg_hammer_flatter": (56, 56), "frg_table": (128, 80), "frg_mold": (96, 56), "frg_pyrometer": (64, 96),
+            "frg_magnet": (48, 72),
+            "mine_miner_1": (64, 80), "mine_miner_2": (64, 80), "mine_miner_3": (64, 80), "mine_cart": (96, 64),
+            "npc_smith": (104, 160)}     # объекты комнат таверны (лист O)      # иконки: склейка частей, свой холст 32×32
 
 
 def canvas(name):
@@ -139,6 +185,8 @@ def canvas(name):
         return (40, 56), True
     if name in OBJ_SIZE:                               # объект комнаты: свой холст, вписывается
         return OBJ_SIZE[name], True
+    if name.startswith("fic_"):                        # значки кузни (лист KI): квадрат, вписывается (HD ×4)
+        return (64, 64), True
     if mat in ICON_KINDS:                              # иконки 32×32, каждая вписывается в свой холст
         return (32, 32), True
     n = CANVAS.get(name, 32)
@@ -263,7 +311,35 @@ def rows(rects):
     return out + sorted(row, key=lambda j: rects[j].left)
 
 
-def run(src, folder, preview=None, names=ORDER, res=1):
+HD_SETS = {"jewel_magnifier_hd", "ui_kit", "facet_machine_hd", "forge_props_hd",
+           "icons_forge_hd", "mine_hd"}                                                     # высокое разрешение: без пиксель-обработки
+HD_SCALE = {"facet_machine_hd": 4, "forge_props_hd": 4, "icons_forge_hd": 4,
+            "mine_hd": 4}                                                                   # холст ×N к обычному спрайту
+
+
+def hd_sprite(rgb, region, size):
+    """Высокое разрешение (не пиксель-арт): мягкая альфа по расстоянию до пурпурного фона, без розовой каймы
+    (кайма обесцвечивается к соседнему цвету фигуры), плавное уменьшение, без палитры и контура."""
+    d = np.abs(rgb - MAGENTA).sum(-1)
+    alpha = np.clip((d - 100) / 130, 0, 1) * region
+    pink = (rgb[..., 1] < 0.8 * np.minimum(rgb[..., 0], rgb[..., 2])) & (alpha < 1)
+    fix = rgb.copy()                                   # кайма: убрать пурпур из полупрозрачных пикселей
+    grey = fix[..., 1:2]
+    fix[pink] = np.concatenate([np.minimum(fix[..., 0:1], grey * 1.4), grey, np.minimum(fix[..., 2:3], grey * 1.4)],
+                               -1)[pink]
+    h, w = alpha.shape
+    surf = pygame.Surface((w, h), pygame.SRCALPHA)
+    arr = np.dstack([np.clip(fix, 0, 255), alpha * 255]).astype(np.uint8)
+    surf = pygame.image.frombuffer(np.ascontiguousarray(arr).tobytes(), (w, h), "RGBA").copy()
+    sw, sh = size
+    k = min(sw / w, sh / h)
+    img = pygame.transform.smoothscale(surf, (max(1, int(w * k)), max(1, int(h * k))))
+    out = pygame.Surface((sw, sh), pygame.SRCALPHA)
+    out.blit(img, ((sw - img.get_width()) // 2, (sh - img.get_height()) // 2))
+    return out
+
+
+def run(src, folder, preview=None, names=ORDER, res=1, hd=False, hd_k=1):
     pygame.init()
     img = pygame.image.load(src)
     a = pygame.surfarray.array3d(img).transpose(1, 0, 2).astype(float)
@@ -322,6 +398,15 @@ def run(src, folder, preview=None, names=ORDER, res=1):
         rgb = a[r.top:r.bottom, r.left:r.right]
         (sw, sh), fit = canvas(name)
         sw, sh = sw * res, sh * res
+        if hd:                                         # высокое разрешение — как есть, только вырезать из фона
+            grown = masks[i]
+            for _ in range(3):
+                grown = grown | np.roll(grown, 1, 0) | np.roll(grown, -1, 0) | np.roll(grown, 1, 1) | np.roll(grown, -1, 1)
+            surf = hd_sprite(rgb, grown[r.top:r.bottom, r.left:r.right].astype(float), (sw * hd_k, sh * hd_k))
+            pygame.image.save(surf, os.path.join(folder, f"{name}.png"))
+            out[name] = surf
+            print(f"{name}: {sw * hd_k}x{sh * hd_k} (HD)")
+            continue
         scale = min((sw - 2) / r.w, (sh - 2) / r.h) if fit else 29 * res / hero_h
         spr = make_sprite(rgb, mask, (sw, sh), scale, colors=22 if res == 1 else 30)
         surf = pygame.image.frombuffer(np.ascontiguousarray(spr).tobytes(), (sw, sh), "RGBA").copy()
@@ -355,4 +440,5 @@ if __name__ == "__main__":
                "assets/icons" if which.startswith("icons") else "assets/sprites")
     if res > 1:
         default = os.path.join(default, f"x{res}")
-    run(argv[0], argv[1] if len(argv) > 1 else default, opts.get("--preview"), SETS[which], res)
+    run(argv[0], argv[1] if len(argv) > 1 else default, opts.get("--preview"), SETS[which], res,
+        hd=which in HD_SETS, hd_k=HD_SCALE.get(which, 1))

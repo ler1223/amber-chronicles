@@ -173,6 +173,9 @@ def test_event_camp_shop_screens(tmp_path):
     app.switch(XS.ShopScene(app))
     click(app, ("buy", 0))
     assert run.nodes[run.node]["stock"][0] is None and run.bag
+    before, cost = run.gold, run.shop_reroll_cost()
+    click(app, "reroll")
+    assert run.gold == before - cost and all(o is not None for o in run.nodes[run.node]["stock"])
     app.switch(XS.CampScene(app))
     run.heroes[0].wounded = True
     click(app, "rest")

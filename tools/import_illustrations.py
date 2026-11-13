@@ -61,6 +61,7 @@ ORDER = [
     "yard_sky_low", "yard_sky_mid", "yard_sky_high", "room_dorm_6",    # небо двора слоями + чердак (лист 35)
     "ws_bench_jewel", "ws_bench_forge", "ws_bench_alchemy", "ws_bench_leather",   # верстаки мини-игр (лист 36)
     "room_market", "market_gems", "market_goods", "market_night",       # рынок (лист 37)
+    "order_toll", "final_vigil", "lich_phylactery",                     # Склеп: недостающие сцены (лист 38)
 ]
 SHEETS = [ORDER[i:i + 4] for i in range(0, len(ORDER), 4)]
 

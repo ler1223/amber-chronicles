@@ -34,10 +34,26 @@
   "shadow": {
     "class": "assassin",
     "name": "Тень",
-    "desc": "Метит цели для всего отряда. Вместо Ядовитого клинка — Метка смерти, вместо Удара в спину — Ускользание.",
-    "replace": {"venom_blade": "shadow_mark"},
-    "passive": {"kind": "dodge", "vs": ["melee", "ranged"], "name": "Ускользание", "pp": 1, "desc": "Атака оружием по ассасину: −1 деление шкалы, промах"},
-    "mods": [{"stat": "move_time", "mult": 0.9}]
+    "desc": "Метит цели для всего отряда. Вместо Ядовитых дротиков — Метка смерти, вместо Удара в спину — Ускользание.",
+    "replace": {
+      "venom_darts": "shadow_mark"
+    },
+    "passive": {
+      "kind": "dodge",
+      "vs": [
+        "melee",
+        "ranged"
+      ],
+      "name": "Ускользание",
+      "pp": 1,
+      "desc": "Атака оружием по ассасину: −1 деление шкалы, промах"
+    },
+    "mods": [
+      {
+        "stat": "move_time",
+        "mult": 0.9
+      }
+    ]
   },
   "duelist": {
     "class": "assassin",
@@ -50,18 +66,47 @@
   "wild": {
     "class": "druid",
     "name": "Дикий оборотень",
-    "desc": "Ближний бой в облике волка. Вместо Омоложения — Облик волка, вместо Силы природы — Звериная ярость.",
-    "replace": {"rejuvenate": "wolf_form"},
-    "passive": {"kind": "rage", "name": "Звериная ярость", "pp": 1, "stat": "atk_mult", "value": 1.4, "duration": 3, "desc": "Удар по друиду: −1 деление шкалы, его атаки ×1.4 на 3 сек"},
-    "mods": [{"stat": "atk_damage", "add": 2}]
+    "desc": "Ближний бой и кровотечение. Вместо Дара леса — Звериный рывок.",
+    "replace": {
+      "rejuvenate": "beast_dash"
+    },
+    "passive": {
+      "kind": "rage",
+      "name": "Звериная ярость",
+      "pp": 1,
+      "stat": "atk_mult",
+      "value": 1.4,
+      "duration": 3,
+      "desc": "Удар по друиду: −1 деление шкалы, его атаки ×1.4 на 3 сек"
+    },
+    "mods": [
+      {
+        "stat": "atk_damage",
+        "add": 2
+      }
+    ]
   },
   "grove": {
     "class": "druid",
     "name": "Хранитель рощи",
-    "desc": "Лечит отряд через древо. Вместо Облика медведя — Древо жизни, вместо Силы природы — Покров рощи.",
-    "replace": {"bear_form": "spirit_tree"},
-    "passive": {"kind": "intercede", "name": "Покров рощи", "pp": 1, "range": 1, "heal": 8, "desc": "Соседа-союзника бьют: −1 деление шкалы, лечит его на 8"},
-    "mods": [{"stat": "ap_max", "add": 1}]
+    "desc": "Лечит отряд через дух леса. Вместо смены облика — Дух леса.",
+    "replace": {
+      "form_shift": "spirit_tree"
+    },
+    "passive": {
+      "kind": "intercede",
+      "name": "Покров рощи",
+      "pp": 1,
+      "range": 1,
+      "heal": 8,
+      "desc": "Соседа-союзника бьют: −1 деление шкалы, лечит его на 8"
+    },
+    "mods": [
+      {
+        "stat": "ap_max",
+        "add": 1
+      }
+    ]
   },
   "sentinel": {
     "class": "guardian",

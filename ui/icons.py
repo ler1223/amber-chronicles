@@ -4,6 +4,7 @@
 Под значком полоска оставшегося времени. Всё рисуется кодом и кэшируется по (вид, размер, рамка).
 """
 import math
+from pathlib import Path
 
 import pygame
 
@@ -28,10 +29,31 @@ BUFF_NAMES = {"armor": "броня", "atk_mult": "урон", "atk_speed": "бы�
               "collide_stun": "стенобой: столкновения оглушают", "billiard": "бильярд: толчки по цепочке",
               "all_arrows": "все стрелы сразу", "inferno": "инферно: огонь не гаснет",
               "stable": "стабилизатор: теги не реагируют", "armor_shred": "пробита броня",
-              "fletch": "оперение: атаки несут стрелы лучника"}
+              "fletch": "оперение: атаки несут стрелы лучника", "evasion": "уклонение",
+              "debuff_resist": "сопротивление дебафам", "backstab_taken": "уязвим к удару в спину"}
 MARK_GLYPH = {"challenge": "duel", "duel": "duel", "cold": "ice", "bomb": "bomb"}
 
 _cache = {}
+_ASSET_ICONS = {
+    "fog": "fx_fog", "evasion": "fx_evasion", "blind": "fx_blind",
+    "heal_taken": "fx_heal_taken", "tough": "fx_tough", "debuff_resist": "fx_debuff_resist",
+    "regen": "fx_heal_over_time", "shield": "fx_phoenix_shield", "cleanse": "fx_cleanse",
+}
+_ICON_DIR = Path(__file__).resolve().parent.parent / "assets" / "icons"
+
+
+def _asset_icon(kind, size):
+    """Нарисованная иконка эффекта из assets/icons, если лист уже импортирован."""
+    name = _ASSET_ICONS.get(kind)
+    if not name:
+        return None
+    path = _ICON_DIR / f"{name}.png"
+    if not path.exists():
+        return None
+    img = pygame.image.load(str(path)).convert_alpha()
+    if img.get_size() != (size, size):
+        img = pygame.transform.scale(img, (size, size))
+    return img
 
 
 def _star(s, c, x, y, r):
@@ -236,9 +258,11 @@ def icon(kind, size, border):
     if img is None:
         img = pygame.Surface((size, size), pygame.SRCALPHA)
         pygame.draw.rect(img, (22, 22, 30, 235), img.get_rect(), border_radius=4)
-        inner = pygame.Surface((size, size), pygame.SRCALPHA)
-        glyph(inner, kind, size)
-        img.blit(inner, (0, 0))
+        drawn = _asset_icon(kind, size)
+        if drawn is None:
+            drawn = pygame.Surface((size, size), pygame.SRCALPHA)
+            glyph(drawn, kind, size)
+        img.blit(drawn, (0, 0))
         pygame.draw.rect(img, border, img.get_rect(), 2 if size >= 16 else 1, border_radius=4)
         _cache[key] = img
     return img
@@ -255,10 +279,14 @@ def buff_icon(stat, value):
     if stat == "slow":
         return ("fast", True) if value < 1 else ("slow", False)
     if stat == "heal_taken":
-        return ("heal_down", False) if value < 1 else ("regen", True)
+        return ("heal_down", False) if value < 1 else ("heal_taken", True)
+    if stat == "evasion":
+        return ("evasion", True)
+    if stat == "debuff_resist":
+        return ("debuff_resist", True)
     if stat == "range_add":
         return ("range_down", value >= 0)
-    if stat == "exposed":
+    if stat in ("exposed", "backstab_taken"):
         return ("exposed", False)
     if stat == "trance":
         return ("atk_up", True)
@@ -323,6 +351,9 @@ def unit_states(u, data, combat=None):
         d = data.mutators[mut]
         out.insert(0, (d.get("icon", "other"), tuple(d["color"]), 1.0, f"{d['name']}: {d['desc']}"))
     if combat is not None:
+        cell = combat.grid.get(u.cell)
+        if cell is not None and cell.hazard == "fog":
+            out.append(("fog", (170, 180, 190), 1.0, "Туман: уклонение / слепота"))
         for name, left, total in combat.pending_on(u):
             out.append(("regen", (255, 240, 170), left / max(total, 0.01), f"{name} через {left:.1f} с"))
     if u.watch:

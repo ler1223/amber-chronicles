@@ -587,19 +587,23 @@ def barrage(c, caster, eff, tunit):
     if tunit is None:
         c.emit("fizzle", unit=caster, skill=None)
         return
+    shadow = max(caster.ambush, eff.get("_shadow", 1.0))
     n, gap = eff.get("shots", 3), eff.get("gap", 0.16)
+    if shadow > 1.0 and eff.get("shadow_shots"):
+        n = eff["shadow_shots"]                       # из тени — дополнительный дротик
     targets = [tunit]
     if eff.get("spread"):
         targets = [tunit] + [v for v in _foes_by_dist(c, caster, tunit.cell, eff["spread"]) if v is not tunit]
+    shot = dict(eff["shot"], _shadow=shadow)
     for i in range(n):
         t = targets[i % len(targets)]
         extra = {}
         if i == n - 1 and eff.get("last_interrupt"):
             extra = {"interrupt": True, "stun": eff.get("last_stun", 0)}
         if i == 0:
-            fire_shot(c, caster, t, eff["shot"], extra)
+            fire_shot(c, caster, t, shot, extra)
         else:
-            c.delayed.append({"left": i * gap, "total": i * gap, "shot": (caster, t, eff["shot"], extra),
+            c.delayed.append({"left": i * gap, "total": i * gap, "shot": (caster, t, shot, extra),
                               "tunit": None})
 
 

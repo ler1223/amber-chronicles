@@ -1,5 +1,5 @@
 {
- "_note": "Сюжетный режим: пул навыков класса, слоты и доктрины. Уровни — уровень героя (sim/stats.py). core — хотя бы один из этих навыков нужен герою (таверна экспедиции всегда его даёт); requires — навык работает, только если в наборе есть один из перечисленных; ult — ультимейт: не занимает слот, всегда четвёртый (клавиша R).",
+ "_note": "Сюжетный режим: пул навыков класса, слоты и доктрины. Цель — около 10 обычных навыков и 3 ультимейта на класс: герой берёт 3 обычных и один ультимейт, поэтому два героя одного класса собираются по-разному вокруг одной механики. Уровни — уровень героя (sim/stats.py). core — хотя бы один из этих навыков нужен герою (таверна экспедиции всегда его даёт); requires — навык работает, только если в наборе есть один из перечисленных; ult — ультимейт: не занимает слот, всегда четвёртый (клавиша R).",
  "slots": 3,
  "doctrine_unlock": 4,
  "classes": {
@@ -14,11 +14,19 @@
      "level": 2
     },
     {
+     "id": "guard_ally",
+     "level": 3
+    },
+    {
      "id": "riposte",
      "level": 3
     },
     {
      "id": "feint",
+     "level": 5
+    },
+    {
+     "id": "shield_formation",
      "level": 5
     },
     {
@@ -30,13 +38,27 @@
      "level": 9
     },
     {
+     "id": "shield_bash",
+     "level": 10
+    },
+    {
+     "id": "disarm",
+     "level": 12
+    },
+    {
      "id": "duel",
      "level": 10,
      "ult": true
     },
     {
-     "id": "disarm",
-     "level": 12
+     "id": "last_stand",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "shield_charge",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -75,8 +97,16 @@
      "level": 3
     },
     {
+     "id": "piercing_shot",
+     "level": 4
+    },
+    {
      "id": "rain_of_arrows",
      "level": 5
+    },
+    {
+     "id": "concussive_shot",
+     "level": 6
     },
     {
      "id": "headshot",
@@ -85,6 +115,10 @@
     {
      "id": "shackle_shot",
      "level": 9
+    },
+    {
+     "id": "suppressing_fire",
+     "level": 10
     },
     {
      "id": "mirror_arrow",
@@ -135,8 +169,16 @@
      "level": 3
     },
     {
+     "id": "flame_wall",
+     "level": 4
+    },
+    {
      "id": "cinder_field",
      "level": 5
+    },
+    {
+     "id": "ash_veil",
+     "level": 6
     },
     {
      "id": "flashpoint",
@@ -147,13 +189,27 @@
      "level": 9
     },
     {
+     "id": "flashover",
+     "level": 10
+    },
+    {
+     "id": "consume_fire",
+     "level": 12
+    },
+    {
      "id": "inferno",
      "level": 10,
      "ult": true
     },
     {
-     "id": "consume_fire",
-     "level": 12
+     "id": "meteor",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "phoenix",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -212,8 +268,16 @@
      "level": 3
     },
     {
+     "id": "faith_shield",
+     "level": 4
+    },
+    {
      "id": "purify",
      "level": 5
+    },
+    {
+     "id": "consecrate",
+     "level": 6
     },
     {
      "id": "judgment",
@@ -224,13 +288,27 @@
      "level": 9
     },
     {
+     "id": "prayer",
+     "level": 10
+    },
+    {
+     "id": "blessing",
+     "level": 12
+    },
+    {
      "id": "divine_light",
      "level": 10,
      "ult": true
     },
     {
+     "id": "miracle",
+     "level": 10,
+     "ult": true
+    },
+    {
      "id": "revive",
-     "level": 12
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -267,125 +345,132 @@
    }
   },
   "assassin": {
-   "skills": [
-    {
-     "id": "shadow_step",
-     "level": 1
-    },
-    {
-     "id": "vanish",
-     "level": 2
-    },
-    {
-     "id": "backstab",
-     "level": 3
-    },
-    {
-     "id": "smoke_bomb",
-     "level": 5
-    },
-    {
-     "id": "shadow_mark",
-     "level": 7
-    },
-    {
-     "id": "garrote",
-     "level": 9
-    },
-    {
-     "id": "shadow_dance",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "shadow_double",
-     "level": 12
-    }
-   ],
-   "doctrines": [
-    {
-     "id": "shadow",
-     "level": 4
-    },
-    {
-     "id": "duelist",
-     "level": 4
-    }
-   ],
-   "core": [
-    "vanish",
-    "smoke_bomb",
-    "shadow_double"
-   ],
-   "requires": {
-    "garrote": [
-     "vanish",
-     "smoke_bomb",
-     "shadow_double"
+    "skills": [
+      {
+        "id": "vanish",
+        "level": 1
+      },
+      {
+        "id": "backstab",
+        "level": 2
+      },
+      {
+        "id": "venom_darts",
+        "level": 3
+      },
+      {
+        "id": "smoke_bomb",
+        "level": 5
+      },
+      {
+        "id": "shadow_mark",
+        "level": 7
+      },
+      {
+        "id": "bloodletting",
+        "level": 9
+      },
+      {
+        "id": "assassin_decoy",
+        "level": 11
+      },
+      {
+        "id": "shadow_dance",
+        "level": 10,
+        "ult": true
+      },
+      {
+        "id": "shadow_execution",
+        "level": 10,
+        "ult": true
+      },
+      {
+        "id": "nightfall",
+        "level": 10,
+        "ult": true
+      }
+    ],
+    "doctrines": [
+      {
+        "id": "shadow",
+        "level": 4
+      },
+      {
+        "id": "duelist",
+        "level": 4
+      }
+    ],
+    "core": [
+      "vanish"
+    ],
+    "requires": {},
+    "always": [
+      "vanish"
     ]
-   }
   },
   "druid": {
-   "skills": [
-    {
-     "id": "bear_form",
-     "level": 1
-    },
-    {
-     "id": "rejuvenate",
-     "level": 2
-    },
-    {
-     "id": "wolf_form",
-     "level": 3
-    },
-    {
-     "id": "maul",
-     "level": 5
-    },
-    {
-     "id": "pounce",
-     "level": 7
-    },
-    {
-     "id": "entangle",
-     "level": 9
-    },
-    {
-     "id": "wild_fury",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "bear_roar",
-     "level": 12
-    }
-   ],
-   "doctrines": [
-    {
-     "id": "wild",
-     "level": 4
-    },
-    {
-     "id": "grove",
-     "level": 4
-    }
-   ],
-   "core": [
-    "bear_form",
-    "wolf_form"
-   ],
-   "requires": {
-    "maul": [
-     "bear_form"
+    "skills": [
+      {
+        "id": "form_shift",
+        "level": 1
+      },
+      {
+        "id": "entangle",
+        "level": 2
+      },
+      {
+        "id": "rejuvenate",
+        "level": 3
+      },
+      {
+        "id": "wild_call",
+        "level": 5
+      },
+      {
+        "id": "primal_strike",
+        "level": 7
+      },
+      {
+        "id": "beast_dash",
+        "level": 9
+      },
+      {
+        "id": "spirit_tree",
+        "level": 11
+      },
+      {
+        "id": "wild_fury",
+        "level": 10,
+        "ult": true
+      },
+      {
+        "id": "grove_awakening",
+        "level": 10,
+        "ult": true
+      },
+      {
+        "id": "beast_pack",
+        "level": 10,
+        "ult": true
+      }
     ],
-    "bear_roar": [
-     "bear_form"
+    "doctrines": [
+      {
+        "id": "wild",
+        "level": 4
+      },
+      {
+        "id": "grove",
+        "level": 4
+      }
     ],
-    "pounce": [
-     "wolf_form"
-    ]
-   }
+    "core": [
+      "form_shift"
+    ],
+    "always": [
+      "form_shift"
+    ],
+    "requires": {}
   },
   "guardian": {
    "skills": [

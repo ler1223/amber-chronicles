@@ -1,103 +1,158 @@
-"""Режим «Одиночка» и статистика боя: один герой в таверне, 6 слотов навыков (D и F — картами «новый навык»),
-герой крепче, врагов меньше, выбор с героя не спадает, камера едет за ним; учёт урона, лечения и убийств."""
+"""Бесконечный забег: обычный отряд, у каждого героя одна способность, акты не кончаются."""
 import os
+import random
 import sys
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import pygame  # noqa: E402
-
 from test_expedition import ED, X  # noqa: E402
 from sim.combat import ENEMY, PLAYER, Combat  # noqa: E402
+from sim import story_meta  # noqa: E402
 
-pygame.init()
 
-
-def solo_run(seed=2, cls=None):
+def endless_run(seed=2, cls=None):
     prof = X.ExpeditionProfile(ED, solo=True)
-    h = next((h for h in prof.roster if cls is None or h.cls == cls), prof.roster[0])
-    return prof, prof.start([h.uid], seed=seed)
+    picked = list(prof.roster[:2])
+    if cls is not None:
+        h = next((x for x in prof.roster if x.cls == cls), None)
+        if h is not None:
+            picked = [h] + [x for x in prof.roster if x.uid != h.uid][:1]
+    return prof, prof.start([h.uid for h in picked], seed=seed)
 
 
-def test_solo_profile_takes_one_hero():
+def battle_node(run):
+    n = next(n for n in run.nodes.values() if n["type"] == "battle")
+    run.node = n["id"]
+    return n
+
+
+def test_endless_profile_takes_team_and_one_skill():
     prof = X.ExpeditionProfile(ED, solo=True)
-    assert prof.mode == "solo" and not any(h.solo for h in prof.roster)   # таверна общая: «одиночка» — только в походе
+    assert prof.mode == "solo" and prof.solo
+    assert prof.squad_cfg("swamp")["squad_start"] == 2
     try:
-        prof.start([h.uid for h in prof.roster[:2]], seed=1)
-        assert False, "двоих в одиночку не берут"
+        prof.start([prof.roster[0].uid], seed=1)
+        assert False, "в бесконечный забег берут обычный отряд"
     except ValueError:
         pass
-    run = prof.start([prof.roster[0].uid], seed=1)
-    assert run.solo and run.heroes[0].solo and len(run.heroes) == 1 and run.cfg["squad_max"] == 1
-    assert run.apply_ops([{"recruit": 1}], None) == []                  # спутники не присоединяются
+    run = prof.start([h.uid for h in prof.roster[:2]], seed=1)
+    assert run.endless and not run.solo and len(run.heroes) == 2
+    assert run.cfg["squad_max"] == 2
+    for h in run.heroes:
+        assert h.endless_skill
+        assert run.battle_skills(h) == [h.endless_skill]
     back = X.Expedition.from_dict(ED, run.to_dict())
-    assert back.solo and back.heroes[0].solo
+    assert back.endless and not back.solo and len(back.heroes) == 2
+    assert all(len(back.battle_skills(h)) == 1 for h in back.heroes)
 
 
-def test_solo_hero_is_tougher_and_fights_fewer_enemies():
-    _, run = solo_run()
-    squad = X.Expedition(ED, [X.Hero(dict(run.heroes[0].to_dict(), solo=False))], seed=2)
-    assert run.max_hp(run.heroes[0]) > 2 * squad.max_hp(squad.heroes[0])
-    keep = ED.expedition["config"]["solo"]["keep"]
-    for n in run.nodes.values():
-        if n["type"] in ("battle", "elite") and n["encounter"] is not None:
-            run.node = n["id"]
-            c = Combat(run.data, n["encounter"], squad=run.combat_squad(), enemy_scale=run.enemy_scale())
-            assert len(c.alive(ENEMY)) <= max(keep, len([u for u in c.alive(ENEMY) if u.elite or u.boss]))
-
-
-def test_solo_learns_skills_into_d_and_f():
-    _, run = solo_run()
+def test_endless_uses_normal_team_stats_and_enemy_count():
+    _, run = endless_run()
     h = run.heroes[0]
-    for _ in range(8):
-        run.gain_xp(h, run.xp_next(h))
-    assert h.level >= 7 and run.slots_open(h) == 5
-    cards = run.pick_cards(h)
-    assert cards and cards[0]["type"] == "learn"
-    while h.sp > 0 and run.take_card(h, 0):
-        pass
-    ult = X.story_meta.ult_of(ED, h.cls)
-    regular = [s for s in h.skills if s != ult]
-    assert len(regular) == 5 and h.skills[3] == ult                       # Q W E, R — ультимейт, D, F
-    again = X.fix_kit(ED, X.Hero(h.to_dict()))
-    assert again.skills == h.skills                                       # перезагрузка не ломает шесть слотов
+    normal = X.Expedition(ED, [X.Hero(dict(h.to_dict()))], seed=2)
+    assert run.max_hp(h) == normal.max_hp(normal.heroes[0])
+    battle_node(run)
+    scale = run.enemy_scale()
+    assert "solo" not in scale
 
 
-def test_solo_battle_keeps_hero_selected_and_camera_follows():
-    from game.battle_scene import BattleScene
-    _, run = solo_run()
-    nid = run.available()[0]
-    run.enter(nid)
-    sc = BattleScene(run.data, run.nodes[nid]["encounter"], squad=run.combat_squad(), enemy_scale=run.enemy_scale(),
-                     simple=True, solo=True, on_finish=lambda c, f: None)
-    hero = sc.hero
-    assert sc.phase == "battle" and sc.selected is hero                  # расстановки нет — сразу бой
-    foe = sc.combat.alive(ENEMY)[0]
-    sc._select(foe)
-    sc._key(pygame.K_ESCAPE)
-    sc.update(1 / 30)
-    assert sc.selected is hero and sc.selected_units == [hero]
-    v = sc.view
-    v.gl_camera = True                                                   # камера (как в OpenGL)
-    sc.paused = False
-    for _ in range(20):
-        sc.update(1 / 30)
-    scr = v.vfx.screen
-    assert abs(scr.zoom - v.follow_zoom) < 0.05
-    hx, hy = v.cam(v.feet_pos(hero))
-    ax, ay = v.follow_anchor()
-    assert abs(hx - ax) < 40 and abs(hy - ay) < 40                       # герой — в центре кадра
-    p = (300.0, 200.0)
-    back = v.uncam(v.cam(p))
-    assert abs(back[0] - p[0]) < 1e-6 and abs(back[1] - p[1]) < 1e-6    # клики попадают туда же
-    z = v.follow_zoom
-    sc.handle(pygame.event.Event(pygame.MOUSEWHEEL, x=0, y=1))
-    assert v.follow_zoom > z
+def test_endless_acts_grow_and_do_not_end_on_boss():
+    _, run = endless_run()
+    battle_node(run)
+    hp0 = run.enemy_scale()["hp"]
+    run.act = 2
+    hp2 = run.enemy_scale()["hp"]
+    run.act = 3
+    hp3 = run.enemy_scale()["hp"]
+    assert hp3 > hp2 > hp0
+    assert run.act_def["name"] and run.reward_offers("battle")
+    assert run.price_k() > 1.0
+
+    # Босс третьего акта в бесконечном режиме не завершает поход.
+    run.act = 2
+    run.new_map()
+    boss = next(n for n in run.nodes.values() if n["type"] == "boss")
+    run.node = boss["id"]
+    boss["encounter"] = run.boss_encounter()
+    c = Combat(run.data, boss["encounter"], squad=run.combat_squad(), enemy_scale=run.enemy_scale())
+    c.result = "victory"
+    out = run.finish_battle(c)
+    assert out["act_done"] == 2 and run.result is None
+    run.next_act()
+    assert run.act == 3 and run.act_def is not None
+
+
+def test_endless_one_skill_can_be_any_kit_skill():
+    _, run = endless_run()
+    h = run.heroes[0]
+    choices = story_meta.one_skill_choices(run.data, h.cls, h.level, h)
+    assert len(choices) >= 2
+    non_ult = next(s for s in choices if not story_meta.is_ult(run.data, h.cls, s))
+    h.endless_skill = non_ult
+    assert run.battle_skills(h) == [non_ult]
+    h.level = 10
+    ults = [s for s in story_meta.one_skill_choices(run.data, h.cls, h.level, h)
+            if story_meta.is_ult(run.data, h.cls, s)]
+    if ults:
+        h.endless_skill = ults[0]
+        assert run.battle_skills(h) == [ults[0]]
+
+
+def test_endless_elites_grow_with_act_and_get_modifiers():
+    _, run = endless_run()
+    n = battle_node(run)
+    s0 = run.enemy_scale()
+    assert s0["endless"]["elite_count"] == 1
+    c = Combat(run.data, n["encounter"], squad=run.combat_squad(), enemy_scale=s0)
+    elites = [u for u in c.fighters(ENEMY) if u.elite and not u.boss]
+    assert elites and all(u.mutator for u in elites)
+    assert {"frostburst", "stormcaller", "juggernaut", "vampiric", "swift", "thorns"} <= set(run.data.mutators)
+    run.act = 4
+    s4 = run.enemy_scale()
+    assert s4["endless"]["elite_count"] > s0["endless"]["elite_count"]
+    assert run.endless_growth("hp") > 1 + 2 * 0.24      # уже не линейный рост
+
+
+def test_endless_run_can_end_after_boss():
+    prof, run = endless_run()
+    run.result = "ended"
+    end = prof.finish(run)
+    assert end["result"] == "ended" and end["endless"]
+    assert end["act"] >= 0
+
+
+def test_items_scale_past_three_and_shop_can_reroll():
+    _, run = endless_run()
+    assert X.tier_k(run.xd, 4) > X.tier_k(run.xd, 3)
+    assert X.tier_k(run.xd, 10) > X.tier_k(run.xd, 4)
+    item = X.make_item(run.xd, random.Random(1), 4, "rare")
+    assert " IV" in X.item_name(item)
+    old = {"tier": 3, "name": "Тест", "rarity": "rare"}
+    run.act = 4
+    assert run.upgrade_cap() == 5 and run.upgrade_item(old) and old["tier"] == 4
+
+    node = next(iter(run.nodes.values()))
+    node["stock"] = run.shop_stock()
+    run.gold = 9999
+    before = run.gold
+    cost = run.shop_reroll_cost()
+    assert cost > 0 and run.reroll_shop(node["id"])
+    assert run.gold == before - cost and len(node["stock"]) == run.cfg["shop"]["items"]
+
+    it = run.xd["items"]
+    assert {"warded", "duelist", "focused", "thorned", "savage",
+            "archmage", "colossus", "lucky", "bloodthirst"} <= set(it["stat_affixes"])
+    assert {"frost_nova", "thunder_chain", "blood_nova", "quake", "siphon"} <= set(it["effects"])
+    mods, extra, rules = X.item_effects(run.xd, {
+        "uid": 1, "base": "blade", "slot": "weapon", "tier": 4, "rarity": "rare",
+        "name": "Тест", "unique": None, "affixes": [{"kind": "stat", "id": "warded"}],
+    })
+    assert mods
 
 
 def test_battle_stats_count_damage_heals_and_kills():
-    _, run = solo_run(cls="priest")
+    _, run = endless_run(cls="priest")
     nid = run.available()[0]
     run.enter(nid)
     c = Combat(run.data, run.nodes[nid]["encounter"], squad=run.combat_squad(), enemy_scale=run.enemy_scale(),
@@ -105,13 +160,9 @@ def test_battle_stats_count_damage_heals_and_kills():
     while not c.result and c.time < 150:
         c.step()
     st = c.battle_stats()
-    row = st["rows"][0]
-    assert row["dealt"] > 0 and row["taken"] >= 0 and st["foes"] >= st["killed"]
-    assert sum(r["kills"] for r in st["rows"]) <= st["killed"]
-    if c.result == "victory":
-        assert row["kills"] >= 1
+    assert st["rows"] and st["foes"] >= st["killed"]
     out = run.finish_battle(c)
-    assert out["stats"]["rows"][0]["name"] == row["name"]
+    assert out["stats"]["rows"][0]["name"] == st["rows"][0]["name"]
 
 
 def test_main_launcher_offers_only_new_modes(tmp_path):
@@ -125,7 +176,7 @@ def test_main_launcher_offers_only_new_modes(tmp_path):
     app = App(ED, None, False, prof, start="title", launcher="main")
     keys = [k for _, k, _ in app.scene.buttons]
     assert isinstance(app.scene, TitleScene) and keys[0] == "continue"
-    assert not {"solo", "expedition", "story", "mode"} & set(keys)  # один сейв: отряд или одиночка — в таверне
+    assert not {"solo", "expedition", "story", "mode"} & set(keys)  # один сейв: отряд или забег — в таверне
     app._base_path = base
     app.switch_mode("solo")
     assert app.profile.mode == "solo" and app.profile.solo and last_mode(base) == "solo"

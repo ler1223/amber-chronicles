@@ -237,6 +237,41 @@ class Light:
         self.pilot.spells.emitters.append(fall)
         return hit
 
+    # ---------- Щит Феникса ----------
+
+    def phoenix_shield(self, unit, duration=8.0):
+        """Круглый огненный щит вокруг поднятого: два наклонных кольца частиц, медленно вращаются."""
+        R = 0.72
+
+        def step(dt, frac, x, y):
+            t = self.pilot.time
+            for tilt, pal, temp in ((0.25, "fire", 0.88), (-0.55, "light", 0.72)):
+                ang = np.linspace(0, math.tau, 28, endpoint=False) + t * 0.9
+                px = np.cos(ang) * R
+                py = np.sin(ang) * R * 0.62
+                pz = 0.55 + np.sin(ang) * R * (0.9 + tilt)
+                self.ps.spawn(len(ang), (x + px, y + py, pz), (0, 0, 0), life=0.16, temp=temp,
+                              cool=0.6, pal=pal, smoke=None, size=1.5, life_var=0.0)
+            if int(t * 10) % 3 == 0:
+                self.ps.spawn(2, (x + self.rng.normal(0, 0.18, 2), y + self.rng.normal(0, 0.12, 2),
+                                  self.rng.uniform(0.3, 1.2, 2)), (0, 0, 0.5), life=0.5, temp=0.9,
+                              cool=1.0, pal="fire", smoke=None, size=1.2)
+
+        self._follow(unit, step, duration)
+
+    # ---------- Молитва ----------
+
+    def prayer_tick(self, center):
+        """Молитва: свет из-за облаков мигает на выбранную область."""
+        x, y = center[0] + 0.5, center[1] + 0.5
+        self.pillar(x, y, h=2.8, n=45, width=0.16, life=0.5)
+        self.ring(x, y, 1.0, n=90, life=0.5)
+        n = 18
+        self.ps.spawn(n, (x + self.rng.normal(0, 0.16, n), y + self.rng.normal(0, 0.10, n),
+                          self.rng.uniform(0.2, 1.4, n)),
+                      (0, 0, self.rng.uniform(0.8, 1.8, n)), life=0.5, temp=0.9, cool=1.5,
+                      pal="light", smoke=None, spread=0.3, land=DIE)
+
     # ---------- Воскрешение ----------
 
     def revive_cast(self, u, alive):

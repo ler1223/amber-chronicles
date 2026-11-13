@@ -13,7 +13,7 @@ from ui import theme as T
 from ui import pixmesh as M
 from ui.pix_spells import Spells
 from ui.pixsim import BOUNCE, DIE
-from ui.pixfire import FireField, IceField, OilField, PoisonField
+from ui.pixfire import FireField, FogField, IceField, OilField, PoisonField
 from ui.pixfx import FPS, PixFx, family
 from ui.settings import SETTINGS
 
@@ -36,6 +36,7 @@ class PixelPilot:
         self.burning = set()       # клетки, горевшие в прошлом кадре
         self.burning_units = set()  # юниты, горевшие в прошлом кадре
         self.fire = FireField()    # горящие клетки — единая горящая поверхность
+        self.fog = FogField(seed=7)         # туман — серое облако на клетках
         self.ice = IceField(seed=8)  # ледяные клетки — единая ледяная корка
         self.poison = PoisonField(seed=5)   # ядовитые клетки — одна лужа отравы
         self.oil = OilField(seed=6)         # масляные клетки — одна лужа с радужной плёнкой
@@ -45,6 +46,7 @@ class PixelPilot:
         self._tongues = []         # языки пламени на клетках: [x, y, осталось жить, фаза покачивания]
         self._unit_src = {}        # юнит → корни огоньков на модельке: [доля x, доля y, осталось жить]
         self._born, self._wall_hp, self._wall_cache, self._wall_rects = {}, {}, {}, {}
+        self._wall_images = {}     # полная стена: рост/таяние — сдвигом и клипом, без повторной растеризации
         self._breaks = []          # раскалывающиеся куски ледяной стены
         self._deto = []            # детонации Вспышки этого кадра — взрываются одной поверхностью
         self._wall_key, self._wall_map = None, {}
@@ -69,6 +71,7 @@ class PixelPilot:
         self.fx.clear()
         self.spells.clear()
         self.fire.clear()
+        self.fog.clear()
         self.poison.clear()
         self.oil.clear()
         self._tongues.clear()
@@ -80,10 +83,12 @@ class PixelPilot:
         self._wall_rects.clear()
         self._born.clear()
         self._wall_hp.clear()
+        self._wall_images.clear()
         self._wall_key = None
         self.fx.clear()
         self.spells.clear()
         self.fire.clear()
+        self.fog.clear()
         self.poison.clear()
         self.oil.clear()
         self._tongues.clear()
@@ -118,18 +123,36 @@ class PixelPilot:
         self.fire.update(dt, cells, c.grid.w, c.grid.h)
         frozen = [pos for pos, cell in c.grid.cells.items() if cell.hazard == "ice" and not S.held(pos)]
         self.ice.update(dt, frozen, c.grid.w, c.grid.h)
+        fog = [pos for pos, cell in c.grid.cells.items() if cell.hazard == "fog" and not S.held(pos)]
+        self.fog.update(dt, fog, c.grid.w, c.grid.h)
+        n = self._rate("fog", 5 * len(fog), dt)
+        if n:
+            i = S.rng.integers(0, len(fog), n)
+            xs = np.array([fog[k][0] for k in i], float) + S.rng.uniform(0.0, 1.0, n)
+            ys = np.array([fog[k][1] for k in i], float) + S.rng.uniform(0.0, 1.0, n)
+            S.ps.spawn(n, (xs, ys, np.full(n, 0.04)), (S.rng.uniform(-0.24, 0.24, n),
+                       S.rng.uniform(-0.08, 0.08, n), S.rng.uniform(0.05, 0.40, n)),
+                       life=2.1, temp=S.rng.uniform(0.34, 0.62, n), cool=0.9, buoy=0.35, drag=1.6,
+                       size=3.4, grow=2.0, alpha=0.55, pal="fog", smoke=None, spread=0.55,
+                       jitter=0.12, life_var=0.4)
+        k = self._rate("fog_puffs", 2.2 * len(fog), dt)
+        for _ in range(k):
+            p = fog[S.rng.integers(0, len(fog))]
+            x, y = p[0] + S.rng.uniform(0.1, 0.9), p[1] + S.rng.uniform(0.1, 0.9)
+            sx, sy, _ = P.project(x, y)
+            self.fx.add("fog", (sx, sy), ttl=1.6, scale=0.95, depth=sy, anchor="bottom")
         self.icy = set(frozen)
         self.poison.update(dt, [p for p, cell in c.grid.cells.items() if cell.hazard == "poison"], c.grid.w, c.grid.h)
         self.oil.update(dt, [p for p, cell in c.grid.cells.items() if cell.hazard == "oil"], c.grid.w, c.grid.h)
         self._cell_tongues(dt, len(cells))
         blaze = [pos for pos in cells if c.grid.get(pos).blaze]
-        n = self._rate("blaze", 26 * len(blaze), dt)
-        if n:                                   # горящее масло: высокие жёлтые языки и густой чёрный дым
+        n = self._rate("blaze", 42 * len(blaze), dt)
+        if n:                                   # усиленный огонь: высокие сине-белые языки и густой дым
             i = S.rng.integers(0, len(blaze), n)
             xs = np.array([blaze[k][0] for k in i], float) + S.rng.uniform(0.1, 0.9, n)
             ys = np.array([blaze[k][1] for k in i], float) + S.rng.uniform(0.1, 0.9, n)
-            S.ps.spawn(n, (xs, ys, np.full(n, 0.02)), (0, 0, 1.25), life=0.85, temp=S.rng.uniform(0.92, 1.0, n),
-                       cool=1.1, buoy=3.4, drag=3.0, size=2.8, grow=-2.6, tall=1.2, pal="fire", smoke="dust",
+            S.ps.spawn(n, (xs, ys, np.full(n, 0.02)), (0, 0, 1.45), life=0.95, temp=S.rng.uniform(0.92, 1.0, n),
+                       cool=1.1, buoy=3.8, drag=2.8, size=3.2, grow=-2.4, tall=2.0, pal="blaze", smoke="dust",
                        smoke_at=0.35, jitter=0.08, life_var=0.3)
         n = self._rate("sparks", 1.5 * len(cells), dt)
         pts = self.fire.sample(n, S.rng) if n else None
@@ -143,6 +166,27 @@ class PixelPilot:
             k = self._rate(("u", u.id), 28, dt)
             if k:
                 self._unit_flames(u, rects[u.id], k, dt)
+
+    def fire_wall(self, cells, duration=6.0):
+        """Стена огня: высокие пиксельные языки по линии клеток, а не редкие искры."""
+        S = self.spells
+        cells = [(float(p[0]), float(p[1])) for p in cells]
+        if not cells:
+            return
+
+        def step(dt, frac):
+            n = max(1, int(58 * dt * len(cells)))
+            idx = S.rng.integers(0, len(cells), n)
+            arr = np.array(cells)[idx]
+            xs = arr[:, 0] + S.rng.uniform(0.08, 0.92, n)
+            ys = arr[:, 1] + S.rng.uniform(0.08, 0.92, n)
+            S.ps.spawn(n, (xs, ys, np.full(n, 0.03)),
+                       (S.rng.uniform(-0.22, 0.22, n), np.zeros(n), S.rng.uniform(1.8, 3.8, n)),
+                       life=1.0, temp=S.rng.uniform(0.86, 1.0, n), cool=1.15, buoy=4.2, drag=2.2,
+                       size=3.4, grow=-1.8, tall=2.3, pal="fire", smoke="dust", smoke_at=0.22,
+                       jitter=0.06, life_var=0.3)
+
+        S.emitter(max(0.2, duration), step)
 
     def _cell_tongues(self, dt, ncells):
         """Пламя на клетках — отдельные языки, как у настоящего огня: у каждого свой корень, живёт пару секунд,
@@ -298,6 +342,8 @@ class PixelPilot:
     def skill(self, u, sk, spec, ctx, color, far, radius, tier, sid=None):
         """Навык огня или льда: свой снаряд и удар. Возвращает время до удара или None (не стихия пилота)."""
         from ui.pix_weapons import WEAPON_SKILLS
+        if sk and sk.get("channel"):
+            return 0.0                         # канал рисует channel_tick, а не разовый удар
         if self.on and sid in WEAPON_SKILLS:
             return self.weapons.skill(sid, u, sk, ctx, ctx.get("hit"))
         if self.on and sid in ("thunderstorm", "e_thunderstorm"):     # гроза: молнии из тучи по площади
@@ -851,25 +897,35 @@ class PixelPilot:
             r = self._wall_rects.get(tuple(run))
             return r.copy() if r is not None else pygame.Rect(0, 0, 0, 0)
         g = min(self._wall_grow(w) for w in units)
-        sink = M.data()["height"] * 1.05 * (1 - g)
-        key = (tuple(run), variant, side, round(sink * 30), P.view_key())
-        hit = self._wall_cache.get(key)
+        # Полную стену растеризуем один раз. Рост/таяние — вертикальный сдвиг и клип по её
+        # исходному прямоугольнику: так дорогой M.wall() не вызывается на каждом кадре.
+        key = (tuple(run), variant, side, P.view_key())
+        hit = self._wall_images.get(key)
         if hit is None:
-            if len(self._wall_cache) > 120:
-                self._wall_cache.clear()
-            hit = self._wall_cache[key] = M.wall(axis, run, variant, side, sink)
+            if len(self._wall_images) > 32:
+                self._wall_images.clear()
+            hit = self._wall_images[key] = M.wall(axis, run, variant, side, 0.0)
         if hit is None:
             return pygame.Rect(0, 0, 0, 0)
         img, (x, y) = hit
+        rise = int(round(img.get_height() * (1.0 - g)))
         if any(self.view.anim(q).hit > 0 for q in units):        # удар: стена вздрагивает
             x += math.sin(self.view.clock * 90) * 1.5
         alpha = int(255 * self._dim())                          # пауза: стена не закрывает фигурки
         if alpha < 255:
             img.set_alpha(alpha)
-        surf.blit(img, (round(x), round(y)))
+        # Видна только часть над исходной нижней кромкой; ниже — стена «в земле».
+        clip = pygame.Rect(round(x), round(y), img.get_width(), img.get_height())
+        old_clip = surf.get_clip()
+        if old_clip is not None:
+            clip = clip.clip(old_clip)
+        surf.set_clip(clip)
+        surf.blit(img, (round(x), round(y) + rise))
+        surf.set_clip(old_clip)
         if alpha < 255:
             img.set_alpha(255)
-        r = pygame.Rect(round(x), round(y), img.get_width(), img.get_height())
+        visible_h = max(0, min(img.get_height(), int(round(img.get_height() * g))))
+        r = pygame.Rect(round(x), round(y) + rise, img.get_width(), visible_h)
         self._wall_rects[tuple(run)] = r
         return r
 
@@ -906,7 +962,9 @@ class PixelPilot:
             return
         w = self._wall_map.get(u.id)
         axis, side, variant = (w[0], w[3], w[4]) if w else ("y", 1 if u.cell[0] + 0.5 >= P.CX else -1, 0)
-        self._breaks.append([u.cell, axis, side, variant, self.time])
+        # 3D-раскол рисуем один раз на всю стену; остальные глыбы дают только частицы.
+        if w is None or u.id == w[5]:
+            self._breaks.append([u.cell, axis, side, variant, self.time])
         x, y = u.cell[0] + 0.5, u.cell[1] + 0.5
         n = 24
         a = S.rng.uniform(0, math.tau, n)
@@ -922,15 +980,17 @@ class PixelPilot:
         """Раскалывающиеся куски стены: кадр по траекториям Blender, после — глыбы лежат и тают (0.8 сек)."""
         out = []
         frames, fps = M.break_frames()
+        step = 3                                  # 30 кадров Blender → 10 уникальных кадров
+        life = frames / fps
         keep = []
         for b in self._breaks:
             cell, axis, side, variant, t0 = b
             age = self.time - t0
-            if age > frames / fps + 0.8:
+            if age > life + 0.8:
                 continue
             keep.append(b)
-            f = min(frames - 1, int(age * fps))
-            fade = max(0.0, 1 - max(0.0, age - frames / fps) / 0.8)
+            f = min(frames - 1, (int(age * fps) // step) * step)
+            fade = max(0.0, 1 - max(0.0, age - life) / 0.8)
             out.append((P.project(cell[0] + 0.5, cell[1] + 0.9)[1], 1, "pix",
                         (self._draw_break, (cell, axis, side, variant, f, fade))))
         self._breaks = keep
@@ -986,6 +1046,7 @@ class PixelPilot:
         self.poison.draw(flat, dim)
         self.ice.draw(flat, dim)               # ледяные клетки — одна корка, а не иней на каждой клетке
         self.fire.draw(flat, dim)
+        self.fog.draw(flat, dim)
         self.fx.draw_ground(flat, dim)
         for q in self.quakes:
             q.draw(flat)

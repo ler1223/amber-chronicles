@@ -80,6 +80,14 @@ def entries(data):
         if sid.startswith("e_") and family(sk):
             out.append((f"враг · {sk['name']}  [{'огонь' if family(sk) == 'fire' else 'лёд'}]", "mage", None, {},
                         sid))
+    # всё, что не попало в пулы (старые/резервные/вырезанные навыки), тоже должно быть видно в галерее
+    for sid, sk in data.skills.items():
+        if sid.startswith("e_") or any(sid == x[4] for x in out):
+            continue
+        for br in [None] + sorted(data.branches.get(sid, {})):
+            mark = {"fire": "  [огонь]", "ice": "  [лёд]"}.get(family(sk), "")
+            label = f"резерв · {sk['name']}" + (f" ({br}2)" if br else "") + mark
+            out.append((label, "mage", STORY, {sid: (br, 2)} if br else {}, sid))
     return out
 
 

@@ -3,6 +3,7 @@
 Все экраны — stage (вёрстка 1280×800). Поход сохраняется после каждого шага: из любого экрана можно выйти
 в таверну и вернуться («Продолжить поход»), бой при этом начнётся заново, а исход броска события — нет.
 """
+import contextlib
 import math
 
 import pygame
@@ -189,6 +190,8 @@ def resume(app):
         app.switch(ShopScene(app))
     elif kind == "act":
         app.switch(ActScene(app))
+    elif kind == "boss_choice":
+        app.switch(EndlessBossScene(app))
     else:
         to_map(app)
 
@@ -285,6 +288,11 @@ def after_reward(app, summary):
     if run.result == "victory":
         finish(app)
     elif summary.get("act_done") is not None:
+        if run.endless:
+            run.stage = {"kind": "boss_choice"}
+            save(app)
+            app.switch(EndlessBossScene(app))
+            return
         run.next_act()
         run.stage = {"kind": "act"}
         save(app)
@@ -315,34 +323,96 @@ class XScene:
         self.scroll_pos = {}    # прокрутка списков: {ключ: первый видимый элемент}
         self.scroll_regs = {}   # списки, нарисованные в этом кадре: {ключ: (область, дорожка, всего, видно, вид)}
         self.scroll_drag = None
+        self.scroll_cur = {}    # плавная прокрутка: текущее (дробное) положение, догоняет scroll_pos
+        self.scroll_t = {}
+        self.grid_clip = None   # сетка рисуется — попадания мыши обрезаются её областью
         self.frame_n = 0
 
     # ---------- прокрутка списков ----------
 
     def scroll_list(self, surf, key, area, total, visible, horizontal=False):
         """Список с полосой прокрутки: колесо над областью, перетаскивание ползунка, клик по дорожке.
-        Возвращает первый видимый элемент (строку). Полоса — справа (или снизу у горизонтального)."""
+        Возвращает первый видимый элемент (строку); положение плавно догоняет цель (дробная часть —
+        scroll_shift). Полоса — справа (или снизу у горизонтального)."""
         mx = max(0, total - visible)
         pos = max(0, min(mx, self.scroll_pos.get(key, 0)))
         self.scroll_pos[key] = pos
         if mx <= 0:
             self.scroll_regs.pop(key, None)
+            self.scroll_cur[key] = 0.0
             return 0
+        cur = self.scroll_cur.get(key, float(pos))                # плавно: текущее догоняет цель
+        dt = max(0.0, min(0.1, self.clock - self.scroll_t.get(key, self.clock)))
+        self.scroll_t[key] = self.clock
+        cur += (pos - cur) * min(1.0, dt * 14)
+        if abs(pos - cur) < 0.002 or dt == 0 and key not in self.scroll_cur:
+            cur = float(pos)
+        self.scroll_cur[key] = cur
+        pos_draw = cur
         area = pygame.Rect(area)
         track = pygame.Rect(area.x + 4, area.bottom + 4, area.w - 8, 10) if horizontal else \
             pygame.Rect(area.right + 4, area.y + 2, 10, area.h - 4)
         long_ = track.w if horizontal else track.h
         size = max(28, int(long_ * visible / total))
-        off = int((long_ - size) * pos / mx)
+        off = int((long_ - size) * pos_draw / mx)
         thumb = pygame.Rect(track.x + off, track.y, size, track.h) if horizontal else \
             pygame.Rect(track.x, track.y + off, track.w, size)
         hot = track.collidepoint(self.mouse) or (self.scroll_drag or (None,))[0] == key
         pygame.draw.rect(surf, (24, 18, 13), track, border_radius=5)
         pygame.draw.rect(surf, (80, 60, 40), track, 1, border_radius=5)
-        pygame.draw.rect(surf, (230, 180, 100) if hot else (170, 130, 80), thumb, border_radius=5)
-        pygame.draw.rect(surf, (60, 40, 24), thumb, 1, border_radius=5)
+        img = T.orn("ui_scroll_thumb", thumb.w, thumb.h) if not horizontal else None   # ползунок (лист UI)
+        if img is not None:
+            surf.blit(img, thumb)
+            if hot:
+                pygame.draw.rect(surf, (255, 220, 150), thumb, 1, border_radius=5)
+        else:
+            pygame.draw.rect(surf, (230, 180, 100) if hot else (170, 130, 80), thumb, border_radius=5)
+            pygame.draw.rect(surf, (60, 40, 24), thumb, 1, border_radius=5)
         self.scroll_regs[key] = (area, track, total, visible, horizontal, self.frame_n)
-        return pos
+        return int(math.floor(cur))
+
+    def scroll_shift(self, key, step):
+        """Сдвиг в пикселях для плавной прокрутки: дробная часть положения × высота строки."""
+        cur = self.scroll_cur.get(key, 0.0)
+        return -int(round((cur - math.floor(cur)) * step))
+
+    @contextlib.contextmanager
+    def grid(self, surf, key, area, n, cw, ch, gap=10, stretch=True):
+        """Сетка карточек с плавной прокруткой на всё место: колонки по ширине (карточки растягиваются до краёв),
+        строки — сколько влезет, частично видимые обрезаются. yield [(индекс, прямоугольник)]."""
+        area = pygame.Rect(area)
+        step = ch + gap
+        cols = max(1, (area.w + gap) // (cw + gap))
+        rows = -(-n // cols) if n else 0
+        need = rows * step - gap > area.h
+        inner = pygame.Rect(area.x, area.y, area.w - (22 if need else 0), area.h)
+        cols = max(1, (inner.w + gap) // (cw + gap))
+        if stretch:
+            cw = (inner.w - gap * (cols - 1)) // cols
+        rows = -(-n // cols) if n else 0
+        vis = (inner.h + gap) / step
+        first = self.scroll_list(surf, key, inner, rows, vis) if rows > vis else 0
+        if rows <= vis:
+            self.scroll_regs.pop(key, None)
+            self.scroll_pos[key] = 0
+        shift = self.scroll_shift(key, step) if rows > vis else 0
+        cells = []
+        for r_ in range(first, min(rows, first + int(vis) + 2)):
+            for c in range(cols):
+                i = r_ * cols + c
+                if i >= n:
+                    break
+                rect = pygame.Rect(inner.x + c * (cw + gap), inner.y + (r_ - first) * step + shift, cw, ch)
+                if rect.bottom > inner.y and rect.y < inner.bottom:
+                    cells.append((i, rect))
+        clip = surf.get_clip()
+        surf.set_clip(inner.clip(clip) if clip else inner)
+        prev, self.grid_clip = self.grid_clip, inner
+        try:
+            yield cells
+        finally:
+            surf.set_clip(clip)
+            self.grid_clip = prev
 
     def scroll_event(self, ev):
         """Колесо и перетаскивание полос прокрутки. True — событие съедено."""
@@ -394,6 +464,10 @@ class XScene:
             self.toast = (self.toast[0], self.toast[1] - dt) if self.toast[1] > dt else None
 
     def hit(self, rect, action=None, tip=None):
+        if self.grid_clip is not None:               # карточка сетки, частично за краем, — только видимая часть
+            rect = pygame.Rect(rect).clip(self.grid_clip)
+            if not rect.w or not rect.h:
+                return
         self.hits.append((rect, action, tip))
 
     def handle(self, ev):
@@ -658,9 +732,13 @@ class ActScene(XScene):
         band = pygame.Surface((T.SCREEN_W, 300), pygame.SRCALPHA)
         band.fill((6, 8, 10, 170))
         surf.blit(band, (0, 240))
-        T.text(surf, a["name"], (T.SCREEN_W // 2, 280), 44, GLORY, True, center=True, shadow=True)
+        title = f"Акт {self.run.act + 1} · {a['name']}" if self.run.endless else a["name"]
+        T.text(surf, title, (T.SCREEN_W // 2, 280), 44, GLORY, True, center=True, shadow=True)
         y = 350
-        for line in T.wrap(a.get("intro", ""), 20, 820):
+        intro = a.get("intro", "")
+        if self.run.endless:
+            intro += "  Враги становятся сильнее с каждым актом."
+        for line in T.wrap(intro, 20, 820):
             T.text(surf, line, (T.SCREEN_W // 2, y), 20, (220, 220, 210), center=True, shadow=True)
             y += 28
         diff = self.run.data.config["difficulties"][self.run.difficulty]["name"]
@@ -668,6 +746,50 @@ class ActScene(XScene):
                T.TEXT_DIM, center=True)
         r = pygame.Rect(T.SCREEN_W - 300, T.SCREEN_H - 84, 260, 50)
         self.button(surf, r, "В путь (Пробел)", "go", True, GOLD)
+
+
+class EndlessBossScene(XScene):
+    """После босса бесконечного забега: можно продолжить или закончить забег здесь."""
+
+    def act(self, action, button=1):
+        run = self.run
+        if action == "continue":
+            run.next_act()
+            run.stage = {"kind": "act"}
+            save(self.app)
+            self.app.switch(ActScene(self.app))
+        elif action == "end":
+            run.result = "ended"
+            run.stage = None
+            save(self.app)
+            finish(self.app)
+
+    def key(self, k):
+        if k in (pygame.K_SPACE, pygame.K_RETURN):
+            self.act("continue")
+
+    def draw(self, surf):
+        self.hits = []
+        surf.fill((10, 14, 12))
+        run = self.run
+        a = run.act_def
+        self.backdrop(surf, a.get("art", f"act_{run.act}"), "act", dim=95)
+        img_h = T.SCREEN_W * 2 // 3
+        k = T.SCREEN_W / 192 / 2
+        party_in_scene(surf, run.data, run.heroes, (T.SCREEN_H - img_h) // 2 + int(img_h * 0.95),
+                       30, int(56 * k), k=k, dark=0.8)
+        band = pygame.Surface((T.SCREEN_W, 300), pygame.SRCALPHA)
+        band.fill((6, 8, 10, 170))
+        surf.blit(band, (0, 240))
+        T.text(surf, "Босс акта повержен", (T.SCREEN_W // 2, 280), 44, GLORY, True, center=True, shadow=True)
+        T.text(surf, f"Акт {run.act + 1} · {a['name']}", (T.SCREEN_W // 2, 332), 20,
+               (220, 220, 210), center=True, shadow=True)
+        T.text(surf, "Можно идти дальше — или завершить бесконечный забег с текущими наградами.",
+               (T.SCREEN_W // 2, 366), 18, T.TEXT, center=True, shadow=True)
+        self.button(surf, pygame.Rect(T.SCREEN_W // 2 - 280, T.SCREEN_H - 84, 250, 50),
+                    "Продолжить забег", "continue", True, GOLD)
+        self.button(surf, pygame.Rect(T.SCREEN_W // 2 + 30, T.SCREEN_H - 84, 250, 50),
+                    "Завершить забег", "end", True, (220, 130, 95))
 
 
 # ---------- карта ----------
@@ -694,9 +816,15 @@ class MapScene(XScene):
             y = y0 + (y1 - y0) * (n["idx"] + 0.5) / n["count"]
             self.node_pos[n["id"]] = (x, y)
 
+    def node_visible(self, n):
+        if not self.run.torch_on():
+            return True
+        cur = self.run.nodes[self.run.node]["layer"] if self.run.node else -1
+        return n["layer"] <= cur + self.run.torch_visibility()
+
     def node_at(self, pos):
         for nid, p in self.node_pos.items():
-            if math.dist(p, pos) <= 26:
+            if nid in self.run.nodes and self.node_visible(self.run.nodes[nid]) and math.dist(p, pos) <= 26:
                 return nid
         return None
 
@@ -739,7 +867,8 @@ class MapScene(XScene):
             self._layout()
         surf.fill(T.BG)
         self.backdrop(surf, run.act_def.get("art", f"act_{run.act}"), "act", dim=200)
-        self.header(surf, run.act_def["name"], f"Сложность: {run.data.config['difficulties'][run.difficulty]['name']}"
+        act_name = f"Акт {run.act + 1} · {run.act_def['name']}" if run.endless else run.act_def["name"]
+        self.header(surf, act_name, f"Сложность: {run.data.config['difficulties'][run.difficulty]['name']}"
                     f"  ·  выберите узел: клик или 1–3  ·  F1–F4 / H — лист героя  ·  Esc — в таверну (сохранено)")
         x = self.draw_buffs(surf, 26, 78)
         if run.bag:
@@ -749,6 +878,8 @@ class MapScene(XScene):
             self._draw_heat(surf)
         if run.forge_on():
             draw_mats(self, surf, run, T.SCREEN_W - 26, 52, right=True)
+        if run.torch_on():
+            self._draw_torch(surf)
         from ui import map_art as MA
         avail = set(run.available())
         visited = set(run.path)
@@ -756,8 +887,10 @@ class MapScene(XScene):
         T.frame(surf, board, 150, accent=T.AMBER_DIM)
         rad = {nid: (30 if n["type"] == "boss" else 25 if n["type"] == "elite" else 22) for nid, n in run.nodes.items()}
         for n in run.nodes.values():
+            if not self.node_visible(n):
+                continue
             for nxt in n["next"]:
-                if nxt not in self.node_pos:
+                if nxt not in self.node_pos or not self.node_visible(run.nodes[nxt]):
                     continue
                 if n["id"] in visited and nxt in visited:
                     state = "done"
@@ -770,6 +903,8 @@ class MapScene(XScene):
         hover = self.node_at(self.mouse)
         keys = {nid: i + 1 for i, nid in enumerate(self.open_nodes())}
         for n in run.nodes.values():
+            if not self.node_visible(n):
+                continue
             x, y = self.node_pos[n["id"]]
             nid = n["id"]
             state = ("here" if nid == run.node else "open" if nid in avail else "done" if nid in visited else "future")
@@ -802,6 +937,18 @@ class MapScene(XScene):
             self._node_tip(surf, run.nodes[hover])
         else:
             self.draw_tip(surf)
+
+    def _draw_torch(self, surf):
+        """Факелы: сколько осталось и на сколько слоёв карты хватает света."""
+        run = self.run
+        r = pygame.Rect(T.SCREEN_W - 420, 84, 300, 14)
+        T.text(surf, f"Факелы {run.torches}/{run.torch_max}", (r.x - 96, r.y - 3), 15, (255, 210, 120), True,
+               shadow=True)
+        step = r.w / max(1, run.torch_max)
+        for i in range(run.torch_max):
+            c = pygame.Rect(int(r.x + i * step), r.y, int(max(8, step - 4)), 12)
+            pygame.draw.rect(surf, (255, 190, 80) if i < run.torches else (50, 42, 34), c, border_radius=4)
+        T.text(surf, f"видно {run.torch_visibility()} кл.", (r.x - 96, r.y + 18), 13, T.TEXT_DIM, True, shadow=True)
 
     def _draw_heat(self, surf):
         """Жар кузни: шкала с порогами извержений; на пороге лава зальёт отмеченные узлы."""
@@ -1062,9 +1209,10 @@ class HeroScene(XScene):
         if h.sp:
             T.text(surf, f"выборов: {h.sp}", (box.right - 120, box.y + 12), 16, SP, True)
         y = box.y + 38
-        rh = min(132, (box.bottom - y - 6) // max(1, len(h.skills)) - 6)       # 3 навыка + ультимейт — карточки ниже
+        skills = run.battle_skills(h) if getattr(run, "endless", False) else h.skills
+        rh = min(132, (box.bottom - y - 6) // max(1, len(skills)) - 6)       # 3 навыка + ультимейт — карточки ниже
         ult = story_meta.ult_of(data, h.cls, h.skills)
-        for k_, sid in enumerate(h.skills):
+        for k_, sid in enumerate(skills):
             sk = p["skill_defs"].get(sid, data.skills[sid])
             r = pygame.Rect(box.x + 10, y, box.w - 20, rh)
             is_ult = sid == ult
@@ -1155,11 +1303,14 @@ class HeroScene(XScene):
         y += 8
         T.text(surf, f"Сумка ({len(run.bag)})", (box.x + 12, y), 16, T.TEXT, True)
         y += 24
-        rows = max(1, (box.bottom - 8 - y) // 27)
-        first = self.scroll_list(surf, "bag", pygame.Rect(box.x + 10, y, box.w - 34, rows * 27 - 3), len(run.bag),
-                                 rows)
-        for item in run.bag[first:first + rows]:
-            r = pygame.Rect(box.x + 10, y, box.w - 34 if len(run.bag) > rows else box.w - 20, 24)
+        with self.grid(surf, "bag", pygame.Rect(box.x + 10, y, box.w - 20, box.bottom - 8 - y), len(run.bag),
+                       box.w - 20, 24, gap=3) as cells:
+            for i, r in cells:
+                self._bag_row(surf, run.bag[i], r)
+
+    def _bag_row(self, surf, item, r):
+        h, xd = self.hero, self.xd
+        if True:
             hot = r.collidepoint(self.mouse)
             pygame.draw.rect(surf, (70, 52, 34) if hot else (46, 35, 26), r, border_radius=5)
             ic = item_icon(item, 20)
@@ -1171,7 +1322,6 @@ class HeroScene(XScene):
             if old:
                 tip.append((f"вместо: {X.item_name(old)}", T.TEXT_DIM))
             self.hit(r, ("equip", item["uid"]), tip)
-            y += 27
 
 
 # ---------- событие ----------
@@ -1354,8 +1504,8 @@ class TavernHeroScene(HeroScene):
         self.heroes = prof.recruitable() if hasattr(prof, "recruitable") else prof.hall()
         idx = next((i for i, h in enumerate(self.heroes) if h.uid == uid), 0)
         solo = getattr(prof, "solo", False)
-        self._run = X.Expedition(prof.data, [X.Hero(dict(h.to_dict(), solo=solo)) for h in self.heroes], seed=0,
-                                 chapter=tavern.chapter, solo=solo)
+        self._run = X.Expedition(prof.data, [X.Hero(dict(h.to_dict(), solo=False)) for h in self.heroes], seed=0,
+                                 chapter=tavern.chapter, endless=solo)
         super().__init__(app, idx, back=lambda: app.switch(tavern))
 
     @property
@@ -2497,9 +2647,11 @@ class CampScene(XScene):
         self.header(surf, "Лагерь", "Костёр и пара часов покоя. Выберите одно. В листе героя здесь можно "
                                     "сбросить очки навыков.")
         wounded = [h.name for h in run.heroes if h.wounded]
-        opts = [("rest", "Отдых", [(f"Отряд лечится на {run.cfg['camp_heal'] * 100:.0f}%", T.TEXT),
-                                  ("Раны заживают" + (": " + ", ".join(wounded) if wounded else ""), BLESS)],
-                 (90, 220, 120)),
+        rest_lines = [(f"Отряд лечится на {run.cfg['camp_heal'] * 100:.0f}%", T.TEXT),
+                      ("Раны заживают" + (": " + ", ".join(wounded) if wounded else ""), BLESS)]
+        if run.torch_on():
+            rest_lines.append((f"Факелы пополняются до {run.torch_max}", (255, 190, 80)))
+        opts = [("rest", "Отдых", rest_lines, (90, 220, 120)),
                 ("train", "Тренировка", [("+1 выбор улучшения навыков каждому", SP), ("+половина уровня опыта", W.XP)], SP)]
         if run.heat_on():
             opts.append(("cool", "Остудить кузню", [(f"Жар −{run.heat_cfg().get('camp_cool', 30)}", HEAT),
@@ -2683,7 +2835,7 @@ class AnvilScene(XScene):
             r = pygame.Rect(right.x + 10, y, right.w - 20, 30)
             T.text(surf, fit(X.item_name(item), 14, right.w - 250), (r.x + 4, r.y + 6), 14, rarity_color(xd, item), True)
             b = pygame.Rect(r.right - 224, r.y + 2, 110, 26)
-            can = run.can_pay(run.reforge_cost(item)) and item["tier"] < 3
+            can = run.can_pay(run.reforge_cost(item)) and item["tier"] < run.upgrade_cap()
             self._mini(surf, b, "перековать", ("reforge", item["uid"]), can, HEAT,
                        self.item_tip(item) + [("Перековать: " + rc, GOLD)])
             if item in run.bag:
@@ -2724,12 +2876,20 @@ class ShopScene(XScene):
         elif kind == "sell":
             got = run.sell(action[1])
             self.say(f"Продано за {got}")
+        elif kind == "reroll":
+            if not run.reroll_shop(run.node):
+                self.say("Не хватает золота")
+            else:
+                self.say("Товар обновлён")
         elif kind == "heal":
             if not run.buy_heal():
                 self.say("Не хватает золота")
         elif kind == "uncurse":
             if not run.buy_uncurse():
                 self.say("Не хватает золота")
+        elif kind == "torch":
+            if not run.buy_torch():
+                self.say("Не хватает золота или факелы полны")
         elif kind == "hero":
             self.app.switch(HeroScene(self.app, action[1], back=lambda: self.app.switch(ShopScene(self.app))))
         elif kind == "leave":
@@ -2771,25 +2931,32 @@ class ShopScene(XScene):
         pygame.draw.rect(surf, T.PANEL, box, border_radius=10)
         T.text(surf, "Сумка — ПКМ продать", (box.x + 10, box.y + 8), 15, T.TEXT, True)
         y = box.y + 32
-        rows = (box.bottom - 6 - y) // 29
-        first = self.scroll_list(surf, "shop_bag", pygame.Rect(box.x + 8, y, box.w - 30, rows * 29 - 3),
-                                 len(run.bag), rows)
-        for item in run.bag[first:first + rows]:
-            r = pygame.Rect(box.x + 8, y, box.w - 30 if len(run.bag) > rows else box.w - 16, 26)
-            pygame.draw.rect(surf, (46, 35, 26), r, border_radius=5)
-            T.text(surf, X.item_name(item), (r.x + 8, r.y + 5), 13, rarity_color(xd, item), True)
-            self.hit(r, ("sell", item["uid"]), self.item_tip(item) + [(f"ПКМ — продать за "
-                                                                        f"{X.item_price(xd, item) // 3}", GOLD)])
-            y += 29
+        with self.grid(surf, "shop_bag", pygame.Rect(box.x + 8, y, box.w - 16, box.bottom - 6 - y), len(run.bag),
+                       box.w - 16, 26, gap=3) as cells:
+            for i, r in cells:
+                item = run.bag[i]
+                pygame.draw.rect(surf, (46, 35, 26), r, border_radius=5)
+                T.text(surf, X.item_name(item), (r.x + 8, r.y + 5), 13, rarity_color(xd, item), True)
+                self.hit(r, ("sell", item["uid"]), self.item_tip(item) + [(f"ПКМ — продать за "
+                                                                            f"{X.item_price(xd, item) // 3}", GOLD)])
         self.button(surf, pygame.Rect(26, 366, 300, 46), f"Лекарь: +{run.cfg['shop']['heal_pct'] * 100:.0f}% HP — "
                     f"{run.heal_price()}", "heal", run.gold >= run.heal_price(), (90, 220, 120))
+        self.button(surf, pygame.Rect(26, 420, 300, 46),
+                    f"Обновить товар — {run.shop_reroll_cost()}", "reroll",
+                    run.gold >= run.shop_reroll_cost(), GOLD)
         self.button(surf, pygame.Rect(346, 366, 330, 46), f"Снять проклятие — {run.curse_price()}", "uncurse",
                     bool(run.curses) and run.gold >= run.curse_price(), CURSE)
+        if run.torch_on():
+            tc = run.torch_cfg()
+            price, amount = int(tc.get("shop_price", 25)), int(tc.get("shop_amount", 2))
+            self.button(surf, pygame.Rect(696, 366, 310, 46),
+                        f"Факелы +{amount} — {price}  ({run.torches}/{run.torch_max})", "torch",
+                        run.torches < run.torch_max and run.gold >= price, (255, 190, 80))
         self.button(surf, pygame.Rect(T.SCREEN_W - 250, 366, 226, 46), "Уйти (Esc)", "leave")
         for r, k in scene_party(surf, run, mouse=self.mouse):
             self.hit(r, ("hero", k), [run.heroes[k].name, "Клик — лист героя: надеть купленное"])
         self.draw_tip(surf)
-        self.draw_toast(surf, 440)
+        self.draw_toast(surf, 474)
 
     def handle(self, ev):
         if self.scroll_event(ev):
@@ -2833,17 +3000,23 @@ class EndScene(XScene):
         e = self.end
         self.hits = []
         surf.fill((12, 12, 14))
-        win = e["result"] == "victory"
+        win = e["result"] in ("victory", "ended")
         self.backdrop(surf, "victory" if win else "defeat", "thread" if win else "act", dim=70)
         band = pygame.Surface((T.SCREEN_W, 250 + 22 * len((e.get("news") or [])[:4])), pygame.SRCALPHA)
         band.fill((8, 8, 10, 160))
         surf.blit(band, (0, 140))
         cv = X.chapter_view(self.app.profile.xd, e.get("chapter", "swamp"))
         title = {"swamp": "Болото покорено!", "forge": "Кузни остыли!"}.get(e.get("chapter", "swamp"), "Глава пройдена!")
-        T.text(surf, title if win else "Поход окончен", (T.SCREEN_W // 2, 180), 48,
+        if e.get("endless") and e["result"] != "victory":
+            title = "Бесконечный забег окончен"
+        shown = title if (win or e.get("endless")) else "Поход окончен"
+        T.text(surf, shown, (T.SCREEN_W // 2, 180), 48,
                GLORY if win else CURSE, True, center=True, shadow=True)
         acts = cv["acts"]
-        T.text(surf, f"Дошли до: {acts[min(e['act'], len(acts) - 1)]['name']}", (T.SCREEN_W // 2, 250), 20, T.TEXT,
+        reached = acts[min(e['act'], len(acts) - 1)]["name"]
+        if e.get("endless"):
+            reached = f"Акт {e['act'] + 1} · {reached}"
+        T.text(surf, f"Дошли до: {reached}", (T.SCREEN_W // 2, 250), 20, T.TEXT,
                center=True)
         c = e["counts"]
         T.text(surf, f"Боёв {c.get('battle', 0)} · элиты {c.get('elite', 0)} · боссов {c.get('boss', 0)} · "
@@ -2860,9 +3033,17 @@ class EndScene(XScene):
             extra.append(f"найден самоцвет: {gd['name']} ({e['rough']['size']:.2f} кар.)!")
         if loot:
             extra.append("материалы: " + ", ".join(f"{mats.get(k, {}).get('name', k)} +{v}" for k, v in loot.items()))
+        for m in e.get("masters") or []:                     # спасённый мастер — открыта мастерская
+            extra.append(m)
+        if e.get("forge_find"):
+            extra.append("для кузни: " + e["forge_find"])
+        if e.get("scroll"):
+            extra.append(f"авторский свиток огранки: «{e['scroll']}»")
+        if e.get("showcase"):
+            extra.append("с витрины купили: " + ", ".join(e["showcase"]))
         if e.get("veterans"):
             extra.append("в таверну ветеранами: " + ", ".join(e["veterans"]))
-        elif e["result"] != "victory":
+        elif e["result"] not in ("victory", "ended"):
             extra.append("павшие — в зал славы")
         if extra:
             T.text(surf, " · ".join(extra), (T.SCREEN_W // 2, 376), 17, BLESS if win else T.TEXT_DIM, True,

@@ -18,9 +18,12 @@
 | Тотемы шамана (5) — готово | Лист S | `python tools/import_sheet.py assets/art_src/sheet_totems_shaman.png --set totems_shaman --preview p.png` | `assets/sprites` |
 | Иконки: стрелы колчанов лучника (10) — готово | Лист Q | `python tools/import_sheet.py assets/art_src/sheet_icons_arrows.png --set icons_arrows --preview p.png` | `assets/icons` |
 | Иконки: новые уникальные вещи (16) — готово | Лист I2 | `python tools/import_sheet.py assets/art_src/sheet_icons_items3.png --set icons_items3 --preview p.png` | `assets/icons` |
+| Новые боссы Склепа (2) | Лист CR1 | `python tools/import_sheet.py assets/art_src/sheet_crypt_bosses.png --set crypt_bosses --preview p.png` | `assets/sprites` |
+| Иконки Склепа: трофей, костяная пыль, 6 уникальных вещей (8) | Лист CR2 | `python tools/import_sheet.py assets/art_src/sheet_icons_crypt.png --set icons_crypt --preview p.png` | `assets/icons` |
+| Недостающие сцены Склепа (3) | Лист 38 | `python tools/import_illustrations.py assets/art_src/ill_38.png --names order_toll,final_vigil,lich_phylactery --preview p.png` | `assets/illustrations` |
 
 Пока картинки нет, игра рисует заглушку: враг берёт спрайт родственника (`sprite_fallback` в
-`data/expedition.json`), иллюстрация — процедурную виньетку болота, иконки просто не показываются.
+`data/expedition.json`), иллюстрация — процедурную виньетку главы, иконки просто не показываются.
 
 Порядок на листе важен: ряды сверху вниз, в ряду слева направо. Если генератор нарисовал не столько фигур или
 перепутал порядок — скрипт скажет «на листе N фигур» или превью покажет путаницу; проще перегенерировать.
@@ -1346,4 +1349,673 @@ Row 3:
 11. Flatter: a set hammer with a wide flat square face (a flatter), wooden handle.
 12. Work table: a sturdy wooden workbench with an iron-plated top (seen from the side), a few scattered metal
     scraps.
+```
+
+---
+
+## Огранка: инструменты, диски, бродячий ювелир
+
+Камень по-прежнему рисует код (трассировка лучей, рельеф граней от зерна диска — тоже кодом). Картинки нужны для
+рычага подачи, оправы лупы, значков дисков и книги огранок, фигуры бродячего ювелира — и **текстуры дисков
+высокого разрешения** для лупы (под ×15 видно зерно). Пока картинок нет — рисуются простые формы.
+
+### Лист JT — инструменты ювелира (`--set jewel_tools`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_jewel_tools.png --set jewel_tools --preview p.png
+```
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game sprites in the exact same style as the previous sheets (the gem faceting machine parts): true pixel
+art, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from the top-left,
+2-3 tone shading, brass, steel, dark wood. No text, no letters, no numbers. 8 objects in 2 rows (3, 5), in EXACTLY
+this order (left to right, top row first). Wide empty magenta space between objects: nothing may touch.
+
+Row 1 (large objects):
+1. Feed lever plate: a TALL narrow vertical brass plate (about 3.5 times taller than wide) bolted with 4 rivets,
+   with a long vertical dark slot in the middle and 5 small horizontal notches along the slot, evenly spaced.
+   NO lever handle and NO knob in the slot (the game draws the moving knob). Straight front view.
+2. Magnifier: a big jeweler's hand magnifier seen face-on. A round thick ornate brass ring in the UPPER-RIGHT part
+   of a square area, and a turned dark-wood handle with a brass ferrule going straight DOWN-LEFT at exactly 45
+   degrees to the lower-left corner. The ring's inner opening is about 62% of the whole width, its center is at
+   about 62% from the left and 38% from the top. The INSIDE of the ring is FLAT SOLID MAGENTA (#FF00FF) - empty,
+   the game shows the magnified view there.
+3. Wandering jeweler: a full-body standing character, front 3/4 view, an old travelling gem merchant with a long
+   coat of dark velvet, a wide-brimmed hat, a magnifying loupe on one eye, a small wooden case of gems under the
+   arm and a stack of old books on a strap; gold rings on the fingers. Calm, mysterious, friendly.
+
+Row 2 (small square icons, each fills a square of equal size):
+4. Coarse grinding disc icon: a round lapidary lap disc seen from above, dark rusty-brown surface with big rough
+   visible grit grains and a dark steel rim, a center hole.
+5. Medium grinding disc icon: the same disc, grey surface with medium fine grit.
+6. Fine grinding disc icon: the same disc, light silver smooth satin surface with very fine grit.
+7. Diamond grinding disc icon: the same disc, pale blue-steel surface with tiny sparkling diamond specks.
+8. Book of cuts icon: an old thick leather-bound book, the cover embossed with a golden diagram of a faceted gem
+   (seen from above, star of facet lines), brass corners, a ribbon bookmark.
+```
+
+### Лист JD — поверхности шлифовальных дисков (4 картинки, высокое разрешение)
+
+Эти — **не пиксель-арт**: их видно в лупе с увеличением до ×15. Каждая — отдельная картинка, затем:
+
+```
+python tools/import_texture.py assets/art_src/lap_coarse.png --name lap_tex_coarse
+python tools/import_texture.py assets/art_src/lap_medium.png --name lap_tex_medium
+python tools/import_texture.py assets/art_src/lap_fine.png --name lap_tex_fine
+python tools/import_texture.py assets/art_src/lap_diamond.png --name lap_tex_diamond
+```
+
+Общая часть промпта (одинаковая для всех четырёх, меняется только последняя строка):
+
+```
+Make ONE image, 2048x512, a highly detailed photorealistic macro texture (NOT pixel art), seamless and tileable
+HORIZONTALLY (the left and right edges must continue each other perfectly). It shows the EDGE of a spinning
+lapidary grinding disc seen exactly from the side at eye level, filling the whole image: the top 20% of the image
+is the flat working top surface of the disc seen at a very low grazing angle (a thin bright band where the grit
+catches the light from a warm lamp above), the lower 80% is the vertical outer rim of the disc. Even, soft studio
+light from above, no shadows of objects, no stone, no machine parts, no background, no text, no vignette, no
+perspective convergence — perfectly straight horizontal lines across the whole width. Fine motion streaks along
+the horizontal direction are allowed (the disc spins), but keep the grit grains crisp.
+```
+
+Последняя строка для каждого диска:
+
+```
+1 (lap_coarse): COARSE 260-grit disc: rough dark rusty-brown cast iron, large irregular grit grains and pits,
+  visible deep circular scratches along the rim, a little grey slurry of water and stone dust on the top band.
+2 (lap_medium): MEDIUM 600-grit disc: grey steel with an even medium grit, fine circular scratches, a wet sheen
+  on the top band.
+3 (lap_fine): FINE 1200-grit disc: light silver satin finish, very fine almost invisible grit, smooth soft
+  reflections, a clean wet top band.
+4 (lap_diamond): DIAMOND disc: pale blue-steel plate with an even layer of tiny sparkling diamond grains that
+  glint like stars, very fine regular texture, crisp bright highlights on the top band.
+```
+
+### Лист JM — лупа в высоком разрешении (`--set jewel_magnifier_hd`)
+
+Лупа на станке занимает до трети экрана, а на листе JT она маленькая. Отдельная картинка высокого разрешения
+заменит её сама (игра измеряет, где стекло, и поворачивает ручку от края экрана зеркально — рисуйте как ниже).
+
+```
+python tools/import_sheet.py assets/art_src/jewel_magnifier_hd.png --set jewel_magnifier_hd --preview p.png
+```
+
+```
+Make ONE image, 2048x2048, plain flat solid magenta background (#FF00FF) everywhere around the object.
+A single large jeweler's hand magnifier, seen exactly face-on (front view, no perspective), as a HIGH-RESOLUTION
+finely detailed game asset: crisp clean edges, rich but smooth shading, hand-painted look in the same warm brass
+and dark wood colors as a pixel-art fantasy game, but NOT chunky pixel art (no visible pixel grid).
+The round ornate brass ring sits in the UPPER-RIGHT part of the image; a turned dark-wood handle with brass
+ferrules goes straight DOWN-LEFT at exactly 45 degrees and ends near the lower-left corner. The ring's opening
+is a perfect circle about 52% of the image width, its center at about 64% from the left and 36% from the top.
+The ring is thick (about 7% of the image width), with engraved leaves, small rivets and a polished highlight from
+the top-left. The INSIDE of the ring is FLAT SOLID MAGENTA (#FF00FF) — empty, no glass, no reflections, the game
+draws the magnified view there. Nothing else in the image, no shadow, no text.
+```
+
+---
+
+## Интерфейс: украшения (без пикселей)
+
+Интерфейс сейчас — тёмные плашки с янтарной каймой. Нужны **небольшие** украшения, передающие фэнтези, но не
+перегружающие экран: уголки рамок, разделитель под заголовками, завиток у заголовка окна, ползунок прокрутки и
+кнопка «закрыть». Всё — **высокое разрешение, не пиксель-арт** (как HD-монокль). Игра сама ставит их на все
+панели и окна; пока картинок нет — остаются ромбики и линии.
+
+### Лист UI — украшения интерфейса (`--set ui_kit`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_ui_kit.png --set ui_kit --preview p.png
+```
+
+```
+Make ONE image, 2048x2048, plain flat solid magenta background (#FF00FF) everywhere around the objects.
+A small set of ELEGANT fantasy UI ornaments for a dark tavern game interface, as HIGH-RESOLUTION finely detailed
+game assets: crisp clean edges, smooth shading, hand-painted look (NOT pixel art, no visible pixel grid).
+Material: aged warm brass / old gold filigree with tiny amber gems, subtle dark-bronze shadows. Restrained and
+thin — they decorate the corners and edges of dark wooden panels, they must not be bulky or busy.
+No text, no letters. 6 objects in 3 rows (2, 2, 2), in EXACTLY this order (left to right, top row first),
+with wide empty magenta space between them (nothing may touch).
+
+Row 1:
+1. Corner ornament (large): an L-shaped filigree corner piece for the TOP-LEFT corner of a panel — two thin
+   brass strips meeting at a right angle with a small curling leaf flourish and one tiny round amber gem at the
+   corner. The two arms point RIGHT and DOWN. Fits in a square, mostly empty inside the L.
+2. Corner ornament (small): a simpler, thinner version of the same top-left corner (no leaves, just a tiny
+   curl and a dot), for small buttons and cards.
+
+Row 2:
+3. Horizontal divider: a very long thin line ornament (about 12 times wider than tall) — a fine brass rule that
+   fades out to both ends, with a small symmetric filigree knot and a tiny oval amber gem in the center.
+4. Title flourish: a small horizontal scroll/curl ornament (about 4 times wider than tall) that follows a title
+   on its right side, curling out to the right.
+
+Row 3:
+5. Scrollbar thumb: a VERTICAL slim capsule (about 5 times taller than wide) of polished brass with a thin
+   engraved groove along its length and tiny rounded caps at both ends.
+6. Close button: a round brass coin-like button with a thin raised rim and a small engraved X cross in the
+   middle (the X is an ornament, not a letter).
+```
+
+## Огранка без пикселей: станок и фон в высоком разрешении
+
+Камень, лупа, диски, линии уже без пикселей; детали станка (лист J) и фон верстака (лист 36) — ещё пиксельные и
+при крупном масштабе мылятся. Перегенерация в высоком разрешении:
+
+### Лист J-HD — детали гранильного станка (`--set facet_machine_hd`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_facet_machine_hd.png assets/sprites --set facet_machine_hd --preview p.png
+```
+
+```
+Make ONE image, 2048x2048, plain flat solid magenta background (#FF00FF) everywhere around the objects.
+Parts of an old-world gem FACETING MACHINE (a jeweler's lapidary), polished brass, blued steel and dark wood,
+as HIGH-RESOLUTION finely detailed game assets: crisp clean edges, smooth realistic shading, warm lamp light from
+the top-left, hand-painted look (NOT pixel art). STRAIGHT SIDE VIEW (orthographic, no perspective), no text, no
+letters, no numbers. 7 parts in 2 rows (4, 3), in EXACTLY this order (left to right, top row first). Wide empty
+magenta space between parts: nothing may touch.
+
+Row 1:
+1. Lap disk seen exactly edge-on: a very wide flat horizontal grinding disk (about 7 times wider than tall),
+   dark grey cast iron rim with a fine grit top surface, a thin bright edge on top.
+2. Lap stand: a squat cast-iron pedestal with a wooden base plate and a little brass water drip can, wider at
+   the bottom, flat top (the disk sits on it).
+3. Mast: a TALL thin vertical steel column (about 7 times taller than wide) with a brass height-adjust screw and
+   a few ring marks, flat bottom.
+4. Quadrant head: a round brass protractor dial with an engraved 0-90 quarter-circle scale (only tick marks, NO
+   numbers), a pivot knob in the center.
+
+Row 2:
+5. Index gear: a round brass gear wheel seen face-on with many fine teeth around the rim and a hole in the center.
+6. Loupe ring: a round thick ornate brass porthole frame seen face-on with rivets; the INSIDE of the ring is FLAT
+   SOLID MAGENTA (#FF00FF) - empty, the game shows the gem through it.
+7. Diagram plate: a round dark slate disc with a thin brass bezel and faint engraved concentric guide rings and
+   radial lines (no numbers).
+```
+
+### Фон верстака ювелира (одна картинка, сразу в игру)
+
+Сохраните как `assets/illustrations/hd/ws_bench_jewel.png` (заменит пиксельный фон огранки).
+
+```
+Make ONE image, 2400x1600, a painterly high-resolution fantasy illustration (NOT pixel art): a close-up of an old
+jeweler's workbench in a dark cozy tavern workshop at night. Dark wooden bench with green velvet cloth,
+tweezers, small open boxes of rough gems on a shelf on the back wall, a brass oil lamp giving a warm pool of
+light, a window with night sky on the upper left. No people, no text. The CENTER and LOWER-LEFT of the picture
+must be calm, dark and empty (the game draws a faceting machine there), details only near the edges and the back
+wall. Soft depth of field on the background.
+```
+
+---
+
+## Кузня v2 и шахта (без пикселей, высокое разрешение)
+
+Кузня теперь: тигель → слиток → примитивы → изделие с закалкой. Сейчас этапы рисуются формами и старыми
+пиксельными спрайтами (лист K). Для единого вида с ювелиркой — всё в высоком разрешении, не пиксель-арт, импорт
+HD-путём (`--set ... ` как у листа J-HD). Шахта — новая комната (8): нужна иллюстрация и спрайты рабочих.
+
+### Лист K-HD — оборудование кузни (`--set forge_props_hd`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_forge_hd.png assets/sprites --set forge_props_hd --preview p.png
+```
+
+```
+Make ONE image, 2048x2048, plain flat solid magenta background (#FF00FF) everywhere around the objects.
+Blacksmith's workshop equipment of a dark fantasy tavern as HIGH-RESOLUTION finely detailed game assets: crisp
+clean edges, smooth realistic shading, warm forge light from the left, hand-painted look (NOT pixel art), STRAIGHT
+SIDE VIEW (orthographic), no text. 12 objects in 3 rows (4, 4, 4), in EXACTLY this order, wide magenta gaps:
+
+Row 1:
+1. Anvil: heavy black iron anvil, horn on the LEFT, flat polished face, on a wooden stump with iron bands
+   (about twice wider than tall).
+2. Forge hearth: stone and brick forge with glowing coals, an open fire mouth in the lower middle, sooty hood.
+3. Crucible: a thick clay-and-graphite crucible pot, OPEN TOP (the rim is an empty dark oval), on its own.
+4. Quench barrel: wooden barrel with dark water and a little steam, iron hoops.
+Row 2:
+5. Bellows: big leather bellows with wooden boards, brass nozzle pointing RIGHT.
+6. Tongs: long blacksmith's tongs, horizontal, jaws on the RIGHT.
+7. Hand hammer, head on top, handle down.
+8. Sledgehammer, heavy square head on top, long handle down.
+Row 3:
+9. Flatter: a set hammer with a wide flat square face.
+10. Ingot mold: a cast-iron open mold with an empty ingot-shaped cavity, seen slightly from above.
+11. Pyrometer: a brass dial instrument with a needle and a long probe (no numbers, only tick marks).
+12. Magnet on a handle: a horseshoe magnet on a short wooden handle.
+```
+
+Набор `forge_props_hd` уже в `tools/import_sheet.py`: те же имена `frg_*` (заменят пиксельные), холст ×4.
+
+### Иллюстрация шахты (одна картинка, сразу в игру)
+
+Сохраните как `assets/illustrations/hd/room_mine.png`.
+
+```
+Make ONE image, 2400x1500, a painterly high-resolution fantasy illustration (NOT pixel art): a cross-section of
+a small mine under a tavern hill — four horizontal tunnels (levels) one under another, timber supports, lanterns,
+rails with an empty mine cart, a wooden lift shaft on the right side connecting all levels, rock layers getting
+darker and more crystalline deeper down (the deepest level has faint glowing blue meteoric veins and gem
+crystals). No people, no text. The LEFT two thirds of each tunnel must be calm and fairly empty (the game draws
+miners there); keep the right third for the lift and details. Warm lantern light, cool deep shadows.
+```
+
+## Кузня: значки
+
+Два листа. KI — значки внутри кузни (слитки по сплавам, примитивы, приборы, жидкости, формы, книга) в высоком
+разрешении, как оборудование K-HD. KM — недостающие значки руд и металлов для полосы ресурсов, в пиксель-арте,
+как прежние `mat_*`. Пока значков нет, игра рисует простые формы, так что их можно добавлять по одному листу.
+
+### Лист KI — значки кузни (`--set icons_forge_hd`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_forge_hd.png assets/sprites --set icons_forge_hd --preview p.png
+```
+
+Файлы — `assets/sprites/fic_*.png` (холст 256×256). Примитивы рисуются серой сталью: игра сама окрашивает их
+в цвет сплава.
+
+```
+Make ONE image, 2048x2048, plain flat solid magenta background (#FF00FF) everywhere around the objects.
+Fantasy blacksmith inventory icons as HIGH-RESOLUTION finely detailed game assets: crisp clean edges, smooth
+realistic shading, warm light from the top-left, hand-painted look (NOT pixel art), no text, no letters, no
+frames, no background plates, no glow halos, no separate sparkles or smoke puffs (every icon is ONE connected
+silhouette). Each object fills most of its square cell and reads well when small (40-60 px).
+32 icons in 4 rows of 8, in EXACTLY this order (left to right, top row first), wide magenta gaps, nothing touches.
+
+Row 1 — metal ingots, all the SAME trapezoid ingot shape, three-quarter view, only the metal differs:
+1. Bloomery iron: dark grey rough iron with pitted surface.
+2. Copper: warm reddish-orange copper, slightly polished.
+3. Bronze: golden-brown bronze with a faint green patina on one edge.
+4. Sterling silver: bright cool silver, polished.
+5. 18-carat gold: rich yellow gold, polished.
+6. Steel: clean blue-grey steel with a fine brushed finish.
+7. Spring steel: dark blue-tinted steel with a faint temper-blue sheen.
+8. High-carbon steel: very dark, almost black steel with a sharp bright edge.
+Row 2:
+9. Star steel: deep blue-black metal with tiny glittering silver specks like a night sky.
+10. Ember steel: dark steel with glowing orange cracks inside (glow stays inside the silhouette).
+11. Rod: a single round forged bar, horizontal, plain grey steel.
+12. Strip: a flat forged strip, horizontal, plain grey steel.
+13. Sheet: a thin square metal plate seen at an angle, plain grey steel.
+14. Wire: a small neat coil of wire, plain grey steel.
+15. Recipe book: a thick leather smithing book with an iron hammer emblem on the cover.
+16. Wire drawing plate: a steel plate with a row of holes of decreasing size, a bit of wire through one hole.
+Row 3 — tools and instruments:
+17. Bellows: leather bellows with wooden boards and a brass nozzle.
+18. Pyrometer: a brass dial gauge with a needle and a long thin probe (tick marks only).
+19. Magnet: a red horseshoe magnet on a short wooden handle.
+20. Hourglass: a wooden-framed hourglass with pale sand.
+21. Hardness tester: a small steel punch with a diamond-shaped tip on a little brass stand.
+22. Sledgehammer: heavy square head, long handle, diagonal.
+23. Flatter: a set hammer with a wide flat square face, diagonal.
+24. Steel anvil: a clean bright steel anvil, horn on the left.
+Row 4 — anvil, quench liquids, molds:
+25. Master's anvil: an ornate dark anvil with engraved runes and gold inlay, horn on the left.
+26. Quench oil: a squat clay jug of dark amber oil with a cork.
+27. Brine: a glass jar of cloudy salt water with salt crystals at the bottom.
+28. Salamander blood: a small glass flask of glowing red liquid, a salamander shape etched on the glass.
+29. Glacier meltwater: a frosted glass flask of pale blue icy water with a tiny ice chunk inside.
+30. Rod mold: a cast-iron open mold with a long narrow round groove, seen slightly from above.
+31. Strip mold: a cast-iron open mold with a long flat rectangular groove, seen slightly from above.
+32. Sheet mold: a cast-iron open mold with a wide square shallow cavity, seen slightly from above.
+```
+
+### Лист KM — руды и металлы для полосы ресурсов (`--set icons_forge_mats`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_forge_mats.png --set icons_forge_mats --preview p.png
+```
+
+Файлы — `assets/icons/mat_<материал>.png`, 32×32, тот же стиль, что у листа A2.
+
+```
+Make ONE icon sheet image, 1536x512, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is ONE object filling most of its square, readable when tiny.
+No text, no letters, no frames, no background plates, no circles behind the objects.
+6 icons in 1 row, in EXACTLY this order, wide empty magenta space between icons: nothing may touch.
+
+1. Coal: a small heap of black glossy coal lumps.
+2. Copper ore: a rough grey rock with bright orange-copper veins and a green patina spot.
+3. Tin ore: a rough dark rock with pale silvery-white tin crystals.
+4. Silver ore: a grey rock with bright white-silver metallic veins.
+5. Gold nugget: a lumpy rich-yellow gold nugget with a small highlight.
+6. Meteoric iron: a dark pitted black-blue meteorite chunk with a faint metallic sheen.
+```
+
+---
+
+## Недостающая графика — сводка (ревизия 2026-11-12)
+
+Ревизия по данным игры: у всех врагов, героев, баз вещей, даров, артефактов, самоцветов и объектов комнат картинки
+есть. Не хватает того, что ниже. Сначала — листы, промпты к которым уже были написаны раньше:
+
+| Что | Лист | Промпт | Импорт |
+|---|---|---|---|
+| События Кузней: река расплава, надсмотрщик, меха, шлаковщик | 24 | `prompts_forge.md`, «Лист 24» | `python tools/import_illustrations.py assets/art_src/ill_24.png --sheet 24 --preview p.png` |
+| События Кузней: механоид, алтарь Жара, зеркало, подмастерье | 27 | `prompts_forge.md`, «Лист 27» | `python tools/import_illustrations.py assets/art_src/ill_27.png --sheet 27 --preview p.png` |
+| Рынок: площадь, лоток камней, товары, ночь | 37 | этот файл, «Лист 37» | `python tools/import_illustrations.py assets/art_src/ill_37.png --sheet 37 --preview p.png` |
+
+Лист T2 (значок «Рынок») больше не нужен — значок вошёл в лист T3 ниже.
+
+Новые листы — дальше по порядку. Варианты тотемов шамана берут спрайт своего тотема, иллюзия и отражение
+рисуются по описанию, ледяная стена — эффект: им отдельные картинки не нужны.
+
+### Лист I3 — уникальные вещи, часть 3 (`--set icons_items4`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_items4.png --set icons_items4 --preview p.png
+```
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is a single bold object seen from the front, filling most of its square, readable
+when tiny. No text, no letters, no frames, no background plates, no circles behind the objects.
+14 icons in 2 rows (7, 7), in EXACTLY this order (left to right, top row first).
+Wide empty magenta space between icons: nothing may touch.
+
+Row 1:
+1. A small duelist's pennant on a short pole with two crossed rapiers on the cloth.
+2. A red-stained leather gauntlet with a blood-red gem on the knuckles.
+3. A leather quiver with three arrows, one arrow split into two identical heads.
+4. A ring made of a coiled bowstring with a pale blue wind swirl around it.
+5. An amulet: a charcoal-black heart with glowing orange cracks, on a short chain.
+6. A wooden staff topped with a crackling orange ember spark.
+7. A loop of wooden prayer beads with a small silver holy symbol.
+Row 2:
+8. A gold signet ring with a sun-cross holy symbol on the face.
+9. A dagger whose blade is made of black shadow smoke with a violet edge.
+10. A dark navy hooded cloak sprinkled with tiny pale star dots.
+11. A large wolf fang on a leather cord with three claw-mark notches.
+12. A wreath of green leaves with small white flowers.
+13. A long sentinel spear with a red tassel under the spearhead.
+14. A heavy square tower shield, dented and muddy, with a spike at the bottom.
+```
+
+### Лист I4 — уникальные вещи, часть 4 (`--set icons_items5`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_items5.png --set icons_items5 --preview p.png
+```
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is a single bold object seen from the front, filling most of its square, readable
+when tiny. No text, no letters, no frames, no background plates, no circles behind the objects.
+14 icons in 2 rows (7, 7), in EXACTLY this order (left to right, top row first).
+Wide empty magenta space between icons: nothing may touch.
+
+Row 1:
+1. A small carved wooden totem pole with three stacked painted faces.
+2. A ring with a tiny dreamcatcher web and a single feather hanging from it.
+3. A minstrel's lute with a carved wooden body.
+4. A silver tuning fork with two short vibration arcs attached to the prongs.
+5. A curved horn powder flask with a brass cap and a strap.
+6. A ring whose stone is a small black bomb with a short lit fuse.
+7. A ram's horn bound with iron bands, used as a war club.
+Row 2:
+8. A heavy shaggy brown bison-hide armor with short horns on the shoulders.
+9. A short flintlock musket with a brass-bound stock.
+10. A leather satchel with steel bear-trap jaws sticking out.
+11. An amulet: a heart-shaped pale blue ice crystal in a silver frame.
+12. A staff topped with a big swirling snowflake crystal.
+13. A horned beast skull on a cord with faint violet light in the eye sockets.
+14. A large black scythe with a ghostly pale green blade edge.
+```
+
+### Лист I5 — уникальные вещи, часть 5 (`--set icons_items6`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_items6.png --set icons_items6 --preview p.png
+```
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is a single bold object seen from the front, filling most of its square, readable
+when tiny. No text, no letters, no frames, no background plates, no circles behind the objects.
+14 icons in 2 rows (7, 7), in EXACTLY this order (left to right, top row first).
+Wide empty magenta space between icons: nothing may touch.
+
+Row 1:
+1. An ornate golden hourglass with glowing blue sand.
+2. A ring with a tiny pendulum weight hanging below it on a thin rod.
+3. A dark heavy stone with a violet spiral carved into it.
+4. A ring with a thin outer hoop and two tiny spheres orbiting on it.
+5. A gnarled tree root grown through a chunk of grey rock.
+6. A black obsidian staff topped with a molten orange lava orb.
+7. A small glass alembic still with bubbling green liquid.
+Row 2:
+8. A leather belt with four small colored potion flasks (red, green, blue, yellow).
+9. A jagged notched battle axe with a red-stained blade and a broken chain on the haft.
+10. A bracelet made of linked black leeches with one red drop.
+11. A red and gold marshal's baton with an eagle-shaped cap.
+12. A small red regimental flag on a pole with a gold emblem.
+13. A spindle wound with a glowing golden thread, one loose end.
+14. A signet ring with a glowing pale blue endless-knot symbol.
+```
+
+### Лист T3 — вкладки «Рынок» и «Шахта», трофеи глав (`--set icons_tabs3`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_tabs3.png --set icons_tabs3 --preview p.png
+```
+
+Файлы: `assets/icons/tab_market.png`, `tab_mine.png` (полоса вкладок), `mat_amber.png`, `mat_ember.png`
+(трофеи глав в цене построек — сейчас там цветные ромбики).
+
+```
+Make ONE icon sheet image, 1536x512, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous tab icons: true pixel art on a 32x32 grid per icon,
+crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading, warm amber and dark wood palette. Each icon is ONE object filling most of its square,
+readable when tiny. No text, no letters, no frames, no background plates.
+4 icons in 1 row, in EXACTLY this order (left to right). Wide empty magenta space between icons.
+1. Market: a small market stall awning with a coin purse and a red gem in front.
+2. Mine: a pickaxe crossed with a hanging mining lantern over a lump of ore.
+3. Swamp amber: a glossy honey-orange amber chunk with a tiny insect trapped inside.
+4. Forge heart: a fist-sized glowing ember-red crystal shaped like a heart, with dark iron bands around it.
+```
+
+### Лист MH — горняки и вагонетка шахты (`--set mine_hd`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_mine_hd.png assets/sprites --set mine_hd --preview p.png
+python tools/align_miners.py
+```
+
+Второй шаг обязателен: он перерезает три кадра горняка на общий холст (один масштаб, одна линия земли).
+
+Высокое разрешение, как иллюстрация шахты (`room_mine`). Три кадра одного горняка — игра чередует их (замах,
+середина, удар) и зеркалит каждого второго; вагонетка стоит у подъёмника на каждом уровне. Пока листа нет —
+горняки рисуются палочками.
+
+```
+Make ONE image, 2048x1024, plain flat solid magenta background (#FF00FF) everywhere around the figures.
+Painterly HIGH-RESOLUTION game sprites matching a dark fantasy mine illustration: crisp clean edges, smooth
+realistic shading, warm lantern light from the left, hand-painted look (NOT pixel art), STRAIGHT SIDE VIEW,
+no text. 4 objects in 1 row, in EXACTLY this order, wide magenta gaps, nothing touches, all figures standing
+on the same invisible ground line.
+
+1. A stocky miner facing RIGHT, full body, leather cap with a small candle lantern, rolled sleeves, apron,
+   heavy boots; holding a pickaxe with both hands RAISED HIGH behind the head (wind-up).
+2. The SAME miner, the SAME size and the same legs, the pickaxe swung FORWARD level with the shoulders.
+3. The SAME miner, the SAME size, the pickaxe STRIKING DOWN, its head touching the ground in front of him,
+   a few rock chips attached to the silhouette (not floating far away).
+4. A wooden mine cart on four iron wheels, side view, filled with lumps of grey ore and a few glinting
+   crystals, iron corner plates.
+```
+
+### Лист NS — бродячий кузнец (`--set npc_smith`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_npc_smith.png --set npc_smith --preview p.png
+```
+
+Портрет в окне бродячего кузнеца на рынке — в пару к бродячему ювелиру с листа JT.
+
+```
+Make ONE sprite sheet image, 1024x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game sprite in the exact same style as the wandering jeweler sprite: true pixel art, crisp square
+pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from the top-left, 2-3 tone
+shading. No text, no letters. ONE object, centered:
+A wandering blacksmith, full-body standing character, front 3/4 view: a broad-shouldered travelling smith with
+a soot-stained leather apron over a rough shirt, thick gloves, a short beard, a heavy hammer hanging from the
+belt, a big leather pack on the back with tongs, a small anvil and rolled books strapped to it, a pouch of
+ingots. Gruff and friendly.
+```
+
+---
+
+## Глава 3 «Склеп нежити» — недостающая графика
+
+Основной бестиарий Склепа уже нарисован листом 2 в `prompts_more.md` (`--set crypt_pass`): скелеты, упырь,
+некромант, банши, костяной голем, призрак, рыцарь смерти и лич. События `sunken_chapel`, `sunken_library`,
+`room_cemetery`, `old_armory` и другие тоже уже есть в `assets/illustrations`. Ниже — только то, чего не хватает
+главе 3: два новых босса, иконки трофея/материала/уникальных вещей и три сцены событий.
+
+### Лист CR1 — новые боссы Склепа (`--set crypt_bosses`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_crypt_bosses.png --set crypt_bosses --preview p.png
+```
+
+Аббат и Хранитель колодца — боссы актов I и II. Лич уже есть на листе `crypt_pass`; здесь его не дублируем.
+
+```
+Make ONE sprite sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game sprites in the exact same style as the crypt enemies sheet: true pixel art on a 32x32 grid per
+character, crisp square pixels, no anti-aliasing, no blur, no gradients, limited palette, 1-pixel dark outline,
+light from top-left, 2-3 tone shading. Three-quarter view, full body, every figure faces RIGHT, standing on an
+invisible ground line, no ground shadow, no text, no labels. Dark fantasy undead crypt bosses for a tactics RPG:
+bone, tarnished silver, amber, cold blue soul-fire and grave dust. Two bosses side by side in ONE row, in EXACTLY
+this order (left to right). Wide empty magenta space between them: nothing may touch. Bosses (marked B) are about
+1.7x a normal enemy.
+
+1. (B) Crypt abbot: a tall gaunt undead abbot in rotted violet-and-gold vestments, a tall mitre set with a dull
+   amber stone, an amber seal burning in the middle of his chest, a bone rosary hanging from his belt, one
+   skeletal hand raised with green necrotic flame, the other holding a crooked staff crowned with an amber skull.
+   Cold, patient, almost gentle expression.
+2. (B) Well warden: a drowned spectral guardian in tattered dark-blue robes over rusted mail, a hood hiding a
+   face made of pale blue light, a heavy iron lantern with a soul-flame in one hand, a long rusted chain and hook
+   dragging from the other, water dripping from the hem, faint spectral mist around the feet.
+```
+
+### Лист CR2 — иконки Склепа (`--set icons_crypt`)
+
+```
+python tools/import_sheet.py assets/art_src/sheet_icons_crypt.png --set icons_crypt --preview p.png
+```
+
+Иконки ложатся в карточки вещей, в цену построек и на шкалу материалов. Пока листа нет, уникальные вещи берут
+иконку своей базы, а трофей и костяная пыль рисуются цветными ромбиками.
+
+```
+Make ONE icon sheet image, 1536x1024, plain flat solid magenta background (#FF00FF) everywhere.
+Pixel art game icons in the exact same style as the previous icon sheets: true pixel art on a 32x32 grid per
+icon, crisp square pixels, no anti-aliasing, no blur, limited palette, 1-pixel dark outline, light from top-left,
+2-3 tone shading. Each icon is a single bold object seen from the front, filling most of its square, readable
+when tiny. No text, no letters, no frames, no background plates, no circles behind the objects. Dark fantasy
+crypt palette: bone ivory, tarnished silver, black iron, amber, cold blue soul-fire.
+8 icons in 2 rows of 4, in EXACTLY this order (left to right, top row first). Wide empty magenta space between
+icons: nothing may touch.
+
+Row 1:
+1. Soul shard: a jagged pale-blue crystal shard of a soul, wrapped in a thin silver wire, a faint ghost-light
+   inside, small sparks around it.
+2. Bone dust: a small open leather pouch spilling fine ivory bone dust, a few tiny bone chips and a finger bone
+   resting on the pile.
+3. Soulflame blade: a straight knight's sword with a bone grip, its blade edged in pale blue ghost-fire, a thin
+   trail of soul-smoke rising from the tip.
+4. Grave ward: a heavy dark-iron breastplate with a gravestone-shaped rune in the centre, a pale blue ward-light
+   glowing in the cracks, moss and bone dust in the seams.
+
+Row 2:
+5. Bone bow: a recurve bow made of lashed ribs and a long leg bone, a pale sinew string, one bone-tipped arrow
+   nocked, a faint cold gleam on the arrowhead.
+6. Lich crown: a tall jagged crown of black iron and bone, a green-violet gem in the centre, cold blue flames
+   rising from the points.
+7. Crypt grail: a tarnished silver chalice with a bone stem and a skull-shaped base, filled with pale blue
+   glowing liquid, a thin wisp of soul-light above the rim.
+8. Bone idol: a small idol built from stacked bones and a horned skull, two dull coins in the eye sockets, a
+   dark amber bead on its chest, faint grave mist around the base.
+```
+
+### Лист 38 — недостающие сцены Склепа (`--names ...`)
+
+```
+python tools/import_illustrations.py assets/art_src/ill_38.png --names order_toll,final_vigil,lich_phylactery --preview p.png
+```
+
+Три недостающие иллюстрации событий. Четвёртая ячейка остаётся пустой (чёрной): сетка всё равно 2×2, скрипт
+возьмёт только три имени.
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR equal cells, each with a thin black border, separated
+by wide black gutters. Pixel art scene illustrations, true pixel art on a 192x128 grid per illustration, crisp
+square pixels, no anti-aliasing, limited palette of about 32 colors, dithering allowed. Dark fantasy crypt
+adventure: bone, black stone, tarnished silver, amber, cold blue soul-light, fog. Strong silhouettes, one clear
+light source, moody but readable. No text, no UI, no letters anywhere.
+IMPORTANT: these are EMPTY scenes. Do NOT draw any adventurers, heroes, party members, player characters or
+their hands — the game places its own small hero sprites into the picture later. Keep the LOWER-LEFT third of
+every illustration as a clear, flat, unobstructed patch of solid ground (stone floor, grave slab, chapel step)
+seen at eye level, where 2-4 small figures could stand side by side facing right; nothing important there.
+Named creatures and non-player characters listed below (Order patrol, ghostly hand, distant lich silhouette)
+ARE allowed and should stay in the middle or on the right side of the scene.
+Order: top-left, top-right, bottom-left, bottom-right.
+
+1. (top-left) "Order toll": a crypt corridor with bone niches, three tall patrolmen of the Order of Light in
+   white tabards over silver mail, a sun-and-bone emblem on the chest, one holding a lantern and a small iron
+   toll box, another resting a hand on a sword hilt; their faces are calm and tired, not hostile. A clear stone
+   floor in the lower left.
+2. (top-right) "Final vigil": a small camp before the lich's throne room, a ring of candles and a low brazier on
+   the right, an empty bedroll and a folded banner on a grave slab, fog pressing against a black doorway in the
+   distance, a single pale star visible through a crack in the vault. No people. Clear floor in the lower left.
+3. (bottom-left) "Lich phylactery": a narrow silver-sealed niche in a throne-room wall, the silver plates warped
+   and rune-etched, a small green-violet gem beating behind them like a heart, a skeletal hand hanging limply
+   from a broken chain beside the niche, cold blue light spilling on the floor. No player characters. Clear
+   floor in the lower left.
+4. (bottom-right) EMPTY: fill this cell with flat solid black, no objects, no border inside the cell.
+```
+
+### Если хочется отдельные фоны актов
+
+Фоны актов Склепа уже сгенерированы и подключены: `crypt_act_0` (ограда кладбища), `crypt_act_1`
+(затонувшая часовня) и `crypt_act_2` (тронный зал лича) прописаны в `acts[].art` в
+`data/expedition_crypt.json`. Промпт ниже оставлен на случай перегенерации.
+
+```
+python tools/import_illustrations.py assets/art_src/ill_crypt_acts.png --names crypt_act_0,crypt_act_1,crypt_act_2 --preview p.png
+```
+
+```
+Make ONE image, 1536x1024, split into a 2x2 grid of FOUR equal cells, each with a thin black border, separated
+by wide black gutters. Pixel art scene illustrations, true pixel art on a 192x128 grid per illustration, crisp
+square pixels, no anti-aliasing, limited palette of about 32 colors, dithering allowed. Dark fantasy crypt
+adventure, painterly pixel art like classic adventure games: black stone, bone, tarnished silver, amber, cold
+blue soul-light, fog. Strong silhouettes, one clear light source, moody but readable. No text, no UI, no letters.
+IMPORTANT: these are EMPTY scenes. Do NOT draw any adventurers, heroes, party members, player characters or
+their hands — the game places its own small hero sprites into the picture later. Keep the LOWER-LEFT third of
+every illustration as a clear, flat, unobstructed patch of solid ground (stone flags, grave slab, throne-room
+step) seen at eye level; nothing important there. Named creatures and NPCs below may stand in the middle or on
+the right. Order: top-left, top-right, bottom-left, bottom-right.
+
+1. (top-left) "Act I, the graveyard gate": a rusted iron gate half-sunk in bone-littered earth under a vaulted
+   stone ceiling, rows of crooked graves fading into fog, a single amber lamp burning on a post, distant
+   chapel silhouette. Clear stone path in the lower left.
+2. (top-right) "Act II, the sunken chapel": a half-flooded chapel interior, pews under black water, a huge cracked
+   bell hanging above a broken altar, silver reliquary glinting on the right, cold blue light through a hole in
+   the roof. Clear stone step in the lower left.
+3. (bottom-left) "Act III, the lich's throne": a vast black throne room with columns of bone and iron, a pale
+   green-violet throne on a raised dais in the middle-right, soul-fire braziers, a long red-violet carpet
+   leading to it, fog pooling on the floor. Clear flagstones in the lower left.
+4. (bottom-right) EMPTY: fill this cell with flat solid black, no objects, no border inside the cell.
 ```

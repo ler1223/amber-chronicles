@@ -63,6 +63,7 @@ def foe(c):
 def test_stealth_hides_and_ambush_hits_harder():
     c = Combat(DATA, 1, squad=squad_of(["assassin", "warrior", "mage", "priest"]))
     a, f = unit(c, "assassin"), foe(c)
+    f.passive = None                                   # проверяем скрытность, а не пассивку врага
     c.order_attack(f, a)
     c.apply_effects(a, [{"type": "stealth", "duration": 5, "mult": 2.0}], a.cell, a)
     assert not c.visible(a) and f.order is None and a not in c.foes_of(f)

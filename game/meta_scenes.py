@@ -791,19 +791,23 @@ class HeroesScene(MetaScene):
         for i, line in enumerate(T.wrap(text, 13, rect.w - 28)[:2]):
             T.text(surf, line, (x, y + 42 + i * 16), 13, T.TEXT)
         load = hero.get("skill_loadout", [])
-        if sid not in load:
+        always = set(data.story_progression.get("classes", {}).get(self.cls, {}).get("always", []))
+        if sid not in load and sid not in always:
             T.text(surf, "Поставьте навык в слот, чтобы брать его ветки", (x, y + 82), 12, T.TEXT_DIM)
             return
         T.text(surf, "Ветки навыка из выбранного слота", (x, y + 82), 12, BRANCH_COLOR, True)
         cur = hero["branches"].get(sid)
         free = meta.points_free(data, hero)
-        for col, br in enumerate(("A", "B")):
+        branches = sorted(data.branches[sid])
+        for i, br in enumerate(branches):
+            col, row = i % 2, i // 2
             bx = x + col * (rect.w - 28) // 2
+            by = y + 98 + row * 54
             bw = (rect.w - 28) // 2 - 8
-            T.text(surf, f"{br}: {data.branches[sid][br]['name']}", (bx, y + 98), 12,
+            T.text(surf, f"{br}: {data.branches[sid][br]['name']}", (bx, by), 12,
                    T.TEXT_DIM if cur and cur[0] != br else BRANCH_COLOR, True)
             for tier, td in enumerate(data.branches[sid][br]["tiers"], 1):
-                r = pygame.Rect(bx, y + 110 + (tier - 1) * 22, bw, 20)
+                r = pygame.Rect(bx, by + 12 + (tier - 1) * 22, bw, 20)
                 taken = cur is not None and cur[0] == br and cur[1] >= tier
                 cost = tier - (cur[1] if cur and cur[0] == br else 0)
                 affordable = taken or cost <= free + (cur[1] if cur and cur[0] != br else 0)
@@ -839,13 +843,16 @@ class HeroesScene(MetaScene):
             y += 22
             br = data.branches.get(sid)
             cur = hero["branches"].get(sid)
-            for col, b in enumerate(("A", "B")):
+            branches = sorted(br)
+            for i, b in enumerate(branches):
+                col, row = i % 2, i // 2
                 bx = rect.x + 14 + col * (rect.w - 28) // 2
+                by = y + row * 94
                 bw = (rect.w - 28) // 2 - 8
                 closed = cur is not None and cur[0] != b
-                T.text(surf, f"{b}: {br[b]['name']}", (bx, y), 14, T.TEXT_DIM if closed else BRANCH_COLOR, True)
+                T.text(surf, f"{b}: {br[b]['name']}", (bx, by), 14, T.TEXT_DIM if closed else BRANCH_COLOR, True)
                 for t, tier in enumerate(br[b]["tiers"], 1):
-                    r = pygame.Rect(bx, y + 20 + (t - 1) * 40, bw, 36)
+                    r = pygame.Rect(bx, by + 20 + (t - 1) * 40, bw, 36)
                     taken = cur is not None and cur[0] == b and cur[1] >= t
                     cost = t - (cur[1] if cur and cur[0] == b else 0)
                     affordable = taken or cost <= free + (cur[1] if cur and cur[0] != b else 0)
@@ -863,7 +870,7 @@ class HeroesScene(MetaScene):
                     if closed and not taken:
                         tip += " Заменит другую ветку этого навыка."
                     self.hit(r, ("branch", sid, b, t), tip)
-            y += 20 + 2 * 40 + 14
+            y += 20 + ((len(branches) + 1) // 2) * 94 + 14
 
     def _draw_talents(self, surf, rect, gear=None):
         data, prof, hero = self.app.data, self.app.profile, self.hero

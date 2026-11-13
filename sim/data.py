@@ -134,8 +134,10 @@ class GameData:
         for sid, br in self.branches.items():
             if sid not in self.skills:
                 raise ValueError(f"ветки: неизвестный навык {sid}")
-            for b in ("A", "B"):
-                if len(br[b]["tiers"]) != 2:
+            if len(br) < 2:
+                raise ValueError(f"ветки {sid}: нужно хотя бы 2 ветки")
+            for b, data in br.items():
+                if len(data["tiers"]) != 2:
                     raise ValueError(f"ветки {sid}/{b}: нужно 2 ступени")
         for iid, it in self.items.items():
             if it.get("slot") not in SLOTS or it.get("rarity") not in RARITIES:

@@ -96,10 +96,14 @@ class Combat:
         if scale.get("tier"):                  # сложность похода: подкрепление, механики врагов, фазы боссов
             self.enemy_scale = scale
             MU.apply(self, scale["tier"], scale)
+        if scale.get("endless"):               # бесконечный забег: любые враги могут стать элитой
+            self.enemy_scale = scale
+            MU.apply_endless(self, scale["endless"])
         if scale.get("solo"):                  # одиночка: врагов меньше — главари и первые по списку
             self._solo_trim(scale["solo"])
         hideable = [u for u in self.alive(ENEMY) if not u.boss]
-        for u in self.rng.sample(hideable, min(len(hideable), self.enc.get("fog", 0))):
+        fog_n = max(int(self.enc.get("fog", 0)), int(scale.get("fog", 0)))
+        for u in self.rng.sample(hideable, min(len(hideable), fog_n)):
             u.hidden = True
         self.enemy_scale = scale
         for o in self.enc.get("objects", []):
@@ -497,9 +501,13 @@ class Combat:
     def _cancel_cast(self, u):
         """Отмена каста игроком: AP и перезарядка возвращаются."""
         if u.cast:
+            sid = u.cast["skill"]
+            channel = bool(u.cast.get("channel"))
             u.ap = min(u.ap_max, u.ap + u.cast["ap"])
-            u.cooldowns.pop(u.cast["skill"], None)
+            u.cooldowns.pop(sid, None)
             u.cast = None
+            if channel:
+                self.emit("channel_end", unit=u, skill=sid, reason="cancel")
             self.emit("cast_cancel", unit=u)
 
     # ---------- тик ----------
@@ -636,6 +644,7 @@ class Combat:
             return None
         u = self._spawn(ENEMY, etype, self.data.enemies[etype], cell)
         self._scale_enemy(u, self.enemy_scale or {})
+        MU.maybe_elite(self, u)
         u.ai_timer = 0.3
         self.emit("spawn", unit=u)
         return u
@@ -847,10 +856,45 @@ class Combat:
                 u.asleep = False
             return
         if u.cast:
-            u.cast["left"] -= dt / u.slow_mult(self.tags)
-            if u.cast["left"] <= 0:
-                c, u.cast = u.cast, None
-                self._resolve_skill(u, c["skill"], c["target"], c.get("auto", False))
+            c = u.cast
+            step = dt / u.slow_mult(self.tags)
+            c["left"] -= step
+            ch = c.get("channel")
+            if ch:
+                ch["t"] += step
+                while ch["t"] >= ch["every"] and c["left"] > 0 and (ch["count"] is None or ch["count"] > 0):
+                    ch["t"] -= ch["every"]
+                    if ch["ap_cost"]:
+                        if u.ap < ch["ap_cost"]:
+                            u.cast = None
+                            self.emit("channel_end", unit=u, skill=c["skill"], reason="ap")
+                            return
+                        u.ap -= ch["ap_cost"]
+                        self.emit("channel_ap", unit=u, amount=ch["ap_cost"], left=u.ap)
+                    center = c.get("center", u.cell)
+                    if ch["random"]:
+                        cells = [p for p in self.grid.in_radius(center, ch["spread"])
+                                 if self.grid.get(p) is not None and self.grid.get(p).passable]
+                        if cells:
+                            center = self.rng.choice(cells)
+                    effs = ch["effects"]
+                    if ch["empowered"] and ch["count"] == 1:
+                        effs = [dict(e, amount=e["amount"] * ch["empowered_mult"]) if e.get("amount") else e
+                                for e in effs]
+                    self.emit("channel_tick", unit=u, skill=c["skill"], center=center,
+                              radius=ch["radius"], kind=ch["kind"])
+                    self.apply_effects(u, effs, center, None)
+                    if ch["count"] is not None:
+                        ch["count"] -= 1
+                        if ch["count"] <= 0:
+                            c["left"] = 0
+                            break
+            if c["left"] <= 0:
+                u.cast = None
+                if ch:
+                    self.emit("channel_end", unit=u, skill=c["skill"])
+                else:
+                    self._resolve_skill(u, c["skill"], c["target"], c.get("auto", False))
             return
         if u.wait > 0:
             u.wait -= dt
@@ -941,6 +985,15 @@ class Combat:
                 u.hazard_acc -= 1.0
                 self.damage(u, self._env_amount(u, terrain), None, kind="hazard",
                             dtype=terrain.get("damage_type"))
+            return
+        if c.hazard == "fog":
+            if u.team == c.hazard_team:                 # свои в тумане уклоняются
+                self.add_buff(u, "evasion", 0.22, 0.7)
+            else:                                       # чужие слепнут
+                u.hazard_acc += dt
+                if u.hazard_acc >= 1.0:
+                    u.hazard_acc -= 1.0
+                    self.apply_stun(u, 0.45, "blind")
             return
         if c.hazard:
             h = self.cfg["hazards"][c.hazard]
@@ -1410,7 +1463,8 @@ class Combat:
         p = u.passive
         if p and p["kind"] == "backstab" and u.pp >= p["pp"] and self.exposed(t, u):
             self._use_passive(u, f"урон ×{p['mult']:g}", t)
-            amount *= p["mult"]
+            amount *= p["mult"] * t.buff("backstab_taken", 1.0)
+            self.gain(u, "backstab")
         h = self.cfg.get("hit") if self.hit_timing else None
         flight = 0.0
         if h:
@@ -1461,11 +1515,30 @@ class Combat:
             self._retarget(u)
         else:
             u.order = None
-        if sk["cast"] <= 0:
+        if sk["cast"] <= 0 and not sk.get("channel"):
             self._resolve_skill(u, sid, target, auto)
             return
+        center = target.cell if hasattr(target, "cell") else tuple(target)
         u.cast = {"skill": sid, "target": target, "left": sk["cast"], "total": sk["cast"], "ap": sk["ap"],
-                  "auto": auto}
+                  "auto": auto, "center": center}
+        ch = sk.get("channel")
+        if ch:
+            u.cast["channel"] = {
+                "left": ch.get("duration", sk["cast"]),
+                "t": 0.0,
+                "every": ch.get("every", 1.0),
+                "count": ch.get("count"),
+                "ap_cost": ch.get("ap_cost", 0),
+                "effects": ch.get("effects", []),
+                "radius": ch.get("radius", sk.get("radius", 0)),
+                "random": ch.get("random", False),
+                "spread": ch.get("spread", sk.get("radius", 0)),
+                "kind": ch.get("kind"),
+                "empowered": ch.get("empowered", 0),
+                "empowered_mult": ch.get("empowered_mult", 2.0),
+            }
+            u.cast["left"] = u.cast["total"] = u.cast["channel"]["left"]
+            self.log(f"{u.name}: {sk['name']}", (230, 230, 160) if u.team == PLAYER else (230, 170, 160))
         self.emit("cast_start", unit=u, skill=sid)
 
     HIT_TIMING = True
@@ -1522,7 +1595,7 @@ class Combat:
         hit = self.hit_delay(u, sid, sk, center, tunit)
         spent = kit.spend(self, u, sk)
         u.uses[sid] = u.uses.get(sid, 0) + 1
-        if not sk.get("ult"):
+        if not sk.get("ult") and not sk.get("no_gain"):
             self.gain(u, "skill")
         self.emit("skill", unit=u, skill=sid, center=center, target=tunit, auto=auto, hit=hit)
         for a in self.units:             # ноты барда: навык союзника рядом
@@ -1578,6 +1651,8 @@ class Combat:
 
     def _apply_effects(self, caster, effects, center, tunit=None):
         for eff in effects:
+            if eff.get("if_form") and (caster.form or "human") != eff["if_form"]:
+                continue
             of = eff.get("of")
             if of and (caster.proto.get("ref") or eff.get("pct")):   # числа навыка — от стата героя
                 outer = hasattr(caster, "_pw_base")
@@ -1615,8 +1690,55 @@ class Combat:
         if t in ("delay", "rush", "toss", "fuse", "place_object", "watch", "detonate", "song", "trap", "wall",
                  "terrain", "shatter", "corpse", "rewind", "stasis", "spread_fire", "gather", "swap",
                  "levitate", "collapse", "terrain_cast", "reagent", "extra_attack", "regroup", "focus", "tether",
-                 "merge", "life_transfer"):
+                 "merge", "life_transfer", "fire_wall", "clear_hazard", "stoke_fire", "meteor_rain"):
             self._special(caster, eff, center, tunit)
+            return
+        if t == "vanish":
+            stacks = int(eff.get("_spent", 0) or caster.pp)
+            if stacks <= 0:
+                self.emit("fizzle", unit=caster, skill=None)
+                return
+            duration = stacks * float(eff.get("per_stack", 1.0)) + float(eff.get("bonus", 0.0))
+            self.add_buff(caster, "stealth", eff.get("mult", 1.8), duration)
+            self.emit("vanish", unit=caster, stacks=stacks, duration=duration)
+            return
+        if t == "shadow_slip":
+            old = tuple(caster.cell)
+            if not self.is_free(center, exclude=caster):
+                spot = self.free_near(center, 1)
+                if spot is None:
+                    self.emit("fizzle", unit=caster, skill=None)
+                    return
+                center = spot
+            self._place(caster, center, 0.12)
+            cell = self.grid.get(old)
+            if cell is not None and cell.passable:
+                cell.hazard, cell.hazard_time, cell.hazard_team = "fog", eff.get("duration", 2.0), caster.team
+            return
+        if t == "heal_over_time":
+            every = max(0.2, float(eff.get("every", 1.0)))
+            duration = max(every, float(eff.get("duration", 6.0)))
+            amount = eff.get("amount", 10)
+            radius = eff.get("radius", 0)
+            for i in range(max(1, int(round(duration / every)))):
+                delay = every * (i + 1)
+                self.delayed.append({
+                    "left": delay, "total": delay, "caster": caster,
+                    "effects": [{"type": "heal", "amount": amount, "radius": radius,
+                                 "affects": eff.get("affects", "allies")}],
+                    "center": tuple(center), "tunit": tunit, "name": eff.get("name", "Лечение"),
+                })
+            return
+        if t == "drain_ap":
+            if tunit is not None and tunit.alive:
+                drained = min(tunit.ap, eff.get("amount", 2))
+                tunit.ap -= drained
+                for sid in list(tunit.skills):
+                    tunit.cooldowns[sid] = tunit.cooldowns.get(sid, 0) + eff.get("cooldown", 3)
+                if tunit.cast:
+                    tunit.cast["left"] += eff.get("cast", 1.0)
+                caster.ap = min(caster.ap_max, caster.ap + eff.get("gain", 0))
+                self.emit("drain", unit=tunit, src=caster, amount=drained)
             return
         if t == "teleport":
             if not self.is_free(center, exclude=caster):
@@ -1650,6 +1772,12 @@ class Combat:
             return
         if t == "form":
             self.set_form(caster, eff.get("form"))
+            return
+        if t == "form_cycle":
+            order = ("human", "bear", "wolf")
+            cur = caster.form or "human"
+            nxt = order[(order.index(cur) + 1) % len(order)] if cur in order else "bear"
+            self.set_form(caster, None if nxt == "human" else nxt)
             return
         if t == "revive":
             self.revive(caster, eff, center)
@@ -1775,17 +1903,26 @@ class Combat:
 
     def _hit(self, caster, v, eff):
         """Урон навыка: казнь, удар в спину, вампиризм, бафф/дебафф на цель."""
+        was_poisoned = "poison" in v.statuses
+        was_bleeding = "bleed" in v.statuses
         amount = eff["amount"] * caster.power * max(caster.ambush, eff.get("_shadow", 1.0)) * self.blood_mult(caster)
         amount *= kit.hit_mult(self, caster, v, eff)
         bs = eff.get("backstab")
         if bs and self.exposed(v, caster):
-            amount *= bs
+            amount *= bs * v.buff("backstab_taken", 1.0)
             self.emit("backstab", unit=v, src=caster)
+            self.gain(caster, "backstab")
+        if eff.get("from_shadow") and caster.ambush > 1.0:
+            amount *= eff["from_shadow"]
         ex = eff.get("execute")
         if ex and v.hp < v.max_hp * ex["below"]:
             amount *= ex["mult"]
             self.emit("execute", unit=v)
         dealt = self.damage(v, amount, caster, eff.get("tag"), eff.get("kind", "spell"))
+        if eff.get("tag") == "poison" and was_poisoned:
+            self.gain(caster, "poison")
+        if eff.get("gain_if_bleeding") and was_bleeding:
+            self.gain(caster, "bleed")
         ok = eff.get("on_kill")
         if ok and not v.alive and caster.alive:     # «Охотник за головами»: убил — AP и сброс перезарядки
             caster.ap = min(caster.ap_max, caster.ap + ok.get("ap", 0))
@@ -1812,6 +1949,11 @@ class Combat:
     def add_buff(self, u, stat, value, duration, src=None):
         if stat == "bleed":                       # кровотечение — дот со стаками, а не обычный бафф
             return self.apply_dot(u, "bleed", value, duration, attacker=src or self._actor)
+        if duration > 0 and (stat in ("silence", "exposed", "armor_shred")
+                             or (stat == "slow" and value > 1)
+                             or (stat == "dmg_taken" and value > 1)
+                             or (stat == "atk_mult" and value < 1)):
+            duration = self._debuff_dur(u, duration)      # сопротивление жреца режет и длительность баффов-дебаффов
         fresh = u.buffs.get(stat, [None])[0] != value     # продление того же баффа (аура знамени) — без надписи
         u.buffs[stat] = [value, duration]
         if stat == "silence" and u.cast is not None:      # безмолвие сбивает каст
@@ -2126,6 +2268,8 @@ class Combat:
         и пассивок. dtype — тип урона для резистов (physical/magic/стихия), не вешает статус."""
         if not target.alive:
             return 0
+        if target.proto_id == "decoy" and target.owner is not None and target.owner.proto_id == "assassin":
+            self.gain(target.owner, "decoy")
         sc = attacker.proto.get("scale") if attacker is not None and not self._intercepting else None
         if sc:                                 # режим героев: урон растёт от атрибута своего вида
             school = "basic" if self._basic else (kind if kind in self.data.stats_mode["schools"] else None)
@@ -2147,6 +2291,12 @@ class Combat:
         dg = target.proto.get("dodge")
         if dg and kind in ("melee", "ranged") and attacker is not None and not self._intercepting \
                 and self.rng.random() < dg:
+            self.emit("dodge", unit=target)
+            self.rules.fire("dodge", {kind}, unit=target, source=attacker)
+            return 0
+        ev = target.buff("evasion", 0.0)
+        if ev and kind in DIRECT and attacker is not None and not self._intercepting \
+                and self.rng.random() < ev:
             self.emit("dodge", unit=target)
             self.rules.fire("dodge", {kind}, unit=target, source=attacker)
             return 0
@@ -2297,6 +2447,14 @@ class Combat:
             self.emit("watch", unit=caster, center=tuple(center), radius=eff.get("radius", 1))
         elif t == "detonate":              # Вспышка: всё горящее в радиусе взрывается
             self._detonate(caster, eff, center)
+        elif t == "fire_wall":             # стена огня: линия горящих клеток
+            self._fire_wall(caster, eff, center)
+        elif t == "clear_hazard":          # пепел: тушит огонь в области
+            self._clear_hazard(caster, eff, center)
+        elif t == "stoke_fire":            # вспышка пожара: усиливает очаги и горение
+            self._stoke_fire(caster, eff, center)
+        elif t == "meteor_rain":           # дождь метеоров: несколько отложенных ударов
+            self._meteor_rain(caster, eff, center)
         elif t == "place_object":          # бочка подрывника
             mine = [o for o in self.units if o.alive and o.obj and o.owner is caster and o.proto_id == eff["object"]]
             for old in mine[:max(0, len(mine) - eff.get("limit", 3) + 1)]:
@@ -2593,6 +2751,71 @@ class Combat:
             self.emit("wall", src=caster, center=center)
         else:
             self.emit("fizzle", unit=caster, skill=None)
+
+    def _fire_wall(self, caster, eff, center):
+        """Стена огня: линия горящих клеток поперёк направления каста."""
+        dx, dy = sign(center[0] - caster.cell[0]), sign(center[1] - caster.cell[1])
+        side = (-dy, dx) if (dx, dy) != (0, 0) else (0, 1)
+        if side[0] and side[1]:
+            side = (0, 1)
+        half = eff.get("length", 3) // 2
+        made = []
+        for k in range(-half, eff.get("length", 3) - half):
+            p = (center[0] + side[0] * k, center[1] + side[1] * k)
+            cell = self.grid.get(p)
+            if cell is None or not cell.passable or cell.terrain in ("water", "lava", "chasm"):
+                continue
+            cell.hazard, cell.hazard_time, cell.hazard_team = "fire", eff.get("duration", 6), caster.team
+            cell.blaze = True
+            for v in self.units_in_radius(p, 0):
+                if caster.is_enemy(v) and not v.obj:
+                    self.damage(v, eff.get("amount", 10) * caster.power, caster, "fire", "spell")
+            made.append(p)
+        if made:
+            self.emit("fire_wall", src=caster, center=center, cells=made, duration=eff.get("duration", 6))
+        else:
+            self.emit("fizzle", unit=caster, skill=None)
+
+    def _clear_hazard(self, caster, eff, center):
+        """Пепел: гасит огонь в области."""
+        for p in self.grid.in_radius(tuple(center), eff.get("radius", 1)):
+            cell = self.grid.get(p)
+            if cell is not None and cell.hazard == "fire":
+                cell.hazard, cell.hazard_time, cell.blaze = None, 0.0, False
+
+    def _stoke_fire(self, caster, eff, center):
+        """Вспышка пожара: очаги горят дольше, горящие враги получают усиленное Горение."""
+        for p in self.grid.in_radius(tuple(center), eff.get("radius", 2)):
+            cell = self.grid.get(p)
+            if cell is not None and cell.hazard == "fire":
+                cell.hazard_time = max(cell.hazard_time, eff.get("duration", 6))
+                cell.blaze = True
+        for v in self.units_in_radius(tuple(center), eff.get("radius", 2)):
+            if caster.is_enemy(v) and not v.obj and "fire" in v.statuses:
+                self.apply_status(v, "fire", caster, hit=eff.get("hit", 20))
+        self.emit("stoke", center=tuple(center), radius=eff.get("radius", 2), src=caster)
+
+    def _meteor_rain(self, caster, eff, center):
+        """Дождь метеоров: несколько отложенных ударов в случайные клетки."""
+        cells = [p for p in self.grid.in_radius(tuple(center), eff.get("spread", 3))
+                 if self.grid.get(p) is not None and self.grid.get(p).passable]
+        if not cells:
+            self.emit("fizzle", unit=caster, skill=None)
+            return
+        count = eff.get("count", 5)
+        for i in range(count):
+            p = self.rng.choice(cells)
+            dmg = eff.get("amount", 20)
+            if eff.get("empowered") and i == count - 1:
+                dmg *= eff.get("empowered_mult", 2.0)
+            effects = [
+                {"type": "damage", "amount": dmg, "radius": 1, "kind": "spell", "tag": "fire"},
+                {"type": "hazard", "hazard": "fire", "duration": eff.get("burn", 4), "radius": 1},
+            ]
+            total = 0.4 + i * 0.35
+            self.delayed.append({"left": total, "total": total, "caster": caster, "effects": effects,
+                                 "center": p, "tunit": None, "name": "Метеор", "skill": "meteor"})
+        self.emit("meteor_rain", center=tuple(center), count=count, src=caster)
 
     def _corpse(self, caster, eff, center):
         if eff["do"] == "make":            # создать труп из своей крови
@@ -2988,11 +3211,16 @@ class Combat:
         self.emit("heal", unit=u, amount=real)
         return real
 
+    def _debuff_dur(self, u, dur):
+        """Длительность дебаффа с учётом сопротивления жреца: 0.25 = на четверть короче."""
+        resist = max(0.0, min(0.8, float(u.buff("debuff_resist", 0.0))))
+        return max(0.2, float(dur) * (1.0 - resist))
+
     def apply_status(self, u, tag, attacker=None, hit=0, hostile=None):
         """Вешает тег-статус. Если на юните есть реагирующий тег — реакция. Возвращает бонус к удару.
         hostile — тег наложил враг юнита (или опасная среда): реакция в полную силу. Союзник или рельеф —
         реакция только нейтрализует теги (вода союзника тушит, а не обваривает паром)."""
-        dur = self.cfg["status_duration"]
+        dur = self._debuff_dur(u, self.cfg["status_duration"])
         if "immune" in u.buffs or u.obj:
             return 0
         if attacker is not None and attacker.is_enemy(u):
@@ -3022,7 +3250,7 @@ class Combat:
 
     def _apply_water(self, u, attacker, hit, hostile):
         """Вода всегда тушит огонь; союзная/рельефная вода оставляет мокрый тег, вражеская — пар."""
-        dur = self.cfg["status_duration"]
+        dur = self._debuff_dur(u, self.cfg["status_duration"])
         if "fire" in u.statuses:
             self._clear_dot(u, "fire")
             self.emit("extinguish", unit=u, tag="fire")
@@ -3054,7 +3282,7 @@ class Combat:
         """Наложение дот-тега с реакциями и правилами стаков."""
         self._sync_dots(u)
         cfg = self._dot_cfg(tag)
-        dur = cfg.get("duration", self.cfg["status_duration"])
+        dur = self._debuff_dur(u, cfg.get("duration", self.cfg["status_duration"]))
         if tag == "fire" and ("water" in u.statuses or "wet" in C.unit_tags(self, u)):
             self._clear_dot(u, "fire")             # мокрого поджечь нельзя
             self.emit("extinguish", unit=u, tag="fire")
@@ -3094,7 +3322,7 @@ class Combat:
             if tag in u.dots:
                 self._refresh_dot(u, tag)
             else:
-                u.statuses[tag] = self.cfg["status_duration"]
+                u.statuses[tag] = self._debuff_dur(u, self.cfg["status_duration"])
             return
         extra = self.apply_status(u, tag, attacker, 0, hostile)
         if extra and u.alive:
@@ -3176,9 +3404,13 @@ class Combat:
         if u.cast and not self._try_concentration(u):
             if self._actor is not None and self._actor.team != u.team:
                 self._actor.tally["interrupts"] += 1
-            sk = u.skill_defs[u.cast["skill"]]
+            sid = u.cast["skill"]
+            sk = u.skill_defs[sid]
+            channel = bool(u.cast.get("channel"))
             u.cast = None
             self.emit("interrupt", unit=u)
+            if channel:
+                self.emit("channel_end", unit=u, skill=sid, reason="interrupt")
             self.log(f"{u.name}: каст «{sk['name']}» сорван", (255, 200, 120))
 
     def apply_stun(self, u, dur, look=None):
@@ -3186,6 +3418,7 @@ class Combat:
         freeze (лёд), shock (разряд), blind (ослепление), sleep (сон)."""
         if not u.alive:
             return
+        dur = self._debuff_dur(u, dur)
         self._interrupt(u)
         if self._actor is not None and self._actor.team != u.team:
             self._actor.tally["cc"] += max(0.0, dur - max(0.0, u.stun))
@@ -3219,6 +3452,8 @@ class Combat:
             PS.on_death(self, u)
             if u.mutator and not (u.undying and not u.risen):
                 MU.on_death(self, u)
+            if "backstab_taken" in u.buffs and u.last_hit_by is not None:
+                self.gain(u.last_hit_by, "mark_kill")
         u.cast = None
         u.order = None
         rises = u.undying and not u.risen and tag not in u.undying.get("unless", ["fire"])

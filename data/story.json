@@ -4,7 +4,18 @@
   "warrior",
   "mage"
  ],
- "squad_max": 6,
+ "squad_max": 5,
+ "squad_by_chapter": {
+  "swamp": 2,
+  "forge": 3,
+  "crypt": 3,
+  "pass": 4,
+  "steppe": 4,
+  "tomb": 5,
+  "fae": 5,
+  "sunken": 5,
+  "citadel": 5
+ },
  "heal_between": 0.5,
  "characters": {
   "warrior": {

@@ -50,6 +50,7 @@ def test_steam_reaction():
 def test_melt_doubles_hit():
     c, _, foes = make()
     slime = foes[0]
+    slime.passive = None                               # проверяем таяние, а не пассивку слизня
     c.apply_status(slime, "ice")
     dealt = c.damage(slime, 20, None, "fire", "spell")
     assert dealt == 40 - slime.armor

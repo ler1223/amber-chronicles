@@ -94,6 +94,7 @@
     "ice": {"name": "Лёд", "color": [170, 225, 245], "status": "ice", "dps": 0, "move": 1.2, "covers": true},
     "oil": {"name": "Масляная лужа", "color": [120, 92, 46], "status": "oil", "dps": 0, "foes_only": true, "move": 1.3},
     "poison": {"name": "Ядовитое облако", "color": [110, 190, 70], "status": "poison", "dps": 0, "foes_only": true},
+    "fog": {"name": "Туман", "color": [170, 180, 190]},
     "briar": {"name": "Терновник", "color": [80, 120, 50], "dps": 3, "dps_pct": 0.02, "damage_type": "physical", "foes_only": true, "move": 1.6},
     "mine": {"name": "Мина", "color": [200, 80, 60], "trigger": {"damage": 30, "tag": "fire", "stun": 1.0}},
     "powder": {"name": "Пороховая дорожка", "color": [72, 60, 46]},

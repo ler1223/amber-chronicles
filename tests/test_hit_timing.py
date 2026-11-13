@@ -51,6 +51,5 @@ def test_arrow_lands_after_flight_and_melee_almost_at_once():
 def test_dash_and_buffs_are_instant():
     c = make(("assassin", "warrior", "mage", "priest"))
     a = next(u for u in c.units if u.proto_id == "assassin")
-    sk = a.skill_defs["shadow_step"]
-    foe = c.alive(ENEMY)[0]
-    assert c.hit_delay(a, "shadow_step", sk, foe.cell, foe) == 0.0
+    sk = a.skill_defs["vanish"]
+    assert c.hit_delay(a, "vanish", sk, a.cell, a) == 0.0

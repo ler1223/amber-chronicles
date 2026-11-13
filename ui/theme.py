@@ -152,6 +152,55 @@ def hero_tint(color):
     return {"accent": acc, "dim": mix(acc, PANEL, 0.5), "fill": mix(PANEL, c, 0.14), "hot": mix(PANEL, c, 0.32)}
 
 
+_ORN = {}
+
+
+def orn(name, w=None, h=None, flip=(False, False)):
+    """Украшение интерфейса (лист UI: assets/sprites/ui_*.png, высокое разрешение) в нужном размере или None."""
+    key = (name, w, h, flip)
+    if key not in _ORN:
+        import os
+        src = _ORN.get((name, "src"))
+        if (name, "src") not in _ORN:
+            path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "sprites",
+                                f"{name}.png")
+            src = None
+            if os.path.exists(path):
+                try:
+                    src = pygame.image.load(path)
+                    r = src.get_bounding_rect()
+                    src = src.subsurface(r).copy() if r.w and r.h else src
+                except pygame.error:
+                    src = None
+            _ORN[(name, "src")] = src
+        img = None
+        if src is not None:
+            if w and not h:
+                h = max(1, round(src.get_height() * w / src.get_width()))
+            elif h and not w:
+                w = max(1, round(src.get_width() * h / src.get_height()))
+            img = pygame.transform.smoothscale(src, (w, h)) if w and h else src
+            if flip != (False, False):
+                img = pygame.transform.flip(img, *flip)
+        if len(_ORN) > 400:
+            srcs = {k: v for k, v in _ORN.items() if k[1] == "src"}
+            _ORN.clear()
+            _ORN.update(srcs)
+        _ORN[key] = img
+    return _ORN[key]
+
+
+def divider(surf, cx, y, w, color=None):
+    """Разделитель под заголовком: орнамент (лист UI) или тонкая янтарная линия с ромбиком."""
+    img = orn("ui_divider", int(w))
+    if img is not None and w >= 40:
+        surf.blit(img, (cx - img.get_width() // 2, y - img.get_height() // 2))
+        return
+    col = color or AMBER_DIM
+    pygame.draw.line(surf, col, (cx - w // 2, y), (cx + w // 2, y), 1)
+    pygame.draw.polygon(surf, AMBER, [(cx, y - 4), (cx + 4, y), (cx, y + 4), (cx - 4, y)])
+
+
 def frame(surf, rect, alpha=238, accent=None, corners=True, radius=7, fill=None, corner=None):
     """Панель «тёмное дерево»: заливка с тёмным низом, тёмный контур, кайма (по умолчанию янтарная) и ромбики в
     углах (corner — их цвет, у панелей героя — цвет класса)."""
@@ -169,6 +218,15 @@ def frame(surf, rect, alpha=238, accent=None, corners=True, radius=7, fill=None,
     pygame.draw.rect(box, (*accent, 220), box.get_rect().inflate(-2, -2), 1, border_radius=max(1, radius - 1))
     surf.blit(box, rect)
     if corners and rect.w > 24 and rect.h > 24:
+        big = min(rect.w, rect.h) >= 90
+        cs = int(max(14, min(40, min(rect.w, rect.h) * 0.16)))
+        name = "ui_corner" if big else "ui_corner_small"
+        if orn(name, cs, cs) is not None and corner is None:       # уголки-завитки (лист UI)
+            for (x, y), fl in (((rect.x - 2, rect.y - 2), (False, False)), ((rect.right - cs + 2, rect.y - 2), (True, False)),
+                               ((rect.x - 2, rect.bottom - cs + 2), (False, True)),
+                               ((rect.right - cs + 2, rect.bottom - cs + 2), (True, True))):
+                surf.blit(orn(name, cs, cs, fl), (x, y))
+            return rect
         for cx, cy in ((rect.x + 3, rect.y + 3), (rect.right - 4, rect.y + 3),
                        (rect.x + 3, rect.bottom - 4), (rect.right - 4, rect.bottom - 4)):
             pygame.draw.polygon(surf, corner or AMBER, [(cx, cy - 3), (cx + 3, cy), (cx, cy + 3), (cx - 3, cy)])

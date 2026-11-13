@@ -1277,8 +1277,52 @@
     "revive": {"circle": "circle_holy", "size": 160, "orb": "charge_orb", "dim": 0.3, "bars": 0.4},
     "headshot": {"circle": "circle_runes", "size": 100, "orb": "charge_orb"},
     "poison_cloud": {"circle": "circle_nature", "size": 90},
-    "mine.B": {"circle": "circle_runes", "size": 90}
-  },
+    "mine.B": {"circle": "circle_runes", "size": 90},
+    "flame_wall": {
+      "circle": "circle_arcane",
+      "size": 120
+    },
+    "ash_veil": {
+      "circle": "circle_holy",
+      "size": 120
+    },
+    "flashover": {
+      "circle": "circle_arcane",
+      "size": 120
+    },
+    "meteor": {
+      "circle": "circle_arcane",
+      "size": 160
+    },
+    "phoenix": {
+      "circle": "circle_holy",
+      "size": 140
+    },
+    "prayer": {
+      "circle": "circle_holy",
+      "size": 140
+    },
+    "blessing": {
+      "circle": "circle_holy",
+      "size": 110
+    },
+    "sanctuary": {
+      "circle": "circle_holy",
+      "size": 130
+    },
+    "miracle": {
+      "circle": "circle_holy",
+      "size": 150
+    },
+    "last_stand": {
+      "circle": "circle_holy",
+      "size": 130
+    },
+    "shield_charge": {
+      "circle": "circle_arcane",
+      "size": 120
+    }
+},
 
   "unit_attacks": {"bog_archer": "arrow_ice"},
 
@@ -1304,7 +1348,6 @@
     "ice_bolt": {"release": "cast_release", "travel": {"sfx": "ice_orb", "ribbon": "ice_trail", "trail": "ice_trail", "light": "orb", "speed": 1100}, "impact": "ice_burst", "scale": 0.8, "branches": {"A": {"impact": "ice_prison"}, "B": {"line_fx": "ice_line", "travel": {"sfx": "ice_orb", "ribbon": "ice_trail", "light": "orb", "speed": 1600}}}},
     "ice_dart": {"travel": {"prop": "arrow_ice", "ribbon": "ice_arrow", "head": "ice_trail", "speed": 1200, "arc": 14}, "impact": "ice_burst", "scale": 0.6},
     "curse": {"release": "cast_release", "travel": {"sfx": "dark_orb", "ribbon": ["dark_smoke", "dark_trail"], "light": "orb", "speed": 900, "arc": 20}, "impact": "curse_hit", "branches": {"A": {"impact": "plague"}, "B": {"impact": "wither"}}},
-    "mana_shield": {"impact": "shield_dome", "branches": {"A": {"impact": "barrier"}, "B": {"impact": "mirror_shield"}}},
     "faith_shield": {"impact": "holy_ring"},
     "blink": {"impact": "blink"},
     "heal": {"release": "cast_release", "impact": "holy_heal", "branches": {"A": {"impact": "renewal", "color": [140, 255, 170]}, "B": {"impact": "great_heal"}}},
@@ -1316,13 +1359,9 @@
     "frost_storm": {"impact": "frost_storm"},
     "ice_ring": {"impact": "ice_nova"},
     "_on_death": {"impact": "beetle_explode"},
-    "shadow_step": {"release": "shadow_puff", "impact": "dagger_strike", "color": [180, 140, 255], "branches": {"A": {"impact": "blade_dance"}, "B": {"impact": "silence_strike"}}},
-    "venom_blade": {"impact": "venom_coat", "color": [130, 220, 90], "branches": {"B": {"travel": {"prop": "dart", "ribbon": "dart", "speed": 1300, "arc": 10}, "impact": "dart_hit"}}},
     "vanish": {"impact": "vanish_smoke", "branches": {"B": {"release": "vanish_smoke", "impact": "reveal_fx"}}},
     "shadow_mark": {"impact": "death_mark", "color": [255, 70, 90]},
     "riposte": {"impact": "parry_stance"},
-    "bear_form": {"impact": "shapeshift"},
-    "wolf_form": {"impact": "shapeshift"},
     "entangle": {"impact": "roots", "color": [130, 200, 90], "branches": {"B": {"impact": "strangle"}}},
     "rejuvenate": {"impact": "nature_heal", "color": [140, 255, 170], "branches": {"A": {"impact": "nature_bloom"}}},
     "spirit_tree": {"impact": "tree_grow", "color": [140, 255, 150]},
@@ -1452,8 +1491,107 @@
     "merge": {"impact": "spirit_link_fx"},
     "life_transfer": {"impact": "transfer"},
     "soul_shield": {"impact": "shield_dome"},
-    "share_pain": {"impact": "curse_hit"}
-  },
+    "share_pain": {"impact": "curse_hit"},
+    "flame_wall": {
+      "release": "cast_release",
+      "impact": "fire_explosion",
+      "color": [
+        255,
+        140,
+        60
+      ]
+    },
+    "ash_veil": {
+      "release": "cast_release",
+      "impact": "smoke_burst",
+      "color": [
+        180,
+        180,
+        190
+      ]
+    },
+    "flashover": {
+      "release": "cast_release",
+      "impact": "purge_fire",
+      "color": [
+        255,
+        140,
+        60
+      ]
+    },
+    "meteor": {
+      "release": "cast_release",
+      "impact": "meteor_impact",
+      "color": [
+        255,
+        140,
+        60
+      ]
+    },
+    "phoenix": {
+      "release": "cast_release",
+      "impact": "great_heal",
+      "color": [
+        255,
+        240,
+        170
+      ]
+    },
+    "prayer": {
+      "release": "cast_release",
+      "impact": "judgment_beam",
+      "color": [
+        255,
+        240,
+        170
+      ]
+    },
+    "blessing": {
+      "release": "cast_release",
+      "impact": "holy_heal",
+      "color": [
+        255,
+        240,
+        170
+      ]
+    },
+    "sanctuary": {
+      "release": "cast_release",
+      "impact": "holy_ring",
+      "color": [
+        255,
+        240,
+        170
+      ]
+    },
+    "miracle": {
+      "release": "cast_release",
+      "impact": "great_heal",
+      "color": [
+        255,
+        240,
+        170
+      ]
+    },
+    "last_stand": {
+      "release": "cast_release",
+      "impact": "holy_ring",
+      "color": [
+        255,
+        200,
+        100
+      ]
+    },
+    "shield_charge": {
+      "release": "cast_release",
+      "impact": "crush",
+      "color": [
+        255,
+        200,
+        100
+      ]
+    }
+},
 
   "defaults": {
     "enemy": {"travel": {"sfx": "energy_orb", "ribbon": "bolt_trail", "speed": 1000}, "impact": "bolt_hit"},

@@ -17,13 +17,13 @@ def test_rooms_strip_switches_rooms(tmp_path):
     assert isinstance(app.scene, R.HallRoom)
 
 
-def test_muster_chapter_tier_format_autocast(tmp_path):
+def test_chapter_and_muster_are_separate_rooms(tmp_path):
     from game import tavern_rooms as R
     from ui import settings
     app = new_app(tmp_path)
-    key(app, pygame.K_2)
+    key(app, pygame.K_9)
     sc = app.scene
-    assert isinstance(sc, R.MusterRoom)
+    assert isinstance(sc, R.ChapterRoom)
     frame(app)
     click(app, ("party_mode", True))
     assert app.profile.solo
@@ -40,8 +40,10 @@ def test_muster_chapter_tier_format_autocast(tmp_path):
     app.profile.chapter_wins = {"swamp": 1}
     click(app, ("chapter", "forge"))
     assert sc.chapter == "forge" and sc.tier == 0
-    key(app, pygame.K_1)
     key(app, pygame.K_2)
+    assert isinstance(app.scene, R.MusterRoom)
+    key(app, pygame.K_1)
+    key(app, pygame.K_9)
     assert app.scene.chapter == "forge"                    # выбор — общий для комнат
 
 
@@ -75,6 +77,20 @@ def test_hall_click_opens_sheet_and_shows_resume(tmp_path):
     assert isinstance(app.scene, TavernHeroScene)
     key(app, pygame.K_ESCAPE)
     assert isinstance(app.scene, R.HallRoom)
+
+
+def test_endless_muster_cycles_one_ability(tmp_path):
+    from game import tavern_rooms as R
+    app = new_app(tmp_path)
+    app.switch_mode("solo")
+    app.to_hub()
+    key(app, pygame.K_2)
+    assert isinstance(app.scene, R.MusterRoom)
+    frame(app)
+    h = app.profile.hall()[0]
+    old = h.endless_skill
+    click(app, ("endless_skill", h.uid))
+    assert h.endless_skill and h.endless_skill != old
 
 
 def test_muster_chest_equips_artifact(tmp_path):
@@ -146,7 +162,8 @@ def test_chest_scrolls_and_gem_viewer_rotates(tmp_path):
     area, track = room.scroll_regs["chest_gems"][:2]
     room.handle(pygame.event.Event(pygame.MOUSEMOTION, pos=area.center, rel=(0, 0), buttons=(0, 0, 0)))
     room.handle(pygame.event.Event(pygame.MOUSEWHEEL, x=0, y=-2))
-    assert room.scroll_pos["chest_gems"] == 2
+    reg = room.scroll_regs["chest_gems"]
+    assert room.scroll_pos["chest_gems"] == min(2, reg[2] - reg[3])      # прокрутка — до последнего пикселя
     room.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(track.centerx, track.bottom - 2), button=1))
     room.handle(pygame.event.Event(pygame.MOUSEBUTTONUP, pos=(track.centerx, track.bottom - 2), button=1))
     frame(app)
@@ -180,7 +197,8 @@ def test_bag_scrolls_in_hero_sheet(tmp_path):
     area = app.scene.scroll_regs["bag"][0]
     app.scene.handle(pygame.event.Event(pygame.MOUSEMOTION, pos=area.center, rel=(0, 0), buttons=(0, 0, 0)))
     app.scene.handle(pygame.event.Event(pygame.MOUSEWHEEL, x=0, y=-3))
-    frame(app)
+    for _ in range(30):                                   # плавная прокрутка — доезжает за доли секунды
+        frame(app)
     shown = [a[1] for _, a, _ in app.scene.hits if isinstance(a, tuple) and a[0] == "equip"]
     assert shown and shown[0] == run.bag[3]["uid"]
     assert X
@@ -198,12 +216,13 @@ def test_wide_window_mouse_hits_stage_scene(tmp_path):
     old = (T.SCREEN_W, T.SCREEN_H)
     T.SCREEN_W, T.SCREEN_H = 1911, 800
     try:
-        with T.design():
-            frame(app)
-            r = g.choice_rects[2]
-        ox = L.content_ox(1911)
-        main.dispatch(app.scene, pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(r.centerx + ox, r.centery), button=1))
+        assert not app.scene.stage                    # огранка — на весь широкий холст, не колонкой
+        frame(app)
+        r = g.choice_rects[2]
+        assert app.scene.area().w > 1800
+        main.dispatch(app.scene, pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=r.center, button=1))
         assert g.phase == "cut" and g.cut is G.CUTS[2]
+        ox = L.content_ox(1911)
         bg = present.side_frames(1911, 800)
         assert bg.get_at((ox + 600, 400))[:3] == (16, 12, 9) and bg.get_at((20, 400))[:3] != (16, 12, 9)
     finally:

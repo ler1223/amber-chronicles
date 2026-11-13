@@ -129,7 +129,7 @@
   "crypt_7": {
     "map": ["..............", "..............", "...#....#.....", "..............", ".....=........", "...#....#..#..", "..............", ".............."],
     "player_spawn": [[2, 3], [0, 2], [0, 4], [1, 5]],
-    "enemies": [{"type": "banshee", "pos": [12, 3]}, {"type": "necromancer", "pos": [12, 4]}, {"type": "skeleton", "pos": [10, 3]}, {"type": "skeleton", "pos": [10, 4]}, {"type": "ghoul", "pos": [9, 3]}, {"type": "skeleton", "pos": [12, 1]}],
+    "enemies": [{"type": "crypt_abbot", "pos": [12, 3]}, {"type": "necromancer", "pos": [12, 4]}, {"type": "skeleton", "pos": [10, 3]}, {"type": "skeleton", "pos": [10, 4]}, {"type": "ghoul", "pos": [9, 3]}, {"type": "skeleton", "pos": [12, 1]}],
     "objective": {"type": "destroy", "name": "Разрушить источники"},
     "objects": [{"type": "sarcophagus", "pos": [11, 3], "spawn": ["ghoul", "skeleton"]}, {"type": "sarcophagus", "pos": [12, 5], "spawn": ["ghoul", "skeleton"]}, {"type": "barrel_powder", "pos": [4, 2]}]
   },
@@ -137,7 +137,7 @@
     "objective": {"type": "defend", "name": "Защитить: Факел-оберег"},
     "waves": [[{"type": "ghoul", "pos": [9, 3]}, {"type": "ghoul", "pos": [9, 3]}, {"type": "skeleton", "pos": [9, 1]}]],
     "objects": [{"type": "ward_torch", "pos": [1, 3]}, {"type": "barrel_powder", "pos": [5, 5]}],
-    "enemies": [{"type": "banshee", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton_archer", "pos": [8, 1]}, {"type": "ghoul", "pos": [7, 2]}]
+    "enemies": [{"type": "crypt_warden", "pos": [9, 2]}, {"type": "necromancer", "pos": [9, 3]}, {"type": "skeleton_archer", "pos": [8, 1]}, {"type": "ghoul", "pos": [7, 2]}]
   },
   "crypt_9": {
     "map": ["..............", "..............", "...#....#..#..", "..............", ".....=........", "...#....#.....", "..............", ".............."],

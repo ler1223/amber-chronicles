@@ -5,6 +5,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import pytest  # noqa: E402
+
 from sim.combat import ENEMY, PLAYER, Combat  # noqa: E402
 from sim.data import GameData  # noqa: E402
 from sim import expedition as X  # noqa: E402
@@ -15,7 +17,7 @@ ED = X.expedition_data(DATA)
 XD = ED.expedition
 
 
-def new_run(tmp_path=None, seed=3, n=3):
+def new_run(tmp_path=None, seed=3, n=2):
     prof = X.ExpeditionProfile(ED, str(tmp_path / "exp.json") if tmp_path else None)
     run = prof.start([h.uid for h in prof.roster[:n]], seed=seed)
     return prof, run
@@ -87,13 +89,24 @@ def test_data_is_consistent():
                     assert "success" in opt and "fail" in opt, eid
 
 
+def test_squad_cap_by_chapter():
+    prof = X.ExpeditionProfile(ED, None, sandbox=True)
+    assert prof.squad_cfg("swamp")["squad_start"] == 2
+    assert prof.squad_cfg("forge")["squad_start"] == 3
+    assert prof.squad_cfg("crypt")["squad_start"] == 3
+    with pytest.raises(ValueError):
+        prof.start([h.uid for h in prof.roster[:3]], seed=1, chapter="swamp")
+    run = prof.start([h.uid for h in prof.roster[:2]], seed=1, chapter="swamp")
+    assert run.cfg["squad_max"] == 2
+
+
 def test_tavern_roster_and_upgrades(tmp_path):
     prof = X.ExpeditionProfile(ED, str(tmp_path / "exp.json"))
     assert len(prof.roster) == 6
     assert {h.cls for h in prof.roster} <= set(XD["tavern"]["start_classes"])
     for h in prof.roster:
         assert len(h.skills) == 4 and len(h.gear) == 1 and h.trait in XD["tavern"]["traits"]
-        assert h.skills[3] == story_meta.ult_of(ED, h.cls)                   # ультимейт — четвёртым, на R
+        assert h.skills[3] in story_meta.ults_of(ED, h.cls)                  # ультимейт — четвёртым, на R
         assert story_meta.kit_ok(ED, h.cls, h.skills[:3])                    # набор не ломает механику класса
     prof.glory = 1000
     assert prof.buy_upgrade("hall") and len(prof.roster) == 8

@@ -204,6 +204,37 @@ def test_ice_wall_cells_join_into_runs_and_render():
     assert frames >= 20 and M.wall_break("x", (5, 4), 1, 0, frames - 1) is not None
 
 
+def test_ice_wall_growth_reuses_full_image(monkeypatch):
+    from ui import pixmesh as M
+    pv = SkillPreview(DATA, pygame.Rect(300, 160, 680, 420), loop=False)
+    pv.show("cryo", None, {}, "ice_wall")
+    for _ in range(50):
+        pv.update(1 / 60)
+    walls = [u for u in pv.c.units if u.obj and u.obj.get("id") == "ice_wall" and u.alive]
+    assert walls
+    pix = pv.view.pix.pixel
+    pix._wall_images.clear()
+    pix._born.clear()
+    pix.time = 0.0
+    calls = []
+    orig = M.wall
+
+    def counted(*a, **k):
+        calls.append(a)
+        return orig(*a, **k)
+
+    monkeypatch.setattr(M, "wall", counted)
+    for i in range(12):
+        pix.time = i / 60
+        for u in walls:
+            pix.draw_object(SCREEN, u)
+    assert len(calls) == 1                         # рост — сдвиг/клип, а не 12 полных рендеров
+    assert len(pix._wall_images) == 1
+    for u in walls:
+        pix.wall_break(u)
+    assert len(pix._breaks) == 1                   # 3D-раскол один на всю стену, не на каждую глыбу
+
+
 def test_flashpoint_burns_surface_as_one_scar():
     from ui.pixmarks import area_scar
     grass = lambda xs, ys: np.full(len(xs), "grass", "U10")   # noqa: E731

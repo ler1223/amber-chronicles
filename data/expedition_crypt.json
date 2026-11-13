@@ -1,0 +1,3416 @@
+{
+  "_note": "Глава 3 «Склеп нежити». Данные похода: acts, events, curses, uniques. Общие встречи и враги лежат в data/encounters.json и data/enemies.json; enemies — ослабленные копии для главы (см. tools/content_expedition_crypt.py).",
+  "name": "Склеп нежити",
+  "trade_faction": "order",
+  "factions": {
+    "order": "Орден Света",
+    "dead": "Мёртвые",
+    "ghouls": "Упыри",
+    "cult": "Культ Лича"
+  },
+  "mats": {
+    "ore": {
+      "name": "Железная руда",
+      "color": [
+        170,
+        150,
+        140
+      ]
+    },
+    "herbs": {
+      "name": "Травы",
+      "color": [
+        120,
+        200,
+        110
+      ]
+    },
+    "gems": {
+      "name": "Самоцветная крошка",
+      "color": [
+        170,
+        140,
+        255
+      ]
+    },
+    "bonedust": {
+      "name": "Костяная пыль",
+      "color": [
+        210,
+        205,
+        185
+      ],
+      "desc": "Редкий материал Склепа: элита и боссы"
+    }
+  },
+  "mechanics": {
+    "torch": {
+      "max": 6,
+      "start": 6,
+      "by_tier": [
+        6,
+        4,
+        3
+      ],
+      "by_difficulty": {
+        "normal": 6,
+        "heroic": 4,
+        "nightmare": 3
+      },
+      "visibility": 2,
+      "low_visibility": 1,
+      "camp_refill": 6,
+      "shop_price": 25,
+      "shop_amount": 2
+    }
+  },
+  "boss_rules": [],
+  "curses": {
+    "grave_chill": {
+      "name": "Могильный холод",
+      "desc": "Отряд: −10% здоровья",
+      "mods": [
+        {
+          "stat": "hp",
+          "mult": 0.9
+        }
+      ]
+    },
+    "soul_rot": {
+      "name": "Гниение души",
+      "desc": "Отряд: −12% силы навыков",
+      "mods": [
+        {
+          "stat": "power",
+          "mult": 0.88
+        }
+      ]
+    },
+    "brittle_bone": {
+      "name": "Хрупкие кости",
+      "desc": "Отряд: −2 брони",
+      "mods": [
+        {
+          "stat": "armor",
+          "add": -2
+        }
+      ]
+    },
+    "death_mark": {
+      "name": "Метка смерти",
+      "desc": "Отряд: −10% урона атак",
+      "mods": [
+        {
+          "stat": "atk_damage",
+          "mult": 0.9
+        }
+      ]
+    }
+  },
+  "acts": [
+    {
+      "name": "Акт I. Ограда кладбища",
+      "art": "crypt_act_0",
+      "difficulty": "normal",
+      "intro": "За воротами кладбища воздух становится тяжёлым. Туман прячет ряды могил, а под землёй уже кто-то пересчитывает кости.",
+      "weights": {
+        "battle": 34,
+        "event": 30,
+        "elite": 9,
+        "shop": 6,
+        "camp": 10
+      },
+      "rest": [
+        "camp",
+        "shop"
+      ],
+      "pools": {
+        "battle": [
+          "crypt_0",
+          "crypt_1"
+        ],
+        "elite": [
+          "crypt_4"
+        ]
+      },
+      "boss": "crypt_7",
+      "arena": []
+    },
+    {
+      "name": "Акт II. Затонувшая часовня",
+      "art": "crypt_act_1",
+      "difficulty": "heroic",
+      "intro": "Часовня ушла под землю вместе с колоколом. Мёртвые ждут, пока их окликнут, а туман становится всё гуще.",
+      "weights": {
+        "battle": 34,
+        "event": 30,
+        "elite": 9,
+        "shop": 6,
+        "camp": 10
+      },
+      "rest": [
+        "camp",
+        "shop"
+      ],
+      "pools": {
+        "battle": [
+          "crypt_2",
+          "crypt_3",
+          "crypt_6",
+          "crypt_5"
+        ],
+        "elite": [
+          "crypt_4"
+        ]
+      },
+      "boss": "crypt_8",
+      "arena": []
+    },
+    {
+      "name": "Акт III. Трон лича",
+      "art": "crypt_act_2",
+      "difficulty": "nightmare",
+      "intro": "Туман расступается перед тронным залом. На троне сидит тот, кто не умирал, и он уже знает ваши имена.",
+      "weights": {
+        "battle": 34,
+        "event": 30,
+        "elite": 9,
+        "shop": 6,
+        "camp": 10
+      },
+      "rest": [
+        "camp",
+        "shop"
+      ],
+      "pools": {
+        "battle": [
+          "crypt_2",
+          "crypt_3",
+          "crypt_6",
+          "crypt_5"
+        ],
+        "elite": [
+          "crypt_4"
+        ]
+      },
+      "boss": "crypt_9",
+      "arena": []
+    }
+  ],
+  "enemies": {
+    "skeleton": {
+      "name": "Скелет-воин",
+      "label": "Ск",
+      "color": [
+        215,
+        210,
+        195
+      ],
+      "role": "melee",
+      "hp": 88,
+      "armor": 1,
+      "move_time": 0.6,
+      "attack": {
+        "damage": 10.2,
+        "range": 1,
+        "cooldown": 1.3
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [],
+      "look": {
+        "body": "skeleton",
+        "color": [
+          215,
+          210,
+          195
+        ],
+        "accent": [
+          150,
+          150,
+          160
+        ],
+        "head": "skull",
+        "weapon": "sword"
+      },
+      "undying": {
+        "delay": 4,
+        "hp": 0.25,
+        "unless": [
+          "fire"
+        ]
+      },
+      "pp_max": 1,
+      "pp_regen": 7.0,
+      "passive": {
+        "kind": "block",
+        "name": "Костяной строй",
+        "pp": 1,
+        "mult": 0.75,
+        "desc": "Удар по скелету: −1 деление шкалы, урон ×0.75"
+      },
+      "desc": "Скелет в ржавых доспехах. Держит строй, пока целы кости, и поднимается снова, если его не сжечь."
+    },
+    "skeleton_archer": {
+      "name": "Скелет-лучник",
+      "label": "Сл",
+      "color": [
+        215,
+        210,
+        195
+      ],
+      "role": "ranged",
+      "hp": 64,
+      "armor": 0,
+      "move_time": 0.55,
+      "attack": {
+        "damage": 9.3,
+        "range": 5,
+        "cooldown": 1.3
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [],
+      "look": {
+        "body": "skeleton",
+        "color": [
+          215,
+          210,
+          195
+        ],
+        "accent": [
+          120,
+          90,
+          60
+        ],
+        "head": "skull",
+        "weapon": "bow"
+      },
+      "undying": {
+        "delay": 4,
+        "hp": 0.25,
+        "unless": [
+          "fire"
+        ]
+      },
+      "pp_max": 1,
+      "pp_regen": 8.0,
+      "passive": {
+        "kind": "dodge",
+        "vs": [
+          "melee"
+        ],
+        "name": "Хрупкая цель",
+        "pp": 1,
+        "desc": "Ближняя атака по лучнику: −1 деление шкалы, промах"
+      },
+      "desc": "Скелет-лучник с трофейным луком. Держится позади строя и осыпается от первого сильного удара."
+    },
+    "ghoul": {
+      "name": "Упырь",
+      "label": "Уп",
+      "color": [
+        120,
+        140,
+        110
+      ],
+      "role": "melee",
+      "hp": 80,
+      "armor": 0,
+      "move_time": 0.4,
+      "attack": {
+        "damage": 9.3,
+        "range": 1,
+        "cooldown": 1.0,
+        "tag": "poison"
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [],
+      "look": {
+        "body": "ghoul",
+        "color": [
+          120,
+          140,
+          110
+        ],
+        "accent": [
+          200,
+          60,
+          60
+        ],
+        "head": "none",
+        "weapon": "none"
+      },
+      "lifesteal": 0.25,
+      "pp_max": 1,
+      "pp_regen": 5.0,
+      "passive": {
+        "kind": "rage",
+        "name": "Голод",
+        "pp": 1,
+        "stat": "atk_speed",
+        "value": 0.75,
+        "duration": 3,
+        "desc": "Удар по упырю: −1 деление шкалы, атаки на 25% быстрее 3 сек"
+      },
+      "desc": "Голодный упырь. Рвёт когтями, пьёт кровь и приходит в ярость от каждого попадания."
+    },
+    "necromancer": {
+      "name": "Некромант",
+      "label": "Нк",
+      "color": [
+        70,
+        40,
+        90
+      ],
+      "role": "caster",
+      "hp": 76,
+      "armor": 0,
+      "move_time": 0.55,
+      "attack": {
+        "damage": 6.8,
+        "range": 4,
+        "cooldown": 1.3
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [
+        "e_raise",
+        "e_wither"
+      ],
+      "look": {
+        "body": "robe",
+        "color": [
+          70,
+          40,
+          90
+        ],
+        "accent": [
+          180,
+          255,
+          160
+        ],
+        "head": "hood",
+        "weapon": "staff"
+      },
+      "pp_max": 1,
+      "pp_regen": 6.0,
+      "passive": {
+        "kind": "block",
+        "name": "Костяной щит",
+        "pp": 1,
+        "mult": 0.7,
+        "desc": "Удар по некроманту: −1 деление шкалы, урон ×0.7"
+      },
+      "desc": "Некромант в пропитанной янтарём робе. Поднимает скелетов и иссушает лечение живых."
+    },
+    "banshee": {
+      "name": "Банши",
+      "label": "Бн",
+      "color": [
+        190,
+        210,
+        230
+      ],
+      "role": "caster",
+      "hp": 68,
+      "armor": 0,
+      "move_time": 0.55,
+      "attack": {
+        "damage": 7.6,
+        "range": 3,
+        "cooldown": 1.3
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [
+        "e_wail"
+      ],
+      "look": {
+        "body": "spirit",
+        "color": [
+          190,
+          210,
+          230
+        ],
+        "accent": [
+          120,
+          160,
+          200
+        ],
+        "head": "none",
+        "weapon": "none"
+      },
+      "flying": true,
+      "pp_max": 1,
+      "pp_regen": 6.0,
+      "passive": {
+        "kind": "dodge",
+        "vs": [
+          "melee",
+          "ranged"
+        ],
+        "name": "Бесплотность",
+        "pp": 1,
+        "desc": "Атака оружием по банши: −1 деление шкалы, промах"
+      },
+      "desc": "Бесплотный плач, который держится в воздухе. Вопль оглушает, а обычное оружие проходит сквозь неё."
+    },
+    "bone_golem": {
+      "name": "Костяной голем",
+      "label": "Кг",
+      "color": [
+        200,
+        195,
+        180
+      ],
+      "role": "melee",
+      "hp": 224,
+      "armor": 3,
+      "move_time": 0.8,
+      "attack": {
+        "damage": 13.6,
+        "range": 1,
+        "cooldown": 1.6
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [
+        "e_slam"
+      ],
+      "look": {
+        "body": "golem",
+        "color": [
+          200,
+          195,
+          180
+        ],
+        "accent": [
+          120,
+          110,
+          100
+        ],
+        "head": "none",
+        "weapon": "none"
+      },
+      "undying": {
+        "delay": 4,
+        "hp": 0.25,
+        "unless": [
+          "fire"
+        ]
+      },
+      "pp_max": 1,
+      "pp_regen": 7.0,
+      "passive": {
+        "kind": "block",
+        "name": "Костяная броня",
+        "pp": 1,
+        "mult": 0.65,
+        "desc": "Удар по голему: −1 деление шкалы, урон ×0.65"
+      },
+      "desc": "Груда сросшихся костей, скреплённая янтарной смолой. Бьёт по площади и почти не чувствует стрел."
+    },
+    "wraith": {
+      "name": "Призрак",
+      "label": "Пз",
+      "color": [
+        90,
+        80,
+        120
+      ],
+      "role": "melee",
+      "hp": 80,
+      "armor": 0,
+      "move_time": 0.4,
+      "attack": {
+        "damage": 11.9,
+        "range": 1,
+        "cooldown": 1.3
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [
+        "e_spectral_lash"
+      ],
+      "look": {
+        "body": "spirit",
+        "color": [
+          90,
+          80,
+          120
+        ],
+        "accent": [
+          200,
+          150,
+          255
+        ],
+        "head": "none",
+        "weapon": "none"
+      },
+      "flying": true,
+      "lifesteal": 0.3,
+      "pp_max": 1,
+      "pp_regen": 6.0,
+      "passive": {
+        "kind": "siphon",
+        "name": "Вытягивание жизни",
+        "pp": 1,
+        "pct": 0.25,
+        "desc": "Урон навыком: −1 деление шкалы, призрак лечится на 25% нанесённого"
+      },
+      "desc": "Призрак, который охотится на раненых. Хлыст замедляет, а чужой урон становится его жизнью."
+    },
+    "death_knight": {
+      "name": "Рыцарь смерти",
+      "label": "Рс",
+      "color": [
+        60,
+        60,
+        80
+      ],
+      "role": "melee",
+      "hp": 304,
+      "armor": 4,
+      "move_time": 0.55,
+      "attack": {
+        "damage": 15.3,
+        "range": 1,
+        "cooldown": 1.4
+      },
+      "ap_max": 6,
+      "ap_regen": 5.0,
+      "skills": [
+        "e_slam",
+        "e_wither"
+      ],
+      "look": {
+        "body": "skeleton",
+        "color": [
+          60,
+          60,
+          80
+        ],
+        "accent": [
+          120,
+          220,
+          160
+        ],
+        "head": "helm",
+        "weapon": "sword"
+      },
+      "elite": true,
+      "undying": {
+        "delay": 4,
+        "hp": 0.25,
+        "unless": [
+          "fire"
+        ]
+      },
+      "pp_max": 1,
+      "pp_regen": 5.0,
+      "passive": {
+        "kind": "block",
+        "name": "Чёрный доспех",
+        "pp": 1,
+        "mult": 0.6,
+        "desc": "Удар по рыцарю: −1 деление шкалы, урон ×0.6"
+      },
+      "desc": "Павший рыцарь в почерневшей броне. Бьёт оземь, проклинает и встаёт снова, пока не сожжён."
+    },
+    "lich": {
+      "name": "Лич",
+      "label": "Лч",
+      "color": [
+        90,
+        60,
+        120
+      ],
+      "role": "caster",
+      "hp": 480,
+      "armor": 2,
+      "move_time": 0.55,
+      "attack": {
+        "damage": 12.8,
+        "range": 4,
+        "cooldown": 1.3
+      },
+      "ap_max": 8,
+      "ap_regen": 3.5,
+      "skills": [
+        "e_raise_lich",
+        "frost_storm"
+      ],
+      "look": {
+        "body": "skeleton",
+        "color": [
+          90,
+          60,
+          120
+        ],
+        "accent": [
+          150,
+          255,
+          200
+        ],
+        "head": "crown",
+        "weapon": "staff"
+      },
+      "boss": true,
+      "pp_max": 2,
+      "pp_regen": 3.0,
+      "passive": {
+        "kind": "block",
+        "name": "Филактерия",
+        "pp": 1,
+        "mult": 0.5,
+        "desc": "Удар по личу: −1 деление шкалы, урон ×0.5"
+      },
+      "desc": "Хозяин склепа. Держит душу в филактерии, поднимает армию костей и обрушивает ледяную бурю."
+    },
+    "crypt_abbot": {
+      "name": "Аббат-нежить",
+      "label": "Аб",
+      "color": [
+        80,
+        60,
+        110
+      ],
+      "role": "caster",
+      "hp": 96,
+      "armor": 1,
+      "move_time": 0.55,
+      "attack": {
+        "damage": 8.5,
+        "range": 4,
+        "cooldown": 1.3
+      },
+      "ap_max": 8,
+      "ap_regen": 4.0,
+      "skills": [
+        "e_raise",
+        "e_wither"
+      ],
+      "look": {
+        "body": "robe",
+        "color": [
+          80,
+          60,
+          110
+        ],
+        "accent": [
+          230,
+          190,
+          80
+        ],
+        "head": "hood",
+        "weapon": "staff"
+      },
+      "boss": true,
+      "pp_max": 2,
+      "pp_regen": 3.5,
+      "passive": {
+        "kind": "block",
+        "name": "Янтарная печать",
+        "pp": 1,
+        "mult": 0.6,
+        "desc": "Удар по аббату: −1 деление шкалы, урон ×0.6"
+      },
+      "desc": "Аббат, который продал смерть за янтарь. Поднимает мертвецов и проклинает живых."
+    },
+    "crypt_warden": {
+      "name": "Хранитель колодца",
+      "label": "Хк",
+      "color": [
+        60,
+        90,
+        130
+      ],
+      "role": "caster",
+      "hp": 144,
+      "armor": 2,
+      "move_time": 0.5,
+      "attack": {
+        "damage": 10.2,
+        "range": 3,
+        "cooldown": 1.3
+      },
+      "ap_max": 8,
+      "ap_regen": 4.0,
+      "skills": [
+        "e_drag",
+        "e_wither"
+      ],
+      "look": {
+        "body": "spirit",
+        "color": [
+          60,
+          90,
+          130
+        ],
+        "accent": [
+          180,
+          230,
+          255
+        ],
+        "head": "none",
+        "weapon": "none"
+      },
+      "boss": true,
+      "pp_max": 2,
+      "pp_regen": 3.5,
+      "passive": {
+        "kind": "block",
+        "name": "Тёмный омут",
+        "pp": 1,
+        "mult": 0.6,
+        "desc": "Удар по хранителю: −1 деление шкалы, урон ×0.6"
+      },
+      "desc": "Дух, который сторожит колодец душ. Утаскивает героев на дно и не даёт им лечиться."
+    }
+  },
+  "encounters": [
+    {
+      "id": "crypt_0",
+      "name": "Оссуарий",
+      "kind": "normal",
+      "tier": 1,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "...=...#..",
+        "....#.....",
+        "...=..=...",
+        ".....#..=.",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            6,
+            2
+          ]
+        }
+      ],
+      "fog": 1
+    },
+    {
+      "id": "crypt_1",
+      "name": "Галерея гробов",
+      "kind": "normal",
+      "tier": 1,
+      "chapter": "crypt",
+      "map": [
+        "...#......",
+        "...#..=...",
+        "......##..",
+        "...=......",
+        "...#..=...",
+        "...#......"
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "necromancer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            6,
+            3
+          ]
+        }
+      ],
+      "fog": 1
+    },
+    {
+      "id": "crypt_2",
+      "name": "Зал плача",
+      "kind": "normal",
+      "tier": 2,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "....##....",
+        "...=..=...",
+        "...=..=...",
+        "....##....",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "banshee",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "necromancer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            7,
+            1
+          ]
+        }
+      ],
+      "fog": 1
+    },
+    {
+      "id": "crypt_3",
+      "name": "Нижние катакомбы",
+      "kind": "normal",
+      "tier": 2,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "...#....#.",
+        "..........",
+        ".....=....",
+        "...#....#.",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "necromancer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            7,
+            3
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            6,
+            2
+          ]
+        }
+      ],
+      "fog": 2
+    },
+    {
+      "id": "crypt_4",
+      "name": "Чертог рыцаря",
+      "kind": "elite",
+      "tier": 2,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "....##....",
+        "...=..=...",
+        "...=..=...",
+        "....##....",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "necromancer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "death_knight",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        }
+      ],
+      "fog": 1
+    },
+    {
+      "id": "crypt_5",
+      "name": "Ограда кладбища",
+      "kind": "guard",
+      "tier": 1,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "...=...#..",
+        "....#.....",
+        "...=..=...",
+        ".....#..=.",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "necromancer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            6,
+            2
+          ]
+        }
+      ],
+      "fog": 2
+    },
+    {
+      "id": "crypt_6",
+      "name": "Часовня",
+      "kind": "guard",
+      "tier": 1,
+      "chapter": "crypt",
+      "map": [
+        "...#......",
+        "...#..=...",
+        "......##..",
+        "...=......",
+        "...#..=...",
+        "...#......"
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "banshee",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            8,
+            1
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            6,
+            3
+          ]
+        }
+      ],
+      "fog": 2
+    },
+    {
+      "id": "crypt_7",
+      "name": "Склеп аббата",
+      "kind": "guard",
+      "tier": 2,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "...#....#.",
+        "..........",
+        ".....=....",
+        "...#....#.",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "crypt_abbot",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "necromancer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            6,
+            2
+          ]
+        }
+      ],
+      "fog": 2
+    },
+    {
+      "id": "crypt_8",
+      "name": "Колодец душ",
+      "kind": "guard",
+      "tier": 2,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "....##....",
+        "...=..=...",
+        "...=..=...",
+        "....##....",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "crypt_warden",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "necromancer",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton_archer",
+          "pos": [
+            8,
+            1
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "ghoul",
+          "pos": [
+            7,
+            3
+          ]
+        }
+      ],
+      "fog": 2
+    },
+    {
+      "id": "crypt_9",
+      "name": "Трон лича",
+      "kind": "boss",
+      "tier": 3,
+      "chapter": "crypt",
+      "map": [
+        "..........",
+        "...#....#.",
+        "..........",
+        ".....=....",
+        "...#....#.",
+        ".........."
+      ],
+      "player_spawn": [
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "enemies": [
+        {
+          "type": "lich",
+          "pos": [
+            9,
+            2
+          ]
+        },
+        {
+          "type": "banshee",
+          "pos": [
+            9,
+            3
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            2
+          ]
+        },
+        {
+          "type": "skeleton",
+          "pos": [
+            7,
+            3
+          ]
+        }
+      ]
+    }
+  ],
+  "uniques": {
+    "soulflame_blade": {
+      "name": "Клинок души",
+      "base": "blade",
+      "chapter": "crypt",
+      "desc": "Удары поджигают врага (30%); +35% урона атак",
+      "stats": [
+        {
+          "stat": "atk_damage",
+          "pct": 0.35
+        }
+      ],
+      "rules": [
+        {
+          "trigger": "hit",
+          "chance": 0.3,
+          "do": [
+            "ignite"
+          ]
+        }
+      ]
+    },
+    "grave_ward": {
+      "name": "Могильный страж",
+      "base": "plate",
+      "chapter": "crypt",
+      "desc": "Когда ранен — щит 15% здоровья (раз в 6 сек); +35% здоровья",
+      "stats": [
+        {
+          "stat": "hp",
+          "pct": 0.35
+        }
+      ],
+      "rules": [
+        {
+          "trigger": "hurt",
+          "chance": 1.0,
+          "icd": 6.0,
+          "do": [
+            "ward"
+          ]
+        }
+      ]
+    },
+    "bone_bow": {
+      "name": "Костяной лук",
+      "base": "bow",
+      "chapter": "crypt",
+      "desc": "Стрелы вызывают кровотечение (35%); +30% урона атак",
+      "stats": [
+        {
+          "stat": "atk_damage",
+          "pct": 0.3
+        }
+      ],
+      "rules": [
+        {
+          "trigger": "hit",
+          "chance": 0.35,
+          "do": [
+            "bleed"
+          ]
+        }
+      ]
+    },
+    "lich_crown": {
+      "name": "Венец лича",
+      "base": "charm",
+      "chapter": "crypt",
+      "desc": "Удары обжигают холодом (25%); +30% силы навыков",
+      "stats": [
+        {
+          "stat": "power",
+          "pct": 0.3
+        }
+      ],
+      "rules": [
+        {
+          "trigger": "hit",
+          "chance": 0.25,
+          "do": [
+            "frostbite"
+          ]
+        }
+      ]
+    },
+    "crypt_grail": {
+      "name": "Чаша из склепа",
+      "base": "charm",
+      "chapter": "crypt",
+      "desc": "Когда ранен — лечит 8% здоровья (раз в 8 сек); +25% силы навыков",
+      "stats": [
+        {
+          "stat": "power",
+          "pct": 0.25
+        },
+        {
+          "stat": "hp",
+          "pct": 0.1
+        }
+      ],
+      "rules": [
+        {
+          "trigger": "hurt",
+          "chance": 1.0,
+          "icd": 8.0,
+          "do": [
+            "mend"
+          ]
+        }
+      ]
+    },
+    "crypt_idol": {
+      "name": "Костяной идол",
+      "base": "idol",
+      "chapter": "crypt",
+      "desc": "Удары отравляют (25%); +20% силы навыков, +10% урона атак",
+      "stats": [
+        {
+          "stat": "power",
+          "pct": 0.2
+        },
+        {
+          "stat": "atk_damage",
+          "pct": 0.1
+        }
+      ],
+      "rules": [
+        {
+          "trigger": "hit",
+          "chance": 0.25,
+          "do": [
+            "venom"
+          ]
+        }
+      ]
+    }
+  },
+  "events": {
+    "abandoned_camp": {
+      "title": "Забытый привал",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 1,
+      "steps": {
+        "start": {
+          "text": "Под сводами — старый привал: угли, циновки и чьи-то кости. Мёртвые не тронули это место, и это само по себе тревожит.",
+          "options": [
+            {
+              "text": "Отдохнуть у углей",
+              "do": [
+                {
+                  "heal": 0.2
+                }
+              ],
+              "result": "Короткий сон без снов. Пока что."
+            },
+            {
+              "text": "Обыскать тайник",
+              "do": [
+                {
+                  "gold": 15
+                },
+                {
+                  "mat": "herbs",
+                  "add": 1
+                }
+              ],
+              "result": "Под циновкой — завёрнутые в тряпку травы и горсть монет."
+            },
+            {
+              "text": "Идти дальше",
+              "do": [],
+              "result": "Вы не остаётесь там, где умерли другие."
+            }
+          ]
+        }
+      },
+      "once": false
+    },
+    "hungry_spirit": {
+      "title": "Голодный дух",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 8,
+      "steps": {
+        "start": {
+          "text": "У стены сидит полупрозрачный старик. Он не поднимает глаз: «Тепла... хоть немного тепла. Я не помню, когда ел последний раз».",
+          "options": [
+            {
+              "text": "Отдать свою кровь",
+              "do": [
+                {
+                  "hurt": 0.12,
+                  "who": "hero"
+                },
+                {
+                  "xp": 45
+                },
+                {
+                  "rep": "dead",
+                  "add": 2
+                }
+              ],
+              "result": "Дух жадно ловит капли. В благодарность он шепчет забытое имя."
+            },
+            {
+              "text": "Оставить травы (2)",
+              "requires": {
+                "mat_at_least": {
+                  "herbs": 2
+                }
+              },
+              "do": [
+                {
+                  "mat": "herbs",
+                  "add": -2
+                },
+                {
+                  "heal": 0.12
+                },
+                {
+                  "rep": "dead",
+                  "add": 1
+                }
+              ],
+              "result": "Старик нюхает травы и улыбается: «Пахнет солнцем»."
+            },
+            {
+              "text": "Развеять духа",
+              "do": [
+                {
+                  "battle": "crypt_0",
+                  "after": [
+                    {
+                      "mat": "bonedust",
+                      "add": 1
+                    }
+                  ]
+                },
+                {
+                  "rep": "dead",
+                  "add": -2
+                }
+              ],
+              "result": "Старик рассыпается пылью. Кости под ним приходят в движение."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "priest_wisps": {
+      "title": "Огоньки жреца",
+      "kind": "short",
+      "acts": [
+        1,
+        2
+      ],
+      "weight": 8,
+      "steps": {
+        "start": {
+          "text": "Над могилами пляшут бледные огоньки. Один из них вспыхивает ярче и уходит вглубь, оставляя за собой цепочку искр.",
+          "options": [
+            {
+              "text": "Идти за огоньком",
+              "check": {
+                "attr": "int",
+                "dc": 13
+              },
+              "success": {
+                "text": "Огонёк выводит к тайнику, а не в трясину.",
+                "do": [
+                  {
+                    "gold": 40
+                  },
+                  {
+                    "mat": "gems",
+                    "add": 2
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Огонёк обманывает: под ногами — гнилая доска.",
+                "do": [
+                  {
+                    "hurt": 0.15
+                  },
+                  {
+                    "curse": "grave_chill"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Разогнать огоньки",
+              "do": [
+                {
+                  "battle": "crypt_1",
+                  "after": [
+                    {
+                      "xp": 30
+                    }
+                  ]
+                }
+              ],
+              "result": "Огоньки гаснут, но из гробов поднимаются те, кому они светили."
+            },
+            {
+              "text": "Обойти стороной",
+              "do": [],
+              "result": "Вы не доверяете огню в месте, где нет тепла."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "fog_voices": {
+      "title": "Голоса в тумане",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 9,
+      "steps": {
+        "start": {
+          "text": "Туман сгущается. В нём звучат голоса: одни зовут по имени, другие просят не идти дальше. Ни у одного нет лица.",
+          "options": [
+            {
+              "text": "Слушать и запоминать",
+              "check": {
+                "attr": "int",
+                "dc": 14
+              },
+              "success": {
+                "text": "Голоса складываются в историю этого места.",
+                "do": [
+                  {
+                    "xp": 50
+                  },
+                  {
+                    "flag": "fog_heard"
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Один голос оказывается слишком близко.",
+                "do": [
+                  {
+                    "hurt": 0.2
+                  },
+                  {
+                    "curse": "soul_rot"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Заткнуть уши и идти",
+              "do": [
+                {
+                  "heal": 0.05
+                }
+              ],
+              "result": "Вы идёте на звук собственного дыхания."
+            },
+            {
+              "text": "Крикнуть в туман",
+              "do": [
+                {
+                  "battle": "crypt_3",
+                  "after": [
+                    {
+                      "xp": 35
+                    }
+                  ]
+                }
+              ],
+              "result": "Туман отвечает лязгом костей."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "room_cemetery": {
+      "title": "Кладбище под сводами",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 8,
+      "steps": {
+        "start": {
+          "text": "Ряды могил вырублены прямо в камне. На плитах — имена, стёртые до неузнаваемости. Одна могила свежая.",
+          "options": [
+            {
+              "text": "Раскопать свежую могилу",
+              "check": {
+                "attr": "str",
+                "dc": 13
+              },
+              "success": {
+                "text": "В гробу — вещь, которую покойный не забрал.",
+                "do": [
+                  {
+                    "item": {
+                      "slot": "weapon"
+                    }
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Крышка срывается, и из щели тянется холод.",
+                "do": [
+                  {
+                    "hurt": 0.12
+                  },
+                  {
+                    "curse": "grave_chill"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Почтить память",
+              "do": [
+                {
+                  "rep": "order",
+                  "add": 2
+                },
+                {
+                  "heal": 0.1
+                }
+              ],
+              "result": "Вы читаете имена вслух. Тишина становится чуть добрее."
+            },
+            {
+              "text": "Сжечь кости",
+              "do": [
+                {
+                  "rep": "order",
+                  "add": -2
+                },
+                {
+                  "mat": "bonedust",
+                  "add": 2
+                }
+              ],
+              "result": "Огонь очищает, но Орден не одобрил бы такого погребения."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "sunken_chapel": {
+      "title": "Затонувшая часовня",
+      "kind": "short",
+      "acts": [
+        1,
+        2
+      ],
+      "weight": 8,
+      "steps": {
+        "start": {
+          "text": "Часовня ушла под землю вместе с колоколом. Алтарь ещё стоит, а на нём — чаша, покрытая зелёной патиной.",
+          "options": [
+            {
+              "text": "Помолиться",
+              "do": [
+                {
+                  "heal": 0.3
+                },
+                {
+                  "rep": "order",
+                  "add": 2
+                }
+              ],
+              "result": "Тихая молитва в мёртвом месте. Кто-то слушает."
+            },
+            {
+              "text": "Вскрыть раку",
+              "do": [
+                {
+                  "item": {
+                    "slot": "armor"
+                  }
+                },
+                {
+                  "curse": "grave_chill"
+                }
+              ],
+              "result": "Доспех святого тяжёл, а холод не отступает."
+            },
+            {
+              "text": "Осквернить алтарь",
+              "do": [
+                {
+                  "battle": "crypt_6"
+                },
+                {
+                  "rep": "order",
+                  "add": -3
+                },
+                {
+                  "mat": "bonedust",
+                  "add": 2
+                }
+              ],
+              "result": "Патина трескается. Часовня отвечает хором мёртвых."
+            },
+            {
+              "text": "Осмотреть алтарь",
+              "do": [
+                {
+                  "add_node": {
+                    "event": "sunken_chapel.altar",
+                    "label": "Алтарь часовни",
+                    "ahead": 2,
+                    "in_act": 2
+                  }
+                }
+              ],
+              "result": "За алтарём — узкий проход, которого не было на плане."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "sunken_chapel.altar": {
+      "title": "Алтарь часовни",
+      "kind": "thread",
+      "acts": [],
+      "weight": 40,
+      "steps": {
+        "start": {
+          "text": "Внутри алтаря — ниша с чашей и свечой. Свеча не гаснет, хотя воздуха здесь нет уже сотни лет.",
+          "options": [
+            {
+              "text": "Зажечь свечу",
+              "do": [
+                {
+                  "heal": 0.2
+                },
+                {
+                  "boss_mod": {
+                    "name": "Освящённый алтарь: Лич слабее",
+                    "good": true,
+                    "hp": 0.9
+                  }
+                }
+              ],
+              "result": "Свеча горит ровно. Тьма вокруг становится менее плотной."
+            },
+            {
+              "text": "Забрать чашу",
+              "do": [
+                {
+                  "item": {
+                    "unique": "crypt_grail"
+                  }
+                },
+                {
+                  "curse": "soul_rot"
+                }
+              ],
+              "result": "Чаша холодна, как лёд, и не пуста."
+            },
+            {
+              "text": "Разбить алтарь",
+              "do": [
+                {
+                  "battle": "crypt_4"
+                },
+                {
+                  "mat": "bonedust",
+                  "add": 3
+                }
+              ],
+              "result": "Камень лопается. Из трещин выходят рыцари, которых здесь не хоронили."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "sunken_library": {
+      "title": "Затонувшая библиотека",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "Стеллажи уходят в темноту. Книги разбухли от сырости, но некоторые ещё можно открыть. На столе — свежие заметки.",
+          "options": [
+            {
+              "text": "Читать заметки",
+              "do": [
+                {
+                  "xp": 60
+                },
+                {
+                  "flag": "library_read"
+                }
+              ],
+              "result": "Кто-то уже пытался понять, как остановить подъём мёртвых."
+            },
+            {
+              "text": "Забрать книги",
+              "do": [
+                {
+                  "item": {
+                    "slot": "weapon"
+                  }
+                },
+                {
+                  "curse": "brittle_bone"
+                }
+              ],
+              "result": "Переплёты окованы серебром. Серебро здесь не любят."
+            },
+            {
+              "text": "Сжечь библиотеку",
+              "do": [
+                {
+                  "rep": "order",
+                  "add": 2
+                },
+                {
+                  "battle": "crypt_2",
+                  "after": [
+                    {
+                      "mat": "gems",
+                      "add": 1
+                    }
+                  ]
+                }
+              ],
+              "result": "Огонь съедает страницы. Из дыма поднимаются хозяева книг."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "old_armory": {
+      "title": "Оружейная склепа",
+      "kind": "scene",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "За печатью — оружейная. Стойки истлели, но клинки и доспехи ещё держатся на крючьях.",
+          "options": [
+            {
+              "text": "Взять клинок",
+              "do": [
+                {
+                  "item": {
+                    "slot": "weapon"
+                  }
+                }
+              ],
+              "result": "Сталь холодная, но рука её узнаёт."
+            },
+            {
+              "text": "Взять доспех",
+              "do": [
+                {
+                  "item": {
+                    "slot": "armor"
+                  }
+                }
+              ],
+              "result": "Тяжёлый доспех пахнет землёй."
+            },
+            {
+              "text": "Сгрести всё",
+              "do": [
+                {
+                  "item": {
+                    "slot": "weapon"
+                  }
+                },
+                {
+                  "item": {
+                    "slot": "armor"
+                  }
+                },
+                {
+                  "curse": "grave_chill"
+                }
+              ],
+              "result": "Печать ломается. Холод склепа цепляется за металл."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "idol": {
+      "title": "Костяной идол",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "В нише сидит идол, сложенный из чужих костей. В глазницах — две монеты, и одна из них всё ещё блестит.",
+          "options": [
+            {
+              "text": "Отдать кровь",
+              "do": [
+                {
+                  "hurt": 0.2
+                },
+                {
+                  "perk": {
+                    "name": "Дар костяного идола",
+                    "desc": "+8% урона атак",
+                    "mods": [
+                      {
+                        "stat": "atk_damage",
+                        "mult": 1.08
+                      }
+                    ]
+                  }
+                }
+              ],
+              "result": "Идол принимает капли. Рука становится тяжелее и точнее."
+            },
+            {
+              "text": "Разбить идола",
+              "do": [
+                {
+                  "battle": "crypt_4"
+                },
+                {
+                  "mat": "bonedust",
+                  "add": 2
+                }
+              ],
+              "result": "Кости разлетаются. Пустая ниша смотрит, как вы уходите."
+            },
+            {
+              "text": "Унести идола",
+              "do": [
+                {
+                  "item": {
+                    "unique": "crypt_idol"
+                  }
+                },
+                {
+                  "curse": "death_mark"
+                }
+              ],
+              "result": "Идол не тяжелее ребёнка, но руки немеют."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "mirror_pool": {
+      "title": "Зеркальный водоём",
+      "kind": "short",
+      "acts": [
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "В затопленном зале — чёрная вода. В ней отражается не потолок, а вы, но чуть иначе.",
+          "options": [
+            {
+              "text": "Испить воды",
+              "do": [
+                {
+                  "heal": 0.4
+                },
+                {
+                  "curse": "soul_rot"
+                }
+              ],
+              "result": "Вода холодная и сладкая. Отражение улыбается первым."
+            },
+            {
+              "text": "Разбить отражение",
+              "do": [
+                {
+                  "battle": "crypt_3"
+                },
+                {
+                  "mat": "gems",
+                  "add": 2
+                }
+              ],
+              "result": "Вода вспыхивает осколками. Отражение кричит вашим голосом."
+            },
+            {
+              "text": "Спросить отражение",
+              "check": {
+                "attr": "int",
+                "dc": 13
+              },
+              "success": {
+                "text": "Отражение отвечает шёпотом о том, что ждёт впереди.",
+                "do": [
+                  {
+                    "xp": 50
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Отражение смеётся и не отпускает взгляд.",
+                "do": [
+                  {
+                    "hurt": 0.1
+                  },
+                  {
+                    "curse": "soul_rot"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "plague_village": {
+      "title": "Чумная деревня",
+      "kind": "short",
+      "acts": [
+        1,
+        2
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "Дома стоят нетронутыми, но ни в одном нет живых. На дверях — меловые кресты, а в колодце — тела.",
+          "options": [
+            {
+              "text": "Лечить выживших (травы 3)",
+              "requires": {
+                "mat_at_least": {
+                  "herbs": 3
+                }
+              },
+              "do": [
+                {
+                  "mat": "herbs",
+                  "add": -3
+                },
+                {
+                  "rep": "order",
+                  "add": 2
+                },
+                {
+                  "xp": 40
+                }
+              ],
+              "result": "В подвале церкви — дети. Они ещё дышат."
+            },
+            {
+              "text": "Сжечь заражённых",
+              "do": [
+                {
+                  "battle": "crypt_5"
+                },
+                {
+                  "rep": "order",
+                  "add": -1
+                },
+                {
+                  "mat": "bonedust",
+                  "add": 2
+                }
+              ],
+              "result": "Огонь идёт по улицам. Мёртвые не благодарят."
+            },
+            {
+              "text": "Уйти",
+              "do": [],
+              "result": "Вы не приносите с собой ни надежды, ни заразы."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "fog_doubles": {
+      "title": "Двойники в тумане",
+      "kind": "short",
+      "acts": [
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "Из тумана выходят точные копии отряда. Они молчат и идут ровным шагом, не поднимая оружия.",
+          "options": [
+            {
+              "text": "Атаковать первыми",
+              "do": [
+                {
+                  "battle": "crypt_4",
+                  "after": [
+                    {
+                      "xp": 40
+                    }
+                  ]
+                }
+              ],
+              "result": "Копии рассыпаются, но одна из них успевает улыбнуться."
+            },
+            {
+              "text": "Заговорить с ними",
+              "check": {
+                "attr": "int",
+                "dc": 14
+              },
+              "success": {
+                "text": "Двойники отвечают хором: «Мы — то, что вы оставили».",
+                "do": [
+                  {
+                    "xp": 50
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Они говорят вашими голосами слишком долго.",
+                "do": [
+                  {
+                    "curse": "soul_rot"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Отступить",
+              "do": [
+                {
+                  "hurt": 0.1
+                }
+              ],
+              "result": "Туман провожает вас смехом."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "sunken_chapel.belfry": {
+      "title": "Колокольня",
+      "kind": "short",
+      "acts": [
+        1,
+        2
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "Колокол висит над провалом. Верёвка истлела, но язык колокола ещё качается, хотя ветра нет.",
+          "options": [
+            {
+              "text": "Ударить в колокол",
+              "do": [
+                {
+                  "battle_mod": {
+                    "name": "Звон колокола: враги слабее",
+                    "battles": 2,
+                    "dmg": 0.9,
+                    "good": true
+                  }
+                },
+                {
+                  "rep": "order",
+                  "add": 1
+                }
+              ],
+              "result": "Звон идёт по костям. Мёртвые на миг замедляются."
+            },
+            {
+              "text": "Срезать верёвку",
+              "do": [
+                {
+                  "rep": "order",
+                  "add": -1
+                },
+                {
+                  "mat": "ore",
+                  "add": 2
+                }
+              ],
+              "result": "Колокол падает в провал. Металл ещё пригодится."
+            },
+            {
+              "text": "Слушать звон",
+              "do": [
+                {
+                  "xp": 35
+                },
+                {
+                  "heal": 0.1
+                }
+              ],
+              "result": "В звоне слышится имя, которое вы уже слышали в тумане."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "sunken_chest": {
+      "title": "Мокрый сундук",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "Сундук стоит в луже чёрной воды. Замок покрыт солью, а крышка приоткрыта на палец.",
+          "options": [
+            {
+              "text": "Открыть замок",
+              "check": {
+                "attr": "agi",
+                "dc": 13
+              },
+              "success": {
+                "text": "Замок поддаётся. Внутри — то, что не успели забрать.",
+                "do": [
+                  {
+                    "item": {
+                      "slot": "weapon"
+                    }
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Игла в замке входит под ноготь.",
+                "do": [
+                  {
+                    "hurt": 0.1
+                  },
+                  {
+                    "curse": "death_mark"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Разбить крышку",
+              "do": [
+                {
+                  "item": {
+                    "slot": "armor"
+                  }
+                },
+                {
+                  "hurt": 0.1
+                }
+              ],
+              "result": "Крышка ломается. Внутри — доспех, но руки дрожат."
+            },
+            {
+              "text": "Оставить",
+              "do": [],
+              "result": "Некоторые вещи лучше не будить."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "order_toll": {
+      "title": "Патруль Ордена",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 12,
+      "steps": {
+        "start": {
+          "text": "Из бокового коридора выходят трое в белых накидках. «Пошлина Ордена. Золото, кости или объяснение, почему вы здесь».",
+          "options": [
+            {
+              "text": "Заплатить (30 золота)",
+              "requires": {
+                "gold": 30
+              },
+              "do": [
+                {
+                  "pay": 30
+                }
+              ],
+              "result": "Патруль считает монеты и уходит."
+            },
+            {
+              "text": "Отдать кости (2)",
+              "requires": {
+                "mat_at_least": {
+                  "bonedust": 2
+                }
+              },
+              "do": [
+                {
+                  "mat": "bonedust",
+                  "add": -2
+                },
+                {
+                  "rep": "order",
+                  "add": 1
+                }
+              ],
+              "result": "Орден забирает кости для освящения."
+            },
+            {
+              "text": "Отказаться",
+              "do": [
+                {
+                  "battle": "crypt_5"
+                },
+                {
+                  "rep": "order",
+                  "add": -2
+                }
+              ],
+              "result": "Накидки падают. Под ними — те же кости, что и у всех здесь."
+            }
+          ]
+        }
+      },
+      "once": false
+    },
+    "final_vigil": {
+      "title": "Последняя ночь",
+      "kind": "scene",
+      "acts": [
+        3
+      ],
+      "weight": 10,
+      "steps": {
+        "start": {
+          "text": "До трона лича — один переход. Кто-то должен не спать и следить за туманом, пока остальные отдыхают.",
+          "options": [
+            {
+              "text": "Провести ночь в молитве",
+              "do": [
+                {
+                  "heal": 0.5
+                },
+                {
+                  "boss_mod": {
+                    "name": "Ночная молитва: Лич слабее",
+                    "good": true,
+                    "hp": 0.9
+                  }
+                }
+              ],
+              "result": "Свечи горят до утра. Туман не подходит близко."
+            },
+            {
+              "text": "Смазать оружие (травы 2)",
+              "requires": {
+                "mat_at_least": {
+                  "herbs": 2
+                }
+              },
+              "do": [
+                {
+                  "mat": "herbs",
+                  "add": -2
+                },
+                {
+                  "battle_mod": {
+                    "name": "Святая мазь: урон выше",
+                    "battles": 1,
+                    "dmg": 1.15,
+                    "good": true
+                  }
+                }
+              ],
+              "result": "Травы пахнут живым. Сталь становится светлее."
+            },
+            {
+              "text": "Пожертвовать золото (60)",
+              "requires": {
+                "gold": 60
+              },
+              "do": [
+                {
+                  "gold": -60
+                },
+                {
+                  "xp": 60
+                },
+                {
+                  "boss_mod": {
+                    "name": "Щедрая жертва: Лич слабее",
+                    "good": true,
+                    "hp": 0.85
+                  }
+                }
+              ],
+              "result": "Монеты уходят в трещины пола. Кто-то принимает дар."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "lich_phylactery": {
+      "title": "Филактерия",
+      "kind": "thread",
+      "acts": [
+        3
+      ],
+      "weight": 9,
+      "steps": {
+        "start": {
+          "text": "В стене тронного зала — ниша, забранная серебром. За ней бьётся что-то маленькое и живое. Лич не был бы личом без такой вещи.",
+          "options": [
+            {
+              "text": "Найти и вскрыть нишу",
+              "check": {
+                "attr": "int",
+                "dc": 15
+              },
+              "success": {
+                "text": "Серебро поддаётся. Филактерия трескается.",
+                "do": [
+                  {
+                    "boss_mod": {
+                      "name": "Филактерия разбита: Лич слабее",
+                      "good": true,
+                      "hp": 0.8
+                    }
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Ниша захлопывается, и холод бьёт по рукам.",
+                "do": [
+                  {
+                    "hurt": 0.15
+                  },
+                  {
+                    "boss_mod": {
+                      "name": "Филактерия цела: Лич сильнее",
+                      "good": false,
+                      "hp": 1.15
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Оставить нишу",
+              "do": [],
+              "result": "Вы запоминаете место. Возможно, это уже немало."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "crypt_order_patrol": {
+      "title": "Патруль Ордена",
+      "kind": "short",
+      "acts": [
+        1,
+        2
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "Из тумана выходят трое в белых плащах. Орден ищет пропавшую чашу и не доверяет никому, кто ходит по склепу без свечи.",
+          "options": [
+            {
+              "text": "Показать дорогу к часовне",
+              "do": [
+                {
+                  "rep": "order",
+                  "add": 2
+                },
+                {
+                  "heal": 0.12
+                },
+                {
+                  "xp": 35
+                }
+              ],
+              "result": "Старший кивает: «Свет не забывает тех, кто его носит»."
+            },
+            {
+              "text": "Спросить о личе",
+              "check": {
+                "attr": "int",
+                "dc": 12,
+                "classes": [
+                  "priest",
+                  "necro",
+                  "chrono"
+                ]
+              },
+              "success": {
+                "text": "Патруль делится старыми записями. Вы запоминаете слабое место филактерии.",
+                "do": [
+                  {
+                    "xp": 60
+                  },
+                  {
+                    "flag": "lich_weakness",
+                    "add": 1
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Орден не любит вопросов. Разговор заканчивается угрозой.",
+                "do": [
+                  {
+                    "hurt": 0.1,
+                    "who": "hero"
+                  },
+                  {
+                    "curse": "grave_chill"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Обобрать павших у стены",
+              "do": [
+                {
+                  "gold": 45
+                },
+                {
+                  "rep": "order",
+                  "add": -2
+                },
+                {
+                  "item": "normal"
+                }
+              ],
+              "result": "Доспехи ещё тёплые. Орден запомнит это."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "crypt_bone_choir": {
+      "title": "Костяной хор",
+      "kind": "scene",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "Под сводом стоят рядами костяные фигуры. Когда вы делаете шаг, они начинают петь — тихо, без слов.",
+          "options": [
+            {
+              "text": "Слушать хор",
+              "check": {
+                "attr": "int",
+                "dc": 13
+              },
+              "success": {
+                "text": "Песня складывается в карту: под алтарём есть тайник.",
+                "next": "altar"
+              },
+              "fail": {
+                "text": "Песня входит в голову. Вы приходите в себя на полу.",
+                "do": [
+                  {
+                    "hurt": 0.15
+                  },
+                  {
+                    "curse": "soul_rot"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Подпеть",
+              "do": [
+                {
+                  "rep": "dead",
+                  "add": 1
+                },
+                {
+                  "xp": 25
+                }
+              ],
+              "result": "Костяные челюсти щёлкают в такт. Мёртвые принимают вас за своих.",
+              "next": "altar"
+            },
+            {
+              "text": "Уйти",
+              "result": "Хор остаётся петь в темноте."
+            }
+          ]
+        },
+        "altar": {
+          "text": "За алтарём — ниша, а в ней чаша, покрытая костяной пылью.",
+          "options": [
+            {
+              "text": "Взять чашу",
+              "do": [
+                {
+                  "item": {
+                    "unique": "crypt_grail"
+                  }
+                },
+                {
+                  "curse": "death_mark"
+                }
+              ],
+              "result": "Чаша тяжелее, чем должна быть. Кто-то не хочет её отпускать."
+            },
+            {
+              "text": "Оставить подношение",
+              "do": [
+                {
+                  "pay": 30
+                },
+                {
+                  "gift": "random"
+                }
+              ],
+              "result": "Пыль осыпается, и на миг в нише становится теплее.",
+              "requires": {
+                "pay": 30
+              }
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "crypt_ghoul_feast": {
+      "title": "Пир упырей",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "В боковом зале упыри рвут что-то на части. Они замечают вас, но не бросают добычу — пока.",
+          "options": [
+            {
+              "text": "Напасть",
+              "do": [
+                {
+                  "battle": "crypt_4",
+                  "after": [
+                    {
+                      "item": "elite"
+                    },
+                    {
+                      "xp": 50
+                    }
+                  ]
+                }
+              ],
+              "result": "Упыри поднимаются от стола. Бой будет коротким и грязным."
+            },
+            {
+              "text": "Прокрасться мимо",
+              "check": {
+                "attr": "agi",
+                "dc": 13,
+                "classes": [
+                  "assassin",
+                  "trapper"
+                ]
+              },
+              "success": {
+                "text": "Вы проходите за колоннами. Упыри остаются с ужином.",
+                "do": [
+                  {
+                    "xp": 35
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Кость хрустит под сапогом.",
+                "do": [
+                  {
+                    "battle": "crypt_0"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Бросить им факел",
+              "do": [
+                {
+                  "battle_mod": {
+                    "name": "Упыри отвлечены: меньше врагов в следующем бою",
+                    "battles": 1,
+                    "hp": 0.9,
+                    "good": true
+                  }
+                },
+                {
+                  "xp": 20
+                }
+              ],
+              "result": "Огонь занимает ветошь. Визг уводит упырей в глубину."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "crypt_grave_warden": {
+      "title": "Могильный страж",
+      "kind": "short",
+      "acts": [
+        2,
+        3
+      ],
+      "weight": 7,
+      "steps": {
+        "start": {
+          "text": "У входа в усыпальницу стоит страж в ржавых латах. Он не дышит, но его копьё ещё держится прямо.",
+          "options": [
+            {
+              "text": "Вызвать на бой",
+              "do": [
+                {
+                  "battle": "crypt_4",
+                  "after": [
+                    {
+                      "item": "elite"
+                    },
+                    {
+                      "xp": 45
+                    }
+                  ]
+                }
+              ],
+              "result": "Страж поднимает копьё. В пустых глазницах — холод."
+            },
+            {
+              "text": "Назвать имя Ордена",
+              "requires": {
+                "class_any": [
+                  "priest",
+                  "guardian"
+                ]
+              },
+              "do": [
+                {
+                  "rep": "order",
+                  "add": 2
+                },
+                {
+                  "item": "normal"
+                },
+                {
+                  "xp": 30
+                }
+              ],
+              "result": "Страж опускает копьё и пропускает вас. Орденские имена ещё что-то значат."
+            },
+            {
+              "text": "Обойти по боковому проходу",
+              "check": {
+                "attr": "agi",
+                "dc": 14,
+                "traits": [
+                  "nimble"
+                ]
+              },
+              "success": {
+                "text": "Вы проскальзываете за колонну. Страж смотрит в пустоту.",
+                "do": [
+                  {
+                    "xp": 25
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Латы поворачиваются слишком быстро.",
+                "do": [
+                  {
+                    "battle": "crypt_0"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "crypt_torchless_depths": {
+      "title": "Без огня",
+      "kind": "short",
+      "acts": [
+        1,
+        2,
+        3
+      ],
+      "weight": 6,
+      "steps": {
+        "start": {
+          "text": "Факел догорел. Темнота склепа густая, как вода; где-то капает, и капли звучат слишком близко.",
+          "options": [
+            {
+              "text": "Идти на ощупь",
+              "check": {
+                "attr": "agi",
+                "dc": 13
+              },
+              "success": {
+                "text": "Пальцы находят сухой факел в нише. Тьма отступает на шаг.",
+                "do": [
+                  {
+                    "battle_mod": {
+                      "name": "Факел найден: враги видны лучше",
+                      "battles": 2,
+                      "dmg": 0.9,
+                      "good": true
+                    }
+                  },
+                  {
+                    "xp": 30
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Вы теряете направление. Из темноты тянется холод.",
+                "do": [
+                  {
+                    "hurt": 0.15
+                  },
+                  {
+                    "curse": "grave_chill"
+                  }
+                ]
+              }
+            },
+            {
+              "text": "Вернуться к лагерю",
+              "do": [
+                {
+                  "heal": 0.1
+                }
+              ],
+              "result": "Вы отступаете, пока темнота не сомкнулась."
+            },
+            {
+              "text": "Позвать огонь",
+              "requires": {
+                "class_any": [
+                  "mage",
+                  "cryo",
+                  "alchemist"
+                ]
+              },
+              "do": [
+                {
+                  "battle_mod": {
+                    "name": "Огонь освещает путь: враги не прячутся",
+                    "battles": 2,
+                    "dmg": 0.9,
+                    "good": true
+                  }
+                },
+                {
+                  "xp": 35
+                }
+              ],
+              "result": "Пламя дрожит на ладони. Темнота отступает."
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "crypt_cult_offer": {
+      "title": "Предложение культа",
+      "kind": "short",
+      "acts": [
+        2,
+        3
+      ],
+      "weight": 6,
+      "steps": {
+        "start": {
+          "text": "В нише сидит человек в багровом капюшоне. Перед ним — чаша с чёрной водой: «Один глоток — и лич тебя не увидит. Один глоток — и ты уже не совсем ты».",
+          "options": [
+            {
+              "text": "Выпить",
+              "do": [
+                {
+                  "perk": {
+                    "name": "Метка культа",
+                    "desc": "+15% силы навыков, −10% здоровья",
+                    "mods": [
+                      {
+                        "stat": "power",
+                        "mult": 1.15
+                      },
+                      {
+                        "stat": "hp",
+                        "mult": 0.9
+                      }
+                    ],
+                    "who": "hero"
+                  }
+                },
+                {
+                  "curse": "soul_rot"
+                },
+                {
+                  "rep": "cult",
+                  "add": 2
+                }
+              ],
+              "result": "Вода холодная. С этого дня тени шепчут ваше имя."
+            },
+            {
+              "text": "Разбить чашу",
+              "do": [
+                {
+                  "battle": "crypt_0"
+                },
+                {
+                  "rep": "cult",
+                  "add": -2
+                }
+              ],
+              "result": "Чаша лопается. Человек в капюшоне оказывается не один."
+            },
+            {
+              "text": "Выведать ритуал",
+              "check": {
+                "attr": "int",
+                "dc": 14,
+                "traits": [
+                  "scholar"
+                ]
+              },
+              "success": {
+                "text": "Вы запоминаете слова. Лич не любит, когда его ритуал знают другие.",
+                "do": [
+                  {
+                    "flag": "cult_secret",
+                    "add": 1
+                  },
+                  {
+                    "boss_mod": {
+                      "name": "Вы знаете слабое место ритуала",
+                      "good": true,
+                      "hp": 0.9
+                    }
+                  }
+                ]
+              },
+              "fail": {
+                "text": "Культист замечает интерес.",
+                "do": [
+                  {
+                    "curse": "death_mark"
+                  },
+                  {
+                    "rep": "cult",
+                    "add": -2
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "once": true
+    },
+    "crypt_phylactery_whisper": {
+      "title": "Шёпот филактерии",
+      "kind": "thread",
+      "acts": [
+        1,
+        2
+      ],
+      "weight": 9,
+      "once": true,
+      "steps": {
+        "start": {
+          "text": "В стене пульсирует синий свет. За камнем — филактерия, и она говорит вашим голосом: «Освободи меня, и я освобожу тебя от страха».",
+          "options": [
+            {
+              "text": "Прислушаться",
+              "do": [
+                {
+                  "flag": "phylactery_heard",
+                  "add": 1
+                },
+                {
+                  "add_node": {
+                    "event": "crypt_phylactery_end",
+                    "label": "Филактерия зовёт",
+                    "ahead": 2,
+                    "in_act": 3
+                  }
+                }
+              ],
+              "result": "Свет становится ближе. Теперь он знает, где вы."
+            },
+            {
+              "text": "Разбить камень",
+              "do": [
+                {
+                  "battle": "crypt_4",
+                  "after": [
+                    {
+                      "xp": 60
+                    },
+                    {
+                      "item": "elite"
+                    }
+                  ]
+                },
+                {
+                  "rep": "dead",
+                  "add": -2
+                }
+              ],
+              "result": "Камень трескается. Из щели выходит не дух, а голод."
+            },
+            {
+              "text": "Уйти",
+              "result": "Шёпот остаётся за спиной."
+            }
+          ]
+        }
+      }
+    },
+    "crypt_phylactery_end": {
+      "title": "Филактерия зовёт",
+      "kind": "thread",
+      "acts": [],
+      "weight": 40,
+      "once": true,
+      "steps": {
+        "start": {
+          "text": "Синий свет заполняет зал. В центре — филактерия, и вокруг неё стоят мёртвые, ждущие вашего решения.",
+          "options": [
+            {
+              "text": "Разорвать связь",
+              "do": [
+                {
+                  "boss_mod": {
+                    "name": "Филактерия надломлена: лич слабее",
+                    "good": true,
+                    "hp": 0.85
+                  }
+                },
+                {
+                  "gift": "random"
+                },
+                {
+                  "xp": 70
+                }
+              ],
+              "result": "Свет гаснет. Мёртвые опускаются на колени."
+            },
+            {
+              "text": "Забрать силу",
+              "do": [
+                {
+                  "perk": {
+                    "name": "Осколок филактерии",
+                    "desc": "+12% силы навыков, −8% здоровья",
+                    "mods": [
+                      {
+                        "stat": "power",
+                        "mult": 1.12
+                      },
+                      {
+                        "stat": "hp",
+                        "mult": 0.92
+                      }
+                    ],
+                    "who": "any"
+                  }
+                },
+                {
+                  "curse": "soul_rot"
+                }
+              ],
+              "result": "Сила входит в вас, оставляя холод в костях."
+            },
+            {
+              "text": "Уничтожить всё",
+              "do": [
+                {
+                  "battle": "crypt_4",
+                  "after": [
+                    {
+                      "xp": 50
+                    }
+                  ]
+                },
+                {
+                  "rep": "dead",
+                  "add": -3
+                }
+              ],
+              "result": "Мёртвые поднимаются все сразу."
+            }
+          ]
+        }
+      }
+    }
+  }
+}

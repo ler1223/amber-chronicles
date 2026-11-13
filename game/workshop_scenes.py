@@ -84,6 +84,11 @@ def art_tip(prof, art):
 class MiniGameScene(XScene):
     """Мини-игра мастерской. Esc — закончить досрочно (оставшееся засчитается как промах)."""
 
+    @property
+    def stage(self):
+        """Широкая игра (огранка) рисуется на весь холст окна, остальные — в колонке 1280×800."""
+        return not getattr(self.game, "wide", False)
+
     def __init__(self, app, game, title, on_done, back):
         super().__init__(app)
         self.game = game
@@ -161,13 +166,17 @@ class MiniGameScene(XScene):
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not g.done and self.area().collidepoint(ev.pos):
             if hasattr(g, "click") and g.click(ev.pos):
                 return
-            g.press()
+            if getattr(g, "click_press", True):           # огранка: ЛКМ не опускает камень (только Пробел)
+                g.press()
             return
         elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and not g.done:
-            g.release()
+            if getattr(g, "click_press", True):
+                g.release()
         super().handle(ev)
 
     def area(self):
+        if getattr(self.game, "wide", False):          # поле — почти весь экран
+            return pygame.Rect(16, 62, T.SCREEN_W - 32, T.SCREEN_H - 62 - 34)
         w, h = getattr(self.game, "area_size", (840, 360))
         return pygame.Rect(T.SCREEN_W // 2 - w // 2, 110, w, h)
 
@@ -176,20 +185,28 @@ class MiniGameScene(XScene):
         surf.fill((14, 12, 10))
         self.backdrop(surf, "tavern", "tavern", dim=225)
         g = self.game
-        T.text(surf, self.title, (T.SCREEN_W // 2, 30), 28, GLORY, True, center=True, shadow=True)
-        T.text(surf, f"{g.title}: {g.hint}", (T.SCREEN_W // 2, 72), 15, T.TEXT, center=True)
+        wide = getattr(g, "wide", False)
+        if wide:                                        # широкая игра: шапка и низ — тонкие, поле — максимум
+            T.text(surf, self.title, (T.SCREEN_W // 2, 20), 24, GLORY, True, center=True, shadow=True)
+            T.text(surf, f"{g.title}: {g.hint}", (T.SCREEN_W // 2, 46), 14, T.TEXT, center=True)
+        else:
+            T.text(surf, self.title, (T.SCREEN_W // 2, 30), 28, GLORY, True, center=True, shadow=True)
+            T.text(surf, f"{g.title}: {g.hint}", (T.SCREEN_W // 2, 72), 15, T.TEXT, center=True)
         r = self.area()
         T.frame(surf, r, 235, accent=T.PANEL_EDGE)
         g.draw(surf, r)
         q = g.quality
-        T.text(surf, f"Качество сейчас: {q * 100:.0f}% — {A.quality_word(q)}", (T.SCREEN_W // 2, r.bottom + 20), 18,
-               GOLD if q >= 1.0 else T.TEXT, True, center=True)
+        if getattr(g, "phase", "cut") not in ("choose", "plan"):        # огранка: качество — когда пошла работа
+            T.text(surf, f"Качество сейчас: {q * 100:.0f}% — {A.quality_word(q)}",
+                   (T.SCREEN_W // 2 - (200 if wide else 0), r.bottom + (17 if wide else 20)),
+                   16 if wide else 18, GOLD if q >= 1.0 else T.TEXT, True, center=True)
         if g.done:
             self.button(surf, pygame.Rect(T.SCREEN_W // 2 - 140, T.SCREEN_H - 120, 280, 50), "Забрать (Enter)", "take",
                         True, GOLD)
         else:
             free = hasattr(g, "can_abort") and g.can_abort()
             T.text(surf, "Esc — выйти без потерь (работа не начата)" if free else
-                   "Esc — закончить досрочно (остаток — как промах)", (T.SCREEN_W // 2, T.SCREEN_H - 90), 14,
+                   "Esc — закончить досрочно (остаток — как промах)",
+                   (T.SCREEN_W // 2 + (220 if wide else 0), T.SCREEN_H - (17 if wide else 90)), 14,
                    T.TEXT_DIM, center=True)
         self.draw_tip(surf)

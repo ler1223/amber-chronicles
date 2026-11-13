@@ -238,6 +238,7 @@ def test_object_gives_cover_from_shots():
     foe = c.fighters(ENEMY)[0]
     foe.cell = foe.prev_cell = (6, 2)
     foe.armor = 0
+    foe.passive = None                                 # проверяем укрытие, а не пассивку врага
     archer = c.heroes()[1]
     archer.cell = archer.prev_cell = (1, 2)
     archer.pp = 0

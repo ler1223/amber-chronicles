@@ -48,6 +48,7 @@ RECIPES = {
     "ice_core": (lambda s: S.crust(14, 18, 6, s), True),                   # кристалл копится над головой при касте
     "frost": (lambda s: [S.frost(32, s)], False),
     "steam": (lambda s: S.cloud(40, 9, s), False),
+    "fog": (lambda s: S.cloud(46, 10, s, pal="fog", rise=0.22), False),
     "smoke": (lambda s: S.cloud(36, 9, s, pal="dust", rise=0.6), False),
 }
 

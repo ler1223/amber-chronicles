@@ -15,7 +15,7 @@ ED = X.expedition_data(DATA)
 
 def make_run(n=3):
     prof = X.ExpeditionProfile(ED)
-    run = prof.start([h.uid for h in prof.hall()[:n]], seed=5)
+    run = prof.start([h.uid for h in prof.hall()[:2]], seed=5)
     return prof, run
 
 
@@ -47,7 +47,7 @@ def test_third_fall_kills_hero_and_leaves_legacy():
         s = fight(run, kill=[0])
         assert h in run.heroes and h.falls == i + 1 and h.wounded
     s = fight(run, kill=[0])
-    assert h not in run.heroes and len(run.heroes) == 2
+    assert h not in run.heroes and len(run.heroes) == 1
     assert s["dead"] == [h.name] and s["legacy_gifts"] == h.gifts
     assert len(run.bag) == bag0 + item_n                      # вещи павшего — в сумке отряда
     assert h.chronicle[-1]["kind"] == "death"

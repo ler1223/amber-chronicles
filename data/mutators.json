@@ -1,21 +1,213 @@
 {
-  "_note": "Механики врагов на тяжёлых сложностях похода (sim/mutators.py). Значения — доли: 0.06 = 6%.",
-  "suppressor":  {"name": "Глушащий", "group": "skills", "color": [190, 150, 255], "icon": "silence", "silence": 2.0, "icd": 5.0,
-                  "desc": "Удар глушит героя на 2 сек (без навыков) и сбивает каст."},
-  "decay":       {"name": "Гниющий", "group": "skills", "color": [150, 190, 90], "icon": "heal_down", "heal_taken": 0.5, "duration": 5.0,
-                  "desc": "Удар — лечение по цели вдвое слабее 5 сек."},
-  "devourer":    {"name": "Пожирающий", "group": "skills", "color": [220, 110, 200], "icon": "atk_down", "steal": 1, "heal": 0.03, "icd": 3.0,
-                  "desc": "Удар крадёт стак пассивки героя и лечит пожирателя на 3% HP."},
-  "pack_shaman": {"name": "Целящий", "group": "pack", "color": [120, 230, 140], "icon": "regen", "every": 4.0, "radius": 3, "heal": 0.06,
-                  "desc": "Раз в 4 сек лечит врагов рядом на 6% HP."},
-  "shieldbearer":{"name": "Щитоносный", "group": "pack", "color": [170, 210, 255], "icon": "shield", "every": 6.0, "radius": 2, "shield": 0.1, "duration": 5.0,
-                  "desc": "Раз в 6 сек даёт врагам рядом щит 10% HP."},
-  "warlord":     {"name": "Вожак", "group": "pack", "color": [255, 170, 80], "icon": "atk_up", "radius": 2, "atk": 1.25,
-                  "desc": "Враги рядом бьют на 25% сильнее."},
-  "explosive":   {"name": "Взрывной", "group": "death", "color": [255, 120, 60], "icon": "fire", "delay": 1.2, "radius": 1, "pct": 0.15,
-                  "desc": "Погибнув, через 1.2 сек взрывается: героям рядом 15% их HP."},
-  "splitter":    {"name": "Делящийся", "group": "death", "color": [130, 220, 200], "icon": "other", "count": 2, "hp": 0.4, "atk": 0.6,
-                  "desc": "Погибнув, делится на двух меньших (40% HP)."},
-  "restless":    {"name": "Неупокоенный", "group": "death", "color": [210, 215, 190], "icon": "immune", "delay": 2.5, "hp": 0.4,
-                  "desc": "Погибнув, встаёт ещё раз с 40% HP."}
+  "_note": "Механики врагов на тяжёлых сложностях и в бесконечном забеге (sim/mutators.py). Значения — доли: 0.06 = 6%.",
+  "suppressor": {
+    "name": "Глушащий",
+    "group": "skills",
+    "color": [
+      190,
+      150,
+      255
+    ],
+    "icon": "silence",
+    "silence": 2.0,
+    "icd": 5.0,
+    "desc": "Удар глушит героя на 2 сек (без навыков) и сбивает каст."
+  },
+  "decay": {
+    "name": "Гниющий",
+    "group": "skills",
+    "color": [
+      150,
+      190,
+      90
+    ],
+    "icon": "heal_down",
+    "heal_taken": 0.5,
+    "duration": 5.0,
+    "desc": "Удар — лечение по цели вдвое слабее 5 сек."
+  },
+  "devourer": {
+    "name": "Пожирающий",
+    "group": "skills",
+    "color": [
+      220,
+      110,
+      200
+    ],
+    "icon": "atk_down",
+    "steal": 1,
+    "heal": 0.03,
+    "icd": 3.0,
+    "desc": "Удар крадёт стак пассивки героя и лечит пожирателя на 3% HP."
+  },
+  "pack_shaman": {
+    "name": "Целящий",
+    "group": "pack",
+    "color": [
+      120,
+      230,
+      140
+    ],
+    "icon": "regen",
+    "every": 4.0,
+    "radius": 3,
+    "heal": 0.06,
+    "desc": "Раз в 4 сек лечит врагов рядом на 6% HP."
+  },
+  "shieldbearer": {
+    "name": "Щитоносный",
+    "group": "pack",
+    "color": [
+      170,
+      210,
+      255
+    ],
+    "icon": "shield",
+    "every": 6.0,
+    "radius": 2,
+    "shield": 0.1,
+    "duration": 5.0,
+    "desc": "Раз в 6 сек даёт врагам рядом щит 10% HP."
+  },
+  "warlord": {
+    "name": "Вожак",
+    "group": "pack",
+    "color": [
+      255,
+      170,
+      80
+    ],
+    "icon": "atk_up",
+    "radius": 2,
+    "atk": 1.25,
+    "desc": "Враги рядом бьют на 25% сильнее."
+  },
+  "explosive": {
+    "name": "Взрывной",
+    "group": "death",
+    "color": [
+      255,
+      120,
+      60
+    ],
+    "icon": "fire",
+    "delay": 1.2,
+    "radius": 1,
+    "pct": 0.15,
+    "desc": "Погибнув, через 1.2 сек взрывается: героям рядом 15% их HP."
+  },
+  "splitter": {
+    "name": "Делящийся",
+    "group": "death",
+    "color": [
+      130,
+      220,
+      200
+    ],
+    "icon": "other",
+    "count": 2,
+    "hp": 0.4,
+    "atk": 0.6,
+    "desc": "Погибнув, делится на двух меньших (40% HP)."
+  },
+  "restless": {
+    "name": "Неупокоенный",
+    "group": "death",
+    "color": [
+      210,
+      215,
+      190
+    ],
+    "icon": "immune",
+    "delay": 2.5,
+    "hp": 0.4,
+    "desc": "Погибнув, встаёт ещё раз с 40% HP."
+  },
+  "frostburst": {
+    "name": "Морозный",
+    "group": "death",
+    "color": [
+      160,
+      225,
+      250
+    ],
+    "icon": "ice",
+    "delay": 0.8,
+    "radius": 2,
+    "pct": 0.14,
+    "freeze": 1.4,
+    "desc": "Погибнув, через 0.8 сек взрывается льдом: героям рядом 14% HP и заморозка 1.4 сек.",
+    "endless": true
+  },
+  "stormcaller": {
+    "name": "Грозовой",
+    "group": "skills",
+    "color": [
+      150,
+      165,
+      255
+    ],
+    "icon": "storm",
+    "every": 4.5,
+    "radius": 3,
+    "pct": 0.08,
+    "stun": 0.35,
+    "desc": "Раз в 4.5 сек бьёт молнией по героям в радиусе 3: 8% HP и короткое оглушение.",
+    "endless": true
+  },
+  "juggernaut": {
+    "name": "Крепкий",
+    "group": "body",
+    "color": [
+      200,
+      180,
+      140
+    ],
+    "icon": "shield",
+    "hp_mult": 1.5,
+    "armor": 2,
+    "atk_mult": 1.15,
+    "desc": "+50% HP, +2 брони и +15% урона. Элита, которую трудно продавить.",
+    "endless": true
+  },
+  "vampiric": {
+    "name": "Кровосос",
+    "group": "body",
+    "color": [
+      220,
+      80,
+      110
+    ],
+    "icon": "regen",
+    "lifesteal": 0.25,
+    "desc": "Похищает 25% нанесённого урона как HP.",
+    "endless": true
+  },
+  "swift": {
+    "name": "Стремительный",
+    "group": "body",
+    "color": [
+      120,
+      230,
+      200
+    ],
+    "icon": "haste",
+    "move_mult": 0.7,
+    "atk_cd_mult": 0.8,
+    "desc": "Двигается на 30% быстрее и бьёт на 20% чаще.",
+    "endless": true
+  },
+  "thorns": {
+    "name": "Шипастый",
+    "group": "body",
+    "color": [
+      200,
+      160,
+      90
+    ],
+    "icon": "thorns",
+    "thorns": 0.25,
+    "desc": "Ближний удар по нему возвращает 25% урона атакующему.",
+    "endless": true
+  }
 }

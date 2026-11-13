@@ -115,7 +115,7 @@ class Profile:
             hero["path"] = None
         skills = meta.hero_skills(self.data, cls, hero)
         hero["branches"] = {sid: list(v) for sid, v in hero["branches"].items()
-                            if sid in skills and sid in self.data.branches and v[0] in ("A", "B")}
+                            if sid in skills and sid in self.data.branches and v[0] in self.data.branches[sid]}
         hero["talents"] = [t for t in hero["talents"] if t in self.data.talents
                            and meta.talent_fits(self.data, cls, hero, t)]
         hero["loadout"] = [i for i in hero["loadout"] if i in self.data.items]

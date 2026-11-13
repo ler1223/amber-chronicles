@@ -18,7 +18,9 @@ from game import jewel_view as JV
 from game import workshop_games as G
 from game import workshop_scenes as WS
 from sim import artifacts as A
+from ui import aa as AA
 from sim import expedition as X
+from sim import gems as GM
 from sim import story_meta
 from ui import illustrations as IL
 from ui import theme as T
@@ -31,12 +33,14 @@ SECOND = (176, 146, 104)            # вторичные кнопки — све
 WOOD = (70, 50, 32)
 WOOD_DARK = (24, 17, 11)
 ROOMS = (("hall", "Зал", "map_camp", "Герои таверны: осмотреть, вести с поручений"),
-         ("muster", "Сборы", "map_battle", "Собрать отряд, надеть артефакты, глава и ступень — в поход"),
-         ("workshop", "Мастерская", "map_anvil", "Станции мастеров: ковка, огранка, алхимия; сундук-хранилище"),
+         ("muster", "Сборы", "map_battle", "Собрать отряд, надеть артефакты и выйти в поход"),
+         ("workshop", "Мастер", "map_anvil", "Станции мастеров: ковка, огранка, алхимия; сундук-хранилище"),
          ("yard", "Двор", "map_event", "Доска поручений и общежитие ветеранов"),
-         ("build", "Стройка", "map_shop", "Постройки таверны за золото и трофеи глав"),
-         ("fame", "Зал славы", "map_boss", "Кладбище павших и летопись героев"),
-         ("market", "Рынок", "gem_ruby", "Самоцветы: купить необработанные и огранённые, продать свои"))
+         ("build", "Строй", "map_shop", "Постройки таверны за золото и трофеи глав"),
+         ("fame", "Слава", "map_boss", "Кладбище павших и летопись героев"),
+         ("market", "Рынок", "gem_ruby", "Самоцветы: купить необработанные и огранённые, продать свои"),
+         ("mine", "Шахта", "mat_ore", "Шахта: рабочие добывают руды и самоцветы, пока игра открыта"),
+         ("chapters", "Главы", "map_boss", "Выбрать главу, ступень и прочитать её механики"))
 FEATS = (("kills", "убийств"), ("battles", "боёв"), ("boss_kills", "боссов"), ("elite_kills", "элиты"),
          ("tasks", "поручений"), ("runs_won", "побед в походах"), ("falls", "падений"))
 
@@ -78,13 +82,13 @@ def toggle_pick(app, uid):
         return None
     if not prof.ready(h):
         return f"{h.name} ранен на поручении — пропускает этот поход"
-    cap = prof.squad_cfg()["squad_start"]
+    cap = prof.squad_cfg(s["chapter"])["squad_start"]
     if len(s["picked"]) < cap:
         s["picked"].append(uid)
     elif cap == 1:
         s["picked"] = [uid]
     else:
-        return "В поход берут не больше трёх героев — остальные присоединятся в пути"
+        return f"В эту главу берут не больше {cap} героев — остальные присоединятся в пути"
     return None
 
 
@@ -120,6 +124,41 @@ def res_icon(xd, k, size):
     pygame.draw.polygon(s, col, [(c, 3), (size - 4, c), (c, size - 3), (3, c)])
     pygame.draw.polygon(s, T.mix(col, (255, 255, 255), 0.5), [(c, 4), (c + size // 5, c - 2), (c, c)])
     return s
+
+
+_MINE = {}
+
+
+def mine_frames(h):
+    """Кадры горняка (лист MH) на общем холсте — без обрезки полей, иначе фигура прыгает между кадрами."""
+    if h not in _MINE:
+        out = []
+        for i in (1, 2, 3):
+            p = os.path.join(ROOT, "assets", "sprites", f"mine_miner_{i}.png")
+            if not os.path.exists(p):
+                out = None
+                break
+            img = pygame.image.load(p)
+            out.append(pygame.transform.smoothscale(img, (max(1, round(img.get_width() * h / img.get_height())), h)))
+        _MINE[h] = out
+    return _MINE[h]
+
+
+_FICON = {}
+
+
+def forge_icon(name, size, tint=None):
+    """Значок кузни (лист KI, assets/sprites/fic_*.png, высокое разрешение) по высоте size; tint — окрасить
+    серый примитив в цвет сплава. Нет картинки — None (рисуется формой)."""
+    key = (name, size, tint)
+    if key not in _FICON:
+        from game import metal_view as MV
+        img = MV.prop("fic_" + name, None, size)
+        if img is not None and tint is not None:
+            img = img.copy()
+            img.fill(tuple(min(255, int(c * 1.25)) for c in tint) + (255,), special_flags=pygame.BLEND_RGBA_MULT)
+        _FICON[key] = img
+    return _FICON[key]
 
 
 def res_name(xd, k):
@@ -369,19 +408,34 @@ class Overlay:
         self.scene = scene
         self.app = scene.app
 
+    full = False                     # окно — отдельный экран (мастерская): весь экран под шапкой
+
     @property
     def rect(self):
+        if self.full:
+            return pygame.Rect(12, TOP_H + 8, T.SCREEN_W - 24, T.SCREEN_H - TOP_H - 18)
         return pygame.Rect(24, TOP_H + 8, T.SCREEN_W - 48, strip_y() - TOP_H - 16)
 
     def frame(self, surf, title=None):
         r = self.rect
         T.frame(surf, r, 255, accent=T.AMBER_DIM)
-        T.text(surf, title or self.title, (r.x + 18, r.y + 12), 24, GLORY, True)
+        tr = T.text(surf, title or self.title, (r.x + 18, r.y + 12), 24, GLORY, True)
+        self.head_x = tr.right + 16                             # где кончается заголовок (для подписи рядом)
+        if T.orn("ui_flourish", None, 22) is not None:          # завиток после заголовка (лист UI)
+            fl = T.orn("ui_flourish", None, 22)
+            surf.blit(fl, (tr.right + 12, tr.centery - 11))
+            self.head_x = tr.right + 12 + fl.get_width() + 10
         c = pygame.Rect(r.right - 46, r.y + 10, 34, 34)
         hot = c.collidepoint(self.scene.mouse)
-        pygame.draw.rect(surf, (90, 60, 40) if hot else (50, 36, 24), c, border_radius=6)
-        pygame.draw.rect(surf, T.AMBER_DIM, c, 1, border_radius=6)
-        T.text(surf, "×", c.center, 24, T.TEXT, True, center=True)
+        close = T.orn("ui_close", 34, 34)
+        if close is not None:                                   # кнопка «закрыть» (лист UI)
+            surf.blit(close, c)
+            if hot:
+                pygame.draw.rect(surf, (255, 220, 150), c, 1, border_radius=8)
+        else:
+            pygame.draw.rect(surf, (90, 60, 40) if hot else (50, 36, 24), c, border_radius=6)
+            pygame.draw.rect(surf, T.AMBER_DIM, c, 1, border_radius=6)
+            T.text(surf, "×", c.center, 24, T.TEXT, True, center=True)
         self.scene.hit(c, "close", "Закрыть (Esc)")
         return r
 
@@ -546,7 +600,7 @@ class RoomScene(XScene):
                                                                          "за походы, поручения; тратится на всё вне похода"])
         x -= 44
         if self.mats:
-            for k in reversed(list(prof.xd.get("materials", {}))):
+            for k in reversed(self.mat_keys()):
                 n = str(prof.mats.get(k, 0))
                 w = T.font(16, True).size(n)[0]
                 x -= w
@@ -558,6 +612,10 @@ class RoomScene(XScene):
                 x -= 42
         if self.sub:
             T.text(surf, fit(self.sub, 14, x - t.right - 40), (t.right + 18, 22), 14, T.TEXT_DIM)
+
+    def mat_keys(self):
+        """Ресурсы в шапке (комната может показать только свои)."""
+        return list(self.app.profile.xd.get("materials", {}))
 
     def badge_for(self, rid):
         prof = self.app.profile
@@ -781,6 +839,8 @@ def draw_resume(scene, surf):
     T.frame(surf, r, 240)
     acts = X.chapter_view(prof.xd, st.get("chapter", "swamp"))["acts"]
     act = acts[min(st.get("act", 0), len(acts) - 1)]["name"]
+    if st.get("endless", st.get("solo")):
+        act = f"Акт {st.get('act', 0) + 1} · {act}"
     T.text(surf, "Отряд в походе", (r.centerx, r.y + 26), 30, T.TEXT, True, center=True)
     T.text(surf, act, (r.centerx, r.y + 66), 18, GLORY, True, center=True)
     heroes = st.get("heroes", [])
@@ -796,6 +856,137 @@ def draw_resume(scene, surf):
               primary=True)
     scene.btn(surf, pygame.Rect(r.centerx + 30, r.bottom - 84, 260, 52), "Бросить поход", "abandon", True,
               tip="Поход закончится без золота, герои не вернутся")
+
+
+# ---------- Главы ----------
+
+class ChapterRoom(RoomScene):
+    """Выбор главы: крупные карточки с кратким описанием механик, ступень и формат."""
+    room = "chapters"
+    title = "Главы"
+    art = "room_muster"
+    dim = 140
+
+    def room_act(self, action, button=1):
+        prof = self.app.profile
+        s = sel(self.app)
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "chapter":
+            if prof.chapter_open(action[1]):
+                s["chapter"] = action[1]
+                s["tier"] = min(s["tier"], prof.tier_open_of(action[1]))
+                s["picked"] = s["picked"][:prof.squad_cfg(action[1])["squad_start"]]
+            else:
+                self.say("Глава откроется победой в предыдущей")
+        elif kind == "tier":
+            if 0 <= action[1] <= prof.tier_open_of(s["chapter"]):
+                s["tier"] = action[1]
+            else:
+                self.say("Ступень откроется победой на предыдущей")
+        elif kind == "party_mode":
+            prof.solo = action[1]
+            prof.mode = "solo" if prof.solo else "expedition"
+            s["picked"] = s["picked"][:prof.squad_cfg(s["chapter"])["squad_start"]]
+            from game.app import remember_mode
+            if getattr(self.app, "_base_path", None):
+                remember_mode(prof.mode, self.app._base_path)
+            prof.save()
+        elif kind == "autocast":
+            from ui import settings
+            settings.put("autocast_start", action[1])
+        elif kind == "next":
+            go(self.app, "muster")
+        elif kind in ("resume", "abandon"):
+            HallRoom.room_act(self, action, button)
+
+    def room_key(self, k):
+        if self.app.profile.run_state:
+            if k in (pygame.K_SPACE, pygame.K_RETURN):
+                E.resume(self.app)
+            return
+        if k in (pygame.K_SPACE, pygame.K_RETURN):
+            go(self.app, "muster")
+        elif k == pygame.K_LEFT:
+            self.room_act(("tier", max(0, sel(self.app)["tier"] - 1)))
+        elif k == pygame.K_RIGHT:
+            self.room_act(("tier", sel(self.app)["tier"] + 1))
+
+    def draw_room(self, surf):
+        prof = self.app.profile
+        if prof.run_state:
+            draw_resume(self, surf)
+            return
+        xd = prof.xd
+        s = sel(self.app)
+        panel = pygame.Rect(16, TOP_H + 8, T.SCREEN_W - 32, strip_y() - TOP_H - 16)
+        T.frame(surf, panel, 230)
+        T.text(surf, "Куда идём", (panel.x + 14, panel.y + 10), 20, GOLD, True)
+        T.text(surf, "Выберите главу. Под карточкой — только то, что важно знать до похода.",
+               (panel.x + 14, panel.y + 36), 13, T.TEXT_DIM)
+
+        cards_h = panel.h - 152
+        gap = 10
+        cw = (panel.w - 28 - gap * 2) // 3
+        ch = (cards_h - gap * 2) // 3
+        for i, (cid, name, ok) in enumerate(prof.chapters()):
+            meta = xd["chapters"][cid]
+            col = tuple(meta.get("color", GLORY))
+            r = pygame.Rect(panel.x + 14 + (i % 3) * (cw + gap),
+                            panel.y + 58 + (i // 3) * (ch + gap), cw, ch)
+            on = cid == s["chapter"]
+            hot = ok and r.collidepoint(self.mouse)
+            pygame.draw.rect(surf, (58, 42, 27) if on or hot else (32, 24, 17), r, border_radius=8)
+            pygame.draw.rect(surf, col if on else (92, 68, 44) if ok else (65, 55, 50), r,
+                             3 if on else 1, border_radius=8)
+            thumb = IL.get(meta.get("art", "act_0"), "act", (146, 96))
+            if not ok:
+                thumb = pygame.transform.grayscale(thumb)
+            surf.blit(thumb, (r.x + 8, r.y + 8))
+            tx = r.x + 164
+            tw = r.right - tx - 8
+            T.text(surf, fit(name, 18, tw), (tx, r.y + 8), 18, col if ok else T.TEXT_DIM, True)
+            lines = T.wrap(meta.get("desc", ""), 12, tw)[:2]
+            for j, line in enumerate(lines):
+                T.text(surf, line, (tx, r.y + 32 + j * 15), 12, T.TEXT if ok else T.TEXT_DIM)
+            mech = meta.get("mechanics") or []
+            if mech:
+                T.text(surf, fit("• " + mech[0], 11, tw), (tx, r.y + 64), 11, (220, 200, 160) if ok else T.TEXT_DIM)
+                if len(mech) > 1:
+                    T.text(surf, fit("• " + mech[1], 11, tw), (tx, r.y + 79), 11, (220, 200, 160) if ok else T.TEXT_DIM)
+            if not ok:
+                T.text(surf, "закрыто", (r.centerx, r.y + 112), 14, CURSE, True, center=True, shadow=True)
+            self.hit(r, ("chapter", cid), [(name, col), meta.get("desc", "")] +
+                     [(m, (220, 200, 160)) for m in mech[:3]] +
+                     ["клик — выбрать" if ok else "откроется победой в предыдущей главе"])
+
+        bar = pygame.Rect(panel.x + 14, panel.bottom - 92, panel.w - 28, 34)
+        T.text(surf, "Ступень", (bar.x, bar.y + 7), 14, T.TEXT_DIM, True)
+        x = bar.x + 70
+        tiers = xd["config"]["tiers"]
+        for i, tt in enumerate(tiers):
+            ok = i <= prof.tier_open_of(s["chapter"])
+            col = E.tier_color(i, len(tiers))
+            r = pygame.Rect(x, bar.y, 28, 30)
+            on = i == s["tier"]
+            pygame.draw.rect(surf, T.mix(T.PANEL, col, 0.4 if on else 0.12), r, border_radius=6)
+            pygame.draw.rect(surf, col if ok else T.PANEL_EDGE, r, 2 if on else 1, border_radius=6)
+            T.text(surf, str(i + 1), r.center, 15, col if ok else (80, 70, 60), True, center=True)
+            self.hit(r, ("tier", i), [(tt["name"], col), tt["desc"]] +
+                     ([] if ok else [("Закрыто — победите на предыдущей ступени", CURSE)]))
+            x += 32
+        T.text(surf, fit(tiers[s["tier"]]["name"], 13, 220), (x + 8, bar.y + 8), 13,
+               E.tier_color(s["tier"], len(tiers)), True)
+
+        row2 = pygame.Rect(panel.x + 14, panel.bottom - 46, panel.w - 28, 34)
+        T.text(surf, "Формат", (row2.x, row2.y + 7), 14, T.TEXT_DIM, True)
+        xx = self.seg(surf, row2.x + 62, row2.y, ((False, "Отряд"), (True, "Бесконечный")),
+                      bool(prof.solo), "party_mode", h=32)
+        from ui import settings
+        T.text(surf, "Автокаст", (xx + 10, row2.y + 7), 14, T.TEXT_DIM, True)
+        self.seg(surf, xx + 88, row2.y, tuple((m, label) for m, label, _ in E.AUTOCAST_MODES),
+                 settings.SETTINGS.get("autocast_start", "default"), "autocast", h=32)
+        self.btn(surf, pygame.Rect(panel.right - 248, row2.y, 234, 32), "Собрать отряд  (Пробел)",
+                 "next", True, primary=True)
 
 
 # ---------- Сборы ----------
@@ -821,6 +1012,16 @@ class MusterRoom(RoomScene):
         kind = action[0] if isinstance(action, tuple) else action
         if kind == "recruit" and button == 3:
             self.app.switch(E.TavernHeroScene(self.app, self, action[1]))
+        elif kind == "endless_skill":
+            h = next((x for x in self.heroes() if x.uid == action[1]), None)
+            if h is not None:
+                choices = story_meta.one_skill_choices(prof.data, h.cls, h.level, h)
+                if choices:
+                    cur = h.endless_skill if h.endless_skill in choices else story_meta.default_one_skill(
+                        prof.data, h.cls, h.level, h)
+                    i = choices.index(cur) if cur in choices else -1
+                    h.endless_skill = choices[(i + 1) % len(choices)]
+                    prof.save()
         elif kind == "recruit":
             msg = toggle_pick(self.app, action[1])
             if msg:
@@ -833,6 +1034,7 @@ class MusterRoom(RoomScene):
             if prof.chapter_open(action[1]):
                 s["chapter"] = action[1]
                 s["tier"] = min(s["tier"], prof.tier_open_of(action[1]))
+                s["picked"] = s["picked"][:prof.squad_cfg(action[1])["squad_start"]]
             else:
                 self.say("Глава откроется победой в предыдущей")
         elif kind == "tier":
@@ -843,7 +1045,7 @@ class MusterRoom(RoomScene):
         elif kind == "party_mode":
             prof.solo = action[1]
             prof.mode = "solo" if prof.solo else "expedition"
-            s["picked"] = s["picked"][:1 if prof.solo else 3]
+            s["picked"] = s["picked"][:prof.squad_cfg(s["chapter"])["squad_start"]]
             from game.app import remember_mode
             if getattr(self.app, "_base_path", None):
                 remember_mode(prof.mode, self.app._base_path)
@@ -851,6 +1053,8 @@ class MusterRoom(RoomScene):
         elif kind == "autocast":
             from ui import settings
             settings.put("autocast_start", action[1])
+        elif kind == "chapters":
+            go(self.app, "chapters")
         elif kind == "scroll":
             self.wheel(-action[1])
         elif kind == "go":
@@ -861,9 +1065,9 @@ class MusterRoom(RoomScene):
     def start(self):
         prof = self.app.profile
         s = sel(self.app)
-        cfg = prof.squad_cfg()
+        cfg = prof.squad_cfg(s["chapter"])
         if not cfg["squad_min"] <= len(s["picked"]) <= cfg["squad_start"]:
-            self.say("Выберите одного героя" if prof.solo else "Выберите 2–3 героев")
+            self.say(f"Выберите {cfg['squad_start']} героев для этой главы")
             return
         if self.hire_total() > prof.glory:
             self.say("Не хватает золота на найм — выберите новичков попроще")
@@ -902,12 +1106,12 @@ class MusterRoom(RoomScene):
         if prof.run_state:
             draw_resume(self, surf)
             return
-        self.draw_expedition(surf)
+        self.draw_summary(surf)
         self.draw_cards(surf)
         y = strip_y() - 66
         names = [h.name for h in self.heroes() if h.uid in self.picked]
-        cfg = prof.squad_cfg()
-        need = "одного героя" if prof.solo else "2–3 героев"
+        cfg = prof.squad_cfg(sel(self.app)["chapter"])
+        need = f"{cfg['squad_start']} героев для этой главы"
         msg = ("В отряде: " + ", ".join(names)) if names else f"Выберите {need}: клик по карточке. ПКМ — лист героя."
         T.text(surf, msg, (24, y + 6), 17, GOLD if names else T.TEXT, True, shadow=True)
         hire = self.hire_total()
@@ -916,60 +1120,30 @@ class MusterRoom(RoomScene):
         ok = cfg["squad_min"] <= len(self.picked) <= cfg["squad_start"] and hire <= prof.glory
         self.btn(surf, pygame.Rect(T.SCREEN_W - 300, y, 280, 54), "В поход  (Пробел)", "go", ok, primary=True)
 
-    def draw_expedition(self, surf):
+    def draw_summary(self, surf):
         prof = self.app.profile
         xd = prof.xd
         s = sel(self.app)
-        panel = pygame.Rect(16, TOP_H + 8, T.SCREEN_W - 32, 182)
+        meta = xd["chapters"][s["chapter"]]
+        panel = pygame.Rect(16, TOP_H + 8, T.SCREEN_W - 32, 92)
         T.frame(surf, panel, 232)
-        x = panel.x + 12
-        for cid, name, ok in prof.chapters():
-            meta = xd["chapters"][cid]
-            col = tuple(meta.get("color", GLORY))
-            r = pygame.Rect(x, panel.y + 12, 204, panel.h - 24)
-            on = cid == s["chapter"]
-            hot = ok and r.collidepoint(self.mouse)
-            pygame.draw.rect(surf, (60, 44, 28) if on or hot else (34, 25, 17), r, border_radius=8)
-            thumb = IL.get(meta.get("art", "act_0"), "act", (188, 112))
-            if not ok:
-                thumb = pygame.transform.grayscale(thumb)
-            surf.blit(thumb, (r.x + 8, r.y + 8))
-            pygame.draw.rect(surf, col if on else (90, 66, 42), r, 3 if on else 1, border_radius=8)
-            T.text(surf, name, (r.centerx, r.y + 126), 18, col if ok else T.TEXT_DIM, True, center=True)
-            if not ok:
-                T.text(surf, "закрыто", (r.centerx, r.y + 64), 16, CURSE, True, center=True, shadow=True)
-            self.hit(r, ("chapter", cid), [(name, col), meta.get("desc", ""),
-                                           "клик — выбрать" if ok else "откроется победой в предыдущей главе"])
-            x += 214
-        x0 = x + 10
-        tiers = xd["config"]["tiers"]
-        t = tiers[s["tier"]]
-        c = E.tier_color(s["tier"], len(tiers))
-        T.text(surf, f"Ступень {s['tier'] + 1} из {len(tiers)} · {t['name']}", (x0, panel.y + 12), 20, c, True)
-        T.text(surf, fit(t["desc"], 13, panel.right - x0 - 16), (x0, panel.y + 40), 13, T.TEXT_DIM)
-        tw = min(58, (panel.right - x0 - 16 - 9 * 6) // 10)
-        for i, tt in enumerate(tiers):
-            ok = i <= prof.tier_open_of(s["chapter"])
-            col = E.tier_color(i, len(tiers))
-            r = pygame.Rect(x0 + i * (tw + 6), panel.y + 64, tw, 46)
-            on = i == s["tier"]
-            hot = ok and r.collidepoint(self.mouse)
-            pygame.draw.rect(surf, T.mix(T.PANEL, col, 0.4 if on else 0.18 if hot else 0.07), r, border_radius=7)
-            pygame.draw.rect(surf, col if ok else T.PANEL_EDGE, r, 3 if on else 1, border_radius=7)
-            T.text(surf, str(i + 1), r.center, 20, col if ok else (80, 70, 60), True, center=True)
-            self.hit(r, ("tier", i), [(tt["name"], col), tt["desc"]] + ([] if ok else [
-                ("Закрыто — победите на предыдущей ступени", CURSE)]))
-        y = panel.y + 126
-        T.text(surf, "Формат", (x0, y + 8), 14, T.TEXT_DIM, True)
-        xx = self.seg(surf, x0 + 62, y, ((False, "Отряд"), (True, "Одиночка")), bool(prof.solo), "party_mode")
-        from ui import settings
-        T.text(surf, "Автокаст", (xx + 24, y + 8), 14, T.TEXT_DIM, True)
-        self.seg(surf, xx + 100, y, tuple((m, label) for m, label, _ in E.AUTOCAST_MODES),
-                 settings.SETTINGS.get("autocast_start", "default"), "autocast")
+        col = tuple(meta.get("color", GLORY))
+        T.text(surf, meta["name"], (panel.x + 14, panel.y + 8), 22, col, True)
+        desc = fit(meta.get("desc", ""), 13, panel.w - 260)
+        T.text(surf, desc, (panel.x + 14, panel.y + 36), 13, T.TEXT_DIM)
+        mech = (meta.get("mechanics") or [""])[0]
+        T.text(surf, fit("• " + mech, 12, panel.w - 260), (panel.x + 14, panel.y + 56), 12, (220, 200, 160))
+        if prof.solo:
+            T.text(surf, "Бесконечный забег: у каждого героя 1 способность, акты не кончаются",
+                   (panel.x + 14, panel.y + 73), 11, (150, 220, 170))
+        t = xd["config"]["tiers"][s["tier"]]
+        T.text(surf, f"Ступень {s['tier'] + 1} · {t['name']}", (panel.right - 226, panel.y + 10), 15,
+               E.tier_color(s["tier"], len(xd["config"]["tiers"])), True)
+        self.btn(surf, pygame.Rect(panel.right - 226, panel.y + 40, 210, 34), "Сменить главу", "chapters", True)
 
     def draw_cards(self, surf):
         heroes = self.heroes()
-        y = TOP_H + 202
+        y = TOP_H + 112
         n = self.visible()
         self.scroll_pos["muster"] = self.scroll_pos.get("muster", self.scroll)
         shown_n = min(n, len(heroes))
@@ -1019,15 +1193,27 @@ class MusterRoom(RoomScene):
             tag = ("в отряде" + (f" · найм {prof.hire_cost(h)}" if prof.hire_cost(h) else ""), GOLD)
         if tag:
             T.text(surf, fit(tag[0], 13, r.w - 16), (r.centerx, r.y + 200), 13, tag[1], True, center=True)
-        ult = story_meta.ult_of(data, h.cls, h.skills)
-        yy = r.y + 222
-        for k, sid in enumerate(h.skills[:4]):
-            sk = data.skills[sid]
-            T.text(surf, fit(f"{'QWER'[k]}  {sk['name']}", 13, r.w - 20), (r.x + 12, yy), 13,
-                   GOLD if sid == ult else T.TEXT_DIM)
-            yy += 17
+        if prof.solo:                               # бесконечный забег: ровно одна способность
+            choices = story_meta.one_skill_choices(data, h.cls, h.level, h)
+            sid = h.endless_skill if h.endless_skill in choices else story_meta.default_one_skill(
+                data, h.cls, h.level, h)
+            sk = data.skills.get(sid, {})
+            T.text(surf, "Способность", (r.x + 12, r.y + 220), 12, T.TEXT_DIM, True)
+            T.text(surf, fit(sk.get("name", "—"), 14, r.w - 24), (r.x + 12, r.y + 237), 14, GOLD, True)
+            T.text(surf, "клик — сменить", (r.x + 12, r.y + 255), 11, T.TEXT_DIM)
+        else:
+            ult = story_meta.ult_of(data, h.cls, h.skills)
+            yy = r.y + 222
+            for k, sid in enumerate(h.skills[:4]):
+                sk = data.skills[sid]
+                T.text(surf, fit(f"{'QWER'[k]}  {sk['name']}", 13, r.w - 20), (r.x + 12, yy), 13,
+                       GOLD if sid == ult else T.TEXT_DIM)
+                yy += 17
         self.hit(r, ("recruit", h.uid), [(h.name, tn["accent"]),
                                          "клик — " + ("убрать из отряда" if on else "взять в поход"), "ПКМ — лист героя"])
+        if prof.solo:                               # клик по строке способности — следующая
+            self.hit(pygame.Rect(r.x + 8, r.y + 214, r.w - 16, 54), ("endless_skill", h.uid),
+                     ["Одна способность на весь забег", "клик — следующая способность"])
         slots = prof.art_slots(h)
         worn = prof.worn(h)
         sw = 34
@@ -1147,13 +1333,19 @@ class ChestOverlay(Overlay):
         xd = prof.xd
         h = self.hero
         arts = self.arts()
-        tw, th, gap = 236, 92, 10
-        cols = (r.w - 56 + gap) // (tw + gap)
-        rows = max(1, (r.bottom - 14 - y0 + gap) // (th + gap))
-        first = self.scene.scroll_list(surf, "chest_arts", pygame.Rect(r.x + 18, y0, r.w - 54, rows * (th + gap) - gap),
-                                       (len(arts) + cols - 1) // cols, rows)
-        for i, art in enumerate(arts[first * cols:(first + rows) * cols]):
-            tr = pygame.Rect(r.x + 18 + (i % cols) * (tw + gap), y0 + (i // cols) * (th + gap), tw, th)
+        with self.scene.grid(surf, "chest_arts", pygame.Rect(r.x + 18, y0, r.w - 36, r.bottom - 14 - y0), len(arts),
+                             236, 92) as cells:
+            for i, tr in cells:
+                self.draw_art_card(surf, arts[i], tr)
+        if not arts:
+            T.text(surf, "Сундук пуст. Артефакты куются в Мастерской (3).", (r.x + 18, y0 + 10), 16, T.TEXT_DIM)
+
+    def draw_art_card(self, surf, art, tr):
+        prof = self.app.profile
+        xd = prof.xd
+        h = self.hero
+        tw = tr.w
+        if True:
             owner = prof.art_owner(art["uid"])
             mine = h is not None and art["uid"] in h.arts
             locked = prof.art_locked(art["uid"])
@@ -1173,36 +1365,32 @@ class ChestOverlay(Overlay):
             tip = WS.art_tip(prof, art) + ([("клик — " + ("снять" if mine else f"надеть на {h.name}"), T.TEXT_DIM)]
                                            if act else [])
             self.scene.hit(tr, act, tip)
-        if not arts:
-            T.text(surf, "Сундук пуст. Артефакты куются в Мастерской (3).", (r.x + 18, y0 + 10), 16, T.TEXT_DIM)
 
     def draw_gems(self, surf, r, y0):
         prof = self.app.profile
         a = prof.xd["artifacts"]
-        cols = (r.w - 56 + 10) // 180
-        rows = max(1, (r.bottom - 14 - y0 + 10) // 180)
-        first = self.scene.scroll_list(surf, "chest_gems", pygame.Rect(r.x + 18, y0, r.w - 54, rows * 180 - 10),
-                                       (len(prof.gems) + cols - 1) // cols, rows)
-        x, y = r.x + 18, y0
-        for i, g in enumerate(prof.gems[first * cols:(first + rows) * cols]):
+        with self.scene.grid(surf, "chest_gems", pygame.Rect(r.x + 18, y0, r.w - 36, r.bottom - 14 - y0),
+                             len(prof.gems), 170, 170) as cells:
+            for i, tr in cells:
+                self.draw_gem_card(surf, prof.gems[i], tr, i)
+        if not prof.gems:
+            T.text(surf, "Огранённых самоцветов нет — ювелир гранит их из сырья.", (r.x + 18, y0 + 10), 16, T.TEXT_DIM)
+
+    def draw_gem_card(self, surf, g, tr, i):
+        prof = self.app.profile
+        a = prof.xd["artifacts"]
+        if True:
             gd = a["gems"][g["id"]]
-            tr = pygame.Rect(x, y, 170, 170)
             hot = tr.collidepoint(self.scene.mouse)
             pygame.draw.rect(surf, (44, 32, 24) if hot else (26, 20, 16), tr, border_radius=10)
             pygame.draw.rect(surf, tuple(gd["color"]), tr, 2 if hot else 1, border_radius=10)
-            JV.draw_gem(surf, g, tuple(gd["color"]), (tr.centerx, tr.y + 64), 118, self.scene.clock + i * 0.7)
+            JV.draw_gem(surf, g, tuple(gd["color"]), (tr.centerx, tr.y + 64), 118, self.scene.clock + i * 0.7,
+                        xd=prof.xd)
             T.text(surf, gd["name"], (tr.centerx, tr.y + 128), 15, tuple(gd["color"]), True, center=True)
-            cut = next((c["name"] for c in G.CUTS if c["id"] == g.get("cut")), None)
-            T.text(surf, f"{g['q'] * 100:.0f}%" + (f" · {cut}" if cut else ""), (tr.centerx, tr.y + 148), 12,
-                   T.TEXT_DIM, center=True)
-            self.scene.hit(tr, ("gem_view", g["uid"]), [gd["name"], "; ".join(A.entry_text(e, g["q"])
-                                                                              for e in gd["stats"]),
-                                                       "клик — рассмотреть; вставить — у ювелира"])
-            x += 180
-            if (i + 1) % cols == 0:
-                x, y = r.x + 18, y + 180
-        if not prof.gems:
-            T.text(surf, "Огранённых самоцветов нет — ювелир гранит их из сырья.", (r.x + 18, y0 + 10), 16, T.TEXT_DIM)
+            T.text(surf, f"{g.get('size', 0):.2f} кар. · {GM.grade(prof.xd, g.get('cl', 0.6)).lower()}",
+                   (tr.centerx, tr.y + 148), 12, T.TEXT_DIM, center=True)
+            self.scene.hit(tr, ("gem_view", g["uid"]), [gd["name"]] + GM.describe(prof.xd, g) +
+                           [(GM.stat_text(prof.xd, g), BLESS), "клик — рассмотреть; вставить — у ювелира"])
 
     def draw_mats(self, surf, r, y0):
         prof = self.app.profile
@@ -1259,20 +1447,20 @@ class GemViewer(Overlay):
         col = tuple(gd["color"])
         rough = "q" not in self.gem
         r = self.frame(surf, gd["name"] + (" — необработанный" if rough else ""))
-        self.insp.draw(surf, self.view_rect(), JV.stone_faces(self.gem), col, self.scene.clock)
-        size = self.gem.get("size", 1.0)
+        faces = JV.stone_faces(self.gem)
+        self.insp.draw(surf, self.view_rect(), faces, JV.gem_color(self.gem, col), self.scene.clock,
+                       mm=JV.mm_per_unit(self.gem, faces, prof.xd), incl=None if rough else self.gem.get("incl"),
+                       star=0.0 if rough else self.gem.get("star", 0.0), axis=self.gem.get("axis"),
+                       cfield=JV.gem_cfield(self.gem, faces if rough else None))
+        lines = GM.describe(prof.xd, self.gem, rough=rough)
+        T.text(surf, fit(" · ".join(lines), 16, r.w - 40), (r.centerx, r.bottom - 94), 16, col, True, center=True)
         if rough:
-            T.text(surf, f"{size:.2f} карата · цена ≈ {prof.market_price('rough', self.gem)} золота",
-                   (r.centerx, r.bottom - 92), 18, col, True, center=True)
-            T.text(surf, "Огранить — у ювелира (Мастерская → Ювелирная → Огранка)", (r.centerx, r.bottom - 64), 15,
-                   T.TEXT, center=True)
+            T.text(surf, f"цена ≈ {prof.market_price('rough', self.gem)} · огранить — у ювелира: разметка покажет "
+                         "примеси внутри", (r.centerx, r.bottom - 66), 14, T.TEXT, center=True)
         else:
-            cut = next((x["name"] for x in G.CUTS if x["id"] == self.gem.get("cut")), "огранка неизвестна")
-            T.text(surf, f"{cut} · {size:.2f} кар. · {A.quality_word(self.gem['q'])} ({self.gem['q'] * 100:.0f}%)"
-                         f" · цена ≈ {prof.market_price('cut', self.gem)}", (r.centerx, r.bottom - 92), 18, col, True,
+            T.text(surf, fit(GM.stat_text(prof.xd, self.gem) + f" · цена ≈ {prof.market_price('cut', self.gem)}"
+                             " · вставить — у ювелира", 14, r.w - 40), (r.centerx, r.bottom - 66), 14, T.TEXT,
                    center=True)
-            T.text(surf, "; ".join(A.entry_text(e, self.gem["q"]) for e in gd["stats"]) + " — вставить в гнездо у ювелира",
-                   (r.centerx, r.bottom - 64), 15, T.TEXT, center=True)
         T.text(surf, "зажмите мышь и тяните — вращать как угодно · колесо — приблизить · Esc — закрыть",
                (r.centerx, r.bottom - 36), 12, T.TEXT_DIM, center=True)
 
@@ -1282,42 +1470,115 @@ def draw_stone_grid(scene, surf, area, key, items, action_of, empty, price=None,
     items — [(вид: cut | rough, камень)]; button(вид, камень) → (подпись, действие, можно) — кнопка под карточкой."""
     prof = scene.app.profile
     a = prof.xd["artifacts"]
-    cw, ch = 176, 226 if button else 186
-    cols = max(1, (area.w - 22 + 10) // (cw + 10))
-    rows = max(1, (area.h + 10) // (ch + 10))
-    first = scene.scroll_list(surf, key, pygame.Rect(area.x, area.y, area.w - 22, rows * (ch + 10) - 10),
-                              (len(items) + cols - 1) // cols, rows)
-    for i, (kind, g) in enumerate(items[first * cols:(first + rows) * cols]):
-        gd = a["gems"][g["id"]]
-        col = tuple(gd["color"])
-        tr = pygame.Rect(area.x + (i % cols) * (cw + 10), area.y + (i // cols) * (ch + 10), cw, ch)
-        hot = tr.collidepoint(scene.mouse)
-        pygame.draw.rect(surf, (44, 32, 24) if hot else (26, 20, 16), tr, border_radius=10)
-        pygame.draw.rect(surf, col, tr, 2 if hot else 1, border_radius=10)
-        if kind == "rough":
-            JV.draw_rough(surf, g, col, (tr.centerx, tr.y + 62), 104, scene.clock + i * 0.7)
-            sub = f"{g.get('size', 1.0):.2f} кар. · необработанный"
-        else:
-            JV.draw_gem(surf, g, col, (tr.centerx, tr.y + 62), 100, scene.clock + i * 0.7)
-            sub = f"{g.get('size', 1.0):.2f} кар. · {g['q'] * 100:.0f}%"
-        T.text(surf, gd["name"], (tr.centerx, tr.y + 130), 16, col, True, center=True)
-        T.text(surf, sub, (tr.centerx, tr.y + 152), 12, T.TEXT_DIM, center=True)
-        if price:
-            p_ = price(kind, g)
-            coin(surf, (tr.centerx - 24, tr.y + 176), 8)
-            T.text(surf, str(p_), (tr.centerx - 12, tr.y + 167), 16, GOLD, True)
-        scene.hit(tr, action_of(kind, g), [gd["name"] + (" (необработанный)" if kind == "rough" else ""),
-                                           "; ".join(A.entry_text(e, g.get("q", 1.0)) for e in gd["stats"]),
-                                           "клик — рассмотреть"])
-        if button:
-            label, act, ok = button(kind, g)
-            scene.btn(surf, pygame.Rect(tr.x + 12, tr.bottom - 40, tr.w - 24, 32), label, act, ok, primary=True)
+    ch = 226 if button else 186
+    with scene.grid(surf, key, area, len(items), 176, ch) as cells:
+        for i, tr in cells:
+            _stone_card(scene, surf, prof, a, items[i], tr, i, action_of, price, button)
     if not items:
         T.text(surf, empty, (area.x, area.y + 10), 16, T.TEXT_DIM)
 
 
-class WandererOverlay(Overlay):
-    """Бродячий кузнец на рынке: редкие куски металла, инструменты и уроки приёмов."""
+def _stone_card(scene, surf, prof, a, item, tr, i, action_of, price, button):
+    kind, g = item
+    cw = tr.w
+    if True:
+        gd = a["gems"][g["id"]]
+        col = tuple(gd["color"])
+        hot = tr.collidepoint(scene.mouse)
+        pygame.draw.rect(surf, (44, 32, 24) if hot else (26, 20, 16), tr, border_radius=10)
+        pygame.draw.rect(surf, col, tr, 2 if hot else 1, border_radius=10)
+        if kind == "rough":
+            JV.draw_rough(surf, g, col, (tr.centerx, tr.y + 62), 104, scene.clock + i * 0.7, xd=prof.xd)
+            sub = f"{g.get('size', 1.0):.2f} кар. · сырой · {GM.color_word(prof.xd, g.get('col', 0.5))}"
+        else:
+            JV.draw_gem(surf, g, col, (tr.centerx, tr.y + 62), 100, scene.clock + i * 0.7, xd=prof.xd)
+            sub = f"{g.get('size', 1.0):.2f} кар. · {GM.grade(prof.xd, g.get('cl', 0.6)).lower()}"
+        T.text(surf, gd["name"], (tr.centerx, tr.y + 130), 16, col, True, center=True)
+        T.text(surf, fit(sub, 12, cw - 12), (tr.centerx, tr.y + 152), 12, T.TEXT_DIM, center=True)
+        if price:
+            p_ = price(kind, g)
+            coin(surf, (tr.centerx - 24, tr.y + 176), 8)
+            T.text(surf, str(p_), (tr.centerx - 12, tr.y + 167), 16, GOLD, True)
+        scene.hit(tr, action_of(kind, g), [gd["name"] + (" (необработанный)" if kind == "rough" else "")] +
+                  GM.describe(prof.xd, g, rough=kind == "rough") +
+                  ([] if kind == "rough" else [(GM.stat_text(prof.xd, g), BLESS)]) + ["клик — рассмотреть"])
+        if button:
+            label, act, ok = button(kind, g)
+            scene.btn(surf, pygame.Rect(tr.x + 12, tr.bottom - 40, tr.w - 24, 32), label, act, ok, primary=True)
+
+
+class TradeMixin:
+    """Вкладки «Купить / Продать» у бродячего мастера: хотелки визита, терпение и торг (просить выше цены)."""
+    who = "smith"
+    tmode = "buy"
+    ask_i = 0
+
+    def trade_tabs(self, surf, r):
+        self.scene.seg(surf, r.right - 270, r.y + 12, (("buy", "Купить"), ("sell", "Продать")), self.tmode, "tmode",
+                       h=34)
+
+    def trade_act(self, kind, action):
+        """True — действие торга обработано."""
+        from sim import forge as FG
+        prof = self.app.profile
+        if kind == "tmode":
+            self.tmode = action[1]
+        elif kind == "ask":
+            self.ask_i = action[1]
+        elif kind == "tsell":
+            ask = FG.TRADE["asks"][self.ask_i]
+            res, price = prof.trade_sell(self.who, action[1], action[2], ask)
+            self.scene.say({"sold": f"Продано за {price}", "refused": "«Нет уж, за такие деньги — не возьму»",
+                            "angry": "Торговец обиделся — до следующего визита ничего не купит"}.get(res, "Нельзя"))
+        else:
+            return False
+        return True
+
+    def want_name(self, wid):
+        from sim import forge as FG
+        prof = self.app.profile
+        if self.who == "jeweler":
+            return prof.xd["artifacts"]["gems"][wid]["name"]
+        return FG.ALLOYS[wid]["name"] if wid in FG.ALLOYS else res_name(prof.xd, wid)
+
+    def draw_trade_head(self, surf, r):
+        """Хотелки, терпение, запрос (×1.00 … ×1.50) с шансом согласия. Возвращает y под шапкой."""
+        from sim import forge as FG
+        prof = self.app.profile
+        w = prof.market.get(self.who) or {}
+        y = r.y + 60
+        wants = ", ".join(f"{self.want_name(x['id'])} ×{x['k']:.2f}" for x in w.get("wants", []))
+        T.text(surf, "Сейчас берёт дороже: " + (wants or "ничего особенного"), (r.x + 20, y), 16, GLORY, True)
+        pat = w.get("patience", 1.0)
+        T.text(surf, "Терпение:", (r.x + 20, y + 32), 14, T.TEXT_DIM)
+        bar = pygame.Rect(r.x + 100, y + 36, 180, 10)
+        pygame.draw.rect(surf, (40, 30, 24), bar, border_radius=5)
+        pygame.draw.rect(surf, BLESS if pat > 0.5 else GOLD if pat > 0.2 else CURSE,
+                         (bar.x, bar.y, int(bar.w * pat), bar.h), border_radius=5)
+        if w.get("angry"):
+            T.text(surf, "обиделся — до следующего визита не покупает", (bar.right + 14, y + 30), 14, CURSE, True)
+        x = r.x + 330
+        T.text(surf, "Запрос:", (x, y + 32), 14, T.TEXT_DIM)
+        opts = []
+        for i, k in enumerate(FG.TRADE["asks"]):
+            ch = FG.haggle_chance(k, pat)
+            opts.append((i, f"×{k:.2f}" + ("" if i == 0 else f" · {ch * 100:.0f}%")))
+        self.scene.seg(surf, x + 64, y + 24, opts, self.ask_i, "ask", h=30)
+        T.text(surf, "выше запрос — дороже, но торговец может отказать; отказ убавляет терпение",
+               (r.x + 20, y + 62), 12, T.TEXT_DIM)
+        return y + 90
+
+    def sell_button(self, kind, key):
+        from sim import forge as FG
+        prof = self.app.profile
+        w = prof.market.get(self.who) or {}
+        p_ = prof.trade_price(self.who, kind, key, FG.TRADE["asks"][self.ask_i])
+        return f"Продать · {p_}", ("tsell", kind, key), not w.get("angry")
+
+
+class WandererOverlay(TradeMixin, Overlay):
+    """Бродячий кузнец на рынке: слитки сплавов, книги и приборы; покупает металлы (торг)."""
+    who = "smith"
 
     @property
     def title(self):
@@ -1326,48 +1587,217 @@ class WandererOverlay(Overlay):
     def act(self, action, button=1):
         prof = self.app.profile
         kind = action[0] if isinstance(action, tuple) else action
-        if kind == "buy_piece":
+        if self.trade_act(kind, action):
+            return
+        if kind == "buy_ingot":
+            self.scene.say("Куплено — слиток в кузне" if prof.buy_ingot(action[1]) else "Не хватает золота")
+        elif kind == "buy_piece":
             self.scene.say("Куплено — в кузне" if prof.buy_piece(action[1]) else "Не хватает золота")
         elif kind == "buy_tool":
             self.scene.say("Куплено" if prof.buy_tool(action[1]) else "Не хватает золота")
+        elif kind == "buy_forge":
+            self.scene.say("Куплено — в кузне" if prof.buy_smith(action[1]) else "Не хватает золота")
 
-    def draw(self, surf):
-        from sim import smithing as SM
+    def draw_sell(self, surf, r):
+        """Продать кузнецу: слитки, примитивы, руды пачкой — карточки с ценой по запросу."""
+        from sim import forge as FG
         prof = self.app.profile
         xd = prof.xd
+        y = self.draw_trade_head(surf, r)
+        goods = prof.trade_goods("smith")
+        area = pygame.Rect(r.x + 20, y, r.w - 40, r.bottom - 14 - y)
+        with self.scene.grid(surf, "smith_sell", area, len(goods), 220, 132, gap=10) as cells:
+            for i, cr in cells:
+                kind, key, it, want = goods[i]
+                if kind == "mat":
+                    name, sub, col = res_name(xd, key), f"пачка {FG.MAT_LOT} ед. · есть {it['n']}", (200, 190, 170)
+                    ic = res_icon(xd, key, 40)
+                else:
+                    a = FG.ALLOYS[it["alloy"]]
+                    col = a["color"]
+                    if kind == "ingot":
+                        name, ic = f"Слиток · {a['name']}", forge_icon(f"ingot_{it['alloy']}", 40)
+                    else:
+                        name = f"{FG.PRIMS[it['kind']]['name']} · {a['name']}"
+                        ic = forge_icon(f"prim_{it['kind']}", 40, tuple(col))
+                    sub = f"{it['mass']} г · качество {it.get('q', 0.8) * 100:.0f}%"
+                hot = cr.collidepoint(self.scene.mouse)
+                pygame.draw.rect(surf, (44, 32, 24) if hot else (28, 21, 16), cr, border_radius=10)
+                pygame.draw.rect(surf, GOLD if want > 1 else col, cr, 2 if want > 1 else 1, border_radius=10)
+                if ic is not None:
+                    surf.blit(ic, (cr.x + 30 - ic.get_width() // 2, cr.y + 32 - ic.get_height() // 2))
+                T.text(surf, fit(name, 14, cr.w - 70), (cr.x + 60, cr.y + 12), 14, T.TEXT, True)
+                T.text(surf, fit(sub, 12, cr.w - 70), (cr.x + 60, cr.y + 34), 12, T.TEXT_DIM)
+                if want > 1:
+                    T.text(surf, f"хочет — ×{want:.2f}", (cr.x + 60, cr.y + 54), 12, GOLD, True)
+                label, act, ok = self.sell_button(kind, key)
+                self.scene.btn(surf, pygame.Rect(cr.x + 12, cr.bottom - 44, cr.w - 24, 34), label, act, ok,
+                               primary=True)
+        if not goods:
+            T.text(surf, "Продавать нечего: слитки, примитивы или руда (от 10 ед.).", (area.x, area.y + 8), 15,
+                   T.TEXT_DIM)
+
+    def draw(self, surf):
+        prof = self.app.profile
         r = self.frame(surf)
+        self.trade_tabs(surf, r)
+        if self.tmode == "sell":
+            return self.draw_sell(surf, r)
         w = prof.market.get("smith") or {}
-        T.text(surf, "Редкие металлы", (r.x + 20, r.y + 60), 18, GLORY, True)
+        from sim import forge as FG
+        T.text(surf, "Слитки сплавов", (r.x + 20, r.y + 60), 18, GLORY, True)
         x = r.x + 20
-        for p in w.get("pieces", []):
-            m = SM.cfg(xd)["metals"][p["metal"]]
-            cr = pygame.Rect(x, r.y + 90, 200, 200)
+        known = FG.known_alloys(prof.f_tools())
+        for ing in w.get("ingots", []):
+            a = FG.ALLOYS[ing["alloy"]]
+            cr = pygame.Rect(x, r.y + 90, 190, 200)
             pygame.draw.rect(surf, (30, 22, 16), cr, border_radius=10)
-            pygame.draw.rect(surf, tuple(m["color"]), cr, 1, border_radius=10)
-            draw_metal_piece(surf, xd, p, cr.x + 20, cr.y + 16, 22)
-            T.text(surf, m["name"], (cr.centerx, cr.y + 108), 16, tuple(m["color"]), True, center=True)
-            T.text(surf, f"{SM.piece_mass(xd, p)} г · чист. {p['purity'] * 100:.0f}%", (cr.centerx, cr.y + 130), 12,
+            pygame.draw.rect(surf, a["color"], cr, 1, border_radius=10)
+            ic = forge_icon(f"ingot_{ing['alloy']}", 64)
+            if ic is not None:
+                surf.blit(ic, (cr.centerx - ic.get_width() // 2, cr.y + 14))
+            T.text(surf, fit(a["name"], 15, cr.w - 16), (cr.centerx, cr.y + 90), 15, a["color"], True, center=True)
+            T.text(surf, f"{ing['mass']} г · качество {ing['q'] * 100:.0f}%", (cr.centerx, cr.y + 112), 12,
                    T.TEXT_DIM, center=True)
-            T.text(surf, m["desc"], (cr.centerx, cr.y + 148), 11, T.TEXT_DIM, center=True)
-            self.scene.btn(surf, pygame.Rect(cr.x + 12, cr.bottom - 42, cr.w - 24, 32), f"Купить · {p['price']}",
-                           ("buy_piece", p["uid"]), prof.glory >= p["price"], primary=True)
-            x += 212
-        if not w.get("pieces"):
-            T.text(surf, "Металлы разобраны.", (r.x + 20, r.y + 96), 14, T.TEXT_DIM)
-        T.text(surf, "Инструменты и уроки", (r.x + 20, r.y + 320), 18, GLORY, True)
+            if ing["alloy"] not in known:
+                T.text(surf, "редкость: сами пока не плавите", (cr.centerx, cr.y + 130), 11, GOLD, center=True)
+            self.scene.btn(surf, pygame.Rect(cr.x + 12, cr.bottom - 42, cr.w - 24, 32), f"Купить · {ing['price']}",
+                           ("buy_ingot", ing["uid"]), prof.glory >= ing["price"], primary=True)
+            x += 200
+        if not w.get("ingots"):
+            T.text(surf, "Слитки разобраны.", (r.x + 20, r.y + 96), 14, T.TEXT_DIM)
+        npc = JV.spr("npc_smith", None, 200)                         # лист NS: бродячий кузнец
+        if npc is not None:
+            surf.blit(npc, (r.right - npc.get_width() - 40, r.y + 300 - npc.get_height()))
+        offer = w.get("forge", [])
+        x0 = r.x + 20
+        T.text(surf, "Книги, приборы, жидкости, формы", (x0, r.y + 320), 18, GLORY, True)
         y = r.y + 350
-        for tid in w.get("tools", []):
-            t = SM.cfg(xd)["tools"][tid]
-            tr = pygame.Rect(r.x + 20, y, r.w - 40, 56)
+        for tid in offer:
+            name, price, desc = (FG.TOOLS.get(tid) or FG.BOOKS.get(tid))[:2] + ((FG.TOOLS.get(tid) or FG.BOOKS.get(tid))[-1],)
+            tr = pygame.Rect(x0, y, r.right - 20 - x0, 56)
             pygame.draw.rect(surf, (30, 22, 16), tr, border_radius=8)
             pygame.draw.rect(surf, (120, 90, 50), tr, 1, border_radius=8)
-            T.text(surf, t["name"] + (" (урок)" if t.get("lesson") else ""), (tr.x + 14, tr.y + 8), 16, T.TEXT, True)
-            T.text(surf, t["desc"], (tr.x + 14, tr.y + 32), 13, T.TEXT_DIM)
-            self.scene.btn(surf, pygame.Rect(tr.right - 190, tr.y + 10, 176, 36), f"Купить · {t['price']}",
-                           ("buy_tool", tid), prof.glory >= t["price"], primary=True)
+            ic = forge_icon("book" if tid in FG.BOOKS else f"tool_{tid}", 44)   # лист KI; нет — без значка
+            tx = tr.x + 14
+            if ic is not None:
+                surf.blit(ic, (tr.x + 30 - ic.get_width() // 2, tr.centery - ic.get_height() // 2))
+                tx = tr.x + 58
+            T.text(surf, fit(name, 15, tr.right - 200 - tx), (tx, tr.y + 8), 15, T.TEXT, True)
+            T.text(surf, fit(desc, 12, tr.right - 200 - tx), (tx, tr.y + 32), 12, T.TEXT_DIM)
+            self.scene.btn(surf, pygame.Rect(tr.right - 186, tr.y + 10, 172, 36), f"Купить · {price}",
+                           ("buy_forge", tid), prof.glory >= price, primary=True)
             y += 64
-        if not w.get("tools"):
-            T.text(surf, "Инструментов на продажу нет.", (r.x + 20, y + 4), 14, T.TEXT_DIM)
+        if not offer:
+            T.text(surf, "Сегодня без книг и приборов.", (x0, y + 4), 14, T.TEXT_DIM)
+
+
+class JewelerOverlay(TradeMixin, Overlay):
+    """Бродячий ювелир: книги огранок (новая огранка навсегда) и отборные необработанные камни; покупает
+    ваши камни — сырые и огранённые (торг)."""
+    who = "jeweler"
+
+    @property
+    def title(self):
+        return (self.app.profile.market.get("jeweler") or {}).get("name", "Бродячий ювелир")
+
+    def act(self, action, button=1):
+        prof = self.app.profile
+        kind = action[0] if isinstance(action, tuple) else action
+        if self.trade_act(kind, action):
+            return
+        if kind == "own_view":
+            g = next((x for x in prof.rough + prof.gems if x["uid"] == action[1]), None)
+            if g:
+                self.scene.overlay = GemViewer(self.scene, g, back=self)
+        elif kind == "book":
+            self.scene.say("Новая огранка выучена" if prof.buy_book(action[1]) else "Не хватает золота")
+        elif kind == "jrough":
+            self.scene.say("Куплено — камень в сундуке" if prof.buy_jeweler_rough(action[1]) else "Не хватает золота")
+        elif kind == "loupe":
+            self.scene.say("Куплено — на станке огранки" if prof.buy_loupe(action[1]) else "Не хватает золота")
+        elif kind == "gem_view":
+            j = prof.market.get("jeweler") or {}
+            g = next((x for x in j.get("rough", []) if x["uid"] == action[1]), None)
+            if g:
+                self.scene.overlay = GemViewer(self.scene, g, back=self)
+
+    def draw_sell(self, surf, r):
+        prof = self.app.profile
+        y = self.draw_trade_head(surf, r)
+        goods = [(k, it) for k, key, it, want in prof.trade_goods("jeweler")]
+        draw_stone_grid(self.scene, surf, pygame.Rect(r.x + 20, y, r.w - 40, r.bottom - 14 - y), "jeweler_sell",
+                        goods, lambda kind, g: ("own_view", g["uid"]), "Камней нет — продавать нечего.",
+                        button=lambda kind, g: self.sell_button(kind, g["uid"]))      # цена — на кнопке
+
+    def draw(self, surf):
+        prof = self.app.profile
+        r = self.frame(surf)
+        self.trade_tabs(surf, r)
+        if self.tmode == "sell":
+            return self.draw_sell(surf, r)
+        j = prof.market.get("jeweler") or {}
+        npc = JV.spr("npc_jeweler", None, 150)                       # лист JT: бродячий ювелир
+        if npc is not None:
+            surf.blit(npc, (r.right - npc.get_width() - 24, r.bottom - npc.get_height() - 16))
+        T.text(surf, "Книги огранок", (r.x + 20, r.y + 60), 18, GLORY, True)
+        T.text(surf, f"известно огранок: {len(prof.cuts)} из {len(GM.CUTS)}", (r.x + 200, r.y + 64), 13, T.TEXT_DIM)
+        y = r.y + 92
+        for cid in j.get("books", []):
+            c = GM.CUT_BY_ID[cid]
+            br = pygame.Rect(r.x + 20, y, r.w // 2 - 30, 92)
+            pygame.draw.rect(surf, (34, 25, 18), br, border_radius=8)
+            pygame.draw.rect(surf, (150, 110, 60), br, 1, border_radius=8)
+            from game import workshop_games as WG
+            JV.stone(surf, JV.ideal(WG.CUTS.index(c)), JV.turntable(self.scene.clock), (br.x + 48, br.centery), 0.34,
+                     (150, 200, 255), self.scene.clock)
+            low, top = WG.cut_counts(c)
+            bk = JV.spr("book_cut", 28, 28)
+            if bk is not None:
+                surf.blit(bk, (br.x + 70, br.y + 6))
+            T.text(surf, f"«{c['name']}»", (br.x + 100, br.y + 10), 17, GOLD if c.get("rare") else T.TEXT, True)
+            if c.get("rare"):                                       # авторская огранка — редкий свиток
+                pygame.draw.rect(surf, GOLD, br, 2, border_radius=8)
+                T.text(surf, "авторский свиток", (br.x + 110 + T.font(17, True).size(f"«{c['name']}»")[0],
+                                                  br.y + 13), 12, GOLD, True)
+            T.text(surf, fit(c.get("desc", ""), 12, br.w - 300), (br.x + 100, br.y + 36), 12, T.TEXT_DIM)
+            T.text(surf, f"граней {low + top} · предел {c['cap'] * 100:.0f}% · ценность ×{c['value']:.2f}",
+                   (br.x + 100, br.y + 58), 12, BLESS)
+            self.scene.btn(surf, pygame.Rect(br.right - 190, br.y + 26, 176, 40), f"Купить · {c['book']}",
+                           ("book", cid), prof.glory >= c["book"], primary=True)
+            y += 100
+        if not j.get("books"):
+            T.text(surf, "Книг больше нет.", (r.x + 20, y + 4), 14, T.TEXT_DIM)
+            y += 30
+        y += 16
+        T.text(surf, "Лупа и диски для станка", (r.x + 20, y), 18, GLORY, True)
+        own = prof.lenses()
+        T.text(surf, "у вас: " + (" + ".join(f"×{GM.LOUPE_BY_ID[t][2]}" for t in own) if own else "нет"),
+               (r.x + 200, y + 4), 13, T.TEXT_DIM)
+        y += 30
+        for tid in j.get("tools", []):
+            name, price, desc = GM.tool_info(tid)
+            br = pygame.Rect(r.x + 20, y, r.w // 2 - 30, 64)
+            pygame.draw.rect(surf, (34, 25, 18), br, border_radius=8)
+            pygame.draw.rect(surf, (150, 110, 60), br, 1, border_radius=8)
+            ic = JV.disc_icon(tid, 44)
+            tx = br.x + 14 + (52 if ic is not None else 0)
+            if ic is not None:
+                surf.blit(ic, (br.x + 10, br.y + 10))
+            T.text(surf, name, (tx, br.y + 10), 16, T.TEXT, True)
+            T.text(surf, desc, (tx, br.y + 36), 12, T.TEXT_DIM)
+            self.scene.btn(surf, pygame.Rect(br.right - 190, br.y + 12, 176, 40), f"Купить · {price}",
+                           ("loupe", tid), prof.glory >= price, primary=True)
+            y += 72
+        if not j.get("tools"):
+            T.text(surf, "Сегодня без стёкол.", (r.x + 20, y), 14, T.TEXT_DIM)
+        x0 = r.x + r.w // 2 + 10
+        T.text(surf, "Отборные камни", (x0, r.y + 60), 18, GLORY, True)
+        stock = [("rough", x) for x in j.get("rough", [])]
+        draw_stone_grid(self.scene, surf, pygame.Rect(x0, r.y + 92, r.right - x0 - 20, r.bottom - r.y - 110),
+                        "jeweler_stock", stock, lambda kind, g: ("gem_view", g["uid"]), "Камни разобраны.",
+                        price=prof.market_price,
+                        button=lambda kind, g: ("Купить", ("jrough", g["uid"]), prof.glory >= prof.market_price(kind, g)))
 
 
 class MarketRoom(RoomScene):
@@ -1393,6 +1823,8 @@ class MarketRoom(RoomScene):
                 self.say(f"Продано за {prof.sell_price(action[1], item)}")
         elif kind == "wanderer":
             self.overlay = WandererOverlay(self)
+        elif kind == "jeweler":
+            self.overlay = JewelerOverlay(self)
         elif kind == "gem_view":
             g = next((x for x in prof.gems + prof.rough + prof.market.get("rough", []) + prof.market.get("cut", [])
                       if x["uid"] == action[1]), None)
@@ -1417,6 +1849,11 @@ class MarketRoom(RoomScene):
         if w:                                          # бродячий кузнец — иногда заходит
             self.btn(surf, pygame.Rect(left.right - 300, left.y + 8, 284, 36), "Бродячий кузнец: " + w["name"].split()[-1],
                      "wanderer", True, primary=True, tip=[w["name"], "редкие металлы, инструменты и уроки"])
+        j = prof.market.get("jeweler")
+        if j:                                          # бродячий ювелир — книги огранок
+            self.btn(surf, pygame.Rect(left.right - 300 - (296 if w else 0), left.y + 8, 284, 36),
+                     "Бродячий ювелир: " + j["name"].split()[-1], "jeweler", True, primary=True,
+                     tip=[j["name"], "книги огранок и отборные камни"])
         own = [("rough", x) for x in prof.rough] + [("cut", x) for x in prof.gems]
         draw_stone_grid(self, surf, pygame.Rect(right.x + 16, right.y + 50, right.w - 32, right.h - 64), "market_own",
                         own, lambda kind, g: ("gem_view", g["uid"]), "Своих камней нет.",
@@ -1440,12 +1877,12 @@ class WorkshopRoom(RoomScene):
     def __init__(self, app, ws=None):
         super().__init__(app)
         if ws:
-            self.overlay = (SmithOverlay if ws == "ws_forge" else StationOverlay)(self, ws)
+            self.overlay = (ForgeOverlay if ws == "ws_forge" else StationOverlay)(self, ws)
 
     def room_act(self, action, button=1):
         kind = action[0] if isinstance(action, tuple) else action
-        if kind == "station":
-            self.overlay = (SmithOverlay if action[1] == "ws_forge" else StationOverlay)(self, action[1])
+        if kind == "station":                          # мастерская — отдельный экран со своими вкладками
+            self.app.switch(StationScene(self.app, action[1]))
         elif kind == "chest":
             self.overlay = ChestOverlay(self)
 
@@ -1474,7 +1911,8 @@ class WorkshopRoom(RoomScene):
             if hot:
                 glow_outline(surf, img, pos)
             surf.blit(img, pos)
-            sub = (f"ур. {lv} · {b['levels'][lv - 1]['text']}" if lv else "не построено — Стройка (5)")
+            sub = (f"ур. {lv} · {b['levels'][lv - 1]['text']}" if lv else "не построено — Стройка (5)"
+                   if prof.master_free(ws) else f"мастер в плену: «{prof.master_chapter(ws)}»")
             plate(surf, (int(fx * T.SCREEN_W), ground + 8), b["name"], sub, GLORY if lv else T.TEXT_DIM, w=250)
             self.hit(rect.union(pygame.Rect(int(fx * T.SCREEN_W) - 125, ground + 8, 250, 50)), ("station", ws),
                      [(b["name"], GLORY), b["desc"], "клик — к мастеру"])
@@ -1517,6 +1955,12 @@ class StationOverlay(Overlay):
     def level(self):
         return self.app.profile.building_level(self.ws)
 
+    def modes(self):
+        """Вкладки станции (для клавиш 1–9 и Tab на отдельном экране)."""
+        if self.ws == "ws_jewel":
+            return [("craft", "Оправа"), ("cut", "Огранка"), ("socket", "Вставка"), ("show", "Витрина")]
+        return []
+
     def play(self, title, done, diff=1, color=None, seed=None):
         """Мини-игра мастерской; diff — сложность (0–3, по редкости вещи); seed — заготовка (свой камень)."""
         app = self.app
@@ -1541,6 +1985,10 @@ class StationOverlay(Overlay):
             self.kind = action[1]
         elif kind == "pick_art":
             self.art_sel = action[1]
+        elif kind == "craft_whole":
+            self.craft_whole()
+        elif kind == "alloy_pick":                  # металл изделия: клик — только этот, ещё клик — любой годный
+            self.alloy_sel = None if getattr(self, "alloy_sel", None) == action[1] else action[1]
         elif kind == "build":
             go(self.app, "build")
         elif kind == "craft":
@@ -1548,11 +1996,29 @@ class StationOverlay(Overlay):
                 self.scene.say("Не хватает материалов или золота, или мастерская мала для этой редкости")
                 return
             ws, k, sid = self.ws, self.kind, self.set_sel
-            if ws == "ws_jewel":                 # кольца и амулеты — без огранки: работа ровная, сила — в камнях
-                art = prof.craft(ws, k, sid, 1.0, seed=int(self.scene.clock * 1000))
-                self.result = ([(A.art_name(xd, art), WS.rar_color(xd, art["rarity"])),
-                                ("Готово — вставьте огранённые камни в гнёзда", GLORY)]
-                               + [(ln, T.TEXT) for ln in A.art_lines(xd, art)], art) if art else None
+            if ws == "ws_jewel":                 # кольца и амулеты — оправа из кузни: проволока и лист
+                from sim import forge as FG
+                prims = prof.pick_prims(k, getattr(self, "alloy_sel", None), sid)
+                if prims is None:
+                    self.scene.say(self.need_text(k, sid))
+                    return
+                from game import forge_games as FGM
+                game = FGM.ItemGame(k, prims, prof.f_tools(), prof.forge_level(), int(self.scene.clock * 1000))
+                uids = [p["uid"] for p in prims]
+
+                def jdone(q):
+                    r_ = game.result
+                    if not r_:
+                        return
+                    art = prof.make_item(k, sid, uids, r_["heat"], seed=int(self.scene.clock * 1000))
+                    metal = ", ".join(FG.ALLOYS[a_]["name"] for a_ in (art or {}).get("alloys", []))
+                    self.result = ([(A.art_name(xd, art), WS.rar_color(xd, art["rarity"])),
+                                    (f"Оправа: {metal} — вставьте огранённые камни", GLORY)]
+                                   + [(ln, T.TEXT) for ln in A.art_lines(xd, art)], art) if art else None
+                app, scene = self.app, self.scene
+                self.last_game = game
+                app.switch(WS.MiniGameScene(app, game, f"Оправа: {xd['artifacts']['kinds'][k]['name']}", jdone,
+                                            lambda: app.switch(scene)))
                 return
 
             def done(q):
@@ -1569,18 +2035,54 @@ class StationOverlay(Overlay):
                 self.scene.say("Нужен необработанный камень (рынок, вылазки) и немного золота")
                 return
             gid, ruid = rough["id"], rough["uid"]
+            gd = xd["artifacts"]["gems"][gid]
 
             def done(q):
                 game = self.last_game
+                if game.split is not None:           # раскол по трещине — остался меньший кусок
+                    r2 = prof.split_rough(ruid, 0.4, drop=game.split, seed=int(self.scene.clock * 1000))
+                    self.result = ([(f"{gd['name']} раскололся по трещине", CURSE),
+                                    (f"остался кусок {r2['size']:.2f} кар. — его можно огранить снова", T.TEXT)],
+                                   None) if r2 else None
+                    return
                 if game.phase != "cut":              # огранку не начали — камень остаётся необработанным
                     self.result = None
                     return
-                g = prof.cut_gem(ruid, q, shape=game.shape(), cut=game.cut["id"] if game.cut else None)
-                gd = xd["artifacts"]["gems"][gid]
-                self.result = ([(f"{gd['name']}: {A.quality_word(g['q'])} ({g['q'] * 100:.0f}%)", tuple(gd["color"])),
-                                ("; ".join(A.entry_text(e, g["q"]) for e in gd["stats"]), T.TEXT)], None) if g else None
-            self.play(f"Огранка: {xd['artifacts']['gems'][gid]['name']} · {rough['size']:.2f} кар.", done, 1,
-                      tuple(xd["artifacts"]["gems"][gid]["color"]), seed=rough["seed"])
+                g = prof.cut_gem(ruid, q, shape=game.shape(), cut=game.cut["id"] if game.cut else None,
+                                 ct=game.final_ct(), incl=game.final_incl(), star=game.final_star(),
+                                 cf=game.cf, cz=game.final_colors(), axis=game.caxis)
+                self.result = ([(f"{gd['name']} · {g['size']:.2f} кар.: {A.quality_word(g['q'])} ({g['q'] * 100:.0f}%)",
+                                 tuple(gd["color"])),
+                                (" · ".join(GM.describe(xd, g)[1:]), T.TEXT),
+                                (GM.stat_text(xd, g) + f" · цена ≈ {prof.market_price('cut', g)}", BLESS)], None) \
+                    if g else None
+            game = G.JewelCut(rough["seed"], diff=1, rough=GM.ensure_rough(xd, rough),
+                              known=None if prof.sandbox else prof.cuts, xd=xd, lenses=prof.lenses(),
+                              disks=prof.disks(), autofocus="loupe_af" in prof.jtools)
+            game.color = GM.tint(tuple(gd["color"]), rough.get("col", 0.5))
+            self.last_game = game
+            app, scene = self.app, self.scene
+            app.switch(WS.MiniGameScene(app, game, f"Огранка: {gd['name']} · {rough['size']:.2f} кар.", done,
+                                        lambda: app.switch(scene)))
+        elif kind == "sc_slot":                     # витрина: выбрать место
+            self.sc_sel = action[1]
+        elif kind == "sc_gem":
+            sl = prof.showcase_slots()
+            i = getattr(self, "sc_sel", None)
+            if i is None or sl[i]:                  # место не выбрано — первое свободное
+                i = next((k for k, x in enumerate(sl) if x is None), i if i is not None else 0)
+            if prof.show_gem(i, action[1]):
+                self.sc_sel = i
+                self.scene.say("Камень выставлен на витрину")
+        elif kind == "sc_take":
+            if prof.unshow(action[1]):
+                self.scene.say("Камень снят — он в сундуке")
+        elif kind == "sc_sale":
+            prof.toggle_sale(action[1])
+        elif kind == "unsocket":
+            g = prof.unsocket(self.art_sel, action[1])
+            self.scene.say(f"Камень вынут — {xd['artifacts']['gems'][g['id']]['name']} в сундуке" if g else
+                           "Не хватает золота")
         elif kind == "socket":
             if self.art_sel and prof.socket(self.art_sel, action[1]):
                 self.scene.say("Самоцвет вставлен")
@@ -1623,8 +2125,14 @@ class StationOverlay(Overlay):
         b = xd["buildings"][self.ws]
         lv = self.level()
         if lv:
-            T.text(surf, fit(f"ур. {lv} · " + b["desc"], 14, r.w - 420 - T.font(24, True).size(self.title)[0]),
-                   (r.x + 20 + T.font(24, True).size(self.title)[0] + 16, r.y + 20), 14, T.TEXT_DIM)
+            T.text(surf, fit(f"ур. {lv} · " + b["desc"], 14, r.right - 400 - self.head_x),
+                   (self.head_x, r.y + 20), 14, T.TEXT_DIM)
+        if not lv and not prof.master_free(self.ws):
+            m = prof.master_of(self.ws)
+            T.text(surf, f"Мастера нет: {m['name']} в плену.", (r.centerx, r.y + 110), 24, CURSE, True, center=True)
+            T.text(surf, f"Победите босса главы «{prof.master_chapter(self.ws)}» — мастер вернётся с отрядом и откроет "
+                         "мастерскую.", (r.centerx, r.y + 148), 16, T.TEXT, center=True)
+            return
         if not lv:
             T.text(surf, f"«{b['name']}» ещё не построена.", (r.centerx, r.y + 110), 24, CURSE, True, center=True)
             T.text(surf, "Постройте её в Стройке — уровень мастерской открывает редкость вещей.",
@@ -1633,14 +2141,16 @@ class StationOverlay(Overlay):
                            primary=True)
             return
         if self.ws == "ws_jewel":
-            self.scene.seg(surf, r.right - 380, r.y + 12, (("craft", "Ковка"), ("cut", "Огранка"), ("socket", "Вставка")),
-                           self.mode, "mode", h=34)
+            self.scene.seg(surf, r.right - 500, r.y + 12, [(m, f"{i + 1} {lab}") for i, (m, lab) in
+                                                            enumerate(self.modes())], self.mode, "mode", h=34)
         if self.ws == "ws_alchemy":
             self.draw_alchemy(surf, r)
         elif self.mode == "cut":
             self.draw_cut(surf, r)
         elif self.mode == "socket":
             self.draw_socket(surf, r)
+        elif self.mode == "show":
+            self.draw_showcase(surf, r)
         else:
             self.draw_craft(surf, r)
         if self.result:
@@ -1715,25 +2225,187 @@ class StationOverlay(Overlay):
             T.text(surf, "при качестве 100%", (kr.x + 14, kr.bottom - 28), 12, T.TEXT_DIM)
             self.scene.hit(kr, ("kind", k), [(a["kinds"][k]["name"], T.TEXT), "клик — выбрать"])
         y += 186
+        if self.ws in ("ws_forge", "ws_jewel") and self.kind:          # из чего: примитивы и металл сета
+            y = self.draw_need(surf, x0, y - 6, r.right - 16)
         cost = A.craft_cost(xd, self.ws, self.set_sel)
         T.text(surf, "Цена:", (x0, y + 4), 16, T.TEXT_DIM, True)
         cost_icons(self.scene, surf, prof, cost, x0 + 58, y)
-        T.text(surf, "Качество — по мини-игре (70–130%); от 115% — дополнительное свойство.", (x0, y + 36), 14,
-               T.TEXT_DIM)
-        self.scene.btn(surf, pygame.Rect(x0, y + 66, 300, 56), "Ковать  (Enter)", "craft",
-                       prof.can_craft(self.ws, self.set_sel), primary=True)
+        if self.ws in ("ws_forge", "ws_jewel") and self.kind:      # сборка (≤100%) или цельная ковка (≤130%)
+            from sim import forge as FG
+            mass = FG.item_mass(self.kind)
+            ing = prof.whole_ingot(self.kind, self.set_sel, getattr(self, "alloy_sel", None))
+            from sim import forge_card as FC
+            card = FC.CARDS[FC.card_for(self.kind, prof.f_tools())]
+            stages = " → ".join(FC.OPS[st["op"]][0].lower() for st in card["stages"])
+            T.text(surf, fit(f"{card['name']}: {stages} · слиток {mass} г · до {card['cap'] * 100:.0f}%" +
+                             ("" if card["cap"] > 1 else " (техкарта мастера — книга: до 130%)"), 14, r.right - x0 - 20),
+                   (x0, y + 36), 14, T.TEXT_DIM)
+            bx = x0
+            if self.ws == "ws_jewel":                          # ювелир: оправу можно и собрать из примитивов
+                self.scene.btn(surf, pygame.Rect(x0, y + 66, 300, 56), "Собрать  (Enter)", "craft",
+                               prof.can_craft(self.ws, self.set_sel), primary=True)
+                bx = x0 + 312
+            self.scene.btn(surf, pygame.Rect(bx, y + 66, 300, 56),
+                           "Ковать по техкарте" + ("  (Enter)" if self.ws == "ws_forge" else ""), "craft_whole",
+                           ing is not None and prof.can_craft(self.ws, self.set_sel), primary=True,
+                           tip=[(card["name"], GLORY), f"слиток годного сплава от {mass} г — ковка по этапам: {stages}",
+                                f"затем закалка; качество до {card['cap'] * 100:.0f}%" +
+                                (", от 115% — свойство" if card["cap"] > 1 else ""),
+                                (f"слиток: {FG.ALLOYS[ing['alloy']]['name']}, {ing['mass']} г" if ing else
+                                 "нет подходящего слитка — тигель", BLESS if ing else CURSE)])
+        else:
+            T.text(surf, "Качество — по мини-игре (70–130%); от 115% — дополнительное свойство.", (x0, y + 36), 14,
+                   T.TEXT_DIM)
+            self.scene.btn(surf, pygame.Rect(x0, y + 66, 300, 56), "Ковать  (Enter)", "craft",
+                           prof.can_craft(self.ws, self.set_sel), primary=True)
+
+    def run_game(self, game, title, done):
+        """Мини-игра; done может поставить следующую (self.next_game = (игра, заголовок, done)) — цепочка."""
+        app, scene = self.app, self.scene
+        self.last_game = game
+        self.next_game = None
+
+        def back():
+            nxt, self.next_game = self.next_game, None
+            if nxt:
+                self.run_game(*nxt)
+            else:
+                app.switch(scene)
+        app.switch(WS.MiniGameScene(app, game, title, done, back))
+
+    def craft_whole(self):
+        """Вещь по техкарте: ковка из слитка по этапам → закалка → вещь (потолок — у техкарты: 100% или 130%)."""
+        from game import forge_games as FGM
+        from sim import forge as FG
+        prof = self.app.profile
+        xd = prof.xd
+        k, sid = self.kind, self.set_sel
+        ing = prof.whole_ingot(k, sid, getattr(self, "alloy_sel", None))
+        if ing is None:
+            metals = " / ".join(FG.ALLOYS[m]["name"] for m in prof.set_alloys(k, sid))
+            self.scene.say(f"Нужен слиток от {FG.item_mass(k)} г: {metals} — тигель")
+            return
+        if not prof.can_craft(self.ws, sid):
+            self.scene.say("Не хватает золота или редкого материала сета")
+            return
+        seed = int(self.scene.clock * 1000) + prof.art_n
+        mass, iu, aid = FG.item_mass(k), ing["uid"], ing["alloy"]
+        name = xd["artifacts"]["kinds"][k]["name"]
+        from game.forge_card_game import CardGame
+        from sim import forge_card as FC
+        game = CardGame(aid, k, prof.f_tools(), prof.forge_level(), seed, mass=mass)
+
+        def forged(q):
+            r = game.result
+            if not r:
+                return
+            temper = FGM.TemperGame(k, [{"alloy": aid, "mass": mass, "q": 0.9}], prof.f_tools(),
+                                    prof.forge_level(), seed)
+
+            def tempered(q2):
+                rr = temper.result
+                if not rr:
+                    return
+                card = FC.CARDS[r["card"]]
+                art = prof.make_item_whole(k, sid, iu, r["score"], rr["heat"], rr["quench_hard"], rr["temper_acc"],
+                                           seed, cap=card["cap"], card=r["card"])
+                self.result = ([(A.art_name(xd, art), WS.rar_color(xd, art["rarity"])),
+                                (f"{card['name']}: {A.quality_word(art['q'])} — {art['q'] * 100:.0f}%" +
+                                 (" · трещина при закалке" if rr["crack"] else ""), GLORY)]
+                               + [(ln, T.TEXT) for ln in A.art_lines(xd, art)], art) if art else None
+            self.next_game = (temper, f"Закалка: {name}", tempered)
+        self.run_game(game, f"Ковка по техкарте: {name}", forged)
+
+    def need_text(self, kind, sid):
+        from sim import forge as FG
+        prof = self.app.profile
+        need = " + ".join(f"{FG.PRIMS[p]['name'].lower()} ×{n}" for p, n in FG.RECIPES[kind].items())
+        al = getattr(self, "alloy_sel", None)
+        metals = [al] if al else prof.set_alloys(kind, sid)
+        return f"Нужно: {need} — металл: " + " / ".join(FG.ALLOYS[m]["name"] for m in metals)
+
+    def draw_need(self, surf, x0, y, right):
+        """Что нужно для изделия: примитивы по рецепту (сколько есть) и металлы сета с их эффектами."""
+        from sim import forge as FG
+        prof = self.app.profile
+        xd = prof.xd
+        allowed = prof.set_alloys(self.kind, self.set_sel)
+        sel = getattr(self, "alloy_sel", None)
+        if sel not in allowed:
+            self.alloy_sel = sel = None
+        use = [sel] if sel else allowed
+        tr = T.text(surf, f"Нужно для «{xd['artifacts']['kinds'][self.kind]['name']}»:", (x0, y + 4), 16, T.TEXT,
+                    True)
+        x = tr.right + 12
+        if self.ws == "ws_forge":                              # кузня: вещь — из слитка по техкарте
+            need = FG.item_mass(self.kind)
+            ing = prof.whole_ingot(self.kind, self.set_sel, sel)
+            lab = f"слиток от {need} г · " + (f"есть: {FG.ALLOYS[ing['alloy']]['name']} {ing['mass']} г" if ing
+                                              else "нет — тигель")
+            cr = pygame.Rect(x, y, T.font(14, True).size(lab)[0] + 24, 30)
+            pygame.draw.rect(surf, (34, 26, 19), cr, border_radius=8)
+            pygame.draw.rect(surf, BLESS if ing else CURSE, cr, 1, border_radius=8)
+            T.text(surf, lab, (cr.x + 12, cr.y + 6), 14, BLESS if ing else CURSE, True)
+        for pk, n in (FG.RECIPES[self.kind].items() if self.ws != "ws_forge" else ()):
+            have = sum(1 for p in prof.forge["prims"] if p["kind"] == pk and p["alloy"] in use)
+            lab = f"{FG.PRIMS[pk]['name']} ×{n} · есть {have}"
+            ic = forge_icon(f"prim_{pk}", 22)
+            pad = 36 if ic is not None else 12
+            w = T.font(14, True).size(lab)[0] + pad + 12
+            cr = pygame.Rect(x, y, w, 30)
+            pygame.draw.rect(surf, (34, 26, 19), cr, border_radius=8)
+            pygame.draw.rect(surf, BLESS if have >= n else CURSE, cr, 1, border_radius=8)
+            if ic is not None:
+                surf.blit(ic, (cr.x + 8, cr.centery - ic.get_height() // 2))
+            T.text(surf, lab, (cr.x + pad, cr.y + 6), 14, BLESS if have >= n else CURSE, True)
+            x += w + 8
+        y += 40
+        T.text(surf, f"Металл сета «{xd['artifacts']['sets'][self.set_sel]['name']}» — у каждого свой эффект "
+                     "(клик — только этот металл):", (x0, y), 13, T.TEXT_DIM)
+        y += 22
+        n_ = max(1, len(allowed))
+        cw = min(250, (right - x0 - 8 * (n_ - 1)) // n_)
+        for i, aid in enumerate(allowed):
+            a = FG.ALLOYS[aid]
+            cr = pygame.Rect(x0 + i * (cw + 8), y, cw, 60)
+            on = aid == sel
+            hot = cr.collidepoint(self.scene.mouse)
+            pygame.draw.rect(surf, (64, 46, 30) if on else (44, 32, 22) if hot else (30, 22, 16), cr, border_radius=8)
+            pygame.draw.rect(surf, GOLD if on else a["color"], cr, 2 if on else 1, border_radius=8)
+            ic = forge_icon(f"ingot_{aid}", 34)
+            if ic is not None:
+                surf.blit(ic, (cr.x + 8, cr.centery - ic.get_height() // 2))
+            else:
+                pygame.draw.polygon(surf, a["color"], [(cr.x + 8, cr.y + 40), (cr.x + 14, cr.y + 22),
+                                                       (cr.x + 38, cr.y + 22), (cr.x + 44, cr.y + 40)])
+            eff = A.metal_affix_text(xd, {"alloy": aid, "id": FG.ALLOY_AFFIX[aid][0], "k": FG.ALLOY_AFFIX[aid][1]},
+                                     False)
+            cnt = sum(1 for p in prof.forge["prims"] if p["alloy"] == aid)
+            T.text(surf, fit(a["name"], 14, cw - 58), (cr.x + 52, cr.y + 6), 14, T.TEXT, True)
+            T.text(surf, fit(eff, 12, cw - 58), (cr.x + 52, cr.y + 25), 12, BLESS)
+            T.text(surf, f"заготовок: {cnt}", (cr.x + 52, cr.y + 42), 11, T.TEXT_DIM)
+            self.scene.hit(cr, ("alloy_pick", aid),
+                           [(a["name"], a["color"]), (eff + " (при качестве 100%)", BLESS),
+                            f"твёрдость {a['hard'] * 100:.0f}% · вязкость {a['tough'] * 100:.0f}%",
+                            "клик — ковать только из него; ещё клик — из любого годного"])
+        return y + 70
 
     def art_list(self, surf, x, y, w, bottom, pred):
         prof = self.app.profile
         xd = prof.xd
         arts = [a for a in sorted(prof.stash.values(), key=lambda a: (-A.RARITY_ORDER.index(a["rarity"]), a["set"]))
                 if pred(a)]
-        rows = max(1, (bottom - y) // 70)
-        first = self.scene.scroll_list(surf, "station_arts", pygame.Rect(x, y, w - 18, rows * 70 - 6), len(arts), rows)
-        if len(arts) > rows:
-            w -= 18
-        for art in arts[first:first + rows]:
-            tr = pygame.Rect(x, y, w, 64)
+        with self.scene.grid(surf, "station_arts", pygame.Rect(x, y, w, bottom - y), len(arts), w, 64, gap=6) as cells:
+            for i, tr in cells:
+                self.art_row(surf, arts[i], tr)
+        if not arts:
+            T.text(surf, "Нет подходящих артефактов.", (x, y + 6), 15, T.TEXT_DIM)
+
+    def art_row(self, surf, art, tr):
+        prof = self.app.profile
+        xd = prof.xd
+        w = tr.w
+        if True:
             on = art["uid"] == self.art_sel
             locked = prof.art_locked(art["uid"])
             hot = tr.collidepoint(self.scene.mouse)
@@ -1746,9 +2418,6 @@ class StationOverlay(Overlay):
             T.text(surf, f"{art['q'] * 100:.0f}%" + (f" · гнёзд {free}" if free else "")
                    + (" · в походе" if locked else ""), (tr.x + 68, tr.y + 36), 13, T.TEXT_DIM)
             self.scene.hit(tr, ("pick_art", art["uid"]) if not locked else None, WS.art_tip(prof, art))
-            y += 70
-        if not arts:
-            T.text(surf, "Нет подходящих артефактов.", (x, y + 6), 15, T.TEXT_DIM)
 
     def draw_alchemy(self, surf, r):
         prof = self.app.profile
@@ -1797,61 +2466,167 @@ class StationOverlay(Overlay):
         T.text(surf, f"Необработанные камни: {len(prof.rough)} — редкость: рынок и вылазки. Цена работы:",
                (r.x + 18, r.y + 64), 17, GLORY, True)
         cost_icons(self.scene, surf, prof, cost, r.x + 640, r.y + 60)
+        known = ", ".join(GM.cut_name(c) for c in prof.cuts) or "—"
+        T.text(surf, fit(f"Огранки: {known}. Новые — книги бродячего ювелира на Рынке (7).", 13, r.w - 760),
+               (r.x + 740, r.y + 66), 13, T.TEXT_DIM)
         y0 = r.y + 100
-        cols = max(1, (r.w - 56 + 12) // 222)
-        rows = max(1, (r.bottom - 14 - y0 + 12) // 292)
-        first = self.scene.scroll_list(surf, "cut_rough", pygame.Rect(r.x + 18, y0, r.w - 54, rows * 292 - 12),
-                                       (len(prof.rough) + cols - 1) // cols, rows)
-        for i, rough in enumerate(prof.rough[first * cols:(first + rows) * cols]):
-            g = a["gems"][rough["id"]]
-            col = tuple(g["color"])
-            tr = pygame.Rect(r.x + 18 + (i % cols) * 222, y0 + (i // cols) * 292, 210, 280)
-            hot = tr.collidepoint(self.scene.mouse)
-            pygame.draw.rect(surf, (44, 32, 24) if hot else (30, 22, 16), tr, border_radius=10)
-            pygame.draw.rect(surf, col, tr, 2 if hot else 1, border_radius=10)
-            JV.draw_rough(surf, rough, col, (tr.centerx, tr.y + 76), 128, self.scene.clock + i)
-            T.text(surf, g["name"], (tr.centerx, tr.y + 158), 20, col, True, center=True)
-            T.text(surf, f"{rough['size']:.2f} кар. · цена ≈ {prof.market_price('rough', rough)}",
-                   (tr.centerx, tr.y + 184), 13, T.TEXT_DIM, center=True)
-            T.text(surf, "; ".join(A.entry_text(e) for e in g["stats"]) + " при 100%", (tr.centerx, tr.y + 204), 12,
-                   T.TEXT_DIM, center=True)
-            self.scene.btn(surf, pygame.Rect(tr.x + 16, tr.bottom - 58, tr.w - 32, 44), "Огранить",
-                           ("cut", rough["uid"]), prof.can_pay(cost), primary=True)
+        with self.scene.grid(surf, "cut_rough", pygame.Rect(r.x + 18, y0, r.w - 36, r.bottom - 14 - y0),
+                             len(prof.rough), 210, 280, gap=12) as cells:
+            for i, tr in cells:
+                self.rough_card(surf, prof.rough[i], tr, i, cost)
         if not prof.rough:
             T.text(surf, "Необработанных камней нет. Купите на Рынке (7) или найдите в вылазке.", (r.x + 18, y0 + 10),
                    16, T.TEXT_DIM)
+
+    def rough_card(self, surf, rough, tr, i, cost):
+        prof = self.app.profile
+        xd = prof.xd
+        a = xd["artifacts"]
+        if True:
+            g = a["gems"][rough["id"]]
+            col = tuple(g["color"])
+            hot = tr.collidepoint(self.scene.mouse)
+            pygame.draw.rect(surf, (44, 32, 24) if hot else (30, 22, 16), tr, border_radius=10)
+            pygame.draw.rect(surf, col, tr, 2 if hot else 1, border_radius=10)
+            JV.draw_rough(surf, rough, col, (tr.centerx, tr.y + 76), 128, self.scene.clock + i, xd=xd)
+            T.text(surf, g["name"], (tr.centerx, tr.y + 158), 20, col, True, center=True)
+            T.text(surf, f"{rough['size']:.2f} кар. · цена ≈ {prof.market_price('rough', rough)}",
+                   (tr.centerx, tr.y + 184), 13, T.TEXT_DIM, center=True)
+            T.text(surf, fit(GM.describe(xd, rough, rough=True)[1], 12, tr.w - 12), (tr.centerx, tr.y + 204), 12,
+                   T.TEXT_DIM, center=True)
+            self.scene.hit(tr, None, [g["name"]] + GM.describe(xd, rough, rough=True))
+            self.scene.btn(surf, pygame.Rect(tr.x + 16, tr.bottom - 58, tr.w - 32, 44), "Огранить",
+                           ("cut", rough["uid"]), prof.can_pay(cost), primary=True)
 
     def draw_socket(self, surf, r):
         prof = self.app.profile
         xd = prof.xd
         a = xd["artifacts"]
-        T.text(surf, "Артефакт со свободным гнездом", (r.x + 18, r.y + 58), 17, GLORY, True)
+        T.text(surf, "Артефакт с гнёздами", (r.x + 18, r.y + 58), 17, GLORY, True)
         self.art_list(surf, r.x + 16, r.y + 86, 470, r.bottom - 10,
-                      lambda art: A.sockets(xd, art) - len(art["gems"]) > 0)
+                      lambda art: A.sockets(xd, art) > 0)
         x0 = r.x + 510
-        T.text(surf, f"Огранённые камни: {len(prof.gems)} — клик вставляет в выбранный артефакт (насовсем)",
-               (x0, r.y + 58), 15, T.TEXT, True)
-        cols = max(1, (r.right - 34 - x0 + 8) // 136)
-        rows = max(1, (r.bottom - 10 - r.y - 88 + 8) // 138)
-        first = self.scene.scroll_list(surf, "socket_gems", pygame.Rect(x0, r.y + 88, cols * 136 - 8, rows * 138 - 8),
-                                       (len(prof.gems) + cols - 1) // cols, rows)
-        x, y = x0, r.y + 88
-        for i, g in enumerate(prof.gems[first * cols:(first + rows) * cols]):
+        art = prof.stash.get(self.art_sel)
+        top = r.y + 88
+        if art and art.get("gems"):                       # вставленные камни: крупно, с характеристиками; вынуть
+            T.text(surf, "В гнёздах — вынуть за работу ювелира:", (x0, r.y + 58), 15, T.TEXT, True)
+            avail = r.right - 16 - x0
+            gap = 12
+            cols = 1 if avail < 2 * 340 + gap or len(art["gems"]) == 1 else 2
+            cw, ch = min(600, (avail - gap * (cols - 1)) // cols), 178
+            for k, g in enumerate(art["gems"]):
+                gd = a["gems"][g["id"]]
+                cr = pygame.Rect(x0 + (k % cols) * (cw + gap), r.y + 84 + (k // cols) * (ch + gap), cw, ch)
+                pygame.draw.rect(surf, (32, 24, 17), cr, border_radius=10)
+                pygame.draw.rect(surf, tuple(gd["color"]), cr, 1, border_radius=10)
+                JV.draw_gem(surf, dict(g, uid=f"{art['uid']}:{k}"), tuple(gd["color"]), (cr.x + 82, cr.centery), 150,
+                            self.scene.clock + k)                # витрина во всю карточку (не в масштабе карат)
+                tx = cr.x + 166
+                tw = cr.right - tx - 12
+                T.text(surf, gd["name"], (tx, cr.y + 10), 18, tuple(gd["color"]), True)
+                lines = [ln for d in GM.describe(xd, g) for ln in T.wrap(d, 13, tw)]
+                for j, ln in enumerate(lines[:4]):
+                    T.text(surf, ln, (tx, cr.y + 36 + j * 17), 13, T.TEXT_DIM)
+                sy = cr.y + 40 + min(4, len(lines)) * 17
+                for j, ln in enumerate(T.wrap(GM.stat_text(xd, g), 14, tw, True)[:2]):
+                    T.text(surf, ln, (tx, sy + j * 18), 14, BLESS, True)
+                cost = GM.unsocket_cost(xd, g)
+                self.scene.btn(surf, pygame.Rect(tx, cr.bottom - 38, min(240, tw), 30), f"Вынуть · {cost}",
+                               ("unsocket", k), prof.glory >= cost and not prof.art_locked(art["uid"]),
+                               tip=GM.describe(xd, g))
+            rows = (len(art["gems"]) + cols - 1) // cols
+            top = r.y + 84 + rows * (ch + gap) + 34
+        T.text(surf, f"Огранённые камни: {len(prof.gems)} — клик вставляет в выбранный артефакт",
+               (x0, top - 30 if top > r.y + 88 else r.y + 58), 15, T.TEXT, True)
+        with self.scene.grid(surf, "socket_gems", pygame.Rect(x0, top, r.right - 16 - x0, r.bottom - 10 - top),
+                             len(prof.gems), 128, 130, gap=8) as cells:
+            for i, tr in cells:
+                self.socket_card(surf, prof.gems[i], tr)
+        if not prof.gems:
+            T.text(surf, "Камней нет — сначала огранка.", (x0, r.y + 92), 15, T.TEXT_DIM)
+
+    # ---------- витрина ----------
+
+    def draw_showcase(self, surf, r):
+        """Витрина: 6 мест под огранённые камни. Клик по месту — выбрать, по камню из сундука — выставить;
+        с ценником гости таверны покупают камень после похода."""
+        prof = self.app.profile
+        xd = prof.xd
+        a = xd["artifacts"]
+        slots = prof.showcase_slots()
+        n = len(slots)
+        sel = getattr(self, "sc_sel", None)
+        T.text(surf, "Витрина — камни на виду у гостей таверны. С ценником камень могут купить после похода "
+                     "(дороже, чем на рынке).", (r.x + 18, r.y + 60), 14, T.TEXT_DIM)
+        gap = 12
+        cw = (r.w - 36 - gap * (n - 1)) // n
+        ch = 296
+        for i, s_ in enumerate(slots):
+            cr = pygame.Rect(r.x + 18 + i * (cw + gap), r.y + 88, cw, ch)
+            hot = cr.collidepoint(self.scene.mouse)
+            pygame.draw.rect(surf, (24, 16, 22) if not hot else (34, 24, 30), cr, border_radius=12)
+            pygame.draw.rect(surf, GOLD if i == sel else (110, 80, 60), cr, 2 if i == sel else 1, border_radius=12)
+            self.scene.hit(cr, ("sc_slot", i), [f"Место {i + 1}", "клик — выбрать, затем камень из сундука"])
+            if not s_:
+                T.text(surf, "пусто", (cr.centerx, cr.y + 100), 15, (130, 110, 100), center=True)
+                T.text(surf, f"место {i + 1}", (cr.centerx, cr.y + 122), 12, T.TEXT_DIM, center=True)
+                continue
+            g = s_["gem"]
             gd = a["gems"][g["id"]]
-            tr = pygame.Rect(x, y, 128, 130)
+            JV.draw_gem(surf, g, tuple(gd["color"]), (cr.centerx, cr.y + 82), min(cw - 20, 150),
+                        self.scene.clock * 0.6 + i)
+            T.text(surf, fit(gd["name"], 15, cw - 12), (cr.centerx, cr.y + 162), 15, tuple(gd["color"]), True,
+                   center=True)
+            T.text(surf, fit(f"{GM.cut_name(g.get('cut'))} · {g.get('size', 0):.2f} кар.", 12, cw - 12),
+                   (cr.centerx, cr.y + 182), 12, T.TEXT_DIM, center=True)
+            self.scene.hit(cr.inflate(0, -80), ("sc_slot", i), [gd["name"]] + GM.describe(xd, g) +
+                           [(GM.stat_text(xd, g), BLESS)])
+            price = GM.showcase_price(xd, g)
+            self.scene.btn(surf, pygame.Rect(cr.x + 8, cr.bottom - 74, cw - 16, 30),
+                           f"Ценник · {price}" if s_.get("sale") else "Без ценника", ("sc_sale", i), True,
+                           primary=bool(s_.get("sale")),
+                           tip=["С ценником гости могут купить камень после похода" if not s_.get("sale") else
+                                f"Гость заплатит {price} (рынок — {prof.sell_price('cut', g)})", "клик — переключить"])
+            self.scene.btn(surf, pygame.Rect(cr.x + 8, cr.bottom - 38, cw - 16, 30), "Снять", ("sc_take", i), True)
+        y0 = r.y + 88 + ch + 22
+        T.text(surf, f"Огранённые камни в сундуке: {len(prof.gems)} — клик выставляет на " +
+               (f"место {sel + 1}" if sel is not None else "первое свободное место"), (r.x + 18, y0), 15, T.TEXT, True)
+        log = prof.showcase.get("log", [])
+        if log:
+            T.text(surf, fit("Недавно купили: " + ", ".join(log[:3]), 13, r.w - 520), (r.x + 500, y0 + 2), 13, GLORY)
+        top = y0 + 28
+        with self.scene.grid(surf, "show_gems", pygame.Rect(r.x + 18, top, r.w - 36, r.bottom - 10 - top),
+                             len(prof.gems), 128, 130, gap=8) as cells:
+            for i, tr in cells:
+                g = prof.gems[i]
+                gd = a["gems"][g["id"]]
+                hot = tr.collidepoint(self.scene.mouse)
+                pygame.draw.rect(surf, (54, 40, 26) if hot else (32, 24, 17), tr, border_radius=8)
+                pygame.draw.rect(surf, tuple(gd["color"]), tr, 1, border_radius=8)
+                JV.draw_gem(surf, g, tuple(gd["color"]), (tr.centerx, tr.y + 46), 80, self.scene.clock)
+                T.text(surf, fit(gd["name"], 14, tr.w - 8), (tr.centerx, tr.y + 88), 14, tuple(gd["color"]), True,
+                       center=True)
+                T.text(surf, fit(GM.cut_name(g.get("cut")), 11, tr.w - 8), (tr.centerx, tr.y + 108), 11,
+                       T.TEXT_DIM, center=True)
+                self.scene.hit(tr, ("sc_gem", g["uid"]), [gd["name"]] + GM.describe(xd, g) + ["клик — на витрину"])
+        if not prof.gems:
+            T.text(surf, "Огранённых камней нет — сначала огранка.", (r.x + 18, top + 6), 14, T.TEXT_DIM)
+
+    def socket_card(self, surf, g, tr):
+        prof = self.app.profile
+        xd = prof.xd
+        a = xd["artifacts"]
+        if True:
+            gd = a["gems"][g["id"]]
             hot = tr.collidepoint(self.scene.mouse)
             pygame.draw.rect(surf, (54, 40, 26) if hot else (32, 24, 17), tr, border_radius=8)
             pygame.draw.rect(surf, tuple(gd["color"]), tr, 1, border_radius=8)
-            JV.draw_gem(surf, g, tuple(gd["color"]), (tr.centerx, tr.y + 46), 80, self.scene.clock)
+            JV.draw_gem(surf, g, tuple(gd["color"]), (tr.centerx, tr.y + 46), 80, self.scene.clock, xd=xd)
             T.text(surf, gd["name"], (tr.centerx, tr.y + 86), 15, tuple(gd["color"]), True, center=True)
-            T.text(surf, f"{g['q'] * 100:.0f}%", (tr.centerx, tr.y + 106), 13, T.TEXT_DIM, center=True)
-            self.scene.hit(tr, ("socket", g["uid"]), [gd["name"], "; ".join(A.entry_text(e, g["q"]) for e in gd["stats"]),
-                                                      "клик — вставить"])
-            x += 136
-            if (i + 1) % cols == 0:
-                x, y = x0, y + 138
-        if not prof.gems:
-            T.text(surf, "Камней нет — сначала огранка.", (x0, r.y + 92), 15, T.TEXT_DIM)
+            T.text(surf, f"×{GM.power(xd, g):.2f} · {g.get('size', 0):.2f} кар.", (tr.centerx, tr.y + 106), 12,
+                   T.TEXT_DIM, center=True)
+            self.scene.hit(tr, ("socket", g["uid"]), [gd["name"]] + GM.describe(xd, g) +
+                           [(GM.stat_text(xd, g), BLESS), "клик — вставить"])
 
 
 
@@ -1879,10 +2654,6 @@ class SmithOverlay(StationOverlay):
     def tools(self):
         return tuple(self.app.profile.smith.get("tools", []))
 
-    def run_game(self, game, title, done):
-        app, scene = self.app, self.scene
-        self.last_game = game
-        app.switch(WS.MiniGameScene(app, game, title, done, lambda: app.switch(scene)))
 
     def act(self, action, button=1):
         from game import smith_games as SG
@@ -2035,12 +2806,18 @@ class SmithOverlay(StationOverlay):
         xd = prof.xd
         pcs = prof.smith["pieces"]
         T.text(surf, f"Куски металла: {len(pcs)}", (r.x, r.y), 17, GLORY, True)
-        cols = max(1, (r.w - 22 + 8) // 128)
-        rows = max(1, (r.h - 34 + 8) // 92)
-        first = self.scene.scroll_list(surf, "smith_pieces", pygame.Rect(r.x, r.y + 30, cols * 128 - 8, rows * 92 - 8),
-                                       (len(pcs) + cols - 1) // cols, rows)
-        for i, p in enumerate(pcs[first * cols:(first + rows) * cols]):
-            cr = pygame.Rect(r.x + (i % cols) * 128, r.y + 30 + (i // cols) * 92, 120, 84)
+        with self.scene.grid(surf, "smith_pieces", pygame.Rect(r.x, r.y + 30, r.w, r.h - 30), len(pcs), 120, 84,
+                             gap=8, stretch=False) as cells:
+            for i, cr in cells:
+                self.piece_card(surf, pcs[i], cr)
+        if not pcs:
+            T.text(surf, "Пусто — плавьте руду или купите у бродячего кузнеца.", (r.x, r.y + 34), 14, T.TEXT_DIM)
+
+    def piece_card(self, surf, p, cr):
+        from sim import smithing as SM
+        prof = self.app.profile
+        xd = prof.xd
+        if True:
             pygame.draw.rect(surf, (30, 22, 16), cr, border_radius=8)
             pygame.draw.rect(surf, (80, 60, 40), cr, 1, border_radius=8)
             draw_metal_piece(surf, xd, p, cr.x + 8, cr.y + 8, 12)
@@ -2050,8 +2827,6 @@ class SmithOverlay(StationOverlay):
                    T.TEXT_DIM)
             self.scene.hit(cr, None, [m["name"], m["desc"], f"твёрдость {m['hard'] * 100:.0f}%, вязкость "
                                                             f"{m['tough'] * 100:.0f}%, чистота {p['purity'] * 100:.0f}%"])
-        if not pcs:
-            T.text(surf, "Пусто — плавьте руду или купите у бродячего кузнеца.", (r.x, r.y + 34), 14, T.TEXT_DIM)
 
     def draw_stack(self, surf, r):
         from sim import smithing as SM
@@ -2077,11 +2852,19 @@ class SmithOverlay(StationOverlay):
         prof = self.app.profile
         xd = prof.xd
         bs = [b for b in prof.smith["billets"] if pred(b)]
-        rows = max(1, (r.h + 8) // 78)
-        first = self.scene.scroll_list(surf, key, pygame.Rect(r.x, r.y, r.w - 22, rows * 78 - 8), len(bs), rows)
-        for b in bs[first:first + rows]:
+        with self.scene.grid(surf, key, r, len(bs), r.w, 70, gap=8) as cells:
+            for i, br in cells:
+                self.billet_row(surf, bs[i], br)
+        if not bs:
+            T.text(surf, "Нет подходящих пакетов.", (r.x, r.y + 6), 14, T.TEXT_DIM)
+        return bs
+
+    def billet_row(self, surf, b, br):
+        from sim import smithing as SM
+        prof = self.app.profile
+        xd = prof.xd
+        if True:
             pr = SM.billet_props(xd, b)
-            br = pygame.Rect(r.x, r.y, r.w - 22, 70)
             on = b["uid"] == self.b_sel
             hot = br.collidepoint(self.scene.mouse)
             pygame.draw.rect(surf, (64, 46, 30) if on else (44, 32, 22) if hot else (30, 22, 16), br, border_radius=8)
@@ -2095,10 +2878,6 @@ class SmithOverlay(StationOverlay):
                          f"сварка {b['weld'] * 100:.0f}%", (br.x + 80, br.y + 38), 12,
                    T.TEXT_DIM)
             self.scene.hit(br, ("b_pick", b["uid"]))
-            r = pygame.Rect(r.x, r.y + 78, r.w, r.h - 78)
-        if not bs:
-            T.text(surf, "Нет подходящих пакетов.", (r.x, r.y + 6), 14, T.TEXT_DIM)
-        return bs
 
     def draw_weld(self, surf, r):
         prof = self.app.profile
@@ -2135,12 +2914,17 @@ class SmithOverlay(StationOverlay):
         prof = self.app.profile
         parts = prof.smith["parts"]
         T.text(surf, f"Части: {len(parts)}", (r.x, r.y), 16, GLORY, True)
-        cols = max(1, (r.w - 22 + 8) // 150)
-        rows = max(1, (r.h - 26 + 8) // 66)
-        first = self.scene.scroll_list(surf, "smith_parts", pygame.Rect(r.x, r.y + 24, cols * 150 - 8, rows * 66 - 8),
-                                       (len(parts) + cols - 1) // cols, rows)
-        for i, p in enumerate(parts[first * cols:(first + rows) * cols]):
-            cr = pygame.Rect(r.x + (i % cols) * 150, r.y + 24 + (i // cols) * 66, 142, 58)
+        with self.scene.grid(surf, "smith_parts", pygame.Rect(r.x, r.y + 24, r.w, r.h - 24), len(parts), 142, 58,
+                             gap=8) as cells:
+            for i, cr in cells:
+                self.part_card(surf, parts[i], cr)
+        if not parts:
+            T.text(surf, "Пока нет — разделите сваренный брусок.", (r.x, r.y + 28), 13, T.TEXT_DIM)
+
+    def part_card(self, surf, p, cr):
+        from game import smith_games as SG
+        prof = self.app.profile
+        if True:
             pygame.draw.rect(surf, (30, 22, 16), cr, border_radius=8)
             pygame.draw.rect(surf, (80, 60, 40), cr, 1, border_radius=8)
             lk = p.get("look") or {"rows": [["iron"]]}
@@ -2151,8 +2935,6 @@ class SmithOverlay(StationOverlay):
             pr = p["props"]
             self.scene.hit(cr, None, [f"Часть {p['mass']} г", f"твёрдость {pr['hard'] * 100:.0f}% (урон)",
                                       f"вязкость {pr['tough'] * 100:.0f}% (здоровье)", f"{pr['layers']} слоёв"])
-        if not parts:
-            T.text(surf, "Пока нет — разделите сваренный брусок.", (r.x, r.y + 28), 13, T.TEXT_DIM)
 
     def draw_orders(self, surf, r):
         from sim import smithing as SM
@@ -2737,27 +3519,10 @@ class BoardOverlay(Overlay):
         T.text(surf, f"«{t['name']}»: кого отправить ({len(self.team)}/{t['heroes']})", (x0, y), 18, GOLD, True)
         y += 30
         free = self.free_heroes()
-        cols = max(1, (r.right - 34 - x0 + 8) // 112)
-        rows = max(1, (r.bottom - 110 - y) // 122)
-        first = self.scene.scroll_list(surf, "board_heroes", pygame.Rect(x0, y, cols * 112 - 8, rows * 122 - 8),
-                                       (len(free) + cols - 1) // cols, rows)
-        xx, yy = x0, y
-        for i, h in enumerate(free[first * cols:(first + rows) * cols]):
-            img = hero_fit(data, h.cls, 84)
-            cell = pygame.Rect(xx, yy, 104, 114)
-            on = h.uid in self.team
-            hot = cell.collidepoint(self.scene.mouse)
-            pygame.draw.rect(surf, T.mix(T.PANEL_DARK, GOLD, 0.25) if on else (44, 32, 22) if hot else (30, 22, 16), cell,
-                             border_radius=8)
-            pygame.draw.rect(surf, GOLD if on else (80, 60, 40), cell, 2 if on else 1, border_radius=8)
-            surf.blit(img, (cell.centerx - img.get_width() // 2, cell.y + 4))
-            T.text(surf, fit(h.name, 13, 98), (cell.centerx, cell.bottom - 20), 13, T.TEXT, True, center=True)
-            p = prof.contract_chance(o["id"], [h])
-            self.scene.hit(cell, ("send_hero", h.uid), [h.name, f"{data.classes[h.cls]['name']} · ранг {h.rank}",
-                                                        f"шанс в одиночку {p * 100:.0f}%"])
-            xx += 112
-            if (i + 1) % cols == 0:
-                xx, yy = x0, yy + 122
+        with self.scene.grid(surf, "board_heroes", pygame.Rect(x0, y, r.right - 16 - x0, r.bottom - 110 - y),
+                             len(free), 104, 114, gap=8) as cells:
+            for i, cell in cells:
+                self.hero_cell(surf, free[i], cell, o)
         team = [h for h in free if h.uid in self.team]
         by = r.bottom - 70
         if team:
@@ -2768,6 +3533,494 @@ class BoardOverlay(Overlay):
             T.text(surf, "Доска заполнена — больше мест: «Доска поручений» в Стройке", (x0, by - 30), 14, CURSE)
         self.scene.btn(surf, pygame.Rect(r.right - 316, by, 300, 54), "Отправить  (Enter)", "send",
                        len(team) == t["heroes"] and not full, primary=True)
+
+    def hero_cell(self, surf, h, cell, o):
+        prof = self.app.profile
+        data = prof.data
+        if True:
+            img = hero_fit(data, h.cls, 84)
+            on = h.uid in self.team
+            hot = cell.collidepoint(self.scene.mouse)
+            pygame.draw.rect(surf, T.mix(T.PANEL_DARK, GOLD, 0.25) if on else (44, 32, 22) if hot else (30, 22, 16), cell,
+                             border_radius=8)
+            pygame.draw.rect(surf, GOLD if on else (80, 60, 40), cell, 2 if on else 1, border_radius=8)
+            surf.blit(img, (cell.centerx - img.get_width() // 2, cell.y + 4))
+            T.text(surf, fit(h.name, 13, 98), (cell.centerx, cell.bottom - 20), 13, T.TEXT, True, center=True)
+            p = prof.contract_chance(o["id"], [h])
+            self.scene.hit(cell, ("send_hero", h.uid), [h.name, f"{data.classes[h.cls]['name']} · ранг {h.rank}",
+                                                        f"шанс в одиночку {p * 100:.0f}%"])
+
+
+# ---------- Горн мастера v2: тигель → примитивы → изделие (sim/forge.py, game/forge_games.py) ----------
+
+FORGE_MODES = (("crucible", "1 Тигель"), ("hammer", "2 Ковка"), ("item", "3 Изделие"), ("store", "Склад"),
+               ("damascus", "Дамаск"), ("orders", "Заказы"))
+
+
+class ForgeOverlay(SmithOverlay):
+    """Кузня: тигель (сплав по весам и жару) → слиток → примитивы (ковка руками или литьё в форму) → изделие
+    с закалкой и отпуском. Дамаск (пакет и сварка) — ветка по книге."""
+
+    def __init__(self, scene, ws="ws_forge"):
+        super().__init__(scene, ws)
+        self.mode = "crucible"
+        self.ing_sel = None
+        self.sub = "stack"
+
+    def modes(self):
+        return [m for m in FORGE_MODES if m[0] != "damascus"]           # дамаск — пока убран
+
+    def act(self, action, button=1):
+        from game import forge_games as FGM
+        from sim import forge as FG
+        prof = self.app.profile
+        xd = prof.xd
+        kind = action[0] if isinstance(action, tuple) else action
+        seed = int(self.scene.clock * 1000) + prof.art_n
+        if kind == "mode":
+            self.mode = action[1]
+            self.result = None
+        elif kind == "alloy":
+            aid = action[1]
+            if not FG.can_melt(aid, prof.forge_level()):
+                self.scene.say("Горн не даёт такого жара — улучшите Горн мастера в Стройке")
+                return
+            game = FGM.CrucibleGame(aid, prof.mats, prof.f_tools(), prof.forge_level(), seed)
+
+            def done(q):
+                r = game.result
+                out = prof.crucible(r["alloy"], r["charge"], r["purity"], r["heat"], r["mold"], r["pour"],
+                                    casts=r.get("casts"), spilt=r.get("spilt", 0)) if r else None
+                if isinstance(out, dict) and "casts" in out:     # разливка в формы: литые примитивы + слиток
+                    c_, ing = out["casts"], out["ingot"]
+                    lines = [(f"Отлито: {len(c_)} из {len(r['casts'])} форм", GLORY)]
+                    for p_ in c_:
+                        lines.append((f"{FG.PRIMS[p_['kind']]['name']} · {p_['len']} мм · качество {p_['q'] * 100:.0f}%",
+                                      T.TEXT))
+                    if r.get("spilt"):
+                        lines.append((f"пролито {r['spilt']} г", CURSE))
+                    if ing:
+                        self.ing_sel = ing["uid"]
+                        lines.append((f"остаток — слиток {ing['mass']} г", T.TEXT))
+                    self.result = (lines, None)
+                elif isinstance(out, list):
+                    self.result = ([(f"Отлито: {FG.PRIMS[out[0]['kind']]['name'].lower()} ×{len(out)}", GLORY),
+                                    (f"качество {out[0]['q'] * 100:.0f}% (литьё)", T.TEXT)], None)
+                elif out:
+                    self.ing_sel = out["uid"]
+                    self.result = ([(f"Слиток {FG.ALLOYS[out['alloy']]['name']} · {out['mass']} г", GLORY),
+                                    (f"качество {out['q'] * 100:.0f}% · чистота {out['purity'] * 100:.0f}%", T.TEXT)],
+                                   None)
+            self.run_game(game, f"Тигель: {FG.ALLOYS[aid]['name']}", done)
+        elif kind == "ingot":
+            self.ing_sel = action[1]
+        elif kind == "prim":
+            ing = next((i for i in prof.forge["ingots"] if i["uid"] == self.ing_sel), None)
+            pk = action[1]
+            if ing is None:
+                self.scene.say("Выберите слиток")
+                return
+            if ing["mass"] < FG.PRIMS[pk]["mass"]:
+                self.scene.say("Слиток мал для этого примитива")
+                return
+            from game.forge_card_game import CardGame
+            game = CardGame(ing["alloy"], pk, prof.f_tools(), prof.forge_level(), seed)
+            iu = ing["uid"]
+
+            def done(q):
+                if game.result:
+                    p = prof.forge_prim(iu, pk, game.result["score"], game.result.get("len"))
+                    self.result = ([(f"{FG.PRIMS[pk]['name']} готов", GLORY),
+                                    (f"качество {p['q'] * 100:.0f}% · длина {p['len']} мм "
+                                     f"(нужно {FG.PRIMS[pk]['len']})", T.TEXT)], None) if p else None
+            self.run_game(game, f"Ковка: {FG.PRIMS[pk]['name'].lower()}", done)
+        elif kind == "craft":                       # вещи кузни — только по техкарте из слитка
+            self.craft_whole()
+        elif kind == "sub":
+            self.sub = action[1]
+        elif kind == "to_ingot":
+            ing = prof.damascus_ingot(action[1])
+            self.scene.say("Пакет стал слитком дамаска — в ковку" if ing else "Нужен сваренный пакет")
+        else:
+            super().act(action, button)
+
+    def key(self, k):
+        if k in (pygame.K_RETURN, pygame.K_KP_ENTER) and self.mode == "item":
+            self.act("craft")
+            return True
+        return False
+
+    def draw(self, surf):
+        prof = self.app.profile
+        if not self.level():
+            return StationOverlay.draw(self, surf)
+        r = self.frame(surf)
+        modes = [(m, f"{i + 1} {lab.split(' ', 1)[-1]}") for i, (m, lab) in enumerate(self.modes())]
+        self.scene.seg(surf, r.x + 260, r.y + 12, modes, self.mode, "mode", h=34)
+        body = pygame.Rect(r.x + 18, r.y + 60, r.w - 36, r.h - 74)
+        getattr(self, "draw_" + self.mode, self.draw_crucible)(surf, body)
+        if self.result:
+            self.draw_result(surf, r)
+
+    def tool_line(self, surf, x, y, kinds):
+        from sim import forge as FG
+        prof = self.app.profile
+        own = [FG.TOOLS[t][0] for t in FG.TOOLS if FG.TOOLS[t][2] in kinds and prof.f_has(t)]
+        s_ = ("есть: " + ", ".join(own)) if own else "приборов нет — бродячий кузнец (Рынок)"
+        w = self.rect.right - 30 - x
+        tr = T.text(surf, fit(s_, 13, w), (x, y), 13, T.TEXT_DIM)
+        if own:
+            self.scene.hit(tr, None, ["Есть в кузне:"] + own)
+
+    def draw_crucible(self, surf, r):
+        from sim import forge as FG
+        prof = self.app.profile
+        tools = prof.f_tools()
+        lv = prof.forge_level()
+        T.text(surf, f"Сплавы · горн даёт до {FG.max_temp(lv)} °C", (r.x, r.y), 18, GLORY, True)
+        self.tool_line(surf, r.x + 330, r.y + 4, ("forge", "mold", "gauge"))
+        alloys = [a for a in FG.ALLOYS if not FG.ALLOYS[a].get("nocrucible")]
+        with self.scene.grid(surf, "forge_alloys", pygame.Rect(r.x, r.y + 34, r.w, r.h - 34), len(alloys), 300, 112,
+                             gap=10) as cells:
+            for i, cr in cells:
+                aid = alloys[i]
+                a = FG.ALLOYS[aid]
+                known = aid in FG.known_alloys(tools)
+                melt_ok = FG.can_melt(aid, lv)
+                hot = cr.collidepoint(self.scene.mouse)
+                pygame.draw.rect(surf, (52, 38, 26) if hot and known else (30, 22, 16), cr, border_radius=10)
+                pygame.draw.rect(surf, a["color"] if known else (70, 60, 50), cr, 2 if hot else 1, border_radius=10)
+                ic = forge_icon(f"ingot_{aid}", 30)
+                if ic is not None:
+                    if not known:
+                        ic = ic.copy()
+                        ic.fill((90, 90, 90, 255), special_flags=pygame.BLEND_RGBA_MULT)
+                    surf.blit(ic, (cr.x + 34 - ic.get_width() // 2, cr.y + 26 - ic.get_height() // 2))
+                else:
+                    pygame.draw.rect(surf, a["color"] if known else (60, 56, 52), (cr.x + 12, cr.y + 14, 44, 24),
+                                     border_radius=4)
+                T.text(surf, a["name"], (cr.x + 66, cr.y + 12), 16, T.TEXT if known else T.TEXT_DIM, True)
+                if not known:
+                    T.text(surf, FG.BOOKS[a["book"]][0], (cr.x + 12, cr.y + 50), 12, T.TEXT_DIM)
+                    T.text(surf, "книга — у бродячего кузнеца или в походах", (cr.x + 12, cr.y + 70), 12, T.TEXT_DIM)
+                else:
+                    need = FG.charge_need(aid, 300)
+                    have = all(prof.mats.get(m, 0) >= v for m, v in need.items())
+                    T.text(surf, f"{a['melt']} °C · " + ", ".join(f"{res_name(prof.xd, m)} {v}" for m, v in need.items()),
+                           (cr.x + 12, cr.y + 50), 12, T.TEXT if have else CURSE)
+                    T.text(surf, "на слиток 300 г" + ("" if melt_ok else " · горн слаб"), (cr.x + 12, cr.y + 70), 12,
+                           T.TEXT_DIM if melt_ok else CURSE)
+                self.scene.hit(cr, ("alloy", aid) if known else None,
+                               [a["name"], f"твёрдость {a['hard'] * 100:.0f}% · вязкость {a['tough'] * 100:.0f}%",
+                                "закаливается" if a.get("quench") else "не закаливается",
+                                "клик — в тигель" if known else "нужна книга"])
+
+    def draw_hammer(self, surf, r):
+        from sim import forge as FG
+        prof = self.app.profile
+        ings = prof.forge["ingots"]
+        T.text(surf, "Слитки — выберите и выкуйте примитив", (r.x, r.y), 18, GLORY, True)
+        self.tool_line(surf, r.x + 420, r.y + 4, ("hammer", "anvil"))
+        half = pygame.Rect(r.x, r.y + 34, r.w // 2 - 10, r.h - 34)
+        with self.scene.grid(surf, "forge_ingots", half, len(ings), 200, 70, gap=8) as cells:
+            for i, cr in cells:
+                ing = ings[i]
+                a = FG.ALLOYS[ing["alloy"]]
+                on = ing["uid"] == self.ing_sel
+                pygame.draw.rect(surf, (64, 46, 30) if on else (30, 22, 16), cr, border_radius=8)
+                pygame.draw.rect(surf, GOLD if on else a["color"], cr, 2 if on else 1, border_radius=8)
+                ic = forge_icon(f"ingot_{ing['alloy']}", 40)
+                if ic is not None:
+                    surf.blit(ic, (cr.x + 42 - ic.get_width() // 2, cr.centery - ic.get_height() // 2))
+                else:
+                    pygame.draw.polygon(surf, a["color"], [(cr.x + 12, cr.y + 48), (cr.x + 22, cr.y + 22),
+                                                           (cr.x + 62, cr.y + 22), (cr.x + 72, cr.y + 48)])
+                T.text(surf, fit(a["name"], 14, cr.w - 90), (cr.x + 84, cr.y + 10), 14, T.TEXT, True)
+                T.text(surf, f"{ing['mass']} г · {ing['q'] * 100:.0f}%", (cr.x + 84, cr.y + 36), 13, T.TEXT_DIM)
+                self.scene.hit(cr, ("ingot", ing["uid"]), [a["name"], f"{ing['mass']} г, качество {ing['q'] * 100:.0f}%"])
+        if not ings:
+            T.text(surf, "Слитков нет — тигель (1).", (half.x, half.y + 6), 15, T.TEXT_DIM)
+        x0 = r.x + r.w // 2 + 10
+        ing = next((i for i in ings if i["uid"] == self.ing_sel), None)
+        T.text(surf, "Примитив:", (x0, r.y + 34), 16, T.TEXT, True)
+        for j, (pk, p) in enumerate(FG.PRIMS.items()):
+            br = pygame.Rect(x0, r.y + 64 + j * 74, r.right - x0, 66)
+            ok = ing is not None and ing["mass"] >= p["mass"]
+            hot = br.collidepoint(self.scene.mouse)
+            pygame.draw.rect(surf, (52, 38, 26) if hot and ok else (30, 22, 16), br, border_radius=8)
+            pygame.draw.rect(surf, (200, 160, 90) if ok else (70, 60, 50), br, 1, border_radius=8)
+            T.text(surf, f"{p['name']} — {p['mass']} г", (br.x + 14, br.y + 10), 16, T.TEXT if ok else T.TEXT_DIM, True)
+            uses = ", ".join(prof.xd["artifacts"]["kinds"][k]["name"].lower() for k, v in FG.RECIPES.items() if pk in v)
+            T.text(surf, f"толщина {p['thick']} мм, длина {p['len']} мм · для: {uses}", (br.x + 14, br.y + 38), 12,
+                   T.TEXT_DIM)
+            self.scene.hit(br, ("prim", pk) if ok else None, [p["name"], "клик — ковать из выбранного слитка"])
+
+    def draw_item(self, surf, r):
+        StationOverlay.draw_craft(self, surf, self.rect)
+
+    def draw_store(self, surf, r):
+        from sim import forge as FG
+        prof = self.app.profile
+        prims = prof.forge["prims"]
+        T.text(surf, f"Примитивы: {len(prims)} · слитки: {len(prof.forge['ingots'])}", (r.x, r.y), 18, GLORY, True)
+        with self.scene.grid(surf, "forge_prims", pygame.Rect(r.x, r.y + 34, r.w, r.h - 34), len(prims), 190, 64,
+                             gap=8) as cells:
+            for i, cr in cells:
+                p = prims[i]
+                a = FG.ALLOYS[p["alloy"]]
+                pygame.draw.rect(surf, (30, 22, 16), cr, border_radius=8)
+                pygame.draw.rect(surf, a["color"], cr, 1, border_radius=8)
+                ic = forge_icon(f"prim_{p['kind']}", 40, tuple(a["color"]))
+                if ic is not None:
+                    surf.blit(ic, (cr.x + 35 - ic.get_width() // 2, cr.centery - ic.get_height() // 2))
+                else:
+                    th = max(3, int(FG.PRIMS[p["kind"]]["thick"] * 2))
+                    pygame.draw.rect(surf, a["color"], (cr.x + 10, cr.y + 32 - th // 2, 50, th), border_radius=2)
+                T.text(surf, f"{FG.PRIMS[p['kind']]['name']}" + (" (литой)" if p.get("cast") else ""),
+                       (cr.x + 70, cr.y + 8), 14, T.TEXT, True)
+                T.text(surf, fit(f"{a['name']} · {p['q'] * 100:.0f}% · {p.get('len', FG.PRIMS[p['kind']]['len'])} мм",
+                                 12, cr.w - 76), (cr.x + 70, cr.y + 34), 12, T.TEXT_DIM)
+        if not prims:
+            T.text(surf, "Пусто — ковка (2) или литьё в формы.", (r.x, r.y + 40), 15, T.TEXT_DIM)
+
+    def draw_damascus(self, surf, r):
+        prof = self.app.profile
+        self.scene.seg(surf, r.x, r.y, (("stack", "Пакет"), ("weld", "Сварка")), self.sub, "sub", h=30)
+        self.mode = self.sub
+        try:
+            getattr(self, "draw_" + self.sub)(surf, pygame.Rect(r.x, r.y + 40, r.w, r.h - 40))
+        finally:
+            self.mode = "damascus"
+        welded = [b for b in prof.smith["billets"] if b.get("welded")]
+        y = r.bottom - 46
+        for b in welded[:3]:
+            self.scene.btn(surf, pygame.Rect(r.right - 300, y, 290, 38), f"Пакет {b['mass']} г → слиток дамаска",
+                           ("to_ingot", b["uid"]), True, primary=True)
+            y -= 44
+
+
+class MineRoom(RoomScene):
+    """Шахта: рабочие добывают руды и самоцветы, пока игра открыта; склад, кирки, вагонетки, глубина."""
+    room = "mine"
+    title = "Шахта"
+    sub = "Добыча идёт, пока игра открыта — забирайте со склада"
+    art = "room_mine"
+    dim = 150
+    mats = True
+
+    def room_act(self, action, button=1):
+        prof = self.app.profile
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "collect":
+            got, stones = prof.mine_collect()
+            n = sum(got.values())
+            self.say(f"Забрано: {n} ед." + (f" и самоцветов: {len(stones)}" if stones else "") if n or stones else
+                     "Склад пуст")
+        elif kind == "up":
+            if not prof.mine_upgrade(action[1]):
+                self.say("Не хватает золота")
+
+    FLOORS = (0.36, 0.527, 0.699, 0.90)     # полы туннелей на иллюстрации шахты (доли высоты)
+    TUNNEL = (0.04, 0.78)                   # туннели по ширине (справа — подъёмник)
+
+    def draw_backdrop(self, surf):
+        """Шахта в разрезе (иллюстрация) — во всю комнату, без затемнения сверху."""
+        from ui import illustrations as IL
+        top, bottom = TOP_H, strip_y()
+        self.view = pygame.Rect(0, top, T.SCREEN_W, bottom - top)
+        path = os.path.join(IL.DIR, "hd", "room_mine.png")
+        if not os.path.exists(path):
+            return super().draw_backdrop(surf)
+        if getattr(self, "_img_size", None) != self.view.size:
+            src = pygame.image.load(path)
+            k = max(self.view.w / src.get_width(), self.view.h / src.get_height())
+            img = pygame.transform.smoothscale(src, (int(src.get_width() * k) + 1, int(src.get_height() * k) + 1))
+            self._img = img
+            self._img_size = self.view.size
+            self._ox = (self.view.w - img.get_width()) // 2
+            self._oy = self.view.bottom - img.get_height()
+        surf.blit(self._img, (self._ox, self._oy))
+
+    def at(self, fx, fy):
+        img = getattr(self, "_img", None)
+        if img is None:
+            return (self.view.x + fx * self.view.w, self.view.y + fy * self.view.h)
+        return (self._ox + fx * img.get_width(), self._oy + fy * img.get_height())
+
+    def draw_room(self, surf):
+        from sim import forge as FG
+        prof = self.app.profile
+        m = prof.mine
+        xd = prof.xd
+        levels = FG.MINE["depths"]
+        for i, d in enumerate(levels):
+            open_ = i <= m["depth"]
+            floor = self.at(0, self.FLOORS[i])[1]
+            x0 = self.at(self.TUNNEL[0], 0)[0]
+            x1 = self.at(self.TUNNEL[1], 0)[0]
+            band_h = (self.at(0, self.FLOORS[0])[1] - self.at(0, 0.21)[1])
+            band = pygame.Rect(x0, floor - band_h, x1 - x0, band_h)
+            if not open_:                                    # не вскрыт — тёмный завал
+                sh = pygame.Surface(band.size, pygame.SRCALPHA)
+                sh.fill((6, 5, 4, 205))
+                surf.blit(sh, band)
+                T.text(surf, f"{d['name']} — не вскрыт", (band.centerx, band.centery), 18, T.TEXT_DIM, True,
+                       center=True, shadow=True)
+                continue
+            label = d["name"] + " · " + ", ".join(res_name(xd, k) for k in d["mats"]) + \
+                (" · сырые самоцветы" if d.get("rough") else "")
+            T.text(surf, label, (band.x + 14, band.y + 10), 14, (240, 225, 200), True, shadow=True)
+            n = m["workers"] if i == m["depth"] else max(1, m["workers"] // (m["depth"] + 1))
+            from game import metal_view as MV
+            cart = MV.prop("mine_cart", None, max(8, int(44 * self.view.h / 560)))
+            if cart is not None:                             # вагонетка в конце туннеля — левее панели склада
+                cx_ = min(band.right, T.SCREEN_W - 16 - 420) - cart.get_width() - 14
+                surf.blit(cart, (cx_, floor - cart.get_height()))
+            for w in range(n):                               # горняки с кирками (лист MH; нет — простые фигурки)
+                px = band.x + 80 + w * (band.w - 160) / max(1, 7) + 6 * math.sin(self.clock * 1.7 + w)
+                py = floor - 4
+                self.draw_miner(surf, px, py, self.clock * 5 + w * 1.3, flip=w % 2 == 1)
+        self.draw_mine_panel(surf)
+
+    def draw_miner(self, surf, x, y, t, flip=False):
+        s = (self.view.h / 560)
+        frames = mine_frames(max(8, int(62 * s)))
+        if frames:                                         # лист MH: замах — середина — удар (общий холст)
+            v = math.sin(t)
+            img = frames[0] if v > 0.35 else frames[2] if v < -0.35 else frames[1]
+            if flip:
+                img = pygame.transform.flip(img, True, False)
+            surf.blit(img, (x - img.get_width() / 2, y - img.get_height()))
+            return
+        body = (90, 70, 52)
+        pygame.draw.line(surf, body, (x, y - 30 * s), (x, y - 12 * s), max(2, int(6 * s)))
+        pygame.draw.line(surf, (60, 48, 38), (x, y - 12 * s), (x - 5 * s, y), max(2, int(4 * s)))
+        pygame.draw.line(surf, (60, 48, 38), (x, y - 12 * s), (x + 5 * s, y), max(2, int(4 * s)))
+        pygame.draw.circle(surf, (220, 180, 140), (int(x), int(y - 36 * s)), max(3, int(6 * s)))
+        pygame.draw.circle(surf, (200, 160, 60), (int(x), int(y - 40 * s)), max(2, int(5 * s)))
+        a = math.sin(t) * 0.9 - 0.3
+        hx, hy = x + math.cos(a) * 20 * s, y - 28 * s - math.sin(a) * 20 * s
+        pygame.draw.line(surf, (120, 90, 60), (x, y - 26 * s), (hx, hy), max(2, int(3 * s)))
+        pygame.draw.line(surf, (170, 170, 180), (hx - 7 * s, hy - 4 * s), (hx + 7 * s, hy + 4 * s), max(2, int(3 * s)))
+
+    def draw_mine_panel(self, surf):
+        from sim import forge as FG
+        prof = self.app.profile
+        m = prof.mine
+        xd = prof.xd
+        top, bottom = TOP_H + 10, strip_y() - 10
+        # склад и улучшения — справа, поверх подъёмника
+        x0 = T.SCREEN_W - 16 - 420
+        panel = pygame.Rect(x0, top, 420, bottom - top)
+        T.frame(surf, panel, 220)
+        stock = m.get("stock", {})
+        cap = FG.mine_cap(m)
+        tot = sum(stock.values())
+        T.text(surf, f"Склад {tot} / {cap}", (panel.x + 16, panel.y + 12), 20, GLORY, True)
+        bar = pygame.Rect(panel.x + 16, panel.y + 42, panel.w - 32, 10)
+        pygame.draw.rect(surf, (40, 32, 26), bar, border_radius=5)
+        pygame.draw.rect(surf, (230, 180, 100), (bar.x, bar.y, int(bar.w * min(1, tot / max(1, cap))), bar.h),
+                         border_radius=5)
+        T.text(surf, f"добыча {FG.mine_rate(m):.0f} ед./мин · рабочих {m['workers']}", (panel.x + 16, panel.y + 58), 13,
+               T.TEXT_DIM)
+        y = panel.y + 84
+        for k, v in sorted(stock.items(), key=lambda kv: -kv[1]):
+            surf.blit(res_icon(xd, k, 20), (panel.x + 16, y))
+            T.text(surf, f"{res_name(xd, k)}: {v}", (panel.x + 42, y + 2), 14, T.TEXT)
+            y += 24
+        if m.get("rough"):
+            T.text(surf, f"сырые самоцветы: {m['rough']}", (panel.x + 16, y + 2), 14, BLESS, True)
+            y += 24
+        self.btn(surf, pygame.Rect(panel.x + 16, y + 6, panel.w - 32, 44), "Забрать со склада", "collect",
+                 tot > 0 or m.get("rough", 0) > 0, primary=True)
+        y += 64
+        names = {"workers": ("Нанять рабочего", f"рабочих {m['workers']}"),
+                 "pick": ("Кирки лучше", f"выработка ×{FG.MINE['pick'][m['pick']][0]}"),
+                 "store": ("Склад больше", f"вместимость {cap}"),
+                 "cart": ("Вагонетки", f"подъём {FG.MINE['cart'][m['cart']][0]} ед./мин"),
+                 "depth": ("Вскрыть горизонт", FG.MINE["depths"][m["depth"]]["name"])}
+        for what, (label, now) in names.items():
+            cost = FG.mine_next_cost(m, what)
+            row = pygame.Rect(panel.x + 16, y, panel.w - 32, 52)
+            pygame.draw.rect(surf, (32, 24, 18), row, border_radius=8)
+            T.text(surf, label, (row.x + 10, row.y + 6), 15, T.TEXT, True)
+            T.text(surf, now, (row.x + 10, row.y + 28), 12, T.TEXT_DIM)
+            if cost is None:
+                T.text(surf, "предел", (row.right - 90, row.y + 18), 13, GLORY, True)
+            else:
+                self.btn(surf, pygame.Rect(row.right - 150, row.y + 8, 140, 36), f"{cost}", ("up", what),
+                         prof.glory >= cost, primary=True)
+            y += 58
+
+
+# ---------- отдельный экран мастерской ----------
+
+STATION_MATS = {"ws_forge": ["ore", "coal", "copper", "tin", "silver", "gold", "meteor", "embersteel", "stardust"],
+                "ws_jewel": ["gems", "pearl", "stardust"],
+                "ws_alchemy": ["herbs", "pearl", "embersteel", "stardust"],
+                "ws_leather": ["leather", "pearl", "embersteel", "stardust"]}
+STATION_ART = {"ws_forge": "ws_bench_forge", "ws_jewel": "ws_bench_jewel", "ws_alchemy": "ws_bench_alchemy",
+               "ws_leather": "ws_bench_leather"}
+
+
+class StationScene(RoomScene):
+    """Мастерская мастера — отдельный экран: окно во весь экран, свои вкладки (1–9, Tab — дальше, Shift+Tab —
+    назад), в шапке — только свои ресурсы. Esc — назад в Мастерскую."""
+    room = "workshop"
+    mats = True
+    dim = 175
+
+    def __init__(self, app, ws):
+        super().__init__(app)
+        self.ws = ws
+        self.overlay = (ForgeOverlay if ws == "ws_forge" else StationOverlay)(self, ws)
+        self.overlay.full = True
+        self.art = STATION_ART.get(ws, "room_workshop")
+        self.title = self.app.profile.xd["buildings"][ws]["name"]
+
+    def mat_keys(self):
+        allm = self.app.profile.xd.get("materials", {})
+        return [k for k in STATION_MATS.get(self.ws, list(allm)) if k in allm]
+
+    def draw_backdrop(self, surf):
+        from ui import illustrations as IL
+        if os.path.exists(os.path.join(IL.DIR, "hd", f"{self.art}.png")):
+            self.backdrop(surf, self.art, "tavern", dim=self.dim)
+        else:
+            self.backdrop(surf, room_art("room_workshop"), "tavern", dim=self.dim)
+
+    def draw(self, surf):
+        self.hits = []
+        surf.fill(T.BG)
+        self.draw_backdrop(surf)
+        self.overlay.draw(surf)
+        self.draw_top(surf)
+        self.draw_tip(surf)
+        self.draw_toast(surf, T.SCREEN_H - 30)
+
+    def act(self, action, button=1):
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind in ("close", "room"):
+            go(self.app, "workshop")
+        elif kind == "menu":
+            self.app.to_title()
+        else:
+            self.overlay.act(action, button)
+
+    def key(self, k):
+        if k == pygame.K_ESCAPE:
+            go(self.app, "workshop")
+            return
+        modes = self.overlay.modes() if hasattr(self.overlay, "modes") else []
+        if modes and pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(modes):
+            self.overlay.act(("mode", modes[k - pygame.K_1][0]))
+            return
+        if modes and k == pygame.K_TAB:
+            back = bool(pygame.key.get_mods() & pygame.KMOD_SHIFT) if pygame.get_init() else False
+            i = next((j for j, (m, _) in enumerate(modes) if m == self.overlay.mode), 0)
+            self.overlay.act(("mode", modes[(i + (-1 if back else 1)) % len(modes)][0]))
+            return
+        self.overlay.key(k)
 
 
 # ---------- Стройка ----------
@@ -2815,6 +4068,10 @@ class BuildRoom(RoomScene):
                 elif bid in xd.get("buildings", {}):
                     b = xd["buildings"][bid]
                     lv, top = prof.building_level(bid), len(b["levels"])
+                    if not prof.master_free(bid):         # мастерская — после спасения мастера
+                        out.append((group, b["name"], b["desc"], 0, top, "мастер в плену",
+                                    f"спасите: босс главы «{prof.master_chapter(bid)}»", None, ("locked", bid)))
+                        continue
                     out.append((group, b["name"], b["desc"], lv, top, b["levels"][lv - 1]["text"] if lv else "не построено",
                                 b["levels"][lv]["text"] if lv < top else None, prof.building_cost(bid), ("build", bid)))
         return out
@@ -2838,6 +4095,11 @@ class BuildRoom(RoomScene):
             T.text(surf, fit("Сейчас: " + now, 14, cw - 28), (r.x + 14, r.y + 58), 14, T.TEXT)
             if done:
                 T.text(surf, "построено полностью", (r.x + 14, r.bottom - 30), 14, GLORY, True)
+                continue
+            if action[0] == "locked":
+                T.text(surf, fit(nxt, 14, cw - 28), (r.x + 14, r.y + 78), 14, CURSE, True)
+                T.text(surf, "мастерская откроется с мастером", (r.x + 14, r.bottom - 34), 13, T.TEXT_DIM)
+                self.hit(r, None, [(name, GLORY), desc, now, nxt])
                 continue
             T.text(surf, fit("Дальше: " + nxt, 14, cw - 28), (r.x + 14, r.y + 78), 14, BLESS)
             cost_icons(self, surf, prof, cost, r.x + 14, r.bottom - 40, size=22)
@@ -3266,5 +4528,5 @@ class BookScene(RoomScene):
             T.text(surf, "Записей нет.", (r.x, y), 14, ink_dim)
 
 
-ROOM_CLASSES = {"hall": HallRoom, "muster": MusterRoom, "workshop": WorkshopRoom, "yard": YardRoom,
-                "build": BuildRoom, "fame": FameRoom, "market": MarketRoom}
+ROOM_CLASSES = {"hall": HallRoom, "chapters": ChapterRoom, "muster": MusterRoom, "workshop": WorkshopRoom, "yard": YardRoom,
+                "build": BuildRoom, "fame": FameRoom, "market": MarketRoom, "mine": MineRoom}

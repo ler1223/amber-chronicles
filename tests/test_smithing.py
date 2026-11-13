@@ -197,13 +197,18 @@ def test_forge_station_tabs_draw(tmp_path):
     key(app, pygame.K_3)
     room = app.scene
     room.act(("station", "ws_forge"))
-    assert isinstance(room.overlay, R.SmithOverlay)
-    for m, _ in R.SMITH_MODES:
-        room.act(("mode", m))
+    st = app.scene
+    assert isinstance(st, R.StationScene) and isinstance(st.overlay, R.ForgeOverlay)
+    for i, (m, _) in enumerate(st.overlay.modes()):
+        key(app, pygame.K_1 + i)                     # вкладки — цифрами
+        assert st.overlay.mode == m
         frame(app)
-    room.act(("mode", "smelt"))
-    key(app, pygame.K_RETURN)
-    assert type(app.scene.game).__name__ == "SmeltGame"
+    key(app, pygame.K_1)
+    key(app, pygame.K_TAB)                           # Tab — следующая вкладка
+    assert st.overlay.mode == "hammer"
+    key(app, pygame.K_1)
+    st.act(("alloy", "bronze"))
+    assert type(app.scene.game).__name__ == "CrucibleGame"
 
 
 def test_free_cut_any_number_of_pieces():

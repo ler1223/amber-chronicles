@@ -38,7 +38,9 @@ def is_unlocked(data, cls, sid, lvl):
 
 def unlocked_skills(data, cls, lvl):
     """Открытые навыки для слотов (ультимейт — отдельно, см. battle_skills)."""
-    return [sid for sid in all_skills(data, cls) if is_unlocked(data, cls, sid, lvl) and not is_ult(data, cls, sid)]
+    always = set(cfg(data)["classes"].get(cls, {}).get("always", []))
+    return [sid for sid in all_skills(data, cls)
+            if is_unlocked(data, cls, sid, lvl) and not is_ult(data, cls, sid) and sid not in always]
 
 
 # ---------- ультимейт, обязательные навыки и зависимости ----------
@@ -82,6 +84,9 @@ def battle_skills(data, cls, hero):
     """Навыки героя в бой: слоты и, когда открыт, ультимейт четвёртым (у барда — три ноты и финал)."""
     notes = notes_of(data, cls)
     load = notes if notes else [s for s in hero.get("skill_loadout", []) if not is_ult(data, cls, s)][:slots(data)]
+    always = [s for s in cfg(data)["classes"][cls].get("always", []) if s in data.skills]
+    if always:
+        load = always + [s for s in load if s not in always]
     ult = hero.get("ult") if is_ult(data, cls, hero.get("ult")) else ult_of(data, cls)
     if ult and is_unlocked(data, cls, ult, level(hero)):
         load.append(ult)
@@ -103,7 +108,7 @@ def requires(data, cls, sid):
 
 def kit_ok(data, cls, skills):
     """Набор цельный: есть навык из обязательной группы, у каждого навыка есть то, на чём он работает."""
-    have = set(skills)
+    have = set(skills) | set(cfg(data)["classes"].get(cls, {}).get("always", []))
     if notes_of(data, cls):
         return True
     core = core_group(data, cls)
@@ -118,7 +123,8 @@ def random_kit(data, cls, rng, n=None):
     if notes_of(data, cls):                   # бард: ноты и финал
         ults = ults_of(data, cls)
         return notes_of(data, cls) + ([rng.choice(ults)] if ults else [])
-    pool = [s for s in all_skills(data, cls) if not is_ult(data, cls, s)]
+    always = set(cfg(data)["classes"].get(cls, {}).get("always", []))
+    pool = [s for s in all_skills(data, cls) if not is_ult(data, cls, s) and s not in always]
     core = [s for s in core_group(data, cls) if s in pool] or pool[:1]
     kit = [rng.choice(core)]
     rest = [s for s in pool if s not in kit]
@@ -142,6 +148,37 @@ def random_kit(data, cls, rng, n=None):
 
 def default_loadout(data, cls, lvl):
     return unlocked_skills(data, cls, lvl)[:slots(data)]
+
+
+def one_skill_choices(data, cls, lvl, hero=None):
+    """Навыки, которые герой может взять единственной способностью в бесконечном забеге.
+    В отличие от обычного набора, ультимейт здесь — такой же выбор, а не отдельная кнопка R.
+    Если передан герой, выбор ограничен его текущим набором (ветки и ранги продолжают работать)."""
+    if notes_of(data, cls):
+        pool = notes_of(data, cls)
+    else:
+        pool = all_skills(data, cls)
+    out = [sid for sid in pool if sid in data.skills and is_unlocked(data, cls, sid, lvl)]
+    if hero is not None:
+        always = cfg(data)["classes"].get(cls, {}).get("always", [])
+        own = list(getattr(hero, "skills", [])) + list(always)
+        extra = [s for s in own if s in data.skills and s not in out
+                 and (s in always or not is_ult(data, cls, s) or is_unlocked(data, cls, s, lvl))]
+        if extra:
+            out += extra
+        own = [s for s in out if s in own]
+        if own:
+            out = own
+    return out
+
+
+def default_one_skill(data, cls, lvl, hero=None):
+    """Разумный стартовый выбор: открытый ультимейт, иначе первый доступный навык."""
+    choices = one_skill_choices(data, cls, lvl, hero)
+    if not choices:
+        return None
+    ults = set(ults_of(data, cls))
+    return next((s for s in choices if s in ults), choices[0])
 
 
 def doctrine_entries(data, cls):
@@ -168,7 +205,7 @@ def doctrine_unlock_level(data, cls):
 def _trim_branches(data, cls, hero):
     load = set(hero.get("skill_loadout", []))
     hero["branches"] = {sid: list(v) for sid, v in hero.get("branches", {}).items()
-                        if sid in load and sid in data.branches and v[0] in ("A", "B")}
+                        if sid in load and sid in data.branches and v[0] in data.branches[sid]}
 
 
 def _trim_talents(data, cls, hero):

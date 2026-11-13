@@ -11,12 +11,12 @@ import numpy as np
 from ui import projection as P
 from ui.pixfx_sim import BAYER, PAL
 
-PALS = ["fire", "ice", "dust", "steam", "scorch", "water", "storm", "poison", "steel", "stone", "rage", "light",
-        "shadow", "nature", "time", "gravity", "sound", "bone", "blood", "spirit", "gas", "cloud", "petal", "glass",
+PALS = ["fire", "blaze", "ice", "dust", "steam", "scorch", "water", "storm", "poison", "steel", "stone", "rage", "light",
+        "shadow", "nature", "time", "gravity", "sound", "bone", "blood", "spirit", "gas", "cloud", "fog", "petal", "glass",
         "brass", "soul", "oil"]
 PAL_ID = {n: i for i, n in enumerate(PALS)}
 PAL_RGB = np.array([PAL[n] for n in PALS], np.uint8)          # [палитра, 6, 3]
-GLOW_PALS = {PAL_ID[n] for n in ("fire", "ice", "storm", "light", "rage", "time", "gravity", "sound", "spirit",
+GLOW_PALS = {PAL_ID[n] for n in ("fire", "blaze", "ice", "storm", "light", "rage", "time", "gravity", "sound", "spirit",
                                    "shadow", "soul", "glass")}
 PX = 2
 

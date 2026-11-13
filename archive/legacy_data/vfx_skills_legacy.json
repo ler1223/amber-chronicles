@@ -1,0 +1,55 @@
+{
+  "mana_shield": {
+    "impact": "shield_dome",
+    "branches": {
+      "A": {
+        "impact": "barrier"
+      },
+      "B": {
+        "impact": "mirror_shield"
+      }
+    }
+  },
+  "shadow_step": {
+    "release": "shadow_puff",
+    "impact": "dagger_strike",
+    "color": [
+      180,
+      140,
+      255
+    ],
+    "branches": {
+      "A": {
+        "impact": "blade_dance"
+      },
+      "B": {
+        "impact": "silence_strike"
+      }
+    }
+  },
+  "venom_blade": {
+    "impact": "venom_coat",
+    "color": [
+      130,
+      220,
+      90
+    ],
+    "branches": {
+      "B": {
+        "travel": {
+          "prop": "dart",
+          "ribbon": "dart",
+          "speed": 1300,
+          "arc": 10
+        },
+        "impact": "dart_hit"
+      }
+    }
+  },
+  "bear_form": {
+    "impact": "shapeshift"
+  },
+  "wolf_form": {
+    "impact": "shapeshift"
+  }
+}

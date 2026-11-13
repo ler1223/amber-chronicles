@@ -77,35 +77,21 @@ def test_veterans_return_stronger_and_fallen_go_to_hall():
     assert any(f["name"] == v.name for f in prof.fallen) and v.uid not in [h.uid for h in prof.roster]
 
 
-def test_tavern_is_shared_between_squad_and_solo(tmp_path):
+def test_tavern_is_shared_between_squad_and_endless(tmp_path):
     prof = profile(tmp_path)
     prof.glory = 77
     prof.save()
-    solo = profile(tmp_path, solo=True)
-    assert solo.glory == 77 and solo.solo and not any(h.solo for h in solo.roster)
-    run = solo.start([solo.roster[0].uid], seed=7)
-    assert run.solo and run.heroes[0].solo
-    run.result = "victory"
-    solo.finish(run)
-    squad = profile(tmp_path)
-    vet = next(h for h in squad.roster if h.vet)
-    assert vet.vet["solo"] and vet not in squad.hall()               # ветеран-одиночка в отряд не идёт
-    assert len(squad.hall()) == squad.hall_size()                    # зал отряда при этом полный
-    try:
-        squad.start([vet.uid, squad.hall()[0].uid], seed=8)
-        assert False, "одиночку не берут в отряд"
-    except ValueError:
-        pass
+    endless = profile(tmp_path, solo=True)
+    assert endless.glory == 77 and endless.solo and not any(h.solo for h in endless.roster)
+    run = endless.start([h.uid for h in endless.roster[:2]], seed=7)
+    assert run.endless and not run.solo and len(run.heroes) == 2
+    run.result = "defeat"
+    endless.finish(run)
     back = profile(tmp_path, solo=True)
-    assert vet.uid in [h.uid for h in back.hall()]                   # в одиночке он ждёт — с теми же навыками
-    run = back.start([vet.uid], seed=9)
-    assert run.heroes[0].skills == next(h for h in squad.roster if h.uid == vet.uid).skills
-    sq = profile(tmp_path)                                           # ветеран отряда может пойти и в одиночку
-    r = sq.start([h.uid for h in sq.hall()[:2]], seed=10)
-    r.result = "victory"
-    sq.finish(r)
-    svet = next(h for h in profile(tmp_path, solo=True).hall() if h.vet and not h.vet["solo"])
-    assert svet
+    assert back.solo
+    assert len(back.hall()) > 0
+    r = back.start([h.uid for h in back.hall()[:2]], seed=9)
+    assert r.endless and len(r.heroes) == 2
 
 
 def test_gifts_are_plenty_two_choices_and_all_build():

@@ -3,7 +3,10 @@
     "name": "Болотный слизень", "label": "Сл", "color": [70, 140, 120], "role": "melee",
     "hp": 150, "armor": 1, "move_time": 0.7,
     "attack": {"damage": 12, "range": 1, "cooldown": 1.4, "tag": "water"},
-    "skills": []
+    "skills": [],
+    "desc": "Болотный слизень, вязкий и медленный. Держит удар, но боится огня.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Вязкая плоть", "pp": 1, "mult": 0.85, "desc": "Удар по слизню: −1 деление шкалы, урон ×0.85"}
   },
   "beetle": {
     "name": "Огненный жук", "label": "Жк", "color": [220, 110, 40], "role": "melee",
@@ -12,28 +15,40 @@
     "skills": [],
     "on_death": {"name": "Взрыв", "effects": [
       {"type": "damage", "amount": 10, "radius": 1, "affects": "all", "tag": "fire", "kind": "spell"}
-    ]}
+    ]},
+    "desc": "Огненный жук, раздутый от жара. Перед смертью лопается огнём.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "rage", "name": "Предсмертный жар", "pp": 1, "stat": "atk_speed", "value": 0.8, "duration": 3, "desc": "Удар по жуку: −1 деление шкалы, атаки на 20% быстрее 3 сек"}
   },
   "bog_archer": {
     "name": "Болотный стрелок", "label": "Ст", "color": [130, 150, 70], "role": "ranged",
     "hp": 95, "armor": 0, "move_time": 0.55,
     "attack": {"damage": 12, "range": 5, "cooldown": 1.3},
     "ap_max": 6, "ap_regen": 5.0,
-    "skills": ["ice_dart"]
+    "skills": ["ice_dart"],
+    "desc": "Болотный стрелок, который прячется в камышах и бьёт из безопасного далека.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "dodge", "name": "Болотная маскировка", "pp": 1, "vs": ["ranged"], "desc": "Дальняя атака по стрелку: −1 деление шкалы, промах"}
   },
   "frog_shaman": {
     "name": "Жаба-шаман", "label": "Шм", "color": [90, 170, 160], "role": "support",
     "hp": 110, "armor": 0, "move_time": 0.6,
     "attack": {"damage": 6, "range": 4, "cooldown": 1.4, "tag": "water"},
     "ap_max": 6, "ap_regen": 5.0,
-    "skills": ["frog_heal", "mud_splash"]
+    "skills": ["frog_heal", "mud_splash"],
+    "desc": "Жабий шаман, который лечит своих и проклинает чужих.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Жабья шкура", "pp": 1, "mult": 0.85, "desc": "Удар по шаману: −1 деление шкалы, урон ×0.85"}
   },
   "slime_king": {
     "name": "Король слизней", "label": "Кс", "color": [60, 160, 110], "role": "melee", "elite": true,
     "hp": 320, "armor": 2, "move_time": 0.8,
     "attack": {"damage": 16, "range": 1, "cooldown": 1.6, "tag": "water"},
     "ap_max": 6, "ap_regen": 5.5,
-    "skills": ["mud_splash"]
+    "skills": ["mud_splash"],
+    "desc": "Король слизней, огромный и тяжёлый. Медленно ползёт, но давит как телега.",
+    "pp_max": 2, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Слизистая корона", "pp": 1, "mult": 0.7, "desc": "Удар по королю: −1 деление шкалы, урон ×0.7"}
   },
   "ice_witch": {
     "name": "Ледяная ведьма", "label": "Вд", "color": [150, 205, 240], "role": "caster", "boss": true,
@@ -42,7 +57,8 @@
     "ap_max": 8, "ap_regen": 3.5, "pp_max": 2, "pp_regen": 3.0,
     "passive": {"kind": "block", "name": "Ледяная броня", "pp": 1, "mult": 0.5,
                 "desc": "Любой удар: −1 деление шкалы, урон ×0.5"},
-    "skills": ["ice_ring", "frost_storm"]
+    "skills": ["ice_ring", "frost_storm"],
+    "desc": "Ледяная ведьма, которая пришла в болото за янтарём. Мороз держится вокруг неё стеной."
   },
   "toxic_slime": {
     "name": "Ядовитый слизень",
@@ -57,7 +73,10 @@
     "ap_regen": 5.0,
     "skills": [],
     "look": {"body": "blob", "color": [120, 190, 70], "accent": [120, 190, 70], "head": "none", "weapon": "none"},
-    "on_death": {"name": "Ядовитая лужа", "effects": [{"type": "hazard", "hazard": "poison", "duration": 5, "radius": 1}]}
+    "on_death": {"name": "Ядовитая лужа", "effects": [{"type": "hazard", "hazard": "poison", "duration": 5, "radius": 1}]},
+    "desc": "Ядовитый слизень, оставляющий после себя кислотную лужу.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Ядовитая плоть", "pp": 1, "mult": 0.85, "desc": "Удар по слизню: −1 деление шкалы, урон ×0.85"}
   },
   "bog_horror": {
     "name": "Болотный ужас",
@@ -70,9 +89,12 @@
     "attack": {"damage": 18, "range": 1, "cooldown": 1.6},
     "ap_max": 6,
     "ap_regen": 5.0,
-    "skills": [],
+    "skills": ["e_entangle"],
     "look": {"body": "golem", "color": [70, 100, 70], "accent": [140, 180, 110], "head": "none", "weapon": "none"},
-    "lifesteal": 0.25
+    "lifesteal": 0.25,
+    "desc": "Болотный ужас, сплетённый из корней и утопленников. Хватает корнями и не отпускает.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Сплетение корней", "pp": 1, "mult": 0.8, "desc": "Удар по ужасу: −1 деление шкалы, урон ×0.8"}
   },
   "fire_imp": {
     "name": "Огненный бес",
@@ -88,7 +110,10 @@
     "skills": [],
     "look": {"body": "imp", "color": [230, 90, 40], "accent": [255, 200, 80], "head": "horns", "weapon": "none"},
     "heat": {"atk_mult": 1.25, "regen": 3},
-    "resist": {"fire": 0.4}
+    "resist": {"fire": 0.4},
+    "desc": "Огненный бес, шустрый и злой. В кузнях чувствует себя как дома.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Пламенная плоть", "pp": 1, "mult": 0.85, "desc": "Удар по бесу: −1 деление шкалы, урон ×0.85"}
   },
   "magma_golem": {
     "name": "Магмовый голем",
@@ -104,7 +129,10 @@
     "skills": ["e_slam"],
     "look": {"body": "golem", "color": [90, 60, 50], "accent": [255, 120, 40], "head": "none", "weapon": "none"},
     "heat": {"atk_mult": 1.3, "regen": 6},
-    "resist": {"fire": 0.4}
+    "resist": {"fire": 0.4},
+    "desc": "Магмовый голем, медленный и неумолимый. Внутри него плещется расплав.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Магмовая корка", "pp": 1, "mult": 0.8, "desc": "Удар по голему: −1 деление шкалы, урон ×0.8"}
   },
   "hammer_thrower": {
     "name": "Метатель молотов",
@@ -118,7 +146,10 @@
     "ap_max": 6,
     "ap_regen": 5.0,
     "skills": ["e_hammer"],
-    "look": {"body": "humanoid", "color": [150, 110, 80], "accent": [200, 200, 210], "head": "helm", "weapon": "hammer"}
+    "look": {"body": "humanoid", "color": [150, 110, 80], "accent": [200, 200, 210], "head": "helm", "weapon": "hammer"},
+    "desc": "Метатель молотов, который предпочитает бить издалека. Фартук спасает от искр.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Кожаный фартук", "pp": 1, "mult": 0.85, "desc": "Удар по метателю: −1 деление шкалы, урон ×0.85"}
   },
   "flame_priest": {
     "name": "Жрец пламени",
@@ -133,7 +164,10 @@
     "ap_regen": 5.0,
     "skills": ["e_fireball"],
     "look": {"body": "robe", "color": [180, 60, 40], "accent": [255, 180, 60], "head": "hood", "weapon": "staff"},
-    "resist": {"fire": 0.4}
+    "resist": {"fire": 0.4},
+    "desc": "Жрец пламени, который видит в огне волю своего бога.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Пепельная ряса", "pp": 1, "mult": 0.85, "desc": "Удар по жрецу: −1 деление шкалы, урон ×0.85"}
   },
   "salamander": {
     "name": "Саламандра",
@@ -149,7 +183,10 @@
     "skills": ["e_flame_breath"],
     "look": {"body": "lizard", "color": [220, 120, 40], "accent": [255, 220, 90], "head": "none", "weapon": "none"},
     "heat": {"atk_mult": 1.3, "regen": 5},
-    "resist": {"fire": 0.4}
+    "resist": {"fire": 0.4},
+    "desc": "Саламандра, рождённая в жаре кузни. Дышит огнём и не боится пламени.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Чешуя углей", "pp": 1, "mult": 0.8, "desc": "Удар по саламандре: −1 деление шкалы, урон ×0.8"}
   },
   "obsidian_guard": {
     "name": "Обсидиановый страж",
@@ -165,7 +202,10 @@
     "skills": [],
     "look": {"body": "golem", "color": [40, 36, 50], "accent": [180, 90, 255], "head": "none", "weapon": "none"},
     "heat": {"atk_mult": 1.25, "regen": 4},
-    "resist": {"fire": 0.4}
+    "resist": {"fire": 0.4},
+    "desc": "Обсидиановый страж, вырезанный из чёрного стекла. Тяжёлый и почти неуязвимый для стрел.",
+    "pp_max": 2, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Обсидиановая броня", "pp": 1, "mult": 0.7, "desc": "Удар по стражу: −1 деление шкалы, урон ×0.7"}
   },
   "living_lava": {
     "name": "Живая лава",
@@ -182,7 +222,10 @@
     "look": {"body": "blob", "color": [255, 110, 30], "accent": [255, 220, 120], "head": "none", "weapon": "none"},
     "resist": {"fire": 0.4},
     "heat": {"atk_mult": 1.3, "regen": 4},
-    "on_death": {"name": "Разлив лавы", "effects": [{"type": "damage", "amount": 14, "kind": "spell", "radius": 1, "tag": "fire", "affects": "enemies"}, {"type": "hazard", "hazard": "fire", "duration": 5, "radius": 1}]}
+    "on_death": {"name": "Разлив лавы", "effects": [{"type": "damage", "amount": 14, "kind": "spell", "radius": 1, "tag": "fire", "affects": "enemies"}, {"type": "hazard", "hazard": "fire", "duration": 5, "radius": 1}]},
+    "desc": "Живая лава, которая катится по полу и жжёт всё, к чему прикасается.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "retaliate", "name": "Жар", "pp": 1, "damage": 6, "tag": "fire", "desc": "Ближняя атака по лаве: −1 деление шкалы, 6 урона огнём в ответ"}
   },
   "forge_overseer": {
     "name": "Надсмотрщик кузни",
@@ -198,7 +241,10 @@
     "skills": ["e_lash", "e_slam"],
     "look": {"body": "humanoid", "color": [120, 80, 60], "accent": [255, 150, 60], "head": "horns", "weapon": "whip"},
     "elite": true,
-    "resist": {"fire": 0.4}
+    "resist": {"fire": 0.4},
+    "desc": "Надсмотрщик кузни, который держит рабов в страхе и не боится жара.",
+    "pp_max": 2, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Надсмотрщицкий доспех", "pp": 1, "mult": 0.65, "desc": "Удар по надсмотрщику: −1 деление шкалы, урон ×0.65"}
   },
   "forge_lord": {
     "name": "Владыка кузни",
@@ -211,14 +257,15 @@
     "attack": {"damage": 18, "range": 2, "cooldown": 1.5, "kind": "melee"},
     "ap_max": 8,
     "ap_regen": 3.5,
-    "skills": ["e_meteor", "e_slam", "e_fireball"],
+    "skills": ["e_meteor", "e_fireball"],
     "look": {"body": "golem", "color": [70, 50, 50], "accent": [255, 140, 40], "head": "crown", "weapon": "none"},
     "boss": true,
     "resist": {"fire": 0.4},
     "heat": {"atk_mult": 1.25, "regen": 8},
     "pp_max": 2,
     "pp_regen": 3.0,
-    "passive": {"kind": "block", "name": "Броня горна", "pp": 1, "mult": 0.5, "desc": "Любой удар: −1 деление шкалы, урон ×0.5"}
+    "passive": {"kind": "block", "name": "Броня горна", "pp": 1, "mult": 0.5, "desc": "Любой удар: −1 деление шкалы, урон ×0.5"},
+    "desc": "Владыка кузни, который куёт армию из магмы. Его броня раскалена до красна."
   },
   "skeleton": {
     "name": "Скелет-воин",
@@ -233,7 +280,12 @@
     "ap_regen": 5.0,
     "skills": [],
     "look": {"body": "skeleton", "color": [215, 210, 195], "accent": [150, 150, 160], "head": "skull", "weapon": "sword"},
-    "undying": {"delay": 3, "hp": 0.4, "unless": ["fire"]}
+    "undying": {"delay": 3, "hp": 0.4, "unless": ["fire"]},
+    "pp_max": 1,
+    "pp_regen": 7.0,
+    "passive": {"kind": "block", "name": "Костяной строй", "pp": 1, "mult": 0.75,
+                "desc": "Удар по скелету: −1 деление шкалы, урон ×0.75"},
+    "desc": "Скелет в ржавых доспехах. Держит строй, пока целы кости, и поднимается снова, если его не сжечь."
   },
   "skeleton_archer": {
     "name": "Скелет-лучник",
@@ -248,7 +300,12 @@
     "ap_regen": 5.0,
     "skills": [],
     "look": {"body": "skeleton", "color": [215, 210, 195], "accent": [120, 90, 60], "head": "skull", "weapon": "bow"},
-    "undying": {"delay": 3, "hp": 0.4, "unless": ["fire"]}
+    "undying": {"delay": 3, "hp": 0.4, "unless": ["fire"]},
+    "pp_max": 1,
+    "pp_regen": 8.0,
+    "passive": {"kind": "dodge", "vs": ["melee"], "name": "Хрупкая цель", "pp": 1,
+                "desc": "Ближняя атака по лучнику: −1 деление шкалы, промах"},
+    "desc": "Скелет-лучник с трофейным луком. Держится позади строя и осыпается от первого сильного удара."
   },
   "ghoul": {
     "name": "Упырь",
@@ -263,7 +320,12 @@
     "ap_regen": 5.0,
     "skills": [],
     "look": {"body": "ghoul", "color": [120, 140, 110], "accent": [200, 60, 60], "head": "none", "weapon": "none"},
-    "lifesteal": 0.25
+    "lifesteal": 0.25,
+    "pp_max": 1,
+    "pp_regen": 5.0,
+    "passive": {"kind": "rage", "name": "Голод", "pp": 1, "stat": "atk_speed", "value": 0.75, "duration": 3,
+                "desc": "Удар по упырю: −1 деление шкалы, атаки на 25% быстрее 3 сек"},
+    "desc": "Голодный упырь. Рвёт когтями, пьёт кровь и приходит в ярость от каждого попадания."
   },
   "necromancer": {
     "name": "Некромант",
@@ -277,7 +339,12 @@
     "ap_max": 6,
     "ap_regen": 5.0,
     "skills": ["e_raise", "e_wither"],
-    "look": {"body": "robe", "color": [70, 40, 90], "accent": [180, 255, 160], "head": "hood", "weapon": "staff"}
+    "look": {"body": "robe", "color": [70, 40, 90], "accent": [180, 255, 160], "head": "hood", "weapon": "staff"},
+    "pp_max": 1,
+    "pp_regen": 6.0,
+    "passive": {"kind": "block", "name": "Костяной щит", "pp": 1, "mult": 0.7,
+                "desc": "Удар по некроманту: −1 деление шкалы, урон ×0.7"},
+    "desc": "Некромант в пропитанной янтарём робе. Поднимает скелетов и иссушает лечение живых."
   },
   "banshee": {
     "name": "Банши",
@@ -292,7 +359,12 @@
     "ap_regen": 5.0,
     "skills": ["e_wail"],
     "look": {"body": "spirit", "color": [190, 210, 230], "accent": [120, 160, 200], "head": "none", "weapon": "none"},
-    "flying": true
+    "flying": true,
+    "pp_max": 1,
+    "pp_regen": 6.0,
+    "passive": {"kind": "dodge", "vs": ["melee", "ranged"], "name": "Бесплотность", "pp": 1,
+                "desc": "Атака оружием по банши: −1 деление шкалы, промах"},
+    "desc": "Бесплотный плач, который держится в воздухе. Вопль оглушает, а обычное оружие проходит сквозь неё."
   },
   "bone_golem": {
     "name": "Костяной голем",
@@ -305,9 +377,14 @@
     "attack": {"damage": 16, "range": 1, "cooldown": 1.6},
     "ap_max": 6,
     "ap_regen": 5.0,
-    "skills": [],
+    "skills": ["e_slam"],
     "look": {"body": "golem", "color": [200, 195, 180], "accent": [120, 110, 100], "head": "none", "weapon": "none"},
-    "undying": {"delay": 4, "hp": 0.4, "unless": ["fire"]}
+    "undying": {"delay": 4, "hp": 0.4, "unless": ["fire"]},
+    "pp_max": 1,
+    "pp_regen": 7.0,
+    "passive": {"kind": "block", "name": "Костяная броня", "pp": 1, "mult": 0.65,
+                "desc": "Удар по голему: −1 деление шкалы, урон ×0.65"},
+    "desc": "Груда сросшихся костей, скреплённая янтарной смолой. Бьёт по площади и почти не чувствует стрел."
   },
   "wraith": {
     "name": "Призрак",
@@ -320,10 +397,15 @@
     "attack": {"damage": 14, "range": 1, "cooldown": 1.3},
     "ap_max": 6,
     "ap_regen": 5.0,
-    "skills": [],
+    "skills": ["e_spectral_lash"],
     "look": {"body": "spirit", "color": [90, 80, 120], "accent": [200, 150, 255], "head": "none", "weapon": "none"},
     "flying": true,
-    "lifesteal": 0.3
+    "lifesteal": 0.3,
+    "pp_max": 1,
+    "pp_regen": 6.0,
+    "passive": {"kind": "siphon", "name": "Вытягивание жизни", "pp": 1, "pct": 0.25,
+                "desc": "Урон навыком: −1 деление шкалы, призрак лечится на 25% нанесённого"},
+    "desc": "Призрак, который охотится на раненых. Хлыст замедляет, а чужой урон становится его жизнью."
   },
   "death_knight": {
     "name": "Рыцарь смерти",
@@ -339,7 +421,12 @@
     "skills": ["e_slam", "e_wither"],
     "look": {"body": "skeleton", "color": [60, 60, 80], "accent": [120, 220, 160], "head": "helm", "weapon": "sword"},
     "elite": true,
-    "undying": {"delay": 4, "hp": 0.5, "unless": ["fire"]}
+    "undying": {"delay": 4, "hp": 0.5, "unless": ["fire"]},
+    "pp_max": 1,
+    "pp_regen": 5.0,
+    "passive": {"kind": "block", "name": "Чёрный доспех", "pp": 1, "mult": 0.6,
+                "desc": "Удар по рыцарю: −1 деление шкалы, урон ×0.6"},
+    "desc": "Павший рыцарь в почерневшей броне. Бьёт оземь, проклинает и встаёт снова, пока не сожжён."
   },
   "lich": {
     "name": "Лич",
@@ -352,12 +439,54 @@
     "attack": {"damage": 15, "range": 4, "cooldown": 1.3},
     "ap_max": 8,
     "ap_regen": 3.5,
-    "skills": ["e_raise_lich", "e_wither", "frost_storm"],
+    "skills": ["e_raise_lich", "frost_storm"],
     "look": {"body": "skeleton", "color": [90, 60, 120], "accent": [150, 255, 200], "head": "crown", "weapon": "staff"},
     "boss": true,
     "pp_max": 2,
     "pp_regen": 3.0,
-    "passive": {"kind": "block", "name": "Филактерия", "pp": 1, "mult": 0.5, "desc": "Любой удар: −1 деление шкалы, урон ×0.5"}
+    "passive": {"kind": "block", "name": "Филактерия", "pp": 1, "mult": 0.5,
+                "desc": "Удар по личу: −1 деление шкалы, урон ×0.5"},
+    "desc": "Хозяин склепа. Держит душу в филактерии, поднимает армию костей и обрушивает ледяную бурю."
+  },
+  "crypt_abbot": {
+    "name": "Аббат-нежить",
+    "label": "Аб",
+    "color": [80, 60, 110],
+    "role": "caster",
+    "hp": 120,
+    "armor": 1,
+    "move_time": 0.55,
+    "attack": {"damage": 10, "range": 4, "cooldown": 1.3},
+    "ap_max": 8,
+    "ap_regen": 4.0,
+    "skills": ["e_raise", "e_wither"],
+    "look": {"body": "robe", "color": [80, 60, 110], "accent": [230, 190, 80], "head": "hood", "weapon": "staff"},
+    "boss": true,
+    "pp_max": 2,
+    "pp_regen": 3.5,
+    "passive": {"kind": "block", "name": "Янтарная печать", "pp": 1, "mult": 0.6,
+                "desc": "Удар по аббату: −1 деление шкалы, урон ×0.6"},
+    "desc": "Аббат, который продал смерть за янтарь. Поднимает мертвецов и проклинает живых."
+  },
+  "crypt_warden": {
+    "name": "Хранитель колодца",
+    "label": "Хк",
+    "color": [60, 90, 130],
+    "role": "caster",
+    "hp": 180,
+    "armor": 2,
+    "move_time": 0.5,
+    "attack": {"damage": 12, "range": 3, "cooldown": 1.3},
+    "ap_max": 8,
+    "ap_regen": 4.0,
+    "skills": ["e_drag", "e_wither"],
+    "look": {"body": "spirit", "color": [60, 90, 130], "accent": [180, 230, 255], "head": "none", "weapon": "none"},
+    "boss": true,
+    "pp_max": 2,
+    "pp_regen": 3.5,
+    "passive": {"kind": "block", "name": "Тёмный омут", "pp": 1, "mult": 0.6,
+                "desc": "Удар по хранителю: −1 деление шкалы, урон ×0.6"},
+    "desc": "Дух, который сторожит колодец душ. Утаскивает героев на дно и не даёт им лечиться."
   },
   "frost_wolf": {
     "name": "Снежный волк",
@@ -780,7 +909,10 @@
     "ap_max": 6,
     "ap_regen": 5.0,
     "skills": ["e_mirror"],
-    "look": {"body": "robe", "color": [120, 80, 180], "accent": [255, 220, 255], "head": "hat", "weapon": "staff"}
+    "look": {"body": "robe", "color": [120, 80, 180], "accent": [255, 220, 255], "head": "hat", "weapon": "staff"},
+    "desc": "Иллюзионист, который прячется за чужими лицами. Ближний бой для него — плохая шутка.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "dodge", "name": "Мерцание", "pp": 1, "vs": ["ranged"], "desc": "Дальняя атака по иллюзионисту: −1 деление шкалы, промах"}
   },
   "maneater": {
     "name": "Росянка-людоед",
@@ -888,7 +1020,10 @@
     "ap_max": 6,
     "ap_regen": 5.0,
     "skills": ["e_drag"],
-    "look": {"body": "ghoul", "color": [90, 130, 130], "accent": [40, 80, 90], "head": "none", "weapon": "none"}
+    "look": {"body": "ghoul", "color": [90, 130, 130], "accent": [40, 80, 90], "head": "none", "weapon": "none"},
+    "desc": "Утопленник, который всё ещё идёт за живыми. Тянет к воде и не чувствует боли.",
+    "pp_max": 1, "pp_regen": 4.0,
+    "passive": {"kind": "block", "name": "Водяная плоть", "pp": 1, "mult": 0.85, "desc": "Удар по утопленнику: −1 деление шкалы, урон ×0.85"}
   },
   "eel": {
     "name": "Электрический угорь",

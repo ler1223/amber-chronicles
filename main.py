@@ -1,11 +1,11 @@
-"""Хроники янтаря: Экспедиция (поход отряда) и Одиночка (один герой, камера за ним).
+"""Хроники янтаря: Экспедиция (поход отряда) и Бесконечный забег (отряд, у каждого одна способность).
 
 python main.py                  — игра: открывается режим, в котором играли в прошлый раз (save/launcher.json);
                                   окно тянется мышью, F11 / Alt+Enter — полный экран, размер — в настройках
-python main.py --solo           — сразу Одиночка (--expedition — сразу Экспедиция)
+python main.py --solo           — сразу Бесконечный забег (--expedition — сразу Экспедиция)
 python main.py --seed 42        — походы с конкретными картами
 python main.py --autoplay       — отрядом в боях управляет ИИ (демо)
-python main.py --cpu            — без OpenGL (эффекты упрощённо, без свечения; в Одиночке — без камеры за героем)
+python main.py --cpu            — без OpenGL (эффекты упрощённо, без свечения)
 python main.py --sandbox        — песочница: открыто всё (свой профиль, настоящий не трогается);
                                   в бою F7 — полные AP, перезарядки и шкалы, F8 — мгновенная победа
 python main.py --screenshot out.png --seconds 3
@@ -121,6 +121,9 @@ def main():
                 holder.scene.update(dt)
         else:
             holder.scene.update(dt)
+        prof = getattr(holder, "profile", None)
+        if prof is not None and hasattr(prof, "mine_tick"):      # шахта работает, пока игра открыта
+            prof.mine_tick(dt)
         if holder.quit:
             running = False
             continue

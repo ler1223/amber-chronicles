@@ -5,6 +5,17 @@
   "squad_min": 2,
   "squad_start": 3,
   "squad_max": 4,
+  "squad_by_chapter": {
+   "swamp": 2,
+   "forge": 3,
+   "crypt": 3,
+   "pass": 4,
+   "steppe": 4,
+   "tomb": 5,
+   "fae": 5,
+   "sunken": 5,
+   "citadel": 5
+  },
   "hero": {
    "dmg_per_level": 0.06,
    "hp_per_level": 0.05,
@@ -34,8 +45,8 @@
    "ult_uses_div": 4
   },
   "xp": {
-   "next_base": 60,
-   "next_per_level": 40,
+   "next_base": 90,
+   "next_per_level": 60,
    "battle_base": 90,
    "battle_per_depth": 12,
    "node_mult": {
@@ -47,20 +58,51 @@
   },
   "enemy": {
    "act_hp": [
-    1.8,
-    4.1,
-    7.2
+    1.66,
+    3.78,
+    6.64
    ],
    "act_dmg": [
-    0.45,
-    0.76,
-    1.14
+    0.42,
+    0.7,
+    1.05
    ],
    "layer_hp": 0.02,
    "layer_dmg": 0.01
   },
   "post_battle_heal": 0.35,
   "wound_mult": 0.75,
+  "endless": {
+   "hp_per_act": 0.24,
+   "dmg_per_act": 0.18,
+   "gold_per_act": 0.1,
+   "price_per_act": 0.08,
+   "growth_power": 1.6,
+   "elite_base": 1,
+   "elite_per_act": 1,
+   "elite_hp": 1.35,
+   "elite_damage": 1.15,
+   "elite_armor": 1,
+   "elite_chance": 0.12,
+   "elite_chance_per_act": 0.02,
+   "elite_mutators": [
+    "explosive",
+    "frostburst",
+    "stormcaller",
+    "restless",
+    "splitter",
+    "juggernaut",
+    "vampiric",
+    "swift",
+    "thorns",
+    "suppressor",
+    "decay",
+    "devourer",
+    "pack_shaman",
+    "shieldbearer",
+    "warlord"
+   ]
+  },
   "gold": {
    "battle": 22,
    "elite": 40,
@@ -110,7 +152,8 @@
    "heal_pct": 0.4,
    "heal_price": 30,
    "curse_price": 45,
-   "blessing_price": 120
+   "blessing_price": 120,
+   "reroll_cost": 35
   },
   "camp_heal": 0.5,
   "tag_items_max": 2,
@@ -448,71 +491,6 @@
     "desc": "Враги: здоровье ×2.08, урон ×1.72 к 3-му акту; боссы с фазами, подкрепление; механики у 50% врагов к 3-му акту; мутации боссов. Золото ×3.25, материалы ×2.35."
    }
   ],
-  "solo": {
-   "keep": 3,
-   "boss_keep": 1,
-   "phase_max": 1,
-   "slot_levels": [
-    4,
-    7
-   ],
-   "zoom": 1.65,
-   "hero_mods": [
-    {
-     "stat": "hp",
-     "mult": 2.6
-    },
-    {
-     "stat": "atk_damage",
-     "mult": 1.7
-    },
-    {
-     "stat": "power",
-     "mult": 1.7
-    },
-    {
-     "stat": "ap_regen",
-     "mult": 0.8
-    },
-    {
-     "stat": "armor",
-     "add": 2
-    }
-   ],
-   "cfg": {},
-   "role_mods": {
-    "ranged": [
-     {
-      "stat": "hp",
-      "mult": 1.5
-     },
-     {
-      "stat": "armor",
-      "add": 2
-     }
-    ],
-    "caster": [
-     {
-      "stat": "hp",
-      "mult": 1.6
-     },
-     {
-      "stat": "armor",
-      "add": 3
-     }
-    ],
-    "support": [
-     {
-      "stat": "hp",
-      "mult": 1.3
-     },
-     {
-      "stat": "armor",
-      "add": 1
-     }
-    ]
-   }
-  },
   "trophy_final": 2,
   "gift_choices": 2,
   "treasury_share": 0.25,
@@ -534,6 +512,12 @@
      "gems": 2,
      "leather": 1,
      "herbs": 1
+    },
+    "crypt": {
+     "herbs": 2,
+     "gems": 2,
+     "leather": 1,
+     "ore": 1
     }
    },
    "battle": {
@@ -962,6 +946,7 @@
    1.6,
    2.4
   ],
+  "tier_growth": 0.3,
   "tier_names": [
    "",
    "закалённый",
@@ -1480,6 +1465,60 @@
     "text": "+{v}% вампиризма",
     "stat": "lifesteal",
     "add": 0.05
+   },
+   "warded": {
+    "name": "защиты",
+    "text": "{v}% получаемого урона",
+    "stat": "dmg_taken",
+    "pct": -0.05
+   },
+   "duelist": {
+    "name": "дуэлянта",
+    "text": "+{v} дальности атак",
+    "stat": "atk_range",
+    "add": 1
+   },
+   "focused": {
+    "name": "фокуса",
+    "text": "+{v} AP",
+    "stat": "ap_max",
+    "add": 1
+   },
+   "thorned": {
+    "name": "шипов",
+    "text": "+{v}% шипов",
+    "stat": "thorns",
+    "add": 0.12
+   },
+   "savage": {
+    "name": "дикости",
+    "text": "+{v}% урона атак",
+    "stat": "atk_damage",
+    "pct": 0.18
+   },
+   "archmage": {
+    "name": "архимага",
+    "text": "+{v}% силы навыков",
+    "stat": "power",
+    "pct": 0.18
+   },
+   "colossus": {
+    "name": "колосса",
+    "text": "+{v}% здоровья",
+    "stat": "hp",
+    "pct": 0.22
+   },
+   "lucky": {
+    "name": "удачи",
+    "text": "+{v}% шанса крита",
+    "extra": "crit",
+    "add": 0.06
+   },
+   "bloodthirst": {
+    "name": "жажды крови",
+    "text": "+{v}% вампиризма",
+    "stat": "lifesteal",
+    "add": 0.04
    }
   },
   "triggers": {
@@ -1848,6 +1887,108 @@
       "stacks": 1,
       "duration": 5,
       "to": "foe"
+     }
+    ]
+   },
+   "frost_nova": {
+    "text": "ледяной взрыв {p}% атаки и Лёд вокруг",
+    "do": [
+     {
+      "type": "damage",
+      "atk_pct": 0.45,
+      "kind": "reaction",
+      "tag": "ice",
+      "to": "area",
+      "radius": 1,
+      "side": "enemies"
+     },
+     {
+      "type": "status",
+      "tag": "ice",
+      "to": "area",
+      "radius": 1,
+      "side": "enemies"
+     }
+    ],
+    "tags": true
+   },
+   "thunder_chain": {
+    "text": "цепная молния {p}% атаки и Гроза",
+    "needs_foe": true,
+    "do": [
+     {
+      "type": "chain",
+      "atk_pct": 0.55,
+      "radius": 2,
+      "tag": "storm",
+      "to": "unit"
+     },
+     {
+      "type": "status",
+      "tag": "storm",
+      "to": "foe"
+     }
+    ],
+    "tags": true
+   },
+   "blood_nova": {
+    "text": "кровавый взрыв {p}% атаки и кровотечение вокруг",
+    "do": [
+     {
+      "type": "damage",
+      "atk_pct": 0.35,
+      "kind": "reaction",
+      "tag": "bleed",
+      "to": "area",
+      "radius": 1,
+      "side": "enemies"
+     },
+     {
+      "type": "buff",
+      "stat": "bleed",
+      "atk_pct": 0.12,
+      "duration": 4,
+      "to": "area",
+      "radius": 1,
+      "side": "enemies"
+     }
+    ],
+    "tags": true
+   },
+   "quake": {
+    "text": "удар {p}% атаки и оглушение вокруг",
+    "do": [
+     {
+      "type": "damage",
+      "atk_pct": 0.4,
+      "kind": "reaction",
+      "to": "area",
+      "radius": 1,
+      "side": "enemies"
+     },
+     {
+      "type": "stun",
+      "duration": 0.5,
+      "to": "area",
+      "radius": 1,
+      "side": "enemies"
+     }
+    ]
+   },
+   "siphon": {
+    "text": "вытянуть {p}% атаки и восстановить 5% HP",
+    "needs_foe": true,
+    "do": [
+     {
+      "type": "damage",
+      "atk_pct": 0.8,
+      "kind": "reaction",
+      "to": "foe"
+     },
+     {
+      "type": "heal",
+      "hp_pct": 0.05,
+      "to": "self"
      }
     ]
    }
@@ -3568,11 +3709,20 @@
    "ap_regen": 3.5,
    "skills": [
     "e_slam",
-    "mud_splash",
-    "e_drag"
+    "mud_splash"
    ],
    "lifesteal": 0.2,
-   "sprite_fallback": "bog_horror"
+   "sprite_fallback": "bog_horror",
+   "desc": "Древний дух трясины, сросшийся с корнями и утопленниками. Бьёт по площади и давит, как сама топь.",
+   "pp_max": 2,
+   "pp_regen": 3.5,
+   "passive": {
+    "kind": "block",
+    "name": "Сердце трясины",
+    "pp": 1,
+    "mult": 0.6,
+    "desc": "Удар по Сердцу: −1 деление шкалы, урон ×0.6"
+   }
   },
   "toad_queen": {
    "name": "Королева жаб",
@@ -3597,10 +3747,19 @@
    "ap_regen": 3.0,
    "skills": [
     "frog_heal",
-    "mud_splash",
     "e_tidal"
    ],
-   "sprite_fallback": "frog_shaman"
+   "sprite_fallback": "frog_shaman",
+   "desc": "Владычица жабьих дворов. Лечит свиту и обрушивает волны на тех, кто посмел войти в её воды.",
+   "pp_max": 2,
+   "pp_regen": 3.5,
+   "passive": {
+    "kind": "block",
+    "name": "Королевская кожа",
+    "pp": 1,
+    "mult": 0.75,
+    "desc": "Удар по Королеве: −1 деление шкалы, урон ×0.75"
+   }
   },
   "elder_leech": {
    "name": "Старая пиявка",
@@ -3621,7 +3780,17 @@
    },
    "skills": [],
    "lifesteal": 0.5,
-   "sprite_fallback": "toxic_slime"
+   "sprite_fallback": "toxic_slime",
+   "desc": "Раздутая пиявка, которую боятся даже жабы. Вцепляется и пьёт кровь, пока её не оторвут.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Скользкая шкура",
+    "pp": 1,
+    "mult": 0.8,
+    "desc": "Удар по пиявке: −1 деление шкалы, урон ×0.8"
+   }
   },
   "mosquito_swarm": {
    "name": "Комариный рой",
@@ -3644,7 +3813,17 @@
    "skills": [],
    "dodge": 0.35,
    "flying": true,
-   "sprite_fallback": "beetle"
+   "sprite_fallback": "beetle",
+   "desc": "Живой зудящий рой. Его неудобно бить мечом: пока один комар умирает, десять уже пьют кровь.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Плотный рой",
+    "pp": 1,
+    "mult": 0.85,
+    "desc": "Удар по рою: −1 деление шкалы, урон ×0.85"
+   }
   },
   "bog_croc": {
    "name": "Болотный крокодил",
@@ -3668,7 +3847,17 @@
    "skills": [
     "e_drag"
    ],
-   "sprite_fallback": "salamander"
+   "sprite_fallback": "salamander",
+   "desc": "Панцирный хищник мелководья. Тянет добычу в воду и почти не замечает стрел.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Броня из тины",
+    "pp": 1,
+    "mult": 0.75,
+    "desc": "Удар по крокодилу: −1 деление шкалы, урон ×0.75"
+   }
   },
   "spore_shroom": {
    "name": "Гриб-споровик",
@@ -3704,6 +3893,16 @@
       "radius": 1
      }
     ]
+   },
+   "desc": "Ходячий гриб, полный спор. Лопается облаком во все стороны, если его вовремя не сжечь.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Упругая шляпка",
+    "pp": 1,
+    "mult": 0.85,
+    "desc": "Удар по грибу: −1 деление шкалы, урон ×0.85"
    }
   },
   "toad_spearman": {
@@ -3737,7 +3936,8 @@
    "skills": [
     "e_shield_push"
    ],
-   "sprite_fallback": "frog_shaman"
+   "sprite_fallback": "frog_shaman",
+   "desc": "Жабий ветеран в панцирном доспехе. Держит строй щитом и бьёт копьём в открывшуюся брешь."
   },
   "bog_hag": {
    "name": "Болотная ведьма",
@@ -3762,7 +3962,19 @@
     "e_wither",
     "frog_heal"
    ],
-   "sprite_fallback": "frog_shaman"
+   "sprite_fallback": "frog_shaman",
+   "desc": "Старая ведьма болота. Прячется в мороке и сыплет проклятиями, пока её не вытащат на свет.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "dodge",
+    "name": "Туманный морок",
+    "pp": 1,
+    "vs": [
+     "ranged"
+    ],
+    "desc": "Дальняя атака по ведьме: −1 деление шкалы, промах"
+   }
   },
   "will_wisp": {
    "name": "Блуждающий огонёк",
@@ -3797,6 +4009,18 @@
       "kind": "spell"
      }
     ]
+   },
+   "desc": "Блуждающий огонёк, который манит в топь. Перед смертью вспыхивает и бьёт всех рядом.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "dodge",
+    "name": "Мерцающий огонь",
+    "pp": 1,
+    "vs": [
+     "melee"
+    ],
+    "desc": "Ближняя атака по огоньку: −1 деление шкалы, промах"
    }
   },
   "poacher": {
@@ -3817,7 +4041,19 @@
     "cooldown": 1.2
    },
    "skills": [],
-   "sprite_fallback": "trapper"
+   "sprite_fallback": "trapper",
+   "desc": "Браконьер, привыкший стрелять из камышей. Не любит, когда его находят, но уйти старается тихо.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "dodge",
+    "name": "Укрытие в камышах",
+    "pp": 1,
+    "vs": [
+     "ranged"
+    ],
+    "desc": "Дальняя атака по браконьеру: −1 деление шкалы, промах"
+   }
   },
   "reed_militia": {
    "name": "Ополченец Камышинки",
@@ -3837,7 +4073,17 @@
     "cooldown": 1.2
    },
    "skills": [],
-   "sprite_fallback": "raider"
+   "sprite_fallback": "raider",
+   "desc": "Ополченец Камышинки с самодельным щитом. Защищает деревню так, как умеет.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Самодельный щит",
+    "pp": 1,
+    "mult": 0.85,
+    "desc": "Удар по ополченцу: −1 деление шкалы, урон ×0.85"
+   }
   },
   "rust_merc": {
    "name": "Наёмник Ржавых",
@@ -3861,7 +4107,17 @@
    "skills": [
     "e_charge"
    ],
-   "sprite_fallback": "raider"
+   "sprite_fallback": "raider",
+   "desc": "Наёмник Ржавых. Идёт в бой первым, потому что за это платят.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Ржавая броня",
+    "pp": 1,
+    "mult": 0.8,
+    "desc": "Удар по наёмнику: −1 деление шкалы, урон ×0.8"
+   }
   },
   "rust_captain": {
    "name": "Капитан Ржавых",
@@ -3887,7 +4143,17 @@
     "e_charge",
     "e_war_cry"
    ],
-   "sprite_fallback": "warchief"
+   "sprite_fallback": "warchief",
+   "desc": "Капитан Ржавых, который держит отряд криком и сталью. Его доспех знает не одну схватку.",
+   "pp_max": 2,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Капитанский доспех",
+    "pp": 1,
+    "mult": 0.65,
+    "desc": "Удар по капитану: −1 деление шкалы, урон ×0.65"
+   }
   },
   "witch_hunter": {
    "name": "Охотник на ведьм",
@@ -3911,7 +4177,17 @@
    "skills": [
     "ice_dart"
    ],
-   "sprite_fallback": "ice_archer"
+   "sprite_fallback": "ice_archer",
+   "desc": "Охотник на ведьм с серебряным оберегом. Верит, что его дело — жечь чужую магию.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Серебряный оберег",
+    "pp": 1,
+    "mult": 0.8,
+    "desc": "Удар по охотнику: −1 деление шкалы, урон ×0.8"
+   }
   },
   "fog_double": {
    "name": "Туманный двойник",
@@ -3947,6 +4223,18 @@
       "kind": "spell"
      }
     ]
+   },
+   "desc": "Туманный двойник, сплетённый из чужой памяти. Рассыпается, но перед этим успевает ударить.",
+   "pp_max": 1,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "dodge",
+    "name": "Туманная плоть",
+    "pp": 1,
+    "vs": [
+     "melee"
+    ],
+    "desc": "Ближняя атака по двойнику: −1 деление шкалы, промах"
    }
   },
   "bell_ringer": {
@@ -3972,11 +4260,20 @@
    "ap_regen": 4.0,
    "skills": [
     "e_wail",
-    "e_drag",
-    "e_slam"
+    "e_drag"
    ],
    "lifesteal": 0.1,
-   "sprite_fallback": "drowned_captain"
+   "sprite_fallback": "drowned_captain",
+   "desc": "Утопленник, который всё ещё звонит в свой колокол. Тянет героев вниз и глушит их воплем.",
+   "pp_max": 2,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Утопленный звон",
+    "pp": 1,
+    "mult": 0.7,
+    "desc": "Удар по звонарю: −1 деление шкалы, урон ×0.7"
+   }
   },
   "old_tooth": {
    "name": "Старый Зуб",
@@ -4003,7 +4300,17 @@
     "e_slam"
    ],
    "lifesteal": 0.15,
-   "sprite_fallback": "bog_croc"
+   "sprite_fallback": "bog_croc",
+   "desc": "Старый крокодил, переживший всех своих охотников. Его чешуя тверже камня, а пасть — как капкан.",
+   "pp_max": 2,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "block",
+    "name": "Старая чешуя",
+    "pp": 1,
+    "mult": 0.55,
+    "desc": "Удар по Зубу: −1 деление шкалы, урон ×0.55"
+   }
   },
   "leech_mother": {
    "name": "Матка пиявок",
@@ -4030,7 +4337,17 @@
     "e_wither"
    ],
    "lifesteal": 0.35,
-   "sprite_fallback": "elder_leech"
+   "sprite_fallback": "elder_leech",
+   "desc": "Матка пиявок, из которой лезет новый выводок. Каждый удар по ней кормит её.",
+   "pp_max": 2,
+   "pp_regen": 4.0,
+   "passive": {
+    "kind": "siphon",
+    "name": "Кровь выводка",
+    "pp": 1,
+    "pct": 0.25,
+    "desc": "Урон навыком: −1 деление шкалы, матка лечится на 25% нанесённого"
+   }
   },
   "kvaks": {
    "name": "Квакс, король Сердца",
@@ -4055,12 +4372,20 @@
    "ap_regen": 3.5,
    "skills": [
     "e_slam",
-    "mud_splash",
-    "e_tidal",
-    "frog_heal"
+    "e_tidal"
    ],
    "lifesteal": 0.1,
-   "sprite_fallback": "toad_queen"
+   "sprite_fallback": "toad_queen",
+   "desc": "Квакс, король Сердца. Сидит на янтарном троне и верит, что болото принадлежит ему по праву.",
+   "pp_max": 2,
+   "pp_regen": 3.5,
+   "passive": {
+    "kind": "block",
+    "name": "Янтарная корона",
+    "pp": 1,
+    "mult": 0.6,
+    "desc": "Удар по Кваксу: −1 деление шкалы, урон ×0.6"
+   }
   }
  },
  "encounters": [
@@ -12375,6 +12700,144 @@
     "Опасности поля: ковши расплава, меха, жерла"
    ],
    "trophy": "ember"
+  },
+  "crypt": {
+   "name": "Склеп нежити",
+   "order": 2,
+   "file": "expedition_crypt.json",
+   "unlock": "forge",
+   "desc": "Мёртвые встают, пока их не добили Огнём; туман скрывает врагов, а проклятия режут здоровье, силу и урон. Трон лича ждёт в конце.",
+   "art": "crypt_act_0",
+   "color": [
+    150,
+    160,
+    200
+   ],
+   "enemies": [
+    "skeleton",
+    "skeleton_archer",
+    "ghoul",
+    "necromancer",
+    "banshee",
+    "bone_golem",
+    "wraith",
+    "death_knight",
+    "crypt_abbot",
+    "crypt_warden",
+    "lich"
+   ],
+   "boss": "lich",
+   "mechanics": [
+    "Темнота: карта видна на 2 слоя вперёд, каждый шаг тратит факел",
+    "Без факелов видно только на 1 слой, а на расстановке враги скрыты",
+    "Факелы пополняются в лагерях и покупаются у торговца; сложность меняет запас",
+    "Нежить встаёт через 4 секунды, если её не добить Огнём",
+    "Туман скрывает часть врагов на разведке",
+    "Проклятия склепа режут здоровье, силу и урон отряда"
+   ],
+   "trophy": "soul"
+  },
+  "pass": {
+   "name": "Ледяные перевалы",
+   "order": 3,
+   "file": "expedition_pass.json",
+   "unlock": "crypt",
+   "desc": "Горные тропы над пропастью. Лавины, скользкий лёд и ледяная броня врагов.",
+   "art": "pass_act_0",
+   "color": [112, 126, 140],
+   "enemies": ["ice_archer", "frost_shaman", "frost_wolf", "yeti", "yeti_alpha", "frost_giant"],
+   "boss": "frost_giant",
+   "mechanics": [
+    "Скользкий лёд: шаг на лёд протаскивает ещё на клетку",
+    "Лавины: отмеченный участок накрывает уроном, Льдом и оглушением",
+    "Ледяная броня: щит врага нарастает снова; Огонь колет его и бьёт сильнее"
+   ],
+   "trophy": "frost"
+  },
+  "steppe": {
+   "name": "Грозовая степь",
+   "order": 4,
+   "file": "expedition_steppe.json",
+   "unlock": "pass",
+   "desc": "Травы под вечной грозой. Молнии, порывы ветра и быстрые налётчики.",
+   "art": "steppe_act_0",
+   "color": [150, 150, 90],
+   "enemies": ["storm_hawk", "stormcaller", "raider", "steppe_ogre", "warchief", "storm_khan"],
+   "boss": "storm_khan",
+   "mechanics": [
+    "Гроза: молнии бьют в отмеченные клетки; мокрым героям грозит электрошок",
+    "Ветер: порыв сдвигает всех на клетку, в стену — урон",
+    "Налётчики: быстрые всадники врываются в тыл прыжком"
+   ],
+   "trophy": "storm"
+  },
+  "tomb": {
+   "name": "Пустынные гробницы",
+   "order": 5,
+   "file": "expedition_tomb.json",
+   "unlock": "steppe",
+   "desc": "Пески, саркофаги и рои скарабеев. Фараон не желает покоя.",
+   "art": "tomb_act_0",
+   "color": [190, 160, 105],
+   "enemies": ["tomb_archer", "sand_priest", "mummy", "scarab", "sarcophagus", "tomb_guardian", "pharaoh"],
+   "boss": "pharaoh",
+   "mechanics": [
+    "Песчаная буря: на 6 сек дальность стрелков и магов −2",
+    "Саркофаги: каменные гробы поднимают мумий, пока их не разбить",
+    "Скарабеи: рои с Ядом, который режет лечение"
+   ],
+   "trophy": "sun"
+  },
+  "fae": {
+   "name": "Тёмный лес фей",
+   "order": 6,
+   "file": "expedition_fae.json",
+   "unlock": "tomb",
+   "desc": "Лес, где тропы меняются, а феи играют с разумом. В сердце чащи — Чертог королевы.",
+   "art": "fae_act_0",
+   "color": [150, 115, 190],
+   "enemies": ["sprite", "dryad", "thorn_beast", "maneater", "illusionist", "fae_knight", "fae_queen"],
+   "boss": "fae_queen",
+   "mechanics": [
+    "Очарование: феи заставляют героя 4 сек сражаться против своих",
+    "Иллюзии: иллюзионисты создают двойников-приманок",
+    "Хищные растения: хватают героев рядом и лечат фей"
+   ],
+   "trophy": "fae"
+  },
+  "sunken": {
+   "name": "Затонувший город",
+   "order": 7,
+   "file": "expedition_sunken.json",
+   "unlock": "fae",
+   "desc": "Город под водой. В отлив открываются улицы, в прилив — пасть глубин.",
+   "art": "sunken_act_0",
+   "color": [80, 130, 160],
+   "enemies": ["eel", "siren", "drowned", "crab_knight", "drowned_captain", "deep_lord"],
+   "boss": "deep_lord",
+   "mechanics": [
+    "Приливы: волна затапливает два ряда клеток на 6 сек — Вода на всех, кто там стоит",
+    "Утаскивание: утопленники притягивают героев и оглушают",
+    "Угри: электрические твари бьют Грозой; по мокрым — электрошок"
+   ],
+   "trophy": "pearl"
+  },
+  "citadel": {
+   "name": "Небесная цитадель",
+   "order": 8,
+   "file": "expedition_citadel.json",
+   "unlock": "sunken",
+   "desc": "Парящая крепость над облаками. Пропасти, порталы и небесный архонт.",
+   "art": "citadel_act_0",
+   "color": [170, 180, 210],
+   "enemies": ["sentinel", "arcanist", "seraph", "sky_knight", "harpy", "storm_paladin", "archon"],
+   "boss": "archon",
+   "mechanics": [
+    "Пропасти: сброшенный враг гибнет, герой теряет 40% HP — отталкивания решают",
+    "Порталы: шаг в портал переносит к парному порталу",
+    "Летающие: крылатые враги парят над пропастями; на героической и выше дует ветер"
+   ],
+   "trophy": "star"
   }
  },
  "factions": {
@@ -12404,6 +12867,52 @@
    ],
    "chapter": "forge",
    "desc": "За боссов Кузней (финал — ещё 2) и тайных боссов. Нужно для построек таверны."
+  },
+  "soul": {
+   "name": "Осколок души",
+   "color": [
+    150,
+    190,
+    235
+   ],
+   "chapter": "crypt",
+   "desc": "За боссов Склепа (финал — ещё 2) и тайных боссов. Резерв для будущих построек таверны."
+  },
+  "frost": {
+   "name": "Сердце льда",
+   "color": [150, 210, 245],
+   "chapter": "pass",
+   "desc": "За боссов Ледяных перевалов. Нужно для будущих построек таверны."
+  },
+  "storm": {
+   "name": "Громовой янтарь",
+   "color": [255, 230, 110],
+   "chapter": "steppe",
+   "desc": "За боссов Грозовой степи. Нужно для будущих построек таверны."
+  },
+  "sun": {
+   "name": "Солнечный скарабей",
+   "color": [245, 190, 80],
+   "chapter": "tomb",
+   "desc": "За боссов Пустынных гробниц. Нужно для будущих построек таверны."
+  },
+  "fae": {
+   "name": "Пыльца королевы",
+   "color": [210, 150, 255],
+   "chapter": "fae",
+   "desc": "За боссов Тёмного леса фей. Нужно для будущих построек таверны."
+  },
+  "pearl": {
+   "name": "Чёрная жемчужина",
+   "color": [130, 220, 230],
+   "chapter": "sunken",
+   "desc": "За боссов Затонувшего города. Нужно для будущих построек таверны."
+  },
+  "star": {
+   "name": "Звёздный осколок",
+   "color": [220, 230, 255],
+   "chapter": "citadel",
+   "desc": "За боссов Небесной цитадели. Нужно для будущих построек таверны."
   }
  },
  "buildings": {
@@ -12606,7 +13115,7 @@
   },
   "ws_forge": {
    "name": "Горн мастера",
-   "desc": "Кузня артефактов: наручи и пояса. Мини-игра — ритм-ковка",
+   "desc": "Кузня артефактов: наручи и пояса — плавка, пакет, сварка, разделка, ковка",
    "workshop": true,
    "levels": [
     {
@@ -12639,11 +13148,17 @@
      "value": 4,
      "text": "легендарные"
     }
-   ]
+   ],
+   "master": {
+    "chapter": "swamp",
+    "chapter_name": "Болото",
+    "name": "кузнец Гордей",
+    "text": "Кузнец Гордей спасён с Болота — горн мастера открыт"
+   }
   },
   "ws_jewel": {
    "name": "Ювелирная",
-   "desc": "Кольца и амулеты, огранка самоцветов и вставка в гнёзда. Мини-игра — огранка",
+   "desc": "Кольца и амулеты, огранка самоцветов и вставка в гнёзда",
    "workshop": true,
    "levels": [
     {
@@ -12676,7 +13191,13 @@
      "value": 4,
      "text": "легендарные"
     }
-   ]
+   ],
+   "master": {
+    "chapter": "forge",
+    "chapter_name": "Огненные кузни",
+    "name": "ювелирша Ада",
+    "text": "Ювелирша Ада спасена из Кузен — научила столовой огранке"
+   }
   },
   "ws_leather": {
    "name": "Кожевня",
@@ -12713,7 +13234,13 @@
      "value": 4,
      "text": "легендарные"
     }
-   ]
+   ],
+   "master": {
+    "chapter": "ch3",
+    "chapter_name": "глава 3",
+    "name": "кожевник",
+    "text": "Кожевник спасён — кожевня открыта"
+   }
   },
   "ws_alchemy": {
    "name": "Алхимия",
@@ -12743,7 +13270,13 @@
      "value": 10,
      "text": "улучшение до +10"
     }
-   ]
+   ],
+   "master": {
+    "chapter": "ch4",
+    "chapter_name": "глава 4",
+    "name": "алхимик",
+    "text": "Алхимик спасён — алхимия открыта"
+   }
   }
  },
  "vows": {
@@ -12821,7 +13354,7 @@
  },
  "materials": {
   "ore": {
-   "name": "Руда",
+   "name": "Железная руда",
    "color": [
     170,
     150,
@@ -12875,6 +13408,17 @@
    "chapter": "forge",
    "desc": "Редкий материал Кузней: элита и боссы. Для редких и сильнее артефактов огненных сетов"
   },
+  "bonedust": {
+   "name": "Костяная пыль",
+   "color": [
+    210,
+    205,
+    185
+   ],
+   "rare": true,
+   "chapter": "crypt",
+   "desc": "Редкий материал Склепа: элита и боссы. Для редких и сильнее артефактов мёртвых"
+  },
   "stardust": {
    "name": "Звёздная пыль",
    "color": [
@@ -12884,6 +13428,60 @@
    ],
    "rare": true,
    "desc": "С боссов, чаще на высоких ступенях. Нужна для легендарных артефактов"
+  },
+  "coal": {
+   "name": "Уголь",
+   "color": [
+    70,
+    66,
+    64
+   ],
+   "desc": "топливо и углерод стали; шахта, бои"
+  },
+  "copper": {
+   "name": "Медная руда",
+   "color": [
+    205,
+    125,
+    85
+   ],
+   "desc": "медь, бронза, оправы; шахта"
+  },
+  "tin": {
+   "name": "Оловянная руда",
+   "color": [
+    190,
+    195,
+    205
+   ],
+   "desc": "олово для бронзы; шахта (2-й горизонт)"
+  },
+  "silver": {
+   "name": "Серебряная руда",
+   "color": [
+    215,
+    218,
+    228
+   ],
+   "desc": "серебро для оправ; шахта (2-й горизонт)"
+  },
+  "gold": {
+   "name": "Золотые самородки",
+   "color": [
+    240,
+    200,
+    80
+   ],
+   "desc": "золото для оправ; шахта (глубокая жила)"
+  },
+  "meteor": {
+   "name": "Метеоритное железо",
+   "color": [
+    140,
+    160,
+    210
+   ],
+   "desc": "звёздная сталь; шахта (звёздный пласт)"
   }
  },
  "contracts": {
@@ -13430,7 +14028,11 @@
      }
     ],
     "text": "+{v}% урона атак",
-    "price": 320
+    "price": 320,
+    "per_ct": 21000,
+    "sg": 4.0,
+    "incl": 2.5,
+    "silk": 0.35
    },
    "sapphire": {
     "name": "Сапфир",
@@ -13446,7 +14048,11 @@
      }
     ],
     "text": "+{v}% силы навыков",
-    "price": 300
+    "price": 300,
+    "per_ct": 19500,
+    "sg": 4.0,
+    "incl": 2.2,
+    "silk": 0.35
    },
    "emerald": {
     "name": "Изумруд",
@@ -13462,7 +14068,11 @@
      }
     ],
     "text": "+{v}% здоровья",
-    "price": 280
+    "price": 280,
+    "per_ct": 18000,
+    "sg": 2.75,
+    "incl": 4.0,
+    "silk": 0.0
    },
    "topaz": {
     "name": "Топаз",
@@ -13478,7 +14088,11 @@
      }
     ],
     "text": "+{v}% шанса крита",
-    "price": 180
+    "price": 180,
+    "per_ct": 7800,
+    "sg": 3.55,
+    "incl": 1.4,
+    "silk": 0.0
    },
    "amethyst": {
     "name": "Аметист",
@@ -13493,7 +14107,11 @@
      }
     ],
     "text": "−{v}% перезарядки навыков",
-    "price": 150
+    "price": 150,
+    "per_ct": 5400,
+    "sg": 2.65,
+    "incl": 1.6,
+    "silk": 0.0
    }
   },
   "gem_cost": {
@@ -13791,7 +14409,7 @@
   }
  },
  "market": {
-  "_note": "Рынок таверны: товар обновляется после каждого похода. Необработанные самоцветы — редкость: только рынок и небольшой шанс в конце вылазки (за каждую добытую крошку). Каждый камень — свой (seed): огранять именно его.",
+  "_note": "Рынок таверны: товар обновляется после каждого похода. Необработанные самоцветы — редкость: только рынок, бродячий ювелир и небольшой шанс в конце вылазки. Каждый камень свой: караты, цвет, примеси (sim/gems.py).",
   "rough_stock": [
    2,
    4
@@ -13800,17 +14418,9 @@
    0,
    2
   ],
-  "size": [
-   0.75,
-   1.35
-  ],
   "sell_k": 0.5,
   "rough_drop_per_chip": 0.05,
-  "rough_drop_max": 0.6,
-  "cut_value": [
-   0.6,
-   2.2
-  ]
+  "rough_drop_max": 0.6
  },
  "smithing": {
   "_note": "Ковка: плавка руды в куски (железо/сталь по углероду) → пакет на столе (тетрис, слои — строки) → сварка и складывание (дамаск) → разделка клином на части рецепта → ковка частей по контуру и закалка. Свойства металла (твёрдость, вязкость, слои, узор) переходят в артефакт.",

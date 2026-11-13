@@ -6,10 +6,13 @@
   q      — качество ковки (мини-игра) 0.7–1.3;
   level  — улучшение +0…+10 (алхимия);
   extra  — свойство зачарования {"id": свойство вещи, "q": качество} или None;
-  gems   — вставленные самоцветы [{"id", "q"}] (гнёзд — по редкости).
+  gems   — вставленные самоцветы [{"id", "q", "size", "col", "cl", "cut", "star"}] (гнёзд — по редкости),
+           сила — sim/gems.power (4C: караты, цвет, чистота, огранка).
 Слой артефактов множится на остальной рост героя (бонусы внутри слоя складываются)."""
 import math
 import random
+
+from sim import gems as GM
 
 RARITY_ORDER = ("common", "rare", "epic", "legendary")
 
@@ -45,7 +48,8 @@ def _stat(xd, entry, k):
 
 
 def sockets(xd, art):
-    return cfg(xd)["rarities"][art["rarity"]]["sockets"]
+    """Гнёзда: по редкости (+1 у золотой оправы из кузни)."""
+    return cfg(xd)["rarities"][art["rarity"]]["sockets"] + art.get("sockets_bonus", 0)
 
 
 def set_counts(xd, arts):
@@ -88,8 +92,13 @@ def effects(xd, arts, owner="h"):
         for g in art.get("gems", []):
             gd = a["gems"].get(g["id"])
             if gd:
+                gk = GM.power(xd, g)
                 for entry in gd["stats"]:
-                    add(*_stat(xd, entry, g.get("q", 1.0)))
+                    add(*_stat(xd, entry, gk))
+        for m in art.get("metal_affix", []):             # свой эффект металла вещи (бронза — скорость и т. п.)
+            s = xd["items"]["stat_affixes"].get(m["id"])
+            if s:
+                add(*_stat(xd, s, m["k"]))
     for art in arts:                                     # металл кованой вещи: твёрдость, вязкость, дамаск
         for m in metal_mods(art.get("metal")):
             if "extra" in m:
@@ -151,9 +160,18 @@ def quality_word(q):
 def entry_text(entry, k=1.0):
     """«+5% урона атак» для свойства-стата артефакта."""
     names = {"atk_damage": "урона атак", "power": "силы навыков", "hp": "здоровья", "armor": "брони",
-             "lifesteal": "вампиризма", "dot_poison_mult": "урона ядом", "dot_fire_mult": "урона горением"}
+             "lifesteal": "вампиризма", "dot_poison_mult": "урона ядом", "dot_fire_mult": "урона горением",
+             "dot_bleed_mult": "урона кровотечением", "dot_mult": "силы всех дотов",
+             "dot_duration_mult": "длительности дотов"}
     if "pct" in entry and "vs" in entry:
-        return f"+{entry['pct'] * k * 100:.1f}% урона по {'горящим' if entry['vs'] == 'burning' else 'ослабленным'}"
+        vs = {"burning": "горящим", "wet": "мокрым", "cold": "замёрзшим", "dot": "отравленным и горящим"}
+        return f"+{entry['pct'] * k * 100:.1f}% урона по {vs.get(entry['vs'], 'ослабленным')}"
+    if "reaction" in entry:
+        return f"+{entry['reaction'] * k * 100:.1f}% урона реакций героя"
+    if entry.get("extra") == "dodge":
+        return f"+{entry['add'] * k * 100:.1f}% уклонения"
+    if entry.get("extra") == "crit_mult":
+        return f"+{entry['add'] * k * 100:.1f}% силы крита"
     if "pct" in entry:
         return f"+{entry['pct'] * k * 100:.1f}% {names.get(entry['stat'], entry['stat'])}"
     if entry.get("stat") == "armor":
@@ -184,13 +202,23 @@ def art_lines(xd, art):
         out.append("Свойство: " + _affix_scaled(xd, s, v, affix_text))
     for g in art.get("gems", []):
         gd = a["gems"][g["id"]]
-        out.append(f"{gd['name']}: " + "; ".join(entry_text(e, g.get("q", 1.0)) for e in gd["stats"]))
+        out.append(f"{gd['name']}: " + "; ".join(entry_text(e, GM.power(xd, g)) for e in gd["stats"]))
+    for m in art.get("metal_affix", []):
+        out.append(metal_affix_text(xd, m))
     if art.get("metal"):
         out.append(metal_text(art["metal"]))
     free = sockets(xd, art) - len(art.get("gems", []))
     if free > 0:
         out.append("Свободных гнёзд: " + str(free))
     return [x for x in out if x]
+
+
+def metal_affix_text(xd, m, with_name=True):
+    """«Бронза: +5.4% скорости атак» — эффект металла вещи."""
+    from sim import forge as FG
+    s = xd["items"]["stat_affixes"].get(m["id"])
+    t = entry_text(s, m["k"]) if s else ""
+    return f"{FG.ALLOYS[m['alloy']]['name']}: {t}" if with_name else t
 
 
 def _affix_scaled(xd, s, k, affix_text):
@@ -210,7 +238,9 @@ def craft_cost(xd, ws, set_id):
     a = cfg(xd)
     s = a["sets"][set_id]
     c = a["craft_cost"][s["rarity"]]
-    out = {"glory": c["gold"], a["main_mat"][ws]: c["main"]}
+    out = {"glory": c["gold"]}
+    if ws not in ("ws_forge", "ws_jewel"):                # кузня и ювелир: металл — через тигель и примитивы
+        out[a["main_mat"][ws]] = c["main"]
     if c.get("rare"):
         out[s["mat"] or "stardust"] = out.get(s["mat"] or "stardust", 0) + c["rare"]
     if c.get("stardust"):
@@ -266,15 +296,11 @@ def power_score(xd, arts):
     return dmg * hp
 
 
-# ---------- самоцветы: цена ----------
+# ---------- самоцветы: цена (sim/gems.py — 4C) ----------
 
 def rough_value(xd, r):
-    """Цена необработанного камня: вид × размер."""
-    return int(xd["artifacts"]["gems"][r["id"]].get("price", 200) * r.get("size", 1.0))
+    return GM.rough_value(xd, r)
 
 
 def cut_value(xd, g):
-    """Цена огранённого камня: вид × размер × качество огранки (70% — дешевле сырого, 130% — вдвое дороже)."""
-    lo, hi = xd.get("market", {}).get("cut_value", [0.6, 2.2])
-    k = lo + (hi - lo) * max(0.0, min(1.0, (g["q"] - 0.7) / 0.6))
-    return int(xd["artifacts"]["gems"][g["id"]].get("price", 200) * g.get("size", 1.0) * k)
+    return GM.cut_value(xd, g)

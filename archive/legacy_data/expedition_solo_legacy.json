@@ -1,0 +1,65 @@
+{
+  "keep": 3,
+  "boss_keep": 1,
+  "phase_max": 1,
+  "slot_levels": [
+    4,
+    7
+  ],
+  "zoom": 1.65,
+  "hero_mods": [
+    {
+      "stat": "hp",
+      "mult": 2.6
+    },
+    {
+      "stat": "atk_damage",
+      "mult": 1.7
+    },
+    {
+      "stat": "power",
+      "mult": 1.7
+    },
+    {
+      "stat": "ap_regen",
+      "mult": 0.8
+    },
+    {
+      "stat": "armor",
+      "add": 2
+    }
+  ],
+  "cfg": {},
+  "role_mods": {
+    "ranged": [
+      {
+        "stat": "hp",
+        "mult": 1.5
+      },
+      {
+        "stat": "armor",
+        "add": 2
+      }
+    ],
+    "caster": [
+      {
+        "stat": "hp",
+        "mult": 1.6
+      },
+      {
+        "stat": "armor",
+        "add": 3
+      }
+    ],
+    "support": [
+      {
+        "stat": "hp",
+        "mult": 1.3
+      },
+      {
+        "stat": "armor",
+        "add": 1
+      }
+    ]
+  }
+}

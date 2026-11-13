@@ -133,6 +133,20 @@ class FireField:
         return x0 + (xs[i] + rng.random(n)) / RES, y0 + (ys[i] + rng.random(n)) / RES
 
 
+class FogField(FireField):
+    """Туман: серое облако на клетках, край живой; своих скрывает, чужих слепит."""
+
+    def _paint(self, n0, n1, n2, t):
+        band = np.clip(self.cover * (1 - self.cover) * 4, 0, 1)
+        edge = self.cover_n + ((np.roll(n0, t // 4, 0) - 0.5) * 1.1 + (n1 - 0.5) * 0.45) * band
+        depth = np.clip((edge - 0.5) * 2.2, 0, 1)
+        puffs = np.roll(n1, -t, 1) * 0.55 + np.roll(n2, t, 0) * 0.45
+        inside = (edge > 0.5) & (puffs > 0.34)          # рваные клочья, а не серая плитка
+        cloud = np.clip(0.14 + 0.9 * puffs * depth, 0, 1)
+        alpha = np.clip((edge - 0.45) * 5, 0, 1) * (0.03 + 0.09 * depth) * (0.20 + 0.80 * puffs) * inside
+        return bake(cloud * inside, "fog", alpha), inside, depth
+
+
 class IceField(FireField):
     """Ледяные клетки — единая ледяная корка: край общий и рваный (сетки нет), внутри — грани и трещины,
     по льду медленно ползёт блик. Вода под коркой выглядит замёрзшей: корка непрозрачнее воды вокруг."""

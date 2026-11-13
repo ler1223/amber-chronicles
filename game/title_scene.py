@@ -79,7 +79,7 @@ class TitleScene(CampBackdrop):
         if getattr(self.app, "launcher", "legacy") == "main":      # main.py: только Экспедиция и Одиночка
             other = story = None
             exped = ("expedition", "Экспедиция: поход отряда") if prof.mode != "expedition" else \
-                ("solo", "Одиночка: один герой")
+                ("solo", "Бесконечный забег: отряд, 1 способность")
         else:
             other = ("mode", "Основная игра") if prof.mode != "base" else ("mode", "Режим героев (статы)")
             story = ("story", "Сюжет: новое начало") if prof.mode != "story" else None
@@ -142,7 +142,7 @@ class TitleScene(CampBackdrop):
         sub = {"stats": "РЕЖИМ ГЕРОЕВ: уровни, атрибуты, скейлы навыков",
                "story": "СЮЖЕТ: отряд собирается в пути · обучение механикам",
                "expedition": "ЭКСПЕДИЦИЯ: таверна · главы из трёх актов · отряд, события, снаряжение",
-               "solo": "ОДИНОЧКА: один герой · те же главы · камера за героем, шесть навыков"}.get(
+               "solo": "БЕСКОНЕЧНЫЙ ЗАБЕГ: отряд · у каждого одна способность · акты не кончаются"}.get(
             self.app.profile.mode, "тактический бой · вылазки · герои")
         T.text(surf, sub, (T.SCREEN_W // 2, 192), 20,
                (150, 200, 255) if self.app.profile.mode == "stats" else (220, 210, 190), center=True, shadow=True)
@@ -273,7 +273,7 @@ class MainTitleScene(TitleScene):
         T.text(surf, title, (70, 120), 72, (255, 196, 96), True, shadow=True)
         sub = ("Обучение: героями и врагами управляют нейросети, они учатся в каждом бою" if
                getattr(self.app, "launcher", "") == "learn" else
-               "Таверна, главы из трёх актов, события и снаряжение — отрядом или в одиночку")
+               "Таверна, главы, события и снаряжение — обычной вылазкой или бесконечным забегом")
         T.text(surf, sub, (74, 206), 18, (230, 214, 180), shadow=True)
         pygame.draw.line(surf, T.AMBER, (74, 240), (520, 240), 2)
         T.frame(surf, self.panel_rect, 210, accent=T.AMBER_DIM)

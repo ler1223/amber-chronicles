@@ -86,6 +86,19 @@
     "static": true,
     "permanent": true
   },
+  "spirit_wolf": {
+    "name": "Дух волка",
+    "label": "Дв",
+    "color": [150, 200, 230],
+    "role": "melee",
+    "hp": 80,
+    "armor": 1,
+    "move_time": 0.4,
+    "attack": {"damage": 10, "range": 1, "cooldown": 1.0, "tag": "bleed"},
+    "lifesteal": 0.2,
+    "summon": true,
+    "permanent": true
+  },
   "skeleton_minion": {
     "owner_scale": {"hp": 0.35, "atk": 0.8, "armor": 0.5},
     "name": "Поднятый скелет",
@@ -428,5 +441,51 @@
     "sprite_fallback": "totem_storm",
     "aura": {"every": 1.5, "radius": 3, "effects": [{"type": "damage", "amount": 6, "kind": "spell", "radius": 3, "tag": "storm"}, {"type": "stun", "duration": 0.8, "radius": 3, "look": "shock"}]},
     "life": 10
+  },
+  "spirit_healer": {
+    "name": "Дух-хранитель",
+    "label": "Дх",
+    "color": [
+      170,
+      220,
+      255
+    ],
+    "role": "support",
+    "hp": 70,
+    "armor": 1,
+    "move_time": 0.8,
+    "attack": {
+      "damage": 0,
+      "range": 0,
+      "cooldown": 9
+    },
+    "aura": {
+      "every": 1.0,
+      "radius": 2,
+      "effects": [
+        {
+          "type": "heal",
+          "amount": 8,
+          "radius": 2
+        }
+      ]
+    },
+    "summon": true,
+    "flying": true,
+    "look": {
+      "body": "spirit",
+      "color": [
+        170,
+        220,
+        255
+      ],
+      "accent": [
+        120,
+        180,
+        240
+      ],
+      "head": "none",
+      "weapon": "none"
+    }
   }
 }

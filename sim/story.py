@@ -6,7 +6,8 @@
 Предметы покупаются у торговца в лагере, улучшения — в кузнице.
 
 Профиль сюжета — тот же Profile (герои, подготовка, арсенал, лагерь, отряд), но состав героев задаёт сюжет:
-открыты только присоединившиеся, в бою до 6. Прогресс — как в режиме героев (sim/stats.py): уровень героя,
+открыты только присоединившиеся, в бою 2–5 героев по номеру главы (data/story.json → squad_by_chapter).
+Прогресс — как в режиме героев (sim/stats.py): уровень героя,
 атрибуты и очки остаются навсегда; у каждой вылазки свой уровень врагов (data/story.json, «level»).
 """
 import copy
@@ -95,8 +96,19 @@ class StoryProfile(Profile):
     def hero_lock_reason(self, cls):
         return "Присоединится по сюжету"
 
+    def current_chapter(self):
+        """Глава текущей вылазки; после прохождения сюжета — последняя глава."""
+        exp = self.current()
+        if exp is not None:
+            return exp["chapter"]
+        done = [e for e in self.expeditions_list() if e["id"] in self.done]
+        return done[-1]["chapter"] if done else self.story["chapters"][0]["id"]
+
     def squad_size(self):
-        return min(self.story["squad_max"], max(1, len(self.unlocked)))
+        """Активный отряд по главе: 2 / 3 / 3 / 4 / 4 / 5... — не больше открытых героев."""
+        cid = self.current_chapter()
+        cap = (self.story.get("squad_by_chapter") or {}).get(cid, self.story["squad_max"])
+        return min(self.story["squad_max"], max(1, int(cap)))
 
     def level(self, cls):
         return self.heroes[cls]["rpg"]["level"]

@@ -51,17 +51,98 @@
       {"name": "Ледяные осколки", "desc": "Пробивают всех врагов на линии до 5 клеток: 25 урона + Лёд.", "mods": [{"set": {"name": "Ледяные осколки", "desc": "Осколки пробивают всех врагов на линии до 5 клеток: 25 урона + Лёд."}, "effects": [{"type": "line", "amount": 25, "length": 5, "tag": "ice", "kind": "ranged"}]}]},
       {"name": "Шквал", "desc": "Мгновенно, 40 урона.", "mods": [{"set": {"cast": 0, "desc": "Мгновенно. 40 урона + Лёд всем врагам на линии до 5 клеток."}}, {"effect": {"type": "line", "add": {"amount": 15}}}]}]}
   },
-  "mana_shield": {
-    "A": {"name": "Барьер", "tiers": [
-      {"name": "Барьер", "desc": "4 AP: щит 30 всем союзникам в радиусе 2 от цели.", "mods": [{"set": {"name": "Барьер", "ap": 4, "radius": 2, "desc": "Щит 30 всем союзникам в радиусе 2 от цели на 8 сек."}, "effects": [{"type": "shield", "amount": 30, "duration": 8, "radius": 2}]}]},
-      {"name": "Святилище", "desc": "Ещё и снимает с них все теги.", "mods": [{"set": {"desc": "Щит 30 всем союзникам в радиусе 2 на 8 сек, снимает с них теги."}}, {"add_effect": {"type": "cleanse", "radius": 2}}]}]},
-    "B": {"name": "Зеркальный щит", "tiers": [
-      {"name": "Зеркальный щит", "desc": "Щит 40 и отражение 60% ближнего урона на 8 сек.", "mods": [{"set": {"name": "Зеркальный щит", "desc": "Щит 40 и отражение 60% ближнего урона на 8 сек."}, "effects": [{"type": "shield", "amount": 40, "duration": 8}, {"type": "buff", "stat": "thorns", "value": 0.6, "duration": 8}]}]},
-      {"name": "Неуязвимость", "desc": "Ещё −30% получаемого урона.", "mods": [{"set": {"desc": "Щит 40, отражение 60% ближнего урона и −30% получаемого урона на 8 сек."}}, {"add_effect": {"type": "buff", "stat": "dmg_taken", "value": 0.7, "duration": 8}}]}]}
-  },
   "heal": {
-    "A": {"name": "Обновление", "tiers": [{"name": "Обновление", "desc": "Мгновенно: +лечение 200% силы навыков в сек 6 сек (60 всего).", "mods": [{"set": {"name": "Обновление", "cast": 0, "desc": "Мгновенно. Союзник восстанавливает 200% силы навыков в сек 6 сек."}, "effects": [{"type": "buff", "stat": "regen", "value": 10, "duration": 6}]}]}, {"name": "Роща", "desc": "Действует и на союзников рядом с целью.", "mods": [{"set": {"radius": 1, "desc": "Мгновенно. Союзник и все рядом восстанавливают 200% силы навыков в сек 6 сек."}}, {"effect": {"type": "buff", "set": {"radius": 1}}}]}]},
-    "B": {"name": "Великое исцеление", "tiers": [{"name": "Великое исцеление", "desc": "Каст 1.5 сек, 4 AP: лечит на 1800% силы навыков и снимает теги.", "mods": [{"set": {"name": "Великое исцеление", "cast": 1.5, "ap": 4, "desc": "Каст 1.5 сек. Лечит на 1800% силы навыков и снимает теги."}, "effects": [{"type": "heal", "amount": 90}, {"type": "cleanse"}]}]}, {"name": "Божественный дар", "desc": "Лечит на 110, излишек становится щитом.", "mods": [{"set": {"desc": "Каст 1.5 сек. Лечит на 110 и снимает теги; излишек лечения — щит."}}, {"effect": {"type": "heal", "add": {"amount": 20}, "set": {"overheal_shield": true}}}]}]}
+    "A": {
+      "name": "Мгновенное лечение",
+      "tiers": [
+        {
+          "name": "Мгновенное лечение",
+          "desc": "Мгновенно лечит на 55.",
+          "mods": [
+            {
+              "set": {
+                "name": "Мгновенное лечение",
+                "desc": "Мгновенно лечит на 55."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 55
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Мгновенное лечение+",
+          "desc": "Мгновенно лечит на 70 и снимает теги.",
+          "mods": [
+            {
+              "set": {
+                "name": "Мгновенное лечение",
+                "desc": "Мгновенно лечит на 70 и снимает теги."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 70
+                },
+                {
+                  "type": "cleanse"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Маяк",
+      "tiers": [
+        {
+          "name": "Маяк",
+          "desc": "8 сек лечит по 10 HP в секунду.",
+          "mods": [
+            {
+              "set": {
+                "name": "Маяк",
+                "desc": "8 сек лечит по 10 HP в секунду.",
+                "cast": 0
+              },
+              "effects": [
+                {
+                  "type": "heal_over_time",
+                  "amount": 10,
+                  "duration": 8,
+                  "every": 1.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Маяк+",
+          "desc": "10 сек лечит по 14 HP в секунду.",
+          "mods": [
+            {
+              "set": {
+                "name": "Маяк+",
+                "desc": "10 сек лечит по 14 HP в секунду.",
+                "cast": 0
+              },
+              "effects": [
+                {
+                  "type": "heal_over_time",
+                  "amount": 14,
+                  "duration": 10,
+                  "every": 1.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "holy_water": {
     "A": {"name": "Потоп", "tiers": [{"name": "Потоп", "desc": "Радиус 2: урон 160% силы навыков + Вода, замедление 4 сек. Тушит огонь.", "mods": [{"set": {"name": "Потоп", "radius": 2, "desc": "Радиус 2: урон 160% силы навыков + Вода, замедление 4 сек. Тушит огонь."}, "effects": [{"type": "damage", "amount": 8, "radius": 2, "tag": "water", "kind": "spell", "on_hit_buff": {"stat": "slow", "value": 1.6, "duration": 4}}, {"type": "cleanse", "tags": ["fire"], "radius": 2, "affects": "allies"}, {"type": "cell_tag", "tag": "water", "radius": 2}]}]}, {"name": "Цунами", "desc": "Волна отбрасывает задетых врагов от жреца.", "mods": [{"set": {"desc": "Радиус 2: урон 160% силы навыков + Вода, замедление, волна отбрасывает врагов от жреца."}}, {"add_effect": {"type": "knockback", "radius": 2, "cells": 1}}]}]},
@@ -96,36 +177,503 @@
       {"name": "Жатва", "desc": "×2 урона по целям с HP меньше 30%.", "mods": [{"set": {"desc": "28 урона (×2 при HP цели < 30%), лечит мага на 60%, атаки цели ×0.7 на 5 сек."}}, {"effect": {"type": "damage", "set": {"execute": {"below": 0.3, "mult": 2}}}}]}]}
   },
   "judgment": {
-    "A": {"name": "Очищающее пламя", "tiers": [{"name": "Очищающее пламя", "desc": "урон 520% силы навыков + Огонь всем врагам в радиусе 1 от цели.", "mods": [{"set": {"name": "Очищающее пламя", "desc": "урон 520% силы навыков + Огонь врагам в радиусе 1 от цели."}, "effects": [{"type": "damage", "amount": 26, "radius": 1, "tag": "fire", "kind": "spell", "per_gauge": 0.3}]}]}, {"name": "Костёр", "desc": "урон +160% силы навыков, под целью горит земля 5 сек.", "mods": [{"set": {"desc": "34 урона + Огонь врагам в радиусе 1 от цели, земля горит 5 сек."}}, {"effect": {"type": "damage", "add": {"amount": 8}}}, {"add_effect": {"type": "hazard", "hazard": "fire", "radius": 0, "duration": 5}}]}]},
-    "B": {"name": "Свет возмездия", "tiers": [{"name": "Свет возмездия", "desc": "Союзники рядом с целью (радиус 2) лечатся на 18.", "mods": [{"set": {"name": "Свет возмездия", "desc": "урон 600% силы навыков (×1.6 при HP < 40%); союзники в радиусе 2 от цели лечение 360% силы навыков."}}, {"add_effect": {"type": "heal", "amount": 18, "radius": 2, "affects": "allies"}}]}, {"name": "Благодать", "desc": "Лечение +12, излишек становится щитом.", "mods": [{"set": {"desc": "урон 600% силы навыков (×1.6 при HP < 40%); союзники в радиусе 2 от цели лечение 600% силы навыков, излишек — щит."}}, {"effect": {"type": "heal", "add": {"amount": 12}, "set": {"overheal_shield": true}}}]}]}
-  },
-  "shadow_step": {
-    "A": {"name": "Танец клинков", "tiers": [{"name": "Танец клинков", "desc": "урон 200% атаки, перезарядка 3 сек, затем атаки быстрее.", "mods": [{"set": {"name": "Танец клинков", "desc": "Прыжок к врагу: урон 200% атаки (×1.6 в спину), 4 сек атаки на 40% быстрее.", "cooldown": 3}, "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 26, "kind": "melee", "backstab": 1.6}, {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 4, "at": "caster"}]}]}, {"name": "Вихрь теней", "desc": "Ещё урон 92% атаки врагам рядом с целью.", "mods": [{"set": {"desc": "Прыжок к врагу: урон 200% атаки (×1.6 в спину), урон 92% атаки врагам рядом, атаки быстрее 4 сек."}}, {"add_effect": {"type": "damage", "amount": 12, "kind": "melee", "radius": 1}}]}]},
-    "B": {"name": "Убийца магов", "tiers": [{"name": "Перехват", "desc": "Оглушает цель на 1.5 сек — срывает каст.", "mods": [{"set": {"name": "Перехват", "desc": "Прыжок к врагу: урон 138% атаки и оглушение 1.5 сек.", "auto": {"on": true, "conds": [{"type": "target_casting"}]}}, "effects": [{"type": "leap_to"}, {"type": "damage", "amount": 18, "kind": "melee", "backstab": 1.5}, {"type": "stun", "duration": 1.5}]}]}, {"name": "Немота", "desc": "Цель получает +30% урона 6 сек.", "mods": [{"set": {"desc": "Прыжок к врагу: урон 138% атаки, оглушение 1.5 сек, цель получает +30% урона 6 сек."}}, {"add_effect": {"type": "buff", "stat": "dmg_taken", "value": 1.3, "duration": 6, "affects": "enemies"}}]}]}
-  },
-  "venom_blade": {
-    "A": {"name": "Смертельный яд", "tiers": [
-      {"name": "Смертельный яд", "desc": "Атаки ещё и ×1.25.", "mods": [{"set": {"desc": "8 сек атаки накладывают Яд и бьют ×1.25."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 8}}]},
-      {"name": "Некроз", "desc": "Действует 12 сек, перезарядка 8.", "mods": [{"set": {"desc": "12 сек атаки накладывают Яд и бьют ×1.25.", "cooldown": 8}}, {"effect": {"type": "buff", "set": {"duration": 12}}}]}]},
-    "B": {"name": "Отравленный дротик", "tiers": [
-      {"name": "Отравленный дротик", "desc": "Дротик на 4 клетки: 10 урона + Яд, замедление.", "mods": [{"set": {"name": "Отравленный дротик", "desc": "Дротик (дальность 4): 10 урона + Яд, замедление 4 сек.", "target": "enemy", "range": 4, "cooldown": 3, "auto": {"on": true, "conds": []}}, "effects": [{"type": "damage", "amount": 10, "kind": "ranged", "tag": "poison", "on_hit_buff": {"stat": "slow", "value": 1.5, "duration": 4}}]}]},
-      {"name": "Ядовитые брызги", "desc": "Яд перескакивает ещё на 2 врагов.", "mods": [{"set": {"desc": "Дротик: 10 урона + Яд, замедление; яд перескакивает на 2 врагов рядом (8 урона)."}}, {"add_effect": {"type": "chain", "jumps": 2, "range": 2, "amount": 8, "tag": "poison", "kind": "ranged"}}]}]}
+    "A": {
+      "name": "Очищающее пламя",
+      "tiers": [
+        {
+          "name": "Очищающее пламя",
+          "desc": "урон 520% силы навыков + Огонь всем врагам в радиусе 1 от цели.",
+          "mods": [
+            {
+              "set": {
+                "name": "Очищающее пламя",
+                "desc": "урон 520% силы навыков + Огонь врагам в радиусе 1 от цели."
+              },
+              "effects": [
+                {
+                  "type": "damage",
+                  "amount": 26,
+                  "radius": 1,
+                  "tag": "fire",
+                  "kind": "spell",
+                  "per_gauge": 0.3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Костёр",
+          "desc": "урон +160% силы навыков, под целью горит земля 5 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "34 урона + Огонь врагам в радиусе 1 от цели, земля горит 5 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "damage",
+                "add": {
+                  "amount": 8
+                }
+              }
+            },
+            {
+              "add_effect": {
+                "type": "hazard",
+                "hazard": "fire",
+                "radius": 0,
+                "duration": 5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Суд",
+      "tiers": [
+        {
+          "name": "Суд",
+          "desc": "Без урона: безмолвие 3 сек и +25% уязвимости.",
+          "mods": [
+            {
+              "set": {
+                "name": "Суд",
+                "desc": "Без урона: безмолвие 3 сек и +25% уязвимости."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "silence",
+                  "value": 1,
+                  "duration": 3,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "exposed",
+                  "value": 1.25,
+                  "duration": 5,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "stun",
+                  "duration": 1.0,
+                  "look": "stun"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Суд+",
+          "desc": "Безмолвие 4 сек, +35% уязвимости.",
+          "mods": [
+            {
+              "set": {
+                "name": "Суд",
+                "desc": "Безмолвие 4 сек, +35% уязвимости."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "silence",
+                  "value": 1,
+                  "duration": 4,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "exposed",
+                  "value": 1.35,
+                  "duration": 6,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "stun",
+                  "duration": 1.2,
+                  "look": "stun"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "vanish": {
-    "A": {"name": "Засада", "tiers": [
-      {"name": "Засада", "desc": "Удар из тени ×2.2, тень 6 сек.", "mods": [{"set": {"desc": "Тень на 6 сек: враги теряют цель, удар из тени ×2.2."}}, {"effect": {"type": "stealth", "set": {"duration": 6, "mult": 2.2}}}]},
-      {"name": "Призрак", "desc": "В тени двигается на 40% быстрее.", "mods": [{"set": {"desc": "Тень на 6 сек, удар из тени ×2.2, движение на 40% быстрее."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 0.6, "duration": 6}}]}]},
-    "B": {"name": "Отход", "tiers": [
-      {"name": "Отход", "desc": "Прыжок на клетку до 3 и тень на 3 сек.", "mods": [{"set": {"name": "Отход", "desc": "Прыжок на клетку до 3, затем тень 3 сек (удар из тени ×1.8).", "target": "cell", "range": 3, "free_cell": true, "cooldown": 10}, "effects": [{"type": "teleport"}, {"type": "stealth", "duration": 3, "mult": 1.8, "at": "caster"}]}]},
-      {"name": "Дымная завеса", "desc": "На месте прыжка — ядовитое облако.", "mods": [{"set": {"desc": "Ядовитое облако на старой клетке, прыжок до 3, тень 3 сек."}}, {"effects": [{"type": "hazard", "hazard": "poison", "duration": 5, "at": "caster"}, {"type": "teleport"}, {"type": "stealth", "duration": 3, "mult": 1.8, "at": "caster"}]}]}]}
+    "A": {
+      "name": "За спину",
+      "tiers": [
+        {
+          "name": "За спину",
+          "desc": "Минимум 2 стака: рывок к врагу, выход за спину, +20% уязвимости 2 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "За спину",
+                "desc": "Минимум 2 стака: рывок к врагу, выход за спину, +20% уязвимости 2 сек.",
+                "target": "enemy",
+                "range": 4,
+                "gauge_min": 2
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.0,
+                  "mult": 1.8
+                },
+                {
+                  "type": "leap_to"
+                },
+                {
+                  "type": "buff",
+                  "stat": "exposed",
+                  "value": 1.2,
+                  "duration": 2,
+                  "affects": "enemies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "За спину+",
+          "desc": "Дальность 5, +30% уязвимости 3 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "За спину+",
+                "desc": "Дальность 5, +30% уязвимости 3 сек.",
+                "target": "enemy",
+                "range": 5,
+                "gauge_min": 2
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.0,
+                  "mult": 1.8
+                },
+                {
+                  "type": "leap_to"
+                },
+                {
+                  "type": "buff",
+                  "stat": "exposed",
+                  "value": 1.3,
+                  "duration": 3,
+                  "affects": "enemies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Скольжение",
+      "tiers": [
+        {
+          "name": "Скольжение",
+          "desc": "Минимум 2 стака: рывок на свободную клетку до 4, дым на старой клетке 2 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Скольжение",
+                "desc": "Минимум 2 стака: рывок на свободную клетку до 4, дым на старой клетке 2 сек.",
+                "target": "cell",
+                "range": 4,
+                "free_cell": true,
+                "gauge_min": 2
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.0,
+                  "mult": 1.8
+                },
+                {
+                  "type": "shadow_slip",
+                  "duration": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Скольжение+",
+          "desc": "Дальность 5, дым 3 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Скольжение+",
+                "desc": "Дальность 5, дым 3 сек.",
+                "target": "cell",
+                "range": 5,
+                "free_cell": true,
+                "gauge_min": 2
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.0,
+                  "mult": 1.8
+                },
+                {
+                  "type": "shadow_slip",
+                  "duration": 3.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "C": {
+      "name": "Дымный занавес",
+      "tiers": [
+        {
+          "name": "Дымный занавес",
+          "desc": "3 стака: тень на себя и союзников рядом, враги слепнут.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дымный занавес",
+                "desc": "3 стака: тень на себя и союзников рядом, враги слепнут.",
+                "target": "self",
+                "radius": 1,
+                "gauge_min": 3
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.0,
+                  "mult": 1.8
+                },
+                {
+                  "type": "stealth",
+                  "radius": 1,
+                  "duration": 2,
+                  "mult": 1.4
+                },
+                {
+                  "type": "stun",
+                  "radius": 1,
+                  "duration": 0.5,
+                  "look": "blind"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Дымный занавес+",
+          "desc": "Радиус 2, тень 3 сек, слепота 0.7 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дымный занавес+",
+                "desc": "Радиус 2, тень 3 сек, слепота 0.7 сек.",
+                "target": "self",
+                "radius": 2,
+                "gauge_min": 3
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.0,
+                  "mult": 1.8
+                },
+                {
+                  "type": "stealth",
+                  "radius": 2,
+                  "duration": 3,
+                  "mult": 1.5
+                },
+                {
+                  "type": "stun",
+                  "radius": 2,
+                  "duration": 0.7,
+                  "look": "blind"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "D": {
+      "name": "Растворение",
+      "tiers": [
+        {
+          "name": "Растворение",
+          "desc": "Минимум 1 стак: чистая тень, 1 сек за стак.",
+          "mods": [
+            {
+              "set": {
+                "name": "Растворение",
+                "desc": "Минимум 1 стак: чистая тень, 1 сек за стак.",
+                "target": "self",
+                "gauge_min": 1
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.0,
+                  "mult": 1.8
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Растворение+",
+          "desc": "Тень крепче: ×2.0 и 1.25 сек за стак.",
+          "mods": [
+            {
+              "set": {
+                "name": "Растворение+",
+                "desc": "Тень крепче: ×2.0 и 1.25 сек за стак.",
+                "target": "self",
+                "gauge_min": 1
+              },
+              "effects": [
+                {
+                  "type": "vanish",
+                  "per_stack": 1.25,
+                  "mult": 2.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "shadow_mark": {
-    "A": {"name": "Охота", "tiers": [
-      {"name": "Охота", "desc": "Ещё и Яд на цель.", "mods": [{"set": {"desc": "Цель: +35% урона 6 сек и Яд."}}, {"add_effect": {"type": "status", "tag": "poison"}}]},
-      {"name": "Приговор тени", "desc": "+50% урона вместо +35%.", "mods": [{"set": {"desc": "Цель: +50% урона 6 сек и Яд."}}, {"effect": {"type": "buff", "set": {"value": 1.5}}}]}]},
-    "B": {"name": "Слабое место", "tiers": [
-      {"name": "Слабое место", "desc": "Цель теряет 4 брони на 6 сек.", "mods": [{"set": {"name": "Слабое место", "desc": "Цель: −4 брони и +20% урона 6 сек."}, "effects": [{"type": "buff", "stat": "armor", "value": -4, "duration": 6, "affects": "enemies"}, {"type": "buff", "stat": "dmg_taken", "value": 1.2, "duration": 6, "affects": "enemies"}]}]},
-      {"name": "Разоблачение", "desc": "Ещё и оглушение 1 сек.", "mods": [{"set": {"desc": "Цель: −4 брони, +20% урона 6 сек, оглушение 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]}]}
+    "A": {
+      "name": "Охота",
+      "tiers": [
+        {
+          "name": "Охота",
+          "desc": "Метка +35% в спину и Яд.",
+          "mods": [
+            {
+              "set": {
+                "name": "Охота",
+                "desc": "Метка +35% в спину и Яд."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.35,
+                  "duration": 6,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "status",
+                  "tag": "poison"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Приговор тени",
+          "desc": "Метка +50% в спину и Яд.",
+          "mods": [
+            {
+              "set": {
+                "name": "Приговор тени",
+                "desc": "Метка +50% в спину и Яд."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.5,
+                  "duration": 6,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "status",
+                  "tag": "poison"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Слабое место",
+      "tiers": [
+        {
+          "name": "Слабое место",
+          "desc": "Метка +35% в спину, −4 брони.",
+          "mods": [
+            {
+              "set": {
+                "name": "Слабое место",
+                "desc": "Метка +35% в спину, −4 брони."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.35,
+                  "duration": 6,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "armor",
+                  "value": -4,
+                  "duration": 6,
+                  "affects": "enemies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Разоблачение",
+          "desc": "Метка +50% в спину, −4 брони, оглушение 1 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Разоблачение",
+                "desc": "Метка +50% в спину, −4 брони, оглушение 1 сек."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.5,
+                  "duration": 6,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "armor",
+                  "value": -4,
+                  "duration": 6,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "stun",
+                  "duration": 1.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "riposte": {
     "A": {"name": "Дуэль", "tiers": [
@@ -135,33 +683,503 @@
       {"name": "Уход в сторону", "desc": "Вместо брони — уклонение: урон по ассасину ×0.4.", "mods": [{"set": {"name": "Уход в сторону", "desc": "4 сек урон по ассасину ×0.4 и отражение 50%."}, "effects": [{"type": "buff", "stat": "dmg_taken", "value": 0.4, "duration": 4}, {"type": "buff", "stat": "thorns", "value": 0.5, "duration": 4}]}]},
       {"name": "Тень клинка", "desc": "Затем 2 сек тени.", "mods": [{"set": {"desc": "4 сек урон ×0.4, отражение 50%, затем тень (удар ×1.6)."}}, {"add_effect": {"type": "stealth", "duration": 2, "mult": 1.6}}]}]}
   },
-  "bear_form": {
-    "A": {"name": "Медведь-страж", "tiers": [{"name": "Медведь-страж", "desc": "Превращение провоцирует врагов рядом на 4 сек.", "mods": [{"set": {"desc": "Медведь (+4 брони, +40 HP, атака ×1.8); враги рядом атакуют его 4 сек."}}, {"add_effect": {"type": "taunt", "radius": 1, "duration": 4}}]}, {"name": "Шкура", "desc": "И щит 429% силы навыков.", "mods": [{"set": {"desc": "Медведь, провокация рядом 4 сек и щит 429% силы навыков."}}, {"add_effect": {"type": "shield", "amount": 30, "duration": 6}}]}]},
-    "B": {"name": "Ярость зверя", "tiers": [{"name": "Ярость зверя", "desc": "Превращение даёт атаки на 30% быстрее 5 сек.", "mods": [{"set": {"desc": "Медведь (+4 брони, +40 HP, атака ×1.8); 5 сек атаки быстрее."}}, {"add_effect": {"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 5}}]}, {"name": "Вкус крови", "desc": "И лечит на 357% силы навыков.", "mods": [{"set": {"desc": "Медведь, атаки быстрее 5 сек, лечение 357% силы навыков."}}, {"add_effect": {"type": "heal", "amount": 25}}]}]}
-  },
   "entangle": {
-    "A": {"name": "Терновник", "tiers": [{"name": "Терновник", "desc": "урон 200% силы навыков, терновник 6 сек.", "mods": [{"set": {"desc": "Радиус 1: урон 200% силы навыков, оглушение 1.2 сек, терновник 6 сек."}}, {"effect": {"type": "damage", "set": {"amount": 14}}}, {"effect": {"type": "hazard", "set": {"duration": 6}}}]}, {"name": "Дикие заросли", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Радиус 2: урон 200% силы навыков, оглушение 1.2 сек, терновник 6 сек.", "radius": 2}}, {"radius_add": 1}]}]},
-    "B": {"name": "Удушение", "tiers": [{"name": "Удушение", "desc": "Одна цель: оглушение 2.5 сек и Яд.", "mods": [{"set": {"name": "Удушение", "desc": "Враг (дальность 4): оглушение 2.5 сек и Яд.", "target": "enemy", "radius": 0, "auto": {"on": true, "conds": [{"type": "target_casting"}]}}, "effects": [{"type": "stun", "duration": 2.5}, {"type": "status", "tag": "poison"}]}]}, {"name": "Хватка земли", "desc": "И урон 286% силы навыков.", "mods": [{"set": {"desc": "Враг: урон 286% силы навыков, оглушение 2.5 сек и Яд."}}, {"add_effect": {"type": "damage", "amount": 20, "kind": "spell"}}]}]}
+    "A": {
+      "name": "Глубокие корни",
+      "tiers": [
+        {
+          "name": "Глубокие корни",
+          "desc": "Человек: +0.4 сек. корней. Медведь: +8 лечения. Волк: +8 урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Глубокие корни",
+                "desc": "Человек: +0.4 сек. корней. Медведь: +8 лечения. Волк: +8 урона."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.4,
+                "radius": 1,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal",
+                "amount": 8,
+                "at": "caster",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "damage",
+                "amount": 8,
+                "radius": 0,
+                "kind": "melee",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Глубокие корни+",
+          "desc": "Человек: +0.7 сек. Медведь: +12 лечения. Волк: +12 урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Глубокие корни+",
+                "desc": "Человек: +0.7 сек. Медведь: +12 лечения. Волк: +12 урона."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.7,
+                "radius": 1,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal",
+                "amount": 12,
+                "at": "caster",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "damage",
+                "amount": 12,
+                "radius": 0,
+                "kind": "melee",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Шипастая поросль",
+      "tiers": [
+        {
+          "name": "Шипастая поросль",
+          "desc": "Человек: терновник дольше. Медведь: шипы. Волк: кровотечение.",
+          "mods": [
+            {
+              "set": {
+                "name": "Шипастая поросль",
+                "desc": "Человек: терновник дольше. Медведь: шипы. Волк: кровотечение."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "hazard",
+                "hazard": "briar",
+                "duration": 2,
+                "radius": 1,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.4,
+                "duration": 4,
+                "at": "caster",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 4,
+                "duration": 3,
+                "affects": "enemies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Шипастая поросль+",
+          "desc": "Человек: терновник 3 сек. Медведь: +60% шипов. Волк: +6 кровотечения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Шипастая поросль+",
+                "desc": "Человек: терновник 3 сек. Медведь: +60% шипов. Волк: +6 кровотечения."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "hazard",
+                "hazard": "briar",
+                "duration": 3,
+                "radius": 1,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.6,
+                "duration": 4,
+                "at": "caster",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 6,
+                "duration": 3,
+                "affects": "enemies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    }
   },
   "rejuvenate": {
-    "A": {"name": "Цветение", "tiers": [{"name": "Цветение", "desc": "И союзникам рядом.", "mods": [{"set": {"desc": "Союзник и все рядом: лечение 114% силы навыков в сек 5 сек.", "radius": 1}}, {"effect": {"type": "buff", "set": {"radius": 1}}}]}, {"name": "Очищение росой", "desc": "Ещё и снимает теги.", "mods": [{"set": {"desc": "Союзник и все рядом: лечение 114% силы навыков в сек 5 сек, теги сняты."}}, {"add_effect": {"type": "cleanse", "radius": 1}}]}]},
-    "B": {"name": "Живая кора", "tiers": [{"name": "Живая кора", "desc": "Ещё +3 брони на 6 сек.", "mods": [{"set": {"desc": "Союзник: лечение 114% силы навыков в сек 5 сек и +3 брони 6 сек."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 3, "duration": 6}}]}, {"name": "Шипы коры", "desc": "И отражает 40% ближнего урона.", "mods": [{"set": {"desc": "Союзник: регенерация, +3 брони, отражение 40%."}}, {"add_effect": {"type": "buff", "stat": "thorns", "value": 0.4, "duration": 6}}]}]}
-  },
-  "wolf_form": {
-    "A": {"name": "Вожак", "tiers": [
-      {"name": "Вожак", "desc": "Превращение даёт атаки ×1.2 на 6 сек.", "mods": [{"set": {"desc": "Волк; 6 сек атаки ещё ×1.2."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 6}}]},
-      {"name": "Загонщик", "desc": "Враги рядом замедлены.", "mods": [{"set": {"desc": "Волк, атаки ×1.2 6 сек, враги рядом замедлены 4 сек."}}, {"add_effect": {"type": "buff", "stat": "slow", "value": 1.6, "duration": 4, "radius": 1, "affects": "enemies"}}]}]},
-    "B": {"name": "Вой", "tiers": [
-      {"name": "Вой", "desc": "Союзники в радиусе 2: атаки ×1.2 на 6 сек.", "mods": [{"set": {"desc": "Волк; союзники в радиусе 2 бьют ×1.2 6 сек."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 1.2, "duration": 6, "radius": 2}}]},
-      {"name": "Леденящий вой", "desc": "Враги в радиусе 2 получают +20% урона.", "mods": [{"set": {"desc": "Волк, союзники бьют ×1.2, враги в радиусе 2 получают +20% урона 6 сек."}}, {"add_effect": {"type": "buff", "stat": "dmg_taken", "value": 1.2, "duration": 6, "radius": 2, "affects": "enemies"}}]}]}
+    "A": {
+      "name": "Живительный",
+      "tiers": [
+        {
+          "name": "Живительный",
+          "desc": "Дольше постепенное лечение во всех формах.",
+          "mods": [
+            {
+              "set": {
+                "name": "Живительный",
+                "desc": "Дольше постепенное лечение во всех формах."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal_over_time",
+                "amount": 4,
+                "duration": 4,
+                "every": 1.0,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal_over_time",
+                "amount": 5,
+                "duration": 4,
+                "every": 1.0,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal_over_time",
+                "amount": 3,
+                "duration": 4,
+                "every": 1.0,
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Живительный+",
+          "desc": "Ещё сильнее лечение.",
+          "mods": [
+            {
+              "set": {
+                "name": "Живительный+",
+                "desc": "Ещё сильнее лечение."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal_over_time",
+                "amount": 8,
+                "duration": 5,
+                "every": 1.0,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal_over_time",
+                "amount": 9,
+                "duration": 5,
+                "every": 1.0,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal_over_time",
+                "amount": 6,
+                "duration": 5,
+                "every": 1.0,
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкий",
+      "tiers": [
+        {
+          "name": "Стойкий",
+          "desc": "Человек: очищение. Медведь: сопротивление дебаффам. Волк: уклонение.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкий",
+                "desc": "Человек: очищение. Медведь: сопротивление дебаффам. Волк: уклонение."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "cleanse",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "debuff_resist",
+                "value": 0.3,
+                "duration": 6,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "evasion",
+                "value": 0.1,
+                "duration": 6,
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Стойкий+",
+          "desc": "Сильнее очищение и защита.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкий+",
+                "desc": "Сильнее очищение и защита."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "cleanse",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "debuff_resist",
+                "value": 0.5,
+                "duration": 6,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "evasion",
+                "value": 0.15,
+                "duration": 6,
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    }
   },
   "spirit_tree": {
-    "A": {"name": "Роща", "tiers": [
-      {"name": "Роща", "desc": "Древо живёт 20 сек.", "mods": [{"set": {"desc": "Древо 20 сек: лечит в радиусе 2 на 7/сек."}}, {"effect": {"type": "summon", "set": {"duration": 20}}}]},
-      {"name": "Могучее древо", "desc": "Лечит на 40% сильнее.", "mods": [{"set": {"desc": "Древо 20 сек: лечит в радиусе 2, сила ×1.4."}}, {"effect": {"type": "summon", "set": {"power": 1.4}}}]}]},
-    "B": {"name": "Страж-энт", "tiers": [
-      {"name": "Страж-энт", "desc": "Вместо древа — энт: бьёт врагов и провоцирует их.", "mods": [{"set": {"name": "Страж-энт", "desc": "Энт 14 сек: провоцирует врагов в радиусе 2, бьёт рядом.", "place": "foes", "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]}}, "effects": [{"type": "summon", "unit": "ent", "duration": 14}]}]},
-      {"name": "Древний энт", "desc": "Энт крепче и сильнее на 50%.", "mods": [{"set": {"desc": "Энт 14 сек, сила ×1.5."}}, {"effect": {"type": "summon", "set": {"power": 1.5}}}]}]}
+    "A": {
+      "name": "Долгий дух",
+      "tiers": [
+        {
+          "name": "Долгий дух",
+          "desc": "Призывы живут 18 / 18 / 16 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгий дух",
+                "desc": "Призывы живут 18 / 18 / 16 сек.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_tree",
+                    "duration": 18,
+                    "limit": 1,
+                    "if_form": "human"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 18,
+                    "limit": 1,
+                    "if_form": "bear"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 16,
+                    "limit": 1,
+                    "if_form": "wolf"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Долгий дух+",
+          "desc": "Призывы живут 22 / 22 / 20 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгий дух+",
+                "desc": "Призывы живут 22 / 22 / 20 сек.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_tree",
+                    "duration": 22,
+                    "limit": 1,
+                    "if_form": "human"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 22,
+                    "limit": 1,
+                    "if_form": "bear"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 20,
+                    "limit": 1,
+                    "if_form": "wolf"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Свирепый дух",
+      "tiers": [
+        {
+          "name": "Свирепый дух",
+          "desc": "Призывы живут 14 / 14 / 12 сек; союзники рядом +15% атаки.",
+          "mods": [
+            {
+              "set": {
+                "name": "Свирепый дух",
+                "desc": "Призывы живут 14 / 14 / 12 сек; союзники рядом +15% атаки.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_tree",
+                    "duration": 14,
+                    "limit": 1,
+                    "if_form": "human"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 14,
+                    "limit": 1,
+                    "if_form": "bear"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 12,
+                    "limit": 1,
+                    "if_form": "wolf"
+                  },
+                  {
+                    "type": "buff",
+                    "stat": "atk_mult",
+                    "value": 1.15,
+                    "duration": 8,
+                    "radius": 2,
+                    "affects": "allies"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Свирепый дух+",
+          "desc": "Союзники рядом +25% атаки.",
+          "mods": [
+            {
+              "set": {
+                "name": "Свирепый дух+",
+                "desc": "Союзники рядом +25% атаки.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_tree",
+                    "duration": 14,
+                    "limit": 1,
+                    "if_form": "human"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 14,
+                    "limit": 1,
+                    "if_form": "bear"
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 12,
+                    "limit": 1,
+                    "if_form": "wolf"
+                  },
+                  {
+                    "type": "buff",
+                    "stat": "atk_mult",
+                    "value": 1.25,
+                    "duration": 8,
+                    "radius": 2,
+                    "affects": "allies"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
   },
   "lunge": {
     "A": {"name": "Пронзатель", "tiers": [{"name": "Пронзатель", "desc": "4 клетки, урон 300% атаки.", "mods": [{"set": {"desc": "Копьё пробивает 4 клетки: урон 300% атаки каждому."}}, {"effect": {"type": "line", "set": {"length": 4, "amount": 30}}}]}, {"name": "Бронебой", "desc": "Пробитые теряют 3 брони на 6 сек.", "mods": [{"set": {"desc": "4 клетки: урон 300% атаки, −3 брони 6 сек."}}, {"effect": {"type": "line", "set": {"on_hit_buff": {"stat": "armor", "value": -3, "duration": 6}}}}]}]},
@@ -292,12 +1310,142 @@
       {"name": "Паралич", "desc": "И враги бьют слабее (×0.7) 5 сек.", "mods": [{"set": {"desc": "Радиус 1: Яд, облако, замедление, атаки ×0.7."}}, {"add_effect": {"type": "buff", "stat": "atk_mult", "value": 0.7, "duration": 5, "radius": 1, "affects": "enemies"}}]}]}
   },
   "consecrate": {
-    "A": {"name": "Святая земля", "tiers": [
-      {"name": "Святая земля", "desc": "Союзникам ещё 4 HP/сек 5 сек.", "mods": [{"set": {"desc": "Радиус 2: +20 HP и 4 HP/сек союзникам, 14 урона врагам."}}, {"add_effect": {"type": "buff", "stat": "regen", "value": 4, "duration": 5, "radius": 2}}]},
-      {"name": "Благословение", "desc": "И +2 брони союзникам.", "mods": [{"set": {"desc": "Святая земля и +2 брони союзникам на 5 сек."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 2, "duration": 5, "radius": 2}}]}]},
-    "B": {"name": "Кара небес", "tiers": [
-      {"name": "Кара небес", "desc": "Врагам 24 урона + Огонь.", "mods": [{"set": {"desc": "Радиус 2: +20 HP союзникам, 24 урона + Огонь врагам."}}, {"effect": {"type": "damage", "set": {"amount": 24, "tag": "fire"}}}]},
-      {"name": "Испепеление", "desc": "Враги оглушены на 1 сек.", "mods": [{"set": {"desc": "Кара небес и оглушение врагов 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0, "radius": 2}}]}]}
+    "A": {
+      "name": "Святая земля",
+      "tiers": [
+        {
+          "name": "Святая земля",
+          "desc": "Зона 8 сек: союзники лечатся на 8 в секунду и получают +20% лечения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Святая земля",
+                "desc": "Зона 8 сек: союзники лечатся на 8 в секунду и получают +20% лечения."
+              },
+              "effects": [
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "sanctuary",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 8,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.2,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Святая земля+",
+          "desc": "Зона 10 сек: 12 HP в секунду и +30% лечения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Святая земля+",
+                "desc": "Зона 10 сек: 12 HP в секунду и +30% лечения."
+              },
+              "effects": [
+                {
+                  "type": "zone",
+                  "duration": 10,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "sanctuary",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 12,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.3,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Кара",
+      "tiers": [
+        {
+          "name": "Кара",
+          "desc": "Радиус 2: 18 урона и ослепление 0.8 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Кара",
+                "desc": "Радиус 2: 18 урона и ослепление 0.8 сек."
+              },
+              "effects": [
+                {
+                  "type": "damage",
+                  "amount": 18,
+                  "radius": 2,
+                  "kind": "spell"
+                },
+                {
+                  "type": "stun",
+                  "duration": 0.8,
+                  "radius": 2,
+                  "look": "blind"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Кара+",
+          "desc": "Радиус 2: 24 урона и ослепление 1.0 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Кара+",
+                "desc": "Радиус 2: 24 урона и ослепление 1.0 сек."
+              },
+              "effects": [
+                {
+                  "type": "damage",
+                  "amount": 24,
+                  "radius": 2,
+                  "kind": "spell"
+                },
+                {
+                  "type": "stun",
+                  "duration": 1.0,
+                  "radius": 2,
+                  "look": "blind"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "headshot": {
     "A": {"name": "Охотник за головами", "tiers": [{"name": "Охотник за головами", "desc": "Одиночный выстрел → цепочка: убил — +3 AP и перезарядка сброшена.", "mods": [{"set": {"name": "Охотник за головами", "desc": "Каст 1 сек: 500% атаки, ×1.5 по раненым. Убил — +3 AP и перезарядка сброшена."}}, {"effect": {"type": "damage", "set": {"on_kill": {"ap": 3, "reset": "headshot"}}}}]}, {"name": "Контрольный", "desc": "600% атаки.", "mods": [{"set": {"desc": "Каст 1 сек: 600% атаки, ×1.5 по раненым. Убил — +3 AP и перезарядка сброшена."}}, {"effect": {"type": "damage", "set": {"amount": 6.0}}}]}]},
@@ -308,12 +1456,236 @@
     "B": {"name": "Ледяная игла", "tiers": [{"name": "Ледяная игла", "desc": "Одна цель: урон 667% силы навыков + Лёд, каст 0.8.", "mods": [{"set": {"name": "Ледяная игла", "desc": "Враг (дальность 5): каст 0.8, урон 667% силы навыков + Лёд.", "target": "enemy", "radius": 0, "cast": 0.8, "auto": {"on": true, "conds": []}}, "effects": [{"type": "damage", "amount": 40, "kind": "spell", "tag": "ice"}, {"type": "mark", "mark": "cold", "stacks": 2, "duration": 6}]}]}, {"name": "Абсолютный ноль", "desc": "×2 по замороженным/оглушённым — оглушение 1 сек.", "mods": [{"set": {"desc": "Враг: урон 667% силы навыков + Лёд и оглушение 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]}]}
   },
   "revive": {
-    "A": {"name": "Второе дыхание", "tiers": [
-      {"name": "Второе дыхание", "desc": "С 55% HP.", "mods": [{"set": {"desc": "Каст 2 сек: павший союзник встаёт с 55% HP."}}, {"effect": {"type": "revive", "set": {"pct": 0.55}}}]},
-      {"name": "Чудо", "desc": "Перезарядка 25.", "mods": [{"set": {"desc": "Каст 2 сек: павший союзник встаёт с 55% HP. Перезарядка 25.", "cooldown": 25}}]}]},
-    "B": {"name": "Быстрая молитва", "tiers": [
-      {"name": "Быстрая молитва", "desc": "Каст 0.8 сек, 30% HP.", "mods": [{"set": {"desc": "Каст 0.8 сек: павший союзник встаёт с 30% HP.", "cast": 0.8}}, {"effect": {"type": "revive", "set": {"pct": 0.3}}}]},
-      {"name": "Ангел-хранитель", "desc": "Воскрешённый получает щит 40.", "mods": [{"set": {"desc": "Каст 0.8 сек: встаёт с 30% HP и щитом 40."}}, {"add_effect": {"type": "shield", "amount": 40, "duration": 6, "radius": 1}}]}]}
+    "A": {
+      "name": "Долгий дух",
+      "tiers": [
+        {
+          "name": "Долгий дух",
+          "desc": "Дух-хранитель на 16 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгий дух",
+                "desc": "Дух-хранитель на 16 сек."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "spirit_healer",
+                  "duration": 16,
+                  "limit": 1
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 10,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 8,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Долгий дух+",
+          "desc": "Дух-хранитель на 20 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгий дух+",
+                "desc": "Дух-хранитель на 20 сек."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "spirit_healer",
+                  "duration": 20,
+                  "limit": 1
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 10,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 8,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Дух-заступник",
+      "tiers": [
+        {
+          "name": "Дух-заступник",
+          "desc": "Дух на 10 сек: союзники рядом +30% лечения, −10% урона и −30% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дух-заступник",
+                "desc": "Дух на 10 сек: союзники рядом +30% лечения, −10% урона и −30% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "spirit_healer",
+                  "duration": 10,
+                  "limit": 1
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.3,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.9,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.3,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 10,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 8,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Дух-заступник+",
+          "desc": "Дух на 12 сек: +40% лечения, −15% урона и −40% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дух-заступник+",
+                "desc": "Дух на 12 сек: +40% лечения, −15% урона и −40% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "spirit_healer",
+                  "duration": 12,
+                  "limit": 1
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.4,
+                  "duration": 12,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.85,
+                  "duration": 12,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.4,
+                  "duration": 12,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 10,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 8,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "guard_ally": {
     "A": {"name": "Щит-брат", "tiers": [
@@ -336,8 +1708,141 @@
     "B": {"name": "Раздуть", "tiers": [{"name": "Раздуть", "desc": "Огонь не гаснет после вспышки (урон 300% силы навыков).", "mods": [{"set": {"desc": "Горящее в радиусе 6 взрывается, но продолжает гореть: урон 300% силы навыков (горящим ×1.5)."}}, {"effect": {"type": "detonate", "set": {"amount": 18, "keep_fire": true}}}]}, {"name": "Огненный шторм", "desc": "Взрыв каждой клетки задевает радиус 2.", "mods": [{"set": {"desc": "Горящее в радиусе 6 взрывается (взрыв радиусом 2) и горит дальше: урон 300% силы навыков."}}, {"effect": {"type": "detonate", "set": {"blast": 2}}}]}]}
   },
   "vow": {
-    "A": {"name": "Скорый обет", "tiers": [{"name": "Скорый обет", "desc": "Приходит через 1.8 сек.", "mods": [{"set": {"desc": "Через 1.8 сек союзник получает лечение 1600% силы навыков и очищается от тегов."}}, {"effect": {"type": "delay", "set": {"time": 1.8}}}]}, {"name": "Свет обета", "desc": "Лечит и союзников рядом с целью.", "mods": [{"set": {"desc": "Через 1.8 сек союзник и соседи получают лечение 1600% силы навыков и очищаются от тегов."}}, {"effect": {"type": "delay", "set": {"effects": [{"type": "cleanse", "radius": 1}, {"type": "heal", "amount": 80, "radius": 1}]}}}]}]},
-    "B": {"name": "Терпение", "tiers": [{"name": "Долгий обет", "desc": "Через 4 сек, но лечение 2600% силы навыков.", "mods": [{"set": {"desc": "Через 4 сек союзник получает лечение 2600% силы навыков и очищается от тегов."}}, {"effect": {"type": "delay", "set": {"time": 4.0, "effects": [{"type": "cleanse"}, {"type": "heal", "amount": 130}]}}}]}, {"name": "Залог", "desc": "Сразу — щит 500% силы навыков, пока обет не пришёл.", "mods": [{"set": {"desc": "Сразу щит 500% силы навыков, через 4 сек лечение 2600% силы навыков и очищение."}}, {"add_effect": {"type": "shield", "amount": 25, "duration": 4}}]}]}
+    "A": {
+      "name": "Скорый обет",
+      "tiers": [
+        {
+          "name": "Скорый обет",
+          "desc": "Через 1.8 сек лечение 1600% и очищение.",
+          "mods": [
+            {
+              "set": {
+                "name": "Скорый обет",
+                "desc": "Через 1.8 сек лечение 1600% и очищение."
+              },
+              "effects": [
+                {
+                  "type": "delay",
+                  "time": 1.8,
+                  "name": "Обет",
+                  "effects": [
+                    {
+                      "type": "cleanse"
+                    },
+                    {
+                      "type": "heal",
+                      "amount": 80
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Свет обета",
+          "desc": "Через 1.8 сек лечение союзника и соседей.",
+          "mods": [
+            {
+              "set": {
+                "name": "Свет обета",
+                "desc": "Через 1.8 сек лечение союзника и соседей."
+              },
+              "effects": [
+                {
+                  "type": "delay",
+                  "time": 1.8,
+                  "name": "Обет",
+                  "effects": [
+                    {
+                      "type": "cleanse"
+                    },
+                    {
+                      "type": "heal",
+                      "amount": 80,
+                      "radius": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Терпение",
+      "tiers": [
+        {
+          "name": "Долгий обет",
+          "desc": "Через 4 сек лечение 2600% и очищение.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгий обет",
+                "desc": "Через 4 сек лечение 2600% и очищение."
+              },
+              "effects": [
+                {
+                  "type": "delay",
+                  "time": 4.0,
+                  "name": "Обет",
+                  "effects": [
+                    {
+                      "type": "cleanse"
+                    },
+                    {
+                      "type": "heal",
+                      "amount": 130
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Залог",
+          "desc": "Сразу +30% лечения и −10% урона на 4 сек, затем большой обет.",
+          "mods": [
+            {
+              "set": {
+                "name": "Залог",
+                "desc": "Сразу +30% лечения и −10% урона на 4 сек, затем большой обет."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.3,
+                  "duration": 4
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.9,
+                  "duration": 4
+                },
+                {
+                  "type": "delay",
+                  "time": 4.0,
+                  "name": "Обет",
+                  "effects": [
+                    {
+                      "type": "cleanse"
+                    },
+                    {
+                      "type": "heal",
+                      "amount": 130
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "powder_keg": {
     "A": {"name": "Масляная бочка", "tiers": [{"name": "Масляная бочка", "desc": "Взрыв → пожар: бочка разливает масло, взрыв поджигает его — горящая земля вокруг.", "mods": [{"set": {"name": "Масляная бочка", "desc": "Бочка с маслом (до 3): разбитая — масло вокруг, подожжённая или от Фитиля — 220% силы навыков и пожар вокруг."}, "effects": [{"type": "place_object", "object": "barrel_oil", "limit": 3, "blast": 2.2, "hp_pct": 0.15, "radius": 1}]}]}, {"name": "Склад", "desc": "До 4 бочек.", "mods": [{"set": {"desc": "Бочка с маслом (до 4): разбитая — масло, подожжённая — 220% силы навыков и пожар."}}, {"effect": {"type": "place_object", "set": {"limit": 4}}}]}]},
@@ -712,12 +2217,336 @@
     "B": {"name": "Плавление", "tiers": [{"name": "Плавление", "desc": "Задетые получают +20% урона 4 сек.", "mods": [{"set": {"desc": "Линия 5: 36 урона, +20% к получаемому урону."}}, {"effect": {"type": "line", "set": {"on_hit_buff": {"stat": "dmg_taken", "value": 1.2, "duration": 4}}}}]}, {"name": "3 AP", "desc": "3 AP.", "mods": [{"set": {"desc": "Линия 5: 36 урона, уязвимость. 3 AP."}}, {"add": {"ap": -1}}]}]}
   },
   "sanctuary": {
-    "A": {"name": "Твердыня", "tiers": [{"name": "Твердыня", "desc": "Щит 800% силы навыков.", "mods": [{"set": {"desc": "Союзники в радиусе 2: щит 800% силы навыков, теги сняты."}}, {"effect": {"type": "shield", "set": {"amount": 40}}}]}, {"name": "Широкий свод", "desc": "Радиус 3.", "mods": [{"set": {"desc": "Радиус 3: щит 800% силы навыков, теги сняты."}}, {"set": {"radius": 3}}, {"effect": {"type": "shield", "set": {"radius": 3}}}, {"effect": {"type": "cleanse", "set": {"radius": 3}}}]}]},
-    "B": {"name": "Благодать", "tiers": [{"name": "Благодать", "desc": "И лечение 100% силы навыков в сек 6 сек.", "mods": [{"set": {"desc": "Радиус 2: щит 500% силы навыков, теги сняты, лечение 100% силы навыков в сек."}}, {"add_effect": {"type": "buff", "stat": "regen", "value": 5, "duration": 6, "radius": 2}}]}, {"name": "Тишина храма", "desc": "Враги рядом — безмолвие 2 сек.", "mods": [{"set": {"desc": "Щит, очищение, лечение; враги рядом — безмолвие 2 сек."}}, {"add_effect": {"type": "buff", "stat": "silence", "value": 1, "duration": 2, "affects": "enemies", "radius": 2}}]}]}
+    "A": {
+      "name": "Благодать",
+      "tiers": [
+        {
+          "name": "Благодать",
+          "desc": "Зона 8 сек: −20% урона, +20% лечения и −20% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Благодать",
+                "desc": "Зона 8 сек: −20% урона, +20% лечения и −20% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "sanctuary",
+                  "effects": [
+                    {
+                      "type": "buff",
+                      "stat": "dmg_taken",
+                      "value": 0.8,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.2,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "debuff_resist",
+                      "value": 0.2,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Благодать+",
+          "desc": "Зона 10 сек: −25% урона, +30% лечения и −30% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Благодать+",
+                "desc": "Зона 10 сек: −25% урона, +30% лечения и −30% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "zone",
+                  "duration": 10,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "sanctuary",
+                  "effects": [
+                    {
+                      "type": "buff",
+                      "stat": "dmg_taken",
+                      "value": 0.75,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.3,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "debuff_resist",
+                      "value": 0.3,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкость",
+      "tiers": [
+        {
+          "name": "Стойкость",
+          "desc": "Зона 8 сек: −20% урона, +25% лечения и −40% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость",
+                "desc": "Зона 8 сек: −20% урона, +25% лечения и −40% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "sanctuary",
+                  "effects": [
+                    {
+                      "type": "buff",
+                      "stat": "dmg_taken",
+                      "value": 0.8,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.25,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "debuff_resist",
+                      "value": 0.4,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Стойкость+",
+          "desc": "Зона 10 сек: −25% урона, +30% лечения и −50% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость+",
+                "desc": "Зона 10 сек: −25% урона, +30% лечения и −50% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "zone",
+                  "duration": 10,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "sanctuary",
+                  "effects": [
+                    {
+                      "type": "buff",
+                      "stat": "dmg_taken",
+                      "value": 0.75,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.3,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "debuff_resist",
+                      "value": 0.5,
+                      "duration": 1.5,
+                      "radius": 2,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "divine_light": {
-    "A": {"name": "Сияние", "tiers": [{"name": "Сияние", "desc": "Лечение 1800% силы навыков.", "mods": [{"set": {"desc": "Радиус 3: союзники лечение 1800% силы навыков, враги — урон 600% силы навыков."}}, {"effect": {"type": "heal", "set": {"amount": 90}}}]}, {"name": "Щит веры", "desc": "Излишек лечения — щит.", "mods": [{"set": {"desc": "Союзники лечение 1800% силы навыков (излишек — щитом), враги — урон 600% силы навыков."}}, {"effect": {"type": "heal", "set": {"overheal_shield": true}}}]}]},
-    "B": {"name": "Ослепление", "tiers": [{"name": "Ослепление", "desc": "Враги ослеплены 1.5 сек.", "mods": [{"set": {"desc": "Союзники лечение 1200% силы навыков; враги — урон 600% силы навыков и ослепление 1.5 сек."}}, {"add_effect": {"type": "stun", "duration": 1.5, "radius": 3, "look": "blind"}}]}, {"name": "Испепеление", "desc": "Урон 1000% силы навыков.", "mods": [{"set": {"desc": "Союзники лечение 1200% силы навыков; враги — урон 1000% силы навыков и ослепление."}}, {"effect": {"type": "damage", "set": {"amount": 50}}}]}]}
+    "A": {
+      "name": "Сияние",
+      "tiers": [
+        {
+          "name": "Сияние",
+          "desc": "Лечение 1800% силы навыков.",
+          "mods": [
+            {
+              "set": {
+                "name": "Сияние",
+                "desc": "Лечение 1800% силы навыков."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 90,
+                  "radius": 3
+                },
+                {
+                  "type": "damage",
+                  "amount": 30,
+                  "radius": 3,
+                  "kind": "spell"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Излишек",
+          "desc": "Лечение 2000% и +25% входящего лечения на 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Излишек",
+                "desc": "Лечение 2000% и +25% входящего лечения на 6 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 100,
+                  "radius": 3
+                },
+                {
+                  "type": "damage",
+                  "amount": 30,
+                  "radius": 3,
+                  "kind": "spell"
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.25,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Ослепление",
+      "tiers": [
+        {
+          "name": "Ослепление",
+          "desc": "Враги ослеплены 1.5 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Ослепление",
+                "desc": "Враги ослеплены 1.5 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 60,
+                  "radius": 3
+                },
+                {
+                  "type": "damage",
+                  "amount": 30,
+                  "radius": 3,
+                  "kind": "spell"
+                },
+                {
+                  "type": "stun",
+                  "duration": 1.5,
+                  "radius": 3,
+                  "look": "blind"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Испепеление",
+          "desc": "Урон 1000% силы навыков.",
+          "mods": [
+            {
+              "set": {
+                "name": "Испепеление",
+                "desc": "Урон 1000% силы навыков."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 60,
+                  "radius": 3
+                },
+                {
+                  "type": "damage",
+                  "amount": 50,
+                  "radius": 3,
+                  "kind": "spell"
+                },
+                {
+                  "type": "stun",
+                  "duration": 1.5,
+                  "radius": 3,
+                  "look": "blind"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   "backstab": {
     "A": {"name": "Отравленный кинжал", "tiers": [{"name": "Глубокий удар", "desc": "урон 292% атаки.", "mods": [{"set": {"desc": "урон 292% атаки, в спину ×2.2."}}, {"effect": {"type": "damage", "set": {"amount": 38}}}]}, {"name": "Кровоток", "desc": "И кровотечение 46% атаки в сек.", "mods": [{"set": {"desc": "урон 292% атаки (в спину ×2.2), кровотечение 46% атаки в сек."}}, {"add_effect": {"type": "buff", "stat": "bleed", "value": 6, "duration": 4, "affects": "enemies"}}]}]},
@@ -730,14 +2559,6 @@
     "B": {"name": "Ядовитый дым", "tiers": [
       {"name": "Ядовитый дым", "desc": "Клетки отравлены 4 сек.", "mods": [{"set": {"desc": "Радиус 1: ослепление, скрытность, ядовитый дым 4 сек."}}, {"add_effect": {"type": "hazard", "hazard": "poison", "duration": 4, "radius": 1}}]},
       {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Ослепление, скрытность, яд. 2 AP."}}, {"add": {"ap": -1}}]}]}
-  },
-  "crescendo": {
-    "A": {"name": "Овация", "tiers": [
-      {"name": "Овация", "desc": "Ноты ×2.", "mods": [{"set": {"desc": "Финал сейчас: +2 ноты, все ноты ×2."}}, {"effect": {"type": "song_finale", "set": {"mult": 2.0}}}]},
-      {"name": "Бис", "desc": "+4 ноты.", "mods": [{"set": {"desc": "Финал сейчас: +4 ноты, ноты ×2."}}, {"effect": {"type": "song_finale", "set": {"notes": 4}}}]}]},
-    "B": {"name": "Кода", "tiers": [
-      {"name": "Быстрее", "desc": "Перезарядка −4 сек.", "mods": [{"set": {"desc": "Финал сейчас за. Перезарядка −4 сек."}}, {"add": {"cooldown": -4}}]},
-      {"name": "Перезарядка 10", "desc": "Перезарядка 10.", "mods": [{"set": {"desc": "Финал за 3 AP, перезарядка 10."}}, {"add": {"cooldown": -8}}]}]}
   },
   "slug_shot": {
     "A": {"name": "Крупный калибр", "tiers": [{"name": "Крупный калибр", "desc": "урон 600% атаки.", "mods": [{"set": {"desc": "урон 600% атаки и отбрасывание."}}, {"effect": {"type": "damage", "set": {"amount": 48}}}]}, {"name": "Навылет", "desc": "Отбрасывание на 2.", "mods": [{"set": {"desc": "урон 600% атаки и отбрасывание на 2."}}, {"effect": {"type": "knockback", "set": {"cells": 2}}}]}]},
@@ -855,29 +2676,9 @@
     "A": {"name": "Пекло", "tiers": [{"name": "Пекло", "desc": "12 сек.", "mods": [{"set": {"desc": "Огонь разгорается и 12 сек не гаснет."}}, {"effect": {"type": "inferno", "set": {"duration": 12}}}]}, {"name": "Без каста", "desc": "Мгновенно.", "mods": [{"set": {"desc": "Мгновенно: огонь разгорается и 12 сек не гаснет."}}, {"set": {"cast": 0}}]}]},
     "B": {"name": "Огненный дождь", "tiers": [{"name": "Огненный дождь", "desc": "И Огонь всем врагам рядом с огнём.", "mods": [{"set": {"desc": "Огонь разгорается, всем врагам — урон 200% силы навыков и Огонь."}}, {"add_effect": {"type": "damage", "amount": 12, "kind": "spell", "radius": 6, "tag": "fire"}}]}, {"name": "Перезарядка 16", "desc": "Перезарядка 16.", "mods": [{"set": {"desc": "Огненный дождь. Перезарядка 16."}}, {"add": {"cooldown": -8}}]}]}
   },
-  "garrote": {
-    "A": {"name": "Тихая смерть", "tiers": [{"name": "Тихая смерть", "desc": "урон 423% атаки.", "mods": [{"set": {"desc": "Из тени: урон 423% атаки и безмолвие 3 сек."}}, {"effect": {"type": "damage", "set": {"amount": 55}}}]}, {"name": "Удушье", "desc": "Безмолвие 5 сек.", "mods": [{"set": {"desc": "Из тени: урон 423% атаки и безмолвие 5 сек."}}, {"effect": {"type": "buff", "set": {"duration": 5}}}]}]},
-    "B": {"name": "Нить", "tiers": [{"name": "Нить", "desc": "И держит 1.5 сек.", "mods": [{"set": {"desc": "Из тени: урон 308% атаки, безмолвие и держит 1.5 сек."}}, {"add_effect": {"type": "stun", "duration": 1.5, "look": "net"}}]}, {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Удавка за 2 AP."}}, {"add": {"ap": -1}}]}]}
-  },
-  "shadow_double": {
-    "A": {"name": "Долгая тень", "tiers": [{"name": "Долгая тень", "desc": "Тень 5 сек.", "mods": [{"set": {"desc": "Двойник 6 сек, тень 5 сек."}}, {"effect": {"type": "stealth", "set": {"duration": 5}}}]}, {"name": "Двойник 10 сек", "desc": "Двойник 10 сек.", "mods": [{"set": {"desc": "Двойник 10 сек, тень 5 сек."}}, {"effect": {"type": "summon", "set": {"duration": 10}}}]}]},
-    "B": {"name": "Ловушка тени", "tiers": [{"name": "Ловушка тени", "desc": "Двойник взрывается тьмой.", "mods": [{"set": {"desc": "Двойник 6 сек, затем взрыв тьмы: урон 185% силы навыков рядом."}}, {"effect": {"type": "summon", "set": {"duration": 6}}}, {"add_effect": {"type": "delay", "time": 6, "effects": [{"type": "damage", "amount": 24, "kind": "spell", "radius": 1}], "name": "Тень"}}]}, {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Ловушка тени. 2 AP."}}, {"add": {"ap": -1}}]}]}
-  },
   "shadow_dance": {
     "A": {"name": "Вихрь клинков", "tiers": [{"name": "Вихрь клинков", "desc": "До 6 целей.", "mods": [{"set": {"desc": "Танец до 6 целей."}}, {"effect": {"type": "shadow_dance", "set": {"jumps": 6}}}]}, {"name": "Острые клинки", "desc": "урон 385% атаки.", "mods": [{"set": {"desc": "Танец до 6 целей, урон 385% атаки."}}, {"effect": {"type": "shadow_dance", "set": {"amount": 50}}}]}]},
     "B": {"name": "Длинные тени", "tiers": [{"name": "Длинные тени", "desc": "Прыжки до 5 клеток.", "mods": [{"set": {"desc": "Танец, прыжки до 5 клеток."}}, {"effect": {"type": "shadow_dance", "set": {"reach": 5}}}]}, {"name": "Перезарядка 14", "desc": "Перезарядка 14.", "mods": [{"set": {"desc": "Длинные тени. Перезарядка 14."}}, {"add": {"cooldown": -6}}]}]}
-  },
-  "maul": {
-    "A": {"name": "Тяжёлая лапа", "tiers": [{"name": "Тяжёлая лапа", "desc": "урон 571% атаки.", "mods": [{"set": {"desc": "Медведь: урон 571% атаки, оглушение, толчок."}}, {"effect": {"type": "damage", "set": {"amount": 40}}}]}, {"name": "Сокрушить", "desc": "Оглушение 1.5 сек.", "mods": [{"set": {"desc": "Медведь: урон 571% атаки, оглушение 1.5 сек."}}, {"effect": {"type": "stun", "set": {"duration": 1.5}}}]}]},
-    "B": {"name": "Размах лапы", "tiers": [{"name": "Размах лапы", "desc": "И всем рядом.", "mods": [{"set": {"desc": "Медведь: все рядом — урон 429% атаки и оглушение."}}, {"set": {"radius": 1}}, {"effect": {"type": "damage", "set": {"radius": 1}}}, {"effect": {"type": "stun", "set": {"radius": 1}}}]}, {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Размах лапы. 2 AP."}}, {"add": {"ap": -1}}]}]}
-  },
-  "pounce": {
-    "A": {"name": "Клыки", "tiers": [{"name": "Клыки", "desc": "Кровотечение 129% атаки в сек.", "mods": [{"set": {"desc": "Волк: прыжок, урон 343% атаки, кровотечение 129% атаки в сек."}}, {"effect": {"type": "damage", "set": {"on_hit_buff": {"stat": "bleed", "value": 9, "duration": 4}}}}]}, {"name": "Загрызть", "desc": "×2 по раненым.", "mods": [{"set": {"desc": "Волк: прыжок, кровотечение, ×2 при HP < 35%."}}, {"effect": {"type": "damage", "set": {"execute": {"below": 0.35, "mult": 2.0}}}}]}]},
-    "B": {"name": "Стая", "tiers": [{"name": "Стая", "desc": "Перезарядка 3.", "mods": [{"set": {"desc": "Волк: прыжок и кровотечение. Перезарядка 3."}}, {"add": {"cooldown": -2}}]}, {"name": "Дальний прыжок", "desc": "Дальность 6.", "mods": [{"set": {"desc": "Волк: прыжок до 6."}}, {"set": {"range": 6}}]}]}
-  },
-  "bear_roar": {
-    "A": {"name": "Грозный рык", "tiers": [{"name": "Грозный рык", "desc": "Радиус 3.", "mods": [{"set": {"desc": "Радиус 3: провокация, враги слабее."}}, {"set": {"radius": 3}}, {"effect": {"type": "taunt", "set": {"radius": 3}}}, {"effects": [{"type": "taunt", "radius": 3, "duration": 4}, {"type": "buff", "stat": "armor", "value": 4, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 0.8, "duration": 6, "affects": "enemies", "radius": 3}]}]}, {"name": "Шкура", "desc": "+7 брони.", "mods": [{"set": {"desc": "Радиус 3, +7 брони."}}, {"effects": [{"type": "taunt", "radius": 3, "duration": 4}, {"type": "buff", "stat": "armor", "value": 7, "duration": 6}, {"type": "buff", "stat": "atk_mult", "value": 0.8, "duration": 6, "affects": "enemies", "radius": 3}]}]}]},
-    "B": {"name": "Рёв жизни", "tiers": [{"name": "Рёв жизни", "desc": "И лечение 86% силы навыков в сек.", "mods": [{"set": {"desc": "Провокация, +4 брони, лечение 86% силы навыков в сек."}}, {"add_effect": {"type": "buff", "stat": "regen", "value": 6, "duration": 6}}]}, {"name": "Перезарядка 6", "desc": "Перезарядка 6.", "mods": [{"set": {"desc": "Рёв жизни. Перезарядка 6."}}, {"add": {"cooldown": -4}}]}]}
   },
   "wild_fury": {
     "A": {"name": "Зверь", "tiers": [{"name": "Зверь", "desc": "12 сек.", "mods": [{"set": {"desc": "12 сек: броня, скорость, урон, лечение."}}, {"effect": {"type": "buff", "set": {"duration": 12}}}]}, {"name": "Вожак", "desc": "Урон ×1.5.", "mods": [{"set": {"desc": "12 сек: урон ×1.5."}}, {"effects": [{"type": "buff", "stat": "armor", "value": 4, "duration": 12}, {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 12}, {"type": "buff", "stat": "regen", "value": 6, "duration": 12}, {"type": "buff", "stat": "atk_mult", "value": 1.5, "duration": 12}]}]}]},
@@ -914,38 +2715,6 @@
   "totem_link": {
     "A": {"name": "Сильный ток", "tiers": [{"name": "Сильный ток", "desc": "урон 475% силы навыков.", "mods": [{"set": {"desc": "Молнии между тотемами: урон 475% силы навыков."}}, {"effect": {"type": "totem_link", "set": {"amount": 38}}}]}, {"name": "Оглушающий", "desc": "И шок 0.6 сек врагам рядом с шаманом.", "mods": [{"set": {"desc": "урон 475% силы навыков, шок 0.6 сек врагам рядом."}}, {"add_effect": {"type": "stun", "duration": 0.6, "radius": 2, "look": "shock"}}]}]},
     "B": {"name": "Частая сеть", "tiers": [{"name": "Частая сеть", "desc": "Перезарядка 3.", "mods": [{"set": {"desc": "Сеть молний. Перезарядка 3."}}, {"add": {"cooldown": -3}}]}, {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Частая сеть. 2 AP."}}, {"add": {"ap": -1}}]}]}
-  },
-  "battle_hymn": {
-    "A": {"name": "Марш", "tiers": [
-      {"name": "Марш", "desc": "Урон +8% за ноту.", "mods": [{"set": {"desc": "Финал: урон +8% за ноту, AP."}}, {"effect": {"type": "song", "set": {"finale": [{"type": "buff", "stat": "atk_mult", "value": 1.1, "per_note": 0.08, "duration": 8}, {"type": "ap", "amount": 0, "per_note": 0.5}]}}}]},
-      {"name": "Долгий марш", "desc": "6 тактов.", "mods": [{"set": {"desc": "6 тактов, урон +8% за ноту."}}, {"effect": {"type": "song", "set": {"beats": 6}}}]}]},
-    "B": {"name": "Барабаны", "tiers": [
-      {"name": "Барабаны", "desc": "Такт 1.5 сек.", "mods": [{"set": {"desc": "Такт 1.5 сек."}}, {"effect": {"type": "song", "set": {"every": 1.5}}}]},
-      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Барабаны. 2 AP."}}, {"add": {"ap": -1}}]}]}
-  },
-  "solo": {
-    "A": {"name": "Виртуоз", "tiers": [
-      {"name": "Виртуоз", "desc": "+3 ноты.", "mods": [{"set": {"desc": "+3 ноты в песню."}}, {"effect": {"type": "song_notes", "set": {"notes": 3}}}]},
-      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "+3 ноты, 1 AP."}}, {"add": {"ap": -1}}]}]},
-    "B": {"name": "Импровизация", "tiers": [
-      {"name": "Импровизация", "desc": "Перезарядка 2.", "mods": [{"set": {"desc": "+2 ноты, перезарядка 2."}}, {"add": {"cooldown": -2}}]},
-      {"name": "0 AP", "desc": "0 AP.", "mods": [{"set": {"desc": "+2 ноты, без AP."}}, {"add": {"ap": -2}}]}]}
-  },
-  "nocturne": {
-    "A": {"name": "Тёмная ночь", "tiers": [
-      {"name": "Тёмная ночь", "desc": "Урон +9 за ноту.", "mods": [{"set": {"desc": "Финал: 10 урона +9 за ноту и сон."}}, {"effect": {"type": "song", "set": {"finale": [{"type": "sleep", "duration": 1.5, "per_note": 0.4}, {"type": "damage", "amount": 10, "per_note": 9}]}}}]},
-      {"name": "Долгий сон", "desc": "Сон +0.6 за ноту.", "mods": [{"set": {"desc": "Финал: урон +9 и сон +0.6 за ноту."}}, {"effect": {"type": "song", "set": {"finale": [{"type": "sleep", "duration": 1.5, "per_note": 0.6}, {"type": "damage", "amount": 10, "per_note": 9}]}}}]}]},
-    "B": {"name": "Шёпот", "tiers": [
-      {"name": "Шёпот", "desc": "Радиус 4.", "mods": [{"set": {"desc": "Ноктюрн радиуса 4."}}, {"effect": {"type": "song", "set": {"radius": 4}}}]},
-      {"name": "2 AP", "desc": "2 AP.", "mods": [{"set": {"desc": "Шёпот. 2 AP."}}, {"add": {"ap": -1}}]}]}
-  },
-  "tempo": {
-    "A": {"name": "Престо", "tiers": [
-      {"name": "Престо", "desc": "+2 ноты.", "mods": [{"set": {"desc": "Темп вдвое, +2 ноты."}}, {"effect": {"type": "song_tempo", "set": {"notes": 2}}}]},
-      {"name": "1 AP", "desc": "1 AP.", "mods": [{"set": {"desc": "Престо, 1 AP."}}, {"add": {"ap": -1}}]}]},
-    "B": {"name": "Аччелерандо", "tiers": [
-      {"name": "Аччелерандо", "desc": "Перезарядка 5.", "mods": [{"set": {"desc": "Темп вдвое. Перезарядка 5."}}, {"add": {"cooldown": -3}}]},
-      {"name": "Пульс", "desc": "Союзникам рядом +1 AP.", "mods": [{"set": {"desc": "Темп вдвое, союзникам +1 AP."}}, {"add_effect": {"type": "refresh", "ap": 1, "radius": 3}}]}]}
   },
   "sticky_bomb": {
     "A": {"name": "Россыпь", "tiers": [{"name": "Россыпь", "desc": "Одна цель → все рядом: бомба на цель и врагов вокруг неё.", "mods": [{"set": {"name": "Россыпь", "desc": "Бомбы на цель и всех врагов рядом с ней: через 4 сек — 200% атаки огнём вокруг каждой."}, "effects": [{"type": "mark", "mark": "bomb", "stacks": 1, "duration": 4, "radius": 1}]}]}, {"name": "Короткий запал", "desc": "Взрыв через 3 сек.", "mods": [{"set": {"desc": "Бомбы на цель и врагов рядом: через 3 сек — 200% атаки огнём вокруг каждой."}}, {"effect": {"type": "mark", "set": {"duration": 3}}}]}]},
@@ -1270,5 +3039,3068 @@
   "ancestors": {
     "A": {"name": "Стражи предков", "tiers": [{"name": "Стражи предков", "desc": "Неуязвимость 10 сек.", "mods": [{"set": {"desc": "Призыв. По тотему каждого вида вокруг шамана (сверх лимита), все тотемы 10 сек неуязвимы."}}, {"effect": {"type": "ancestors", "set": {"guard": 10}}}]}, {"name": "Перезарядка 22", "desc": "Перезарядка 22.", "mods": [{"set": {"cooldown": 22}}]}]},
     "B": {"name": "Сильные предки", "tiers": [{"name": "Сильные предки", "desc": "Новые тотемы ×1.5.", "mods": [{"set": {"desc": "Призыв. По тотему каждого вида вокруг шамана (сверх лимита, сила ×1.5), все тотемы 6 сек неуязвимы."}}, {"effect": {"type": "ancestors", "set": {"power": 1.5}}}]}, {"name": "Великие предки", "desc": "Новые тотемы ×2.", "mods": [{"set": {"desc": "Призыв. По тотему каждого вида (сила ×2), все тотемы 6 сек неуязвимы."}}, {"effect": {"type": "ancestors", "set": {"power": 2.0}}}]}]}
+  },
+  "last_stand": {
+    "A": {
+      "name": "??????? A",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    },
+    "B": {
+      "name": "??????? B",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    }
+  },
+  "shield_charge": {
+    "A": {
+      "name": "??????? A",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    },
+    "B": {
+      "name": "??????? B",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    }
+  },
+  "piercing_shot": {
+    "A": {
+      "name": "??????? A",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    },
+    "B": {
+      "name": "??????? B",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    }
+  },
+  "concussive_shot": {
+    "A": {
+      "name": "??????? A",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    },
+    "B": {
+      "name": "??????? B",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    }
+  },
+  "suppressing_fire": {
+    "A": {
+      "name": "??????? A",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    },
+    "B": {
+      "name": "??????? B",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    }
+  },
+  "flame_wall": {
+    "A": {
+      "name": "Длинная стена",
+      "tiers": [
+        {
+          "name": "Длинная стена",
+          "desc": "Стена на 5 клеток, 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Длинная стена",
+                "desc": "Стена на 5 клеток, 6 сек."
+              },
+              "effects": [
+                {
+                  "type": "fire_wall",
+                  "length": 5,
+                  "duration": 6,
+                  "amount": 12
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Длинная стена+",
+          "desc": "Стена на 5 клеток, 8 сек, сильнее.",
+          "mods": [
+            {
+              "set": {
+                "name": "Длинная стена+",
+                "desc": "Стена на 5 клеток, 8 сек, сильнее."
+              },
+              "effects": [
+                {
+                  "type": "fire_wall",
+                  "length": 5,
+                  "duration": 8,
+                  "amount": 16
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Пылающая стена",
+      "tiers": [
+        {
+          "name": "Пылающая стена",
+          "desc": "Стена на 3 клетки, 8 сек, 20 урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Пылающая стена",
+                "desc": "Стена на 3 клетки, 8 сек, 20 урона."
+              },
+              "effects": [
+                {
+                  "type": "fire_wall",
+                  "length": 3,
+                  "duration": 8,
+                  "amount": 20
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Пылающая стена+",
+          "desc": "Стена на 3 клетки, 10 сек, 26 урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Пылающая стена+",
+                "desc": "Стена на 3 клетки, 10 сек, 26 урона."
+              },
+              "effects": [
+                {
+                  "type": "fire_wall",
+                  "length": 3,
+                  "duration": 10,
+                  "amount": 26
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "ash_veil": {
+    "A": {
+      "name": "Плотный туман",
+      "tiers": [
+        {
+          "name": "Плотный туман",
+          "desc": "Туман в радиусе 2 на 10 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Плотный туман",
+                "desc": "Туман в радиусе 2 на 10 сек."
+              },
+              "effects": [
+                {
+                  "type": "hazard",
+                  "hazard": "fog",
+                  "duration": 10,
+                  "radius": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Плотный туман+",
+          "desc": "Туман в радиусе 2 на 12 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Плотный туман+",
+                "desc": "Туман в радиусе 2 на 12 сек."
+              },
+              "effects": [
+                {
+                  "type": "hazard",
+                  "hazard": "fog",
+                  "duration": 12,
+                  "radius": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Долгий туман",
+      "tiers": [
+        {
+          "name": "Долгий туман",
+          "desc": "Туман в радиусе 1 на 14 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгий туман",
+                "desc": "Туман в радиусе 1 на 14 сек."
+              },
+              "effects": [
+                {
+                  "type": "hazard",
+                  "hazard": "fog",
+                  "duration": 14,
+                  "radius": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Долгий туман+",
+          "desc": "Туман в радиусе 1 на 18 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгий туман+",
+                "desc": "Туман в радиусе 1 на 18 сек."
+              },
+              "effects": [
+                {
+                  "type": "hazard",
+                  "hazard": "fog",
+                  "duration": 18,
+                  "radius": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "flashover": {
+    "A": {
+      "name": "??????? A",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    },
+    "B": {
+      "name": "??????? B",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    }
+  },
+  "meteor": {
+    "A": {
+      "name": "Семь метеоров",
+      "tiers": [
+        {
+          "name": "Семь метеоров",
+          "desc": "Падает 7 метеоров.",
+          "mods": [
+            {
+              "set": {
+                "channel": {
+                  "duration": 4.0,
+                  "every": 0.6,
+                  "count": 7,
+                  "random": true,
+                  "spread": 3,
+                  "radius": 1,
+                  "kind": "meteor",
+                  "empowered": 0,
+                  "empowered_mult": 2.0,
+                  "effects": [
+                    {
+                      "type": "damage",
+                      "amount": 20,
+                      "radius": 1,
+                      "kind": "spell",
+                      "tag": "fire"
+                    },
+                    {
+                      "type": "hazard",
+                      "hazard": "fire",
+                      "duration": 4,
+                      "radius": 1
+                    }
+                  ]
+                },
+                "desc": "Каст 1.5 сек: 7 метеоров падают в случайные клетки рядом."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Семь метеоров+",
+          "desc": "7 метеоров, каждый сильнее.",
+          "mods": [
+            {
+              "set": {
+                "channel": {
+                  "duration": 4.0,
+                  "every": 0.6,
+                  "count": 7,
+                  "random": true,
+                  "spread": 3,
+                  "radius": 1,
+                  "kind": "meteor",
+                  "empowered": 0,
+                  "empowered_mult": 2.0,
+                  "effects": [
+                    {
+                      "type": "damage",
+                      "amount": 20,
+                      "radius": 1,
+                      "kind": "spell",
+                      "tag": "fire"
+                    },
+                    {
+                      "type": "hazard",
+                      "hazard": "fire",
+                      "duration": 4,
+                      "radius": 1
+                    }
+                  ]
+                },
+                "desc": "Каст 1.5 сек: 7 усиленных метеоров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Усиленный метеор",
+      "tiers": [
+        {
+          "name": "Усиленный метеор",
+          "desc": "Последний метеор бьёт вдвое сильнее.",
+          "mods": [
+            {
+              "set": {
+                "channel": {
+                  "duration": 4.0,
+                  "every": 0.6,
+                  "count": 5,
+                  "random": true,
+                  "spread": 3,
+                  "radius": 1,
+                  "kind": "meteor",
+                  "empowered": 1,
+                  "empowered_mult": 2.0,
+                  "effects": [
+                    {
+                      "type": "damage",
+                      "amount": 20,
+                      "radius": 1,
+                      "kind": "spell",
+                      "tag": "fire"
+                    },
+                    {
+                      "type": "hazard",
+                      "hazard": "fire",
+                      "duration": 4,
+                      "radius": 1
+                    }
+                  ]
+                },
+                "desc": "Каст 1.5 сек: 5 метеоров, последний — вдвое сильнее."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Усиленный метеор+",
+          "desc": "Последний метеор бьёт в 2.5 раза сильнее.",
+          "mods": [
+            {
+              "set": {
+                "channel": {
+                  "duration": 4.0,
+                  "every": 0.6,
+                  "count": 5,
+                  "random": true,
+                  "spread": 3,
+                  "radius": 1,
+                  "kind": "meteor",
+                  "empowered": 1,
+                  "empowered_mult": 2.5,
+                  "effects": [
+                    {
+                      "type": "damage",
+                      "amount": 20,
+                      "radius": 1,
+                      "kind": "spell",
+                      "tag": "fire"
+                    },
+                    {
+                      "type": "hazard",
+                      "hazard": "fire",
+                      "duration": 4,
+                      "radius": 1
+                    }
+                  ]
+                },
+                "desc": "Каст 1.5 сек: 5 метеоров, последний — в 2.5 раза сильнее."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "phoenix": {
+    "A": {
+      "name": "Солнечный щит",
+      "tiers": [
+        {
+          "name": "Солнечный щит",
+          "desc": "Щит 40 на 8 сек, зона лечит на 10 и жжёт на 10.",
+          "mods": [
+            {
+              "set": {
+                "name": "Солнечный щит",
+                "desc": "Щит 40 на 8 сек, зона лечит на 10 и жжёт на 10."
+              },
+              "effects": [
+                {
+                  "type": "revive",
+                  "pct": 0.4,
+                  "radius": 2
+                },
+                {
+                  "type": "shield",
+                  "amount": 40,
+                  "duration": 8
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 10,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 10,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Солнечный щит+",
+          "desc": "Щит 50 на 8 сек, зона лечит на 12 и жжёт на 12.",
+          "mods": [
+            {
+              "set": {
+                "name": "Солнечный щит+",
+                "desc": "Щит 50 на 8 сек, зона лечит на 12 и жжёт на 12."
+              },
+              "effects": [
+                {
+                  "type": "revive",
+                  "pct": 0.4,
+                  "radius": 2
+                },
+                {
+                  "type": "shield",
+                  "amount": 50,
+                  "duration": 8
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 12,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 12,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Тёплый пепел",
+      "tiers": [
+        {
+          "name": "Тёплый пепел",
+          "desc": "Щит 30 на 8 сек; союзники рядом +30% лечения; зона лечит на 12.",
+          "mods": [
+            {
+              "set": {
+                "name": "Тёплый пепел",
+                "desc": "Щит 30 на 8 сек; союзники рядом +30% лечения; зона лечит на 12."
+              },
+              "effects": [
+                {
+                  "type": "revive",
+                  "pct": 0.4,
+                  "radius": 2
+                },
+                {
+                  "type": "shield",
+                  "amount": 30,
+                  "duration": 8
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.3,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 12,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 8,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Тёплый пепел+",
+          "desc": "Щит 40 на 8 сек; +40% лечения; зона лечит на 14.",
+          "mods": [
+            {
+              "set": {
+                "name": "Тёплый пепел+",
+                "desc": "Щит 40 на 8 сек; +40% лечения; зона лечит на 14."
+              },
+              "effects": [
+                {
+                  "type": "revive",
+                  "pct": 0.4,
+                  "radius": 2
+                },
+                {
+                  "type": "shield",
+                  "amount": 40,
+                  "duration": 8
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.4,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "zone",
+                  "duration": 8,
+                  "every": 1.0,
+                  "radius": 2,
+                  "kind": "phoenix",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 14,
+                      "radius": 2,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "damage",
+                      "amount": 10,
+                      "radius": 2,
+                      "kind": "spell",
+                      "tag": "fire",
+                      "affects": "enemies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "prayer": {
+    "A": {
+      "name": "Молитва",
+      "tiers": [
+        {
+          "name": "Молитва",
+          "desc": "6 сек: 12 HP и очищение в секунду.",
+          "mods": [
+            {
+              "set": {
+                "name": "Молитва",
+                "desc": "6 сек: 12 HP и очищение в секунду.",
+                "channel": {
+                  "duration": 6.0,
+                  "every": 1.0,
+                  "count": 6,
+                  "ap_cost": 1,
+                  "radius": 1,
+                  "kind": "prayer",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 12,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "cleanse",
+                      "radius": 1,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              },
+              "effects": []
+            }
+          ]
+        },
+        {
+          "name": "Молитва+",
+          "desc": "8 сек: 16 HP и очищение в секунду.",
+          "mods": [
+            {
+              "set": {
+                "name": "Молитва+",
+                "desc": "8 сек: 16 HP и очищение в секунду.",
+                "channel": {
+                  "duration": 8.0,
+                  "every": 1.0,
+                  "count": 8,
+                  "ap_cost": 1,
+                  "radius": 1,
+                  "kind": "prayer",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 16,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "cleanse",
+                      "radius": 1,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              },
+              "effects": []
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкость",
+      "tiers": [
+        {
+          "name": "Стойкость",
+          "desc": "6 сек: 8 HP, очищение, +35% лечения, −15% урона и −35% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость",
+                "desc": "6 сек: 8 HP, очищение, +35% лечения, −15% урона и −35% дебафов.",
+                "channel": {
+                  "duration": 6.0,
+                  "every": 1.0,
+                  "count": 6,
+                  "ap_cost": 1,
+                  "radius": 1,
+                  "kind": "prayer",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 8,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "cleanse",
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.35,
+                      "duration": 1.5,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "dmg_taken",
+                      "value": 0.85,
+                      "duration": 1.5,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "debuff_resist",
+                      "value": 0.35,
+                      "duration": 1.5,
+                      "radius": 1,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              },
+              "effects": []
+            }
+          ]
+        },
+        {
+          "name": "Стойкость+",
+          "desc": "8 сек: 10 HP, очищение, +45% лечения, −20% урона и −45% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость+",
+                "desc": "8 сек: 10 HP, очищение, +45% лечения, −20% урона и −45% дебафов.",
+                "channel": {
+                  "duration": 8.0,
+                  "every": 1.0,
+                  "count": 8,
+                  "ap_cost": 1,
+                  "radius": 1,
+                  "kind": "prayer",
+                  "effects": [
+                    {
+                      "type": "heal",
+                      "amount": 10,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "cleanse",
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "heal_taken",
+                      "value": 1.45,
+                      "duration": 1.5,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "dmg_taken",
+                      "value": 0.8,
+                      "duration": 1.5,
+                      "radius": 1,
+                      "affects": "allies"
+                    },
+                    {
+                      "type": "buff",
+                      "stat": "debuff_resist",
+                      "value": 0.45,
+                      "duration": 1.5,
+                      "radius": 1,
+                      "affects": "allies"
+                    }
+                  ]
+                }
+              },
+              "effects": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "miracle": {
+    "A": {
+      "name": "Рассвет",
+      "tiers": [
+        {
+          "name": "Рассвет",
+          "desc": "Радиус 3: лечение 60, +30% лечения и −10% урона на 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Рассвет",
+                "desc": "Радиус 3: лечение 60, +30% лечения и −10% урона на 6 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 60,
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.3,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.9,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Рассвет+",
+          "desc": "Радиус 3: лечение 75, +40% лечения и −15% урона на 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Рассвет+",
+                "desc": "Радиус 3: лечение 75, +40% лечения и −15% урона на 8 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 75,
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.4,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.85,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкость",
+      "tiers": [
+        {
+          "name": "Стойкость",
+          "desc": "Радиус 3: лечение 45, очищение, −20% урона и −40% дебафов на 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость",
+                "desc": "Радиус 3: лечение 45, очищение, −20% урона и −40% дебафов на 6 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 45,
+                  "radius": 3
+                },
+                {
+                  "type": "cleanse",
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.8,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.4,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Стойкость+",
+          "desc": "Радиус 3: лечение 55, очищение, −25% урона и −50% дебафов на 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость+",
+                "desc": "Радиус 3: лечение 55, очищение, −25% урона и −50% дебафов на 8 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 55,
+                  "radius": 3
+                },
+                {
+                  "type": "cleanse",
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.75,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.5,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "shield_bash": {
+    "A": {
+      "name": "??????? A",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    },
+    "B": {
+      "name": "??????? B",
+      "tiers": [
+        {
+          "name": "??????? I",
+          "desc": "??????? ?????.",
+          "mods": []
+        },
+        {
+          "name": "??????? II",
+          "desc": "????????? ?????.",
+          "mods": []
+        }
+      ]
+    }
+  },
+  "faith_shield": {
+    "A": {
+      "name": "Покров",
+      "tiers": [
+        {
+          "name": "Покров",
+          "desc": "8 сек: +30% входящего лечения, −15% урона и −25% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Покров",
+                "desc": "8 сек: +30% входящего лечения, −15% урона и −25% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.3,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.85,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.25,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Покров+",
+          "desc": "10 сек: +35% лечения, −20% урона и −35% дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Покров+",
+                "desc": "10 сек: +35% лечения, −20% урона и −35% дебафов."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.35,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.8,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.35,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкость",
+      "tiers": [
+        {
+          "name": "Стойкость",
+          "desc": "8 сек: +20% лечения, −20% урона, −40% дебафов; снимает теги.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость",
+                "desc": "8 сек: +20% лечения, −20% урона, −40% дебафов; снимает теги."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.2,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.8,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.4,
+                  "duration": 8,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "cleanse",
+                  "radius": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Стойкость+",
+          "desc": "10 сек: +25% лечения, −25% урона, −50% дебафов; снимает теги.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость+",
+                "desc": "10 сек: +25% лечения, −25% урона, −50% дебафов; снимает теги."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.25,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.75,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.5,
+                  "duration": 10,
+                  "radius": 2,
+                  "affects": "allies"
+                },
+                {
+                  "type": "cleanse",
+                  "radius": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "blessing": {
+    "A": {
+      "name": "Дар жизни",
+      "tiers": [
+        {
+          "name": "Дар жизни",
+          "desc": "8 сек: +30% входящего лечения и −10% входящего урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дар жизни",
+                "desc": "8 сек: +30% входящего лечения и −10% входящего урона."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.3,
+                  "duration": 8
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.9,
+                  "duration": 8
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Дар жизни+",
+          "desc": "10 сек: +40% входящего лечения и −15% входящего урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дар жизни+",
+                "desc": "10 сек: +40% входящего лечения и −15% входящего урона."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.4,
+                  "duration": 10
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.85,
+                  "duration": 10
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкость",
+      "tiers": [
+        {
+          "name": "Стойкость",
+          "desc": "8 сек: +20% лечения, −15% урона и −40% длительности дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость",
+                "desc": "8 сек: +20% лечения, −15% урона и −40% длительности дебафов."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.2,
+                  "duration": 8
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.85,
+                  "duration": 8
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.4,
+                  "duration": 8
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Стойкость+",
+          "desc": "10 сек: +25% лечения, −20% урона и −50% длительности дебафов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость+",
+                "desc": "10 сек: +25% лечения, −20% урона и −50% длительности дебафов."
+              },
+              "effects": [
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.25,
+                  "duration": 10
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.8,
+                  "duration": 10
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.5,
+                  "duration": 10
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "venom_darts": {
+    "A": {
+      "name": "Двойной залп",
+      "tiers": [
+        {
+          "name": "Двойной залп",
+          "desc": "Два дротика, каждый 133% атаки + Яд.",
+          "mods": [
+            {
+              "set": {
+                "name": "Двойной залп",
+                "desc": "Два дротика, каждый 133% атаки + Яд."
+              },
+              "effects": [
+                {
+                  "type": "barrage",
+                  "shots": 2,
+                  "gap": 0.12,
+                  "reach": 6,
+                  "shadow_shots": 2,
+                  "shot": {
+                    "type": "damage",
+                    "amount": 12,
+                    "kind": "ranged",
+                    "arrow": true,
+                    "tag": "poison",
+                    "of": "atk",
+                    "pct": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Тройной залп",
+          "desc": "Три дротика.",
+          "mods": [
+            {
+              "set": {
+                "name": "Тройной залп",
+                "desc": "Три дротика."
+              },
+              "effects": [
+                {
+                  "type": "barrage",
+                  "shots": 3,
+                  "gap": 0.1,
+                  "reach": 6,
+                  "shadow_shots": 3,
+                  "shot": {
+                    "type": "damage",
+                    "amount": 12,
+                    "kind": "ranged",
+                    "arrow": true,
+                    "tag": "poison",
+                    "of": "atk",
+                    "pct": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Ядовитое облако",
+      "tiers": [
+        {
+          "name": "Ядовитое облако",
+          "desc": "Дротик оставляет яд на клетке 3 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Ядовитое облако",
+                "desc": "Дротик оставляет яд на клетке 3 сек."
+              },
+              "effects": [
+                {
+                  "type": "barrage",
+                  "shots": 1,
+                  "gap": 0.12,
+                  "reach": 6,
+                  "shadow_shots": 2,
+                  "shot": {
+                    "type": "damage",
+                    "amount": 12,
+                    "kind": "ranged",
+                    "arrow": true,
+                    "tag": "poison",
+                    "of": "atk",
+                    "pct": true
+                  }
+                },
+                {
+                  "type": "hazard",
+                  "hazard": "poison",
+                  "radius": 0,
+                  "duration": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Ядовитое облако+",
+          "desc": "Яд в радиусе 1 на 4 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Ядовитое облако+",
+                "desc": "Яд в радиусе 1 на 4 сек."
+              },
+              "effects": [
+                {
+                  "type": "barrage",
+                  "shots": 1,
+                  "gap": 0.12,
+                  "reach": 6,
+                  "shadow_shots": 2,
+                  "shot": {
+                    "type": "damage",
+                    "amount": 12,
+                    "kind": "ranged",
+                    "arrow": true,
+                    "tag": "poison",
+                    "of": "atk",
+                    "pct": true
+                  }
+                },
+                {
+                  "type": "hazard",
+                  "hazard": "poison",
+                  "radius": 1,
+                  "duration": 4
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "bloodletting": {
+    "A": {
+      "name": "Глубокий порез",
+      "tiers": [
+        {
+          "name": "Глубокий порез",
+          "desc": "24 урона и кровотечение 8/сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Глубокий порез",
+                "desc": "24 урона и кровотечение 8/сек."
+              },
+              "effects": [
+                {
+                  "type": "damage",
+                  "amount": 24,
+                  "kind": "melee",
+                  "gain_if_bleeding": true
+                },
+                {
+                  "type": "buff",
+                  "stat": "bleed",
+                  "value": 8,
+                  "duration": 5,
+                  "affects": "enemies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Глубокий порез+",
+          "desc": "30 урона и кровотечение 10/сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Глубокий порез+",
+                "desc": "30 урона и кровотечение 10/сек."
+              },
+              "effects": [
+                {
+                  "type": "damage",
+                  "amount": 30,
+                  "kind": "melee",
+                  "gain_if_bleeding": true
+                },
+                {
+                  "type": "buff",
+                  "stat": "bleed",
+                  "value": 10,
+                  "duration": 5,
+                  "affects": "enemies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Заражение",
+      "tiers": [
+        {
+          "name": "Заражение",
+          "desc": "18 урона, кровотечение 6/сек и Яд.",
+          "mods": [
+            {
+              "set": {
+                "name": "Заражение",
+                "desc": "18 урона, кровотечение 6/сек и Яд."
+              },
+              "effects": [
+                {
+                  "type": "damage",
+                  "amount": 18,
+                  "kind": "melee",
+                  "gain_if_bleeding": true
+                },
+                {
+                  "type": "buff",
+                  "stat": "bleed",
+                  "value": 6,
+                  "duration": 5,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "status",
+                  "tag": "poison"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Заражение+",
+          "desc": "Кровотечение 8/сек, яд и +20% уязвимости.",
+          "mods": [
+            {
+              "set": {
+                "name": "Заражение+",
+                "desc": "Кровотечение 8/сек, яд и +20% уязвимости."
+              },
+              "effects": [
+                {
+                  "type": "damage",
+                  "amount": 18,
+                  "kind": "melee",
+                  "gain_if_bleeding": true
+                },
+                {
+                  "type": "buff",
+                  "stat": "bleed",
+                  "value": 8,
+                  "duration": 6,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "status",
+                  "tag": "poison"
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 1.2,
+                  "duration": 4,
+                  "affects": "enemies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "assassin_decoy": {
+    "A": {
+      "name": "Долгая приманка",
+      "tiers": [
+        {
+          "name": "Долгая приманка",
+          "desc": "Приманка живёт 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая приманка",
+                "desc": "Приманка живёт 8 сек."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "decoy",
+                  "duration": 8
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Долгая приманка+",
+          "desc": "Приманка живёт 10 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая приманка+",
+                "desc": "Приманка живёт 10 сек."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "decoy",
+                  "duration": 10
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Взрывная приманка",
+      "tiers": [
+        {
+          "name": "Взрывная приманка",
+          "desc": "Приманка 5 сек, затем взрыв 20 урона рядом.",
+          "mods": [
+            {
+              "set": {
+                "name": "Взрывная приманка",
+                "desc": "Приманка 5 сек, затем взрыв 20 урона рядом."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "decoy",
+                  "duration": 5
+                },
+                {
+                  "type": "delay",
+                  "time": 5,
+                  "name": "Приманка",
+                  "effects": [
+                    {
+                      "type": "damage",
+                      "amount": 20,
+                      "radius": 1,
+                      "kind": "spell"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Взрывная приманка+",
+          "desc": "Взрыв 28 урона в радиусе 2.",
+          "mods": [
+            {
+              "set": {
+                "name": "Взрывная приманка+",
+                "desc": "Взрыв 28 урона в радиусе 2."
+              },
+              "effects": [
+                {
+                  "type": "summon",
+                  "unit": "decoy",
+                  "duration": 5
+                },
+                {
+                  "type": "delay",
+                  "time": 5,
+                  "name": "Приманка",
+                  "effects": [
+                    {
+                      "type": "damage",
+                      "amount": 28,
+                      "radius": 2,
+                      "kind": "spell"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "shadow_execution": {
+    "A": {
+      "name": "Казнь",
+      "tiers": [
+        {
+          "name": "Казнь",
+          "desc": "70 урона, в спину ×2, добивание ×2 ниже 35%.",
+          "mods": [
+            {
+              "set": {
+                "name": "Казнь",
+                "desc": "70 урона, в спину ×2, добивание ×2 ниже 35%."
+              },
+              "effects": [
+                {
+                  "type": "leap_to"
+                },
+                {
+                  "type": "damage",
+                  "amount": 70,
+                  "kind": "melee",
+                  "backstab": 2.0,
+                  "from_shadow": 1.5,
+                  "execute": {
+                    "below": 0.35,
+                    "mult": 2.0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Казнь+",
+          "desc": "85 урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Казнь+",
+                "desc": "85 урона."
+              },
+              "effects": [
+                {
+                  "type": "leap_to"
+                },
+                {
+                  "type": "damage",
+                  "amount": 85,
+                  "kind": "melee",
+                  "backstab": 2.0,
+                  "from_shadow": 1.5,
+                  "execute": {
+                    "below": 0.35,
+                    "mult": 2.0
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Возврат тени",
+      "tiers": [
+        {
+          "name": "Возврат тени",
+          "desc": "После удара возвращает 3 стака скрытности.",
+          "mods": [
+            {
+              "set": {
+                "name": "Возврат тени",
+                "desc": "После удара возвращает 3 стака скрытности.",
+                "gauge_gain": 3
+              },
+              "effects": [
+                {
+                  "type": "leap_to"
+                },
+                {
+                  "type": "damage",
+                  "amount": 55,
+                  "kind": "melee",
+                  "backstab": 2.0,
+                  "from_shadow": 1.5,
+                  "execute": {
+                    "below": 0.35,
+                    "mult": 2.0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Возврат тени+",
+          "desc": "Возвращает 4 стака.",
+          "mods": [
+            {
+              "set": {
+                "name": "Возврат тени+",
+                "desc": "Возвращает 4 стака.",
+                "gauge_gain": 4
+              },
+              "effects": [
+                {
+                  "type": "leap_to"
+                },
+                {
+                  "type": "damage",
+                  "amount": 55,
+                  "kind": "melee",
+                  "backstab": 2.0,
+                  "from_shadow": 1.5,
+                  "execute": {
+                    "below": 0.35,
+                    "mult": 2.0
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "nightfall": {
+    "A": {
+      "name": "Долгая ночь",
+      "tiers": [
+        {
+          "name": "Долгая ночь",
+          "desc": "Тень и уклонение 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая ночь",
+                "desc": "Тень и уклонение 6 сек."
+              },
+              "effects": [
+                {
+                  "type": "stealth",
+                  "duration": 6,
+                  "radius": 3,
+                  "mult": 1.4
+                },
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.25,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "evasion",
+                  "value": 0.2,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Долгая ночь+",
+          "desc": "Тень и уклонение 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая ночь+",
+                "desc": "Тень и уклонение 8 сек."
+              },
+              "effects": [
+                {
+                  "type": "stealth",
+                  "duration": 8,
+                  "radius": 3,
+                  "mult": 1.5
+                },
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.3,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "evasion",
+                  "value": 0.25,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Широкий мрак",
+      "tiers": [
+        {
+          "name": "Широкий мрак",
+          "desc": "Радиус 4.",
+          "mods": [
+            {
+              "set": {
+                "name": "Широкий мрак",
+                "desc": "Радиус 4."
+              },
+              "effects": [
+                {
+                  "type": "stealth",
+                  "duration": 4,
+                  "radius": 4,
+                  "mult": 1.4
+                },
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.25,
+                  "duration": 4,
+                  "radius": 4,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "evasion",
+                  "value": 0.2,
+                  "duration": 4,
+                  "radius": 4,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Широкий мрак+",
+          "desc": "Радиус 5.",
+          "mods": [
+            {
+              "set": {
+                "name": "Широкий мрак+",
+                "desc": "Радиус 5."
+              },
+              "effects": [
+                {
+                  "type": "stealth",
+                  "duration": 4,
+                  "radius": 5,
+                  "mult": 1.4
+                },
+                {
+                  "type": "buff",
+                  "stat": "backstab_taken",
+                  "value": 1.25,
+                  "duration": 4,
+                  "radius": 5,
+                  "affects": "enemies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "evasion",
+                  "value": 0.2,
+                  "duration": 4,
+                  "radius": 5,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "form_shift": {
+    "A": {
+      "name": "Звериная тропа",
+      "tiers": [
+        {
+          "name": "Звериная тропа",
+          "desc": "После смены облика: +20% скорости атак 2 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Звериная тропа",
+                "desc": "После смены облика: +20% скорости атак 2 сек."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "atk_speed",
+                "value": 0.8,
+                "duration": 2,
+                "at": "caster"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Звериная тропа+",
+          "desc": "После смены облика: +30% скорости атак 3 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Звериная тропа+",
+                "desc": "После смены облика: +30% скорости атак 3 сек."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "atk_speed",
+                "value": 0.7,
+                "duration": 3,
+                "at": "caster"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Лесной покров",
+      "tiers": [
+        {
+          "name": "Лесной покров",
+          "desc": "После смены облика: −20% входящего урона 2 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Лесной покров",
+                "desc": "После смены облика: −20% входящего урона 2 сек."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "dmg_taken",
+                "value": 0.8,
+                "duration": 2,
+                "at": "caster"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Лесной покров+",
+          "desc": "После смены облика: −25% входящего урона 3 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Лесной покров+",
+                "desc": "После смены облика: −25% входящего урона 3 сек."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "dmg_taken",
+                "value": 0.75,
+                "duration": 3,
+                "at": "caster"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "wild_call": {
+    "A": {
+      "name": "Хранитель",
+      "tiers": [
+        {
+          "name": "Хранитель",
+          "desc": "Человек: +8 лечения. Медведь: −15% урона союзникам. Волк: +10% уклонения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Хранитель",
+                "desc": "Человек: +8 лечения. Медведь: −15% урона союзникам. Волк: +10% уклонения."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal",
+                "amount": 8,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "dmg_taken",
+                "value": 0.85,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "evasion",
+                "value": 0.1,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Хранитель+",
+          "desc": "Человек: +12 лечения. Медведь: −20% урона. Волк: +15% уклонения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Хранитель+",
+                "desc": "Человек: +12 лечения. Медведь: −20% урона. Волк: +15% уклонения."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "heal",
+                "amount": 12,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "dmg_taken",
+                "value": 0.8,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "evasion",
+                "value": 0.15,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Голод",
+      "tiers": [
+        {
+          "name": "Голод",
+          "desc": "Человек: +20% входящего лечения. Медведь: шипы. Волк: +15% атаки.",
+          "mods": [
+            {
+              "set": {
+                "name": "Голод",
+                "desc": "Человек: +20% входящего лечения. Медведь: шипы. Волк: +15% атаки."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "heal_taken",
+                "value": 1.2,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.3,
+                "duration": 4,
+                "at": "caster",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "atk_mult",
+                "value": 1.15,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Голод+",
+          "desc": "Человек: +30% лечения. Медведь: +50% шипов. Волк: +25% атаки.",
+          "mods": [
+            {
+              "set": {
+                "name": "Голод+",
+                "desc": "Человек: +30% лечения. Медведь: +50% шипов. Волк: +25% атаки."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "heal_taken",
+                "value": 1.3,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.5,
+                "duration": 4,
+                "at": "caster",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "atk_mult",
+                "value": 1.25,
+                "duration": 4,
+                "radius": 2,
+                "affects": "allies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "beast_dash": {
+    "A": {
+      "name": "Дальний рывок",
+      "tiers": [
+        {
+          "name": "Дальний рывок",
+          "desc": "Дальность 6.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дальний рывок",
+                "desc": "Дальность 6."
+              }
+            },
+            {
+              "set": {
+                "range": 6
+              }
+            }
+          ]
+        },
+        {
+          "name": "Дальний рывок+",
+          "desc": "Дальность 7.",
+          "mods": [
+            {
+              "set": {
+                "name": "Дальний рывок+",
+                "desc": "Дальность 7."
+              }
+            },
+            {
+              "set": {
+                "range": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Сокрушение",
+      "tiers": [
+        {
+          "name": "Сокрушение",
+          "desc": "Человек: +0.5 сек. оглушения. Медведь: толчок 2. Волк: +4 кровотечения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Сокрушение",
+                "desc": "Человек: +0.5 сек. оглушения. Медведь: толчок 2. Волк: +4 кровотечения."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.5,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "knockback",
+                "cells": 2,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 4,
+                "duration": 3,
+                "affects": "enemies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Сокрушение+",
+          "desc": "Человек: +0.8 сек. Медведь: толчок 3. Волк: +7 кровотечения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Сокрушение+",
+                "desc": "Человек: +0.8 сек. Медведь: толчок 3. Волк: +7 кровотечения."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.8,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "knockback",
+                "cells": 3,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 7,
+                "duration": 3,
+                "affects": "enemies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "primal_strike": {
+    "A": {
+      "name": "Тяжёлый удар",
+      "tiers": [
+        {
+          "name": "Тяжёлый удар",
+          "desc": "Человек: оглушение. Медведь: дольше оглушение. Волк: +6 урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Тяжёлый удар",
+                "desc": "Человек: оглушение. Медведь: дольше оглушение. Волк: +6 урона."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.4,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.3,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "damage",
+                "amount": 6,
+                "kind": "melee",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Тяжёлый удар+",
+          "desc": "Человек: 0.7 сек. Медведь: +0.5 сек. Волк: +12 урона.",
+          "mods": [
+            {
+              "set": {
+                "name": "Тяжёлый удар+",
+                "desc": "Человек: 0.7 сек. Медведь: +0.5 сек. Волк: +12 урона."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.7,
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.5,
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "damage",
+                "amount": 12,
+                "kind": "melee",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Кровопускание",
+      "tiers": [
+        {
+          "name": "Кровопускание",
+          "desc": "Человек: +6 урона. Медведь: кровотечение. Волк: +4 кровотечения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Кровопускание",
+                "desc": "Человек: +6 урона. Медведь: кровотечение. Волк: +4 кровотечения."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "damage",
+                "amount": 6,
+                "kind": "spell",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 6,
+                "duration": 4,
+                "affects": "enemies",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 4,
+                "duration": 4,
+                "affects": "enemies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Кровопускание+",
+          "desc": "Человек: +12 урона. Медведь: +10 кровотечения. Волк: +7 кровотечения.",
+          "mods": [
+            {
+              "set": {
+                "name": "Кровопускание+",
+                "desc": "Человек: +12 урона. Медведь: +10 кровотечения. Волк: +7 кровотечения."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "damage",
+                "amount": 12,
+                "kind": "spell",
+                "if_form": "human"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 10,
+                "duration": 4,
+                "affects": "enemies",
+                "if_form": "bear"
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "bleed",
+                "value": 7,
+                "duration": 4,
+                "affects": "enemies",
+                "if_form": "wolf"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "grove_awakening": {
+    "A": {
+      "name": "Долгая роща",
+      "tiers": [
+        {
+          "name": "Долгая роща",
+          "desc": "Зона живёт 10 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая роща",
+                "desc": "Зона живёт 10 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "zone",
+                "set": {
+                  "duration": 10
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Долгая роща+",
+          "desc": "Зона живёт 12 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая роща+",
+                "desc": "Зона живёт 12 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "zone",
+                "set": {
+                  "duration": 12
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкая роща",
+      "tiers": [
+        {
+          "name": "Стойкая роща",
+          "desc": "Союзники в зоне получают −30% длительности дебаффов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкая роща",
+                "desc": "Союзники в зоне получают −30% длительности дебаффов."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "debuff_resist",
+                "value": 0.3,
+                "duration": 8,
+                "radius": 3,
+                "affects": "allies"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Стойкая роща+",
+          "desc": "Союзники в зоне получают −45% длительности дебаффов.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкая роща+",
+                "desc": "Союзники в зоне получают −45% длительности дебаффов."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "debuff_resist",
+                "value": 0.45,
+                "duration": 8,
+                "radius": 3,
+                "affects": "allies"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "beast_pack": {
+    "A": {
+      "name": "Долгая стая",
+      "tiers": [
+        {
+          "name": "Долгая стая",
+          "desc": "Призывы живут 18 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая стая",
+                "desc": "Призывы живут 18 сек.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 18,
+                    "limit": 1
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 18,
+                    "limit": 1
+                  },
+                  {
+                    "type": "buff",
+                    "stat": "atk_speed",
+                    "value": 0.85,
+                    "duration": 10,
+                    "radius": 2,
+                    "affects": "allies"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Долгая стая+",
+          "desc": "Призывы живут 22 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Долгая стая+",
+                "desc": "Призывы живут 22 сек.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 22,
+                    "limit": 1
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 22,
+                    "limit": 1
+                  },
+                  {
+                    "type": "buff",
+                    "stat": "atk_speed",
+                    "value": 0.85,
+                    "duration": 12,
+                    "radius": 2,
+                    "affects": "allies"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Свирепая стая",
+      "tiers": [
+        {
+          "name": "Свирепая стая",
+          "desc": "Союзники рядом +20% атаки.",
+          "mods": [
+            {
+              "set": {
+                "name": "Свирепая стая",
+                "desc": "Союзники рядом +20% атаки.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 12,
+                    "limit": 1
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 12,
+                    "limit": 1
+                  },
+                  {
+                    "type": "buff",
+                    "stat": "atk_mult",
+                    "value": 1.2,
+                    "duration": 8,
+                    "radius": 2,
+                    "affects": "allies"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Свирепая стая+",
+          "desc": "Союзники рядом +30% атаки.",
+          "mods": [
+            {
+              "set": {
+                "name": "Свирепая стая+",
+                "desc": "Союзники рядом +30% атаки.",
+                "effects": [
+                  {
+                    "type": "summon",
+                    "unit": "spirit_wolf",
+                    "duration": 12,
+                    "limit": 1
+                  },
+                  {
+                    "type": "summon",
+                    "unit": "ent",
+                    "duration": 12,
+                    "limit": 1
+                  },
+                  {
+                    "type": "buff",
+                    "stat": "atk_mult",
+                    "value": 1.3,
+                    "duration": 8,
+                    "radius": 2,
+                    "affects": "allies"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sacrifice": {
+    "A": {
+      "name": "Милосердие",
+      "tiers": [
+        {
+          "name": "Милосердие",
+          "desc": "Радиус 3: лечение 40 и +30% входящего лечения на 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Милосердие",
+                "desc": "Радиус 3: лечение 40 и +30% входящего лечения на 6 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 40,
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.3,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Милосердие+",
+          "desc": "Радиус 3: лечение 50 и +40% входящего лечения на 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Милосердие",
+                "desc": "Радиус 3: лечение 50 и +40% входящего лечения на 8 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 50,
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "heal_taken",
+                  "value": 1.4,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стойкость",
+      "tiers": [
+        {
+          "name": "Стойкость",
+          "desc": "Радиус 3: лечение 30, очищение, −20% урона и −40% дебафов на 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость",
+                "desc": "Радиус 3: лечение 30, очищение, −20% урона и −40% дебафов на 6 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 30,
+                  "radius": 3
+                },
+                {
+                  "type": "cleanse",
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.8,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.4,
+                  "duration": 6,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Стойкость+",
+          "desc": "Радиус 3: лечение 40, очищение, −25% урона и −50% дебафов на 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "name": "Стойкость",
+                "desc": "Радиус 3: лечение 40, очищение, −25% урона и −50% дебафов на 8 сек."
+              },
+              "effects": [
+                {
+                  "type": "heal",
+                  "amount": 40,
+                  "radius": 3
+                },
+                {
+                  "type": "cleanse",
+                  "radius": 3
+                },
+                {
+                  "type": "buff",
+                  "stat": "dmg_taken",
+                  "value": 0.75,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                },
+                {
+                  "type": "buff",
+                  "stat": "debuff_resist",
+                  "value": 0.5,
+                  "duration": 8,
+                  "radius": 3,
+                  "affects": "allies"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 }

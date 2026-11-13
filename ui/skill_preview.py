@@ -135,14 +135,23 @@ class SkillPreview:
         if types & {"extra_attack", "focus"} or "atk_tag" in {e.get("stat") for e in flat_effects(sk)}:
             self._put(ally, (5, 3))
             self._put(me, (3, 1))
-        if types & {"heal", "delay", "life_transfer", "rewind"} and sk["target"] == "ally":
+        if types & {"heal", "heal_over_time", "delay", "life_transfer", "rewind"} and sk["target"] == "ally":
             ally.hp = ally.max_hp // 2
-        if "detonate" in types or "spread_fire" in types:
+        if (sk.get("channel") or {}).get("kind") == "prayer":
+            ally.hp = ally.max_hp // 2
+        if "revive" in types:                    # Феникс: показать, кого поднимаем
+            self._put(ally, (5, 3))
+            ally.alive, ally.hp = False, 0
+        if types & {"detonate", "spread_fire", "stoke_fire", "fire_wall", "clear_hazard"}:
             for p in (MAIN, SIDE, BACK, (7, 3)):
                 cell = c.grid.get(p)
                 cell.hazard, cell.hazard_time, cell.hazard_team = "fire", 6.0, None
             for f in (main, side):
                 f.statuses["fire"] = 4.0
+        if any(e.get("type") == "hazard" and e.get("hazard") == "fog" for e in flat_effects(sk)):
+            for p in (MAIN, SIDE, BACK, (7, 3)):
+                cell = c.grid.get(p)
+                cell.hazard, cell.hazard_time, cell.hazard_team = "fog", 8.0, c.heroes()[0].team
         if "corpse" in types:
             for p in ((6, 4), (5, 4), (7, 2)):
                 c.corpses.append({"cell": p, "left": 14.0, "name": "манекен"})
@@ -194,6 +203,8 @@ class SkillPreview:
             return (8, 1)
         if "regroup" in types:
             return (4, 4)
+        if (sk.get("channel") or {}).get("kind") == "prayer":
+            return self.ally.cell
         if "watch" in types or "trap" in types or "wall" in types:
             return (5, 3)
         if sk.get("free_cell") or "teleport" in types:

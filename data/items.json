@@ -44,7 +44,18 @@
   "giant_belt": {"name": "Пояс великана", "slot": "armor", "rarity": "epic", "price": 135, "desc": "+60 HP, +2 брони", "mods": [{"stat": "hp", "add": 60}, {"stat": "armor", "add": 2}]},
   "elemental_plate": {"name": "Доспех стихий", "slot": "armor", "rarity": "epic", "price": 140, "desc": "Урон Огнём, Льдом и Грозой ×0.6, +2 брони", "mods": [{"resist": "fire", "mult": 0.6}, {"resist": "ice", "mult": 0.6}, {"resist": "storm", "mult": 0.6}, {"stat": "armor", "add": 2}]},
   "oil_pouch": {"name": "Сумка масла", "slot": "trinket", "rarity": "common", "price": 55, "desc": "Навык: Масляная склянка", "mods": [{"new_skill": "oil_flask"}]},
-  "venom_vial": {"name": "Склянка яда", "slot": "trinket", "rarity": "common", "price": 55, "desc": "Навык: Ядовитый клинок", "mods": [{"new_skill": "venom_blade"}]},
+  "venom_vial": {
+    "name": "Склянка яда",
+    "slot": "trinket",
+    "rarity": "common",
+    "price": 55,
+    "desc": "?????: ???????? ???????",
+    "mods": [
+      {
+        "new_skill": "venom_darts"
+      }
+    ]
+  },
   "grappling_hook": {"name": "Абордажный крюк", "slot": "trinket", "rarity": "common", "price": 55, "desc": "Навык: Крюк", "mods": [{"new_skill": "hook"}]},
   "thunder_charm": {"name": "Оберег грозы", "slot": "trinket", "rarity": "common", "price": 50, "desc": "Весь огонь героя становится Грозой", "mods": [{"convert_tag": ["fire", "storm"]}]},
   "bog_ring": {"name": "Кольцо болота", "slot": "trinket", "rarity": "common", "price": 50, "desc": "Вся вода героя становится Ядом", "mods": [{"convert_tag": ["water", "poison"]}]},

@@ -57,7 +57,7 @@ def test_craft_pays_and_quality_matters():
     g0, ore0 = p.glory, p.mats["ore"]
     lo = p.craft("ws_forge", "bracers", s, 0.7)
     hi = p.craft("ws_forge", "bracers", s, 1.3)
-    assert lo and hi and p.glory == g0 - 2 * cost["glory"] and p.mats["ore"] == ore0 - 2 * cost["ore"]
+    assert lo and hi and p.glory == g0 - 2 * cost["glory"] and p.mats["ore"] == ore0 - 2 * cost.get("ore", 0)
     assert A.power_k(XD, hi) > A.power_k(XD, lo)
     assert hi["extra"] and not lo["extra"]                      # работа мастера — свойство
     assert not p.craft("ws_jewel", "bracers", s, 1.0)            # наручи — только в кузне
@@ -101,7 +101,7 @@ def test_artifacts_go_into_run_and_multiply_power():
         art["level"] = 10
         assert p.equip(h, art["uid"])
     base = X.Expedition(ED, [X.Hero(h.to_dict() | {"arts": []})], 1, 0).proto(X.Hero(h.to_dict() | {"arts": []}))
-    run = p.start([h.uid] + [x.uid for x in p.hall()[1:3]], seed=2)
+    run = p.start([h.uid] + [x.uid for x in p.hall()[1:2]], seed=2)
     rh = next(x for x in run.heroes if x.uid == h.uid)
     pr = run.proto(rh)
     assert len(run.arts) == 4 and pr["hp"] > base["hp"] * 1.2 and pr["attack"]["damage"] > base["attack"]["damage"] * 1.2
@@ -213,8 +213,10 @@ def test_workshop_and_artifacts_screens(tmp_path):
     room = app.scene
     assert isinstance(room, R.WorkshopRoom)
     click(app, ("station", "ws_leather"))
-    st = room.overlay
-    assert isinstance(st, R.StationOverlay)
+    station = app.scene                              # мастерская — отдельный экран
+    assert isinstance(station, R.StationScene)
+    st = station.overlay
+    assert isinstance(st, R.StationOverlay) and st.full
     click(app, ("set", sets_of("common")[0]))
     key(app, pygame.K_RETURN)
     assert isinstance(app.scene, WS.MiniGameScene) and isinstance(app.scene.game, G.LeatherTrace)
@@ -222,7 +224,10 @@ def test_workshop_and_artifacts_screens(tmp_path):
         frame(app)
     assert app.scene.game.done
     key(app, pygame.K_RETURN)
-    assert app.scene is room and room.overlay is st and len(prof.stash) == 1 and st.result
+    assert app.scene is station and station.overlay is st and len(prof.stash) == 1 and st.result
+    key(app, pygame.K_ESCAPE)                        # Esc — назад в Мастерскую
+    assert isinstance(app.scene, R.WorkshopRoom)
+    room = app.scene
     for ws in ("ws_jewel", "ws_forge", "ws_alchemy"):       # все станции рисуются
         room.overlay = R.StationOverlay(room, ws)
         room.overlay.art_sel = next(iter(prof.stash))
@@ -237,7 +242,10 @@ def test_workshop_and_artifacts_screens(tmp_path):
     assert app.scene is room and rough in prof.rough and not prof.gems
     click(app, ("cut", rough["uid"]))
     g = app.scene.game
-    key(app, pygame.K_1)                            # выбрать огранку и сделать грань — дальше Esc уже досрочно
+    key(app, pygame.K_1)                            # выбрать огранку → разметка (Esc тоже без потерь)
+    assert g.phase == "plan" and g.can_abort()
+    key(app, pygame.K_RETURN)                       # на станок; сделать грань — дальше Esc уже досрочно
+    assert g.phase == "cut"
     g.scores[0] = 0.5
     key(app, pygame.K_ESCAPE)
     assert g.done and g.quality < 0.85
@@ -256,13 +264,15 @@ def test_workshop_and_artifacts_screens(tmp_path):
     assert prof.art_owner(uid) is h
 
 
-def cut_gem_game(cut, ang_err=0.0, overcut=0.0, index_err=0, diff=1):
-    """Бот-огранщик: выбирает огранку, ставит индекс (с ошибкой), угол оправки (с ошибкой), опускает камень до
+def cut_gem_game(cut, ang_err=0.0, overcut=0.0, index_err=0, diff=1, g=None):
+    """Бот-огранщик: выбирает огранку (id), ставит индекс (с ошибкой), угол оправки (с ошибкой), опускает камень до
     пунктира (или глубже) и принимает грань."""
     import pygame
     from game import workshop_games as G
-    g = G.JewelCut(3, diff=diff)
-    g.key(pygame.K_1 + cut)
+    from sim import gems as GM
+    if g is None:
+        g = G.JewelCut(3, diff=diff, disks=["lap_fine"])        # тонкий диск — грань без царапин
+        g.choose(G.CUTS.index(GM.CUT_BY_ID[cut]))
     while not g.done:
         if g.need_flip():                              # низ готов — перевернуть камень на оправке
             g.key(pygame.K_f)
@@ -285,16 +295,19 @@ def cut_gem_game(cut, ang_err=0.0, overcut=0.0, index_err=0, diff=1):
 def test_gem_cutting_rewards_precision():
     import pygame
     from game import workshop_games as G
-    good = cut_gem_game(1)
-    assert good.done and good.quality > G.CUTS[1]["cap"] - 0.06 and good.n == sum(G.cut_counts(G.CUTS[1]))
-    skew = cut_gem_game(1, ang_err=6)
-    deep = cut_gem_game(1, overcut=12)
-    wrong = cut_gem_game(1, index_err=3)
+    from sim import gems as GM
+    em = GM.CUT_BY_ID["emerald"]
+    good = cut_gem_game("emerald")
+    assert good.done and (good.quality - 0.7) / (em["cap"] - 0.7) > 0.93 and good.n == sum(G.cut_counts(em))
+    skew = cut_gem_game("emerald", ang_err=6)
+    deep = cut_gem_game("emerald", overcut=12)
+    wrong = cut_gem_game("emerald", index_err=3)
     for bad in (skew, deep, wrong):
         assert bad.quality < good.quality - 0.08
-    best = cut_gem_game(4)                              # бриллиантовая — 24 грани, предел выше
-    easy = cut_gem_game(0)
-    assert best.n > easy.n and best.quality > easy.quality and best.time_left is not None
+    best = cut_gem_game("brilliant")                    # бриллиантовая — 33 грани, предел выше
+    easy = cut_gem_game("table")
+    assert best.n > easy.n and best.quality > easy.quality
+    assert not hasattr(best, "time_left")               # огранка без ограничения по времени
     g = G.JewelCut(1)
     g.stop()
     assert g.done and g.quality == G.Q_LO
@@ -331,7 +344,7 @@ def test_inspect_during_cutting():
 
 def test_cut_gem_keeps_shape_for_inventory(tmp_path):
     from game import gem3d as G3
-    g = cut_gem_game(2)
+    g = cut_gem_game("cushion")
     shape = g.shape()
     p = rich(tmp_path)
     gem = p.cut_gem("ruby", g.quality, shape=shape, cut=g.cut["id"])
@@ -370,7 +383,7 @@ def test_rough_gems_are_rare_and_traded(tmp_path):
     price = p.market_price("rough", lot)
     assert p.buy("rough", lot["uid"]) and p.glory == 5000 - price and lot in p.rough
     g = p.cut_gem(lot["uid"], 1.2)
-    assert g and g["id"] == lot["id"] and not p.rough and g["size"] == lot["size"]
+    assert g and g["id"] == lot["id"] and not p.rough and g["size"] == round(lot["size"] * 0.2, 2)
     gold = p.glory
     assert p.sell("cut", g["uid"]) and p.glory == gold + int(p.market_price("cut", g) * XD["market"]["sell_k"])
     assert p.market_price("cut", dict(g, q=1.3)) > p.market_price("cut", dict(g, q=0.7))
@@ -409,6 +422,13 @@ def test_jeweler_crafts_rings_without_minigame(tmp_path):
     room.overlay = R.StationOverlay(room, "ws_jewel")
     click(app, ("set", sets_of("common")[0]))
     click(app, "craft")
-    assert app.scene is room and len(prof.stash) == 1 and next(iter(prof.stash.values()))["q"] == 1.0
+    assert not prof.stash                           # без оправы из кузни — нельзя
+    prof.forge["prims"].append({"uid": "w1", "kind": "wire", "alloy": "silver925", "mass": 40, "q": 0.9, "cast": False})
+    click(app, "craft")
+    from tests.test_forge import assemble
+    assemble(app, app.scene.game)                    # оправа собирается: проволоку — на контур, заклёпка, отжиг
+    key(app, pygame.K_RETURN)
+    art = next(iter(prof.stash.values()))
+    assert app.scene is room and len(prof.stash) == 1 and art["alloys"] == ["silver925"] and not prof.forge["prims"]
     key(app, pygame.K_7)
     assert isinstance(app.scene, R.MarketRoom)

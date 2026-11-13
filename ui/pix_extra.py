@@ -20,10 +20,10 @@ from ui.pixsim import DIE
 G = 9.0
 BARRIER_SHAPE = {"guardian": "cube", "warrior": "cube", "tactician": "cube", "ram": "cube", "bloodrager": "cube",
                  "priest": "octa", "druid": "octa", "bard": "octa", "shaman": "octa", "binder": "octa",
-                 "trapper": "octa", "archer": "octa"}
+                 "trapper": "octa", "archer": "octa", "mage": "sphere"}
 BARRIER_PAL = {"priest": "light", "tactician": "light", "binder": "spirit", "cryo": "ice", "druid": "nature",
                "shaman": "storm", "bard": "sound", "necro": "bone", "chrono": "time", "gravity": "gravity",
-               "bloodrager": "blood"}
+               "bloodrager": "blood", "mage": "fire"}
 
 
 def _shape(kind):

@@ -51,6 +51,7 @@ def test_skill_damage_uses_school_attribute_and_crit():
     foe = c.fighters(ENEMY)[0]
     foe.max_hp = foe.hp = 9999
     foe.armor = 0
+    foe.passive = None                                 # проверяем школу и крит, а не пассивку врага
     hp = foe.hp
     c.damage(foe, 20, mage, None, "spell")
     assert hp - foe.hp >= int(20 * mage.proto["scale"]["spell"]) - 1 > 20

@@ -81,6 +81,7 @@ class BattleScene:
         self.hover_cell = None
         self.mouse = (0, 0)
         self.toast = None
+        self.inspect = None      # враг, чьё описание закреплено кликом
         self.picked = None       # юнит, взятый для перестановки
         self.route = None        # маршрут, который игрок рисует правой кнопкой: [клетки]
         self.pick = None         # юнит под курсором (подсвечен кольцом)
@@ -532,6 +533,7 @@ class BattleScene:
                 self.begin_battle()
             elif key == pygame.K_ESCAPE:
                 self.picked = None
+                self.inspect = None
         elif key in (pygame.K_RETURN, pygame.K_KP_ENTER) and c.intermission > 0:
             c.call_wave()
             self.say("Волна вызвана")
@@ -545,7 +547,9 @@ class BattleScene:
             settings.put("battle_speed", self.speed_idx)      # переходит в следующие бои и запуски
         elif key == pygame.K_ESCAPE:
             queued = [u for u in self._selected_team() if u.queue]
-            if self.targeting:
+            if self.inspect is not None:
+                self.inspect = None
+            elif self.targeting:
                 self.targeting = None
                 self.target_queue = False
             elif queued:                             # Esc — очистить очередь выделенных
@@ -564,6 +568,7 @@ class BattleScene:
         self.selected = u
         self.selected_units = [u] if u is not None else []
         self.targeting = None
+        self.inspect = None
 
     def _selected_team(self):
         """Выделенные живые герои. Основной выбранный всегда входит в список."""
@@ -603,6 +608,7 @@ class BattleScene:
         elif u in units:
             self.selected = u
         self.targeting = None
+        self.inspect = None
 
     # ---------- выделение рамкой ----------
 
@@ -745,6 +751,9 @@ class BattleScene:
             return
         c = self.combat
         u = c.unit_at(cell)
+        if u and u.team == ENEMY:
+            self.inspect = u
+            return
         if u and u.team == PLAYER and not u.summon and not u.obj:
             if self.picked and self.picked is not u:
                 c.redeploy(self.picked, cell)  # клик по своему — поменять местами
@@ -808,8 +817,9 @@ class BattleScene:
     def _click(self, pos, button):
         if self._squad_click(pos):
             return
-        for r, foe in self.view.enemy_rects:            # строка в списке врагов — атаковать его
+        for r, foe in self.view.enemy_rects:            # строка в списке врагов — описание и атака
             if r.collidepoint(pos):
+                self.inspect = foe
                 if self.selected and foe.alive:
                     self._order_selected_attack(foe)
                 return
@@ -822,6 +832,10 @@ class BattleScene:
             return
         c = self.combat
         target_unit = c.unit_at(cell)
+        if target_unit is not None and target_unit.team == ENEMY and not target_unit.obj:
+            self.inspect = target_unit
+        elif target_unit is None and button == 1:
+            self.inspect = None
 
         if self.targeting:
             if button == 3:
