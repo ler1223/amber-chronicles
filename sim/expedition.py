@@ -2589,6 +2589,7 @@ class ExpeditionProfile:
         self.runs = 0
         self.wins = 0
         self.best_act = 0
+        self.tutorial = {"done": False, "hints": []}
         self.run_state = None
         self.uid_n = 0
         self.seed_n = 0
@@ -2643,6 +2644,7 @@ class ExpeditionProfile:
         мастерские на максимуме, камни, артефакты в сундуке, ветераны 5-го ранга в общежитии, павшие на кладбище."""
         from . import artifacts as AR
         xd = self.xd
+        self.tutorial["done"] = True
         self.glory = max(self.glory, 99999)
         gc = xd.get("garden", {})
         self.garden_level = len(gc.get("upgrades", []))
@@ -2838,6 +2840,12 @@ class ExpeditionProfile:
             self.chapter_wins = {"swamp": d["wins"]}     # старое сохранение: все победы — на Болоте
         self.upgrades = {k: v for k, v in d.get("upgrades", {}).items() if k in self.xd["tavern"]["upgrades"]}
         self.runs, self.wins, self.best_act = d.get("runs", 0), d.get("wins", 0), d.get("best_act", 0)
+        self.tutorial = dict(d.get("tutorial") or {})
+        self.tutorial.setdefault("done", False)
+        self.tutorial.setdefault("hints", [])
+        if "tutorial" not in d:                       # старые сейвы с прогрессом тур уже не показывают
+            self.tutorial["done"] = bool(self.runs or self.wins or self.upgrades or self.buildings
+                                         or self.chapter_wins)
         self.uid_n, self.seed_n = d.get("uid_n", 0), d.get("seed_n", 0)
         self.roster = [fix_kit(self.data, Hero(dict(h, solo=False))) for h in d.get("roster", [])
                        if h.get("cls") in self.data.classes]
@@ -2865,11 +2873,28 @@ class ExpeditionProfile:
              "forge": self.forge, "mine": self.mine,
              "jtools": self.jtools, "showcase": self.showcase,
              "garden": self.garden, "garden_seeds": self.garden_seeds,
-             "garden_unlocked": self.garden_unlocked, "garden_level": self.garden_level}
+             "garden_unlocked": self.garden_unlocked, "garden_level": self.garden_level,
+             "tutorial": self.tutorial}
         tmp = self.path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(d, f, ensure_ascii=False)
         os.replace(tmp, self.path)
+
+    def tutorial_done(self):
+        return bool(self.tutorial.get("done"))
+
+    def finish_tutorial(self):
+        self.tutorial["done"] = True
+        self.save()
+
+    def hint_seen(self, key):
+        return key in self.tutorial.get("hints", [])
+
+    def mark_hint(self, key):
+        hints = self.tutorial.setdefault("hints", [])
+        if key not in hints:
+            hints.append(key)
+            self.save()
 
     def remember_autocast(self, run):
         pass

@@ -489,6 +489,13 @@ class RoomScene(XScene):
     def __init__(self, app):
         super().__init__(app)
         self.overlay = None
+        self.hint = None
+        from game.onboarding import TourOverlay, hint_for_room
+        tour = getattr(app, "tour", None)
+        if tour and tour["steps"][tour["i"]]["room"] == self.room:
+            self.overlay = TourOverlay(self)
+        else:
+            self.hint = hint_for_room(self)
 
     # совместимость с листом героя таверны (TavernHeroScene: глава, отряд, «взять в поход»)
     @property
@@ -523,10 +530,18 @@ class RoomScene(XScene):
 
     def act(self, action, button=1):
         kind = action[0] if isinstance(action, tuple) else action
+        if self.overlay is not None and getattr(self.overlay, "modal", False):
+            self.overlay.act(action, button)
+            return
         if kind == "room":
             go(self.app, action[1])
         elif kind == "menu":
             self.app.to_title()
+        elif kind == "codex":
+            from game.onboarding import CodexOverlay
+            self.overlay = CodexOverlay(self)
+        elif kind == "hint_close":
+            self.hint = None
         elif kind == "close":
             back = getattr(self.overlay, "back", None)
             self.overlay = back if isinstance(back, Overlay) else None
@@ -540,12 +555,21 @@ class RoomScene(XScene):
 
     def key(self, k):
         if self.overlay is not None:
+            if getattr(self.overlay, "modal", False):
+                self.overlay.key(k)
+                return
             if k == pygame.K_ESCAPE:
                 back = getattr(self.overlay, "back", None)
                 self.overlay = back if isinstance(back, Overlay) else None
                 return
             if self.overlay.key(k):
                 return
+        if k == pygame.K_i:
+            self.act("codex")
+            return
+        if self.hint and k in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_KP_ENTER):
+            self.hint = None
+            return
         if pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(ROOMS):
             go(self.app, ROOMS[k - pygame.K_1][0])
         elif k == pygame.K_ESCAPE:
@@ -590,6 +614,9 @@ class RoomScene(XScene):
         surf.fill(T.BG)
         self.draw_backdrop(surf)
         self.draw_room(surf)
+        if self.hint and self.overlay is None:
+            from game.onboarding import draw_hint
+            draw_hint(self, surf, self.hint)
         if self.overlay is not None:
             self.hits = []
             sh = pygame.Surface((T.SCREEN_W, T.SCREEN_H), pygame.SRCALPHA)
@@ -617,6 +644,8 @@ class RoomScene(XScene):
         surf.blit(band, (0, 0))
         pygame.draw.line(surf, T.AMBER_DIM, (0, TOP_H), (T.SCREEN_W, TOP_H))
         t = T.text(surf, self.room_title(), (22, 10), 26, GLORY, True, shadow=True)
+        codex_r = pygame.Rect(t.right + 18, 10, 90, 30)
+        self.btn(surf, codex_r, "Кодекс", "codex", True, tip="Кодекс (I)")
         x = T.SCREEN_W - 18
         label = str(prof.glory)
         x -= T.font(20, True).size(label)[0]
@@ -637,7 +666,7 @@ class RoomScene(XScene):
                          [res_name(prof.xd, k), prof.xd["materials"][k].get("desc", "материал для мастерских")])
                 x -= 42
         if self.sub:
-            T.text(surf, fit(self.sub, 14, x - t.right - 40), (t.right + 18, 22), 14, T.TEXT_DIM)
+            T.text(surf, fit(self.sub, 14, x - codex_r.right - 24), (codex_r.right + 12, 22), 14, T.TEXT_DIM)
 
     def mat_keys(self):
         """Ресурсы в шапке (комната может показать только свои)."""

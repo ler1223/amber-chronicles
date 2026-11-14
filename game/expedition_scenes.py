@@ -140,7 +140,9 @@ def hero_sprite(data, cls, k=1.0):
 def to_tavern(app):
     """Таверна — комнаты (game/tavern_rooms.py): начинаем с Зала."""
     from game.tavern_rooms import HallRoom
+    from game.onboarding import start_tour
     app.exp = None
+    start_tour(app)
     app.switch(HallRoom(app))
 
 
