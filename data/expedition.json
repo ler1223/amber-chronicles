@@ -13244,7 +13244,7 @@
   },
   "ws_alchemy": {
    "name": "Алхимия",
-   "desc": "Улучшение артефактов (+1…+10) и зачарование свойством. Мини-игра — смешивание",
+   "desc": "Сад растений, улучшение артефактов (+1…+10) и сильные зачарования. Мини-игра — смешивание",
    "workshop": true,
    "levels": [
     {
@@ -13376,6 +13376,99 @@
     200,
     110
    ]
+  },
+  "essence": {
+   "name": "Эссенция растений",
+   "color": [
+    190,
+    120,
+    230
+   ],
+   "desc": "Старая алхимическая вытяжка. Теперь сад собирает сами растения."
+  },
+  "sunleaf": {
+   "name": "Солнечный лист",
+   "color": [230, 190, 70],
+   "plant": true,
+   "desc": "Садовое растение. Любит соседство лунного корня, не переносит морозный колокольчик."
+  },
+  "moonroot": {
+   "name": "Лунный корень",
+   "color": [130, 150, 240],
+   "plant": true,
+   "desc": "Садовое растение. Ускоряется рядом со звёздным цветом, чахнет рядом с пепельным папоротником."
+  },
+  "thornbud": {
+   "name": "Терновый бутон",
+   "color": [170, 100, 160],
+   "plant": true,
+   "desc": "Садовое растение. Любит солнечный лист и морозный колокольчик, страдает от звёздного цвета."
+  },
+  "starflower": {
+   "name": "Звёздный цвет",
+   "color": [110, 210, 225],
+   "plant": true,
+   "desc": "Садовое растение. Растёт быстрее рядом с лунным корнем и пепельным папоротником."
+  },
+  "emberfern": {
+   "name": "Пепельный папоротник",
+   "color": [225, 120, 65],
+   "plant": true,
+   "desc": "Садовое растение. Любит терновый бутон и морозный колокольчик, не терпит лунный корень."
+  },
+  "frostbell": {
+   "name": "Морозный колокольчик",
+   "color": [165, 205, 245],
+   "plant": true,
+   "desc": "Садовое растение. Ускоряется рядом с лунным корнем и звёздным цветом, боится солнечного листа."
+  },
+  "sugarvine": {
+   "name": "Сахарная лоза",
+   "color": [220, 180, 80],
+   "plant": true,
+   "desc": "Садовое растение. Любит солнечный лист и солнечную тыкву, не любит пепельный папоротник."
+  },
+  "sunpumpkin": {
+   "name": "Солнечная тыква",
+   "color": [235, 140, 55],
+   "plant": true,
+   "desc": "Садовое растение. Растёт быстрее рядом с солнечным листом и сахарной лозой."
+  },
+  "bloodpoppy": {
+   "name": "Кровавый мак",
+   "color": [190, 45, 55],
+   "plant": true,
+   "desc": "Садовое растение. Любит пепельный папоротник и терновый бутон, не переносит морозный колокольчик."
+  },
+  "stormlotus": {
+   "name": "Громовой лотос",
+   "color": [90, 130, 220],
+   "plant": true,
+   "desc": "Садовое растение. Ускоряется рядом со звёздным цветом и лунным корнем, чахнет рядом с терновым бутоном."
+  },
+  "bonemoss": {
+   "name": "Костяной мох",
+   "color": [180, 190, 160],
+   "plant": true,
+   "desc": "Садовое растение. Любит лунный корень и морозный колокольчик, не любит солнечный лист."
+  },
+  "tearcap": {
+   "name": "Слезный гриб",
+   "color": [100, 170, 175],
+   "plant": true,
+   "desc": "Садовое растение. Любит морозный колокольчик и лунный корень, не любит терновый бутон."
+  },
+  "dreampollen": {
+   "name": "Пыльца снов",
+   "color": [150, 120, 220],
+   "plant": true,
+   "desc": "Садовое растение. Любит лунный корень и звёздный цвет, боится пепельного папоротника."
+  },
+  "ironthorn": {
+   "name": "Железный шип",
+   "color": [130, 145, 150],
+   "plant": true,
+   "desc": "Садовое растение. Любит терновый бутон и кровавый мак, не любит звёздный цвет."
   },
   "gems": {
    "name": "Самоцветная крошка",
@@ -13814,8 +13907,185 @@
    }
   }
  },
+ "garden": {
+  "_note": "Стартовые растения открыты сразу; остальные виды покупаются у торговца семенами на рынке и остаются открытыми навсегда. Поле начинается с 3×3 и расширяется прокачками у торговца. Соседи ускоряют/замедляют рост. Улучшение артефактов тратит фиксированные растения, зачарование — выбранные 3 растения; особые тройки дают сильную комбинацию.",
+  "cols": 6,
+  "rows": 4,
+  "start": {"cols": 3, "rows": 3},
+  "upgrades": [
+   {"cols": 4, "rows": 3, "price": 60},
+   {"cols": 5, "rows": 3, "price": 140},
+   {"cols": 6, "rows": 3, "price": 260},
+   {"cols": 6, "rows": 4, "price": 420}
+  ],
+  "seed_price": 30,
+  "min_factor": 0.55,
+  "max_factor": 2.0,
+  "starter": {
+   "sunleaf": 2,
+   "moonroot": 2
+  },
+  "starter_unlocked": [
+   "sunleaf",
+   "moonroot"
+  ],
+  "trader": {
+   "stock": [1, 2],
+   "locked_mult": 1.6,
+   "unlocked_mult": 1.0,
+   "tiers": [
+    {"chapter": null, "price": 30, "seeds": ["thornbud", "starflower", "emberfern", "frostbell"]},
+    {"chapter": "swamp", "price": 45, "seeds": ["sugarvine", "sunpumpkin"]},
+    {"chapter": "forge", "price": 70, "seeds": ["bloodpoppy", "stormlotus"]},
+    {"chapter": "crypt", "price": 100, "seeds": ["bonemoss", "tearcap"]},
+    {"chapter": "pass", "price": 140, "seeds": ["dreampollen", "ironthorn"]}
+   ]
+  },
+  "seeds": {
+   "sunleaf": {
+    "name": "Солнечный лист",
+    "time": 60,
+    "color": [230, 190, 70],
+    "accent": [255, 230, 120],
+    "form": "leaf",
+    "yield": 2,
+    "neighbors": {"moonroot": 1.25, "thornbud": 1.1, "frostbell": 0.8},
+    "desc": "Быстрый солнечный лист. Любит лунный корень, боится морозного колокольчика."
+   },
+   "moonroot": {
+    "name": "Лунный корень",
+    "time": 90,
+    "color": [130, 150, 240],
+    "accent": [190, 210, 255],
+    "form": "root",
+    "yield": 2,
+    "neighbors": {"starflower": 1.25, "sunleaf": 1.1, "emberfern": 0.8},
+    "desc": "Ночной корень. Ускоряется рядом со звёздным цветом, чахнет рядом с пепельным папоротником."
+   },
+   "thornbud": {
+    "name": "Терновый бутон",
+    "time": 75,
+    "color": [170, 100, 160],
+    "accent": [235, 150, 210],
+    "form": "thorn",
+    "yield": 2,
+    "neighbors": {"sunleaf": 1.2, "frostbell": 1.1, "starflower": 0.8},
+    "desc": "Колючий бутон. Любит солнечный лист и морозный колокольчик, страдает от звёздного цвета."
+   },
+   "starflower": {
+    "name": "Звёздный цвет",
+    "time": 105,
+    "color": [110, 210, 225],
+    "accent": [235, 255, 255],
+    "form": "star",
+    "yield": 3,
+    "neighbors": {"moonroot": 1.25, "emberfern": 1.1, "thornbud": 0.8},
+    "desc": "Редкий звёздный цвет. Растёт быстрее рядом с лунным корнем и пепельным папоротником."
+   },
+   "emberfern": {
+    "name": "Пепельный папоротник",
+    "time": 80,
+    "color": [225, 120, 65],
+    "accent": [255, 190, 90],
+    "form": "fern",
+    "yield": 2,
+    "neighbors": {"thornbud": 1.25, "frostbell": 1.1, "moonroot": 0.8},
+    "desc": "Тёплый папоротник. Любит терновый бутон и морозный колокольчик, не терпит лунный корень."
+   },
+   "frostbell": {
+    "name": "Морозный колокольчик",
+    "time": 95,
+    "color": [165, 205, 245],
+    "accent": [235, 250, 255],
+    "form": "bell",
+    "yield": 2,
+    "neighbors": {"moonroot": 1.2, "starflower": 1.1, "sunleaf": 0.8},
+    "desc": "Холодный колокольчик. Ускоряется рядом с лунным корнем и звёздным цветом, боится солнечного листа."
+   },
+   "sugarvine": {
+    "name": "Сахарная лоза",
+    "time": 70,
+    "color": [220, 180, 80],
+    "accent": [255, 230, 130],
+    "form": "vine",
+    "yield": 2,
+    "neighbors": {"sunleaf": 1.2, "sunpumpkin": 1.1, "emberfern": 0.8},
+    "desc": "Золотистая лоза. Любит солнечный лист и солнечную тыкву, не любит пепельный папоротник."
+   },
+   "sunpumpkin": {
+    "name": "Солнечная тыква",
+    "time": 100,
+    "color": [235, 140, 55],
+    "accent": [255, 210, 110],
+    "form": "pumpkin",
+    "yield": 3,
+    "neighbors": {"sunleaf": 1.2, "sugarvine": 1.1, "frostbell": 0.8},
+    "desc": "Тёплая тыква. Растёт быстрее рядом с солнечным листом и сахарной лозой, боится морозного колокольчика."
+   },
+   "bloodpoppy": {
+    "name": "Кровавый мак",
+    "time": 85,
+    "color": [190, 45, 55],
+    "accent": [255, 120, 100],
+    "form": "poppy",
+    "yield": 2,
+    "neighbors": {"emberfern": 1.2, "thornbud": 1.1, "frostbell": 0.8},
+    "desc": "Алый мак. Любит пепельный папоротник и терновый бутон, не переносит морозный колокольчик."
+   },
+   "stormlotus": {
+    "name": "Громовой лотос",
+    "time": 95,
+    "color": [90, 130, 220],
+    "accent": [170, 230, 255],
+    "form": "lotus",
+    "yield": 2,
+    "neighbors": {"starflower": 1.25, "moonroot": 1.1, "thornbud": 0.8},
+    "desc": "Синий лотос. Ускоряется рядом со звёздным цветом и лунным корнем, чахнет рядом с терновым бутоном."
+   },
+   "bonemoss": {
+    "name": "Костяной мох",
+    "time": 110,
+    "color": [180, 190, 160],
+    "accent": [235, 240, 210],
+    "form": "moss",
+    "yield": 2,
+    "neighbors": {"moonroot": 1.2, "frostbell": 1.1, "sunleaf": 0.8},
+    "desc": "Бледный мох. Любит лунный корень и морозный колокольчик, не любит солнечный лист."
+   },
+   "tearcap": {
+    "name": "Слезный гриб",
+    "time": 90,
+    "color": [100, 170, 175],
+    "accent": [190, 240, 240],
+    "form": "mushroom",
+    "yield": 2,
+    "neighbors": {"frostbell": 1.2, "moonroot": 1.1, "thornbud": 0.8},
+    "desc": "Гриб с каплями. Любит морозный колокольчик и лунный корень, не любит терновый бутон."
+   },
+   "dreampollen": {
+    "name": "Пыльца снов",
+    "time": 115,
+    "color": [150, 120, 220],
+    "accent": [230, 200, 255],
+    "form": "pollen",
+    "yield": 2,
+    "neighbors": {"moonroot": 1.2, "starflower": 1.1, "emberfern": 0.8},
+    "desc": "Сонная пыльца. Любит лунный корень и звёздный цвет, боится пепельного папоротника."
+   },
+   "ironthorn": {
+    "name": "Железный шип",
+    "time": 100,
+    "color": [130, 145, 150],
+    "accent": [210, 220, 225],
+    "form": "iron",
+    "yield": 2,
+    "neighbors": {"thornbud": 1.2, "bloodpoppy": 1.1, "starflower": 0.8},
+    "desc": "Металлический шип. Любит терновый бутон и кровавый мак, не любит звёздный цвет."
+   }
+  }
+ },
  "artifacts": {
-  "_note": "Артефакты — вне похода: хранилище таверны, ячеек у героя = ранг. Сила = база вида × редкость × качество (мини-игра 0.7–1.3) × (1 + шаг·уровень) + свойство + самоцветы; бонусы сета — за 2 и 4 вещи. Слой артефактов множится на остальное (полный легендарный сет +10 ≈ ×2 силы).",
+  "_note": "Артефакты — вне похода: хранилище таверны, ячеек у героя = ранг. Сила = база вида × редкость × качество (мини-игра 0.7–1.3) × (1 + шаг·уровень) + зачарование + самоцветы. Зачарование собирается из 3 растений: их базовые эффекты складываются, а особая тройка даёт сильный эффект. Бонусы сета — за 2 и 4 вещи. Слой артефактов множится на остальное (полный легендарный сет +10 ≈ ×2 силы).",
   "slots_by_rank": true,
   "level_step": 0.08,
   "max_level": 10,
@@ -13983,13 +14253,16 @@
   "upgrade_cost": {
    "gold": 20,
    "gold_per_level": 15,
-   "herbs": 1,
-   "herbs_every": 2,
+   "sunleaf": 1,
+   "sunleaf_every": 2,
+   "thornbud": 1,
+   "thornbud_every": 3,
+   "emberfern_from": 6,
    "rare_from": 6
   },
   "enchant_cost": {
-   "herbs": 3,
    "gold": 50,
+   "plants": 3,
    "rare_from": "epic"
   },
   "extras": [
@@ -14012,6 +14285,159 @@
    "reactor",
    "stout",
    "deadly"
+  ],
+  "enchants": {
+   "fifth_shot": {
+    "name": "Пятый выстрел",
+    "desc": "Каждая 5-я атака выпускает удар в дополнительную цель.",
+    "type": "extra_shot"
+   },
+   "third_spell": {
+    "name": "Двойное заклинание",
+    "desc": "Каждое 3-е заклинание срабатывает дважды.",
+    "type": "double_spell"
+   },
+   "frost_echo": {
+    "name": "Морозное эхо",
+    "desc": "Каждый 4-й удар вызывает ледяной взрыв вокруг цели.",
+    "rules": [{"trigger": "hit", "every": 4, "chance": 1.0, "icd": 0, "do": ["frost_nova"]}]
+   },
+   "storm_chain": {
+    "name": "Грозовая цепь",
+    "desc": "Каждый 4-й удар вызывает цепную молнию.",
+    "rules": [{"trigger": "hit", "every": 4, "chance": 1.0, "icd": 0, "do": ["thunder_chain"]}]
+   },
+   "blood_feast": {
+    "name": "Кровавый пир",
+    "desc": "Каждое 3-е убийство восстанавливает 8% здоровья.",
+    "rules": [{"trigger": "kill", "every": 3, "chance": 1.0, "icd": 0,
+               "raw": [{"type": "heal", "hp_pct": 0.08, "to": "owner"}]}]
+   },
+   "ward_echo": {
+    "name": "Эхо защиты",
+    "desc": "Каждый 3-й полученный удар даёт щит на 10% HP.",
+    "rules": [{"trigger": "hurt", "every": 3, "chance": 1.0, "icd": 0, "do": ["ward"]}]
+   },
+   "death_burst": {
+    "name": "Пепельный взрыв",
+    "desc": "При смерти врага взрывается, нанося урон вокруг.",
+    "type": "death_burst"
+   },
+   "first_haste": {
+    "name": "Первый рассвет",
+    "desc": "Первые 5 секунд боя атакует на 50% быстрее.",
+    "type": "first_haste"
+   },
+   "first_skill_double": {
+    "name": "Гроза первого удара",
+    "desc": "Первый навык в бою срабатывает дважды.",
+    "type": "first_skill_double"
+   },
+   "single_target_bonus": {
+    "name": "Охотничий инстинкт",
+    "desc": "Навыки по одной цели наносят на 25% больше урона.",
+    "type": "single_target_bonus"
+   },
+   "bleed_extra": {
+    "name": "Кровавый шип",
+    "desc": "При наложении кровотечения есть шанс добавить ещё один стак.",
+    "type": "bleed_extra"
+   }
+  },
+  "plant_effects": {
+   "sunleaf": {"stat": "atk_damage", "pct": 0.03},
+   "moonroot": {"stat": "power", "pct": 0.03},
+   "thornbud": {"extra": "crit", "add": 0.02},
+   "starflower": {"ap_regen": 0.04},
+   "emberfern": {"vs": "burning", "pct": 0.04},
+   "frostbell": {"stat": "armor", "add": 0.5},
+   "bloodpoppy": {"stat": "lifesteal", "add": 0.04},
+   "stormlotus": {"stat": "power", "pct": 0.04},
+   "bonemoss": {"stat": "armor", "add": 0.75},
+   "sugarvine": {"speed": 0.04},
+   "tearcap": {"extra": "heal_taken", "add": 0.06},
+   "dreampollen": {"extra": "dodge", "add": 0.03},
+   "ironthorn": {"vs": "bleeding", "pct": 0.04},
+   "sunpumpkin": {"stat": "hp", "pct": 0.05}
+  },
+  "enchant_combos": [
+   {
+    "id": "solar_volley",
+    "plants": ["sunleaf", "thornbud", "emberfern"],
+    "name": "Солнечный залп",
+    "desc": "Каждая 5-я атака выпускает удар в дополнительную цель.",
+    "effect": "fifth_shot"
+   },
+   {
+    "id": "eclipse",
+    "plants": ["sunleaf", "moonroot", "starflower"],
+    "name": "Затмение",
+    "desc": "Каждое 3-е заклинание срабатывает дважды.",
+    "effect": "third_spell"
+   },
+   {
+    "id": "ashen_frost",
+    "plants": ["thornbud", "emberfern", "frostbell"],
+    "name": "Пепельный иней",
+    "desc": "Каждый 4-й удар вызывает ледяной взрыв вокруг цели.",
+    "effect": "frost_echo"
+   },
+   {
+    "id": "moonstorm",
+    "plants": ["moonroot", "starflower", "frostbell"],
+    "name": "Лунная гроза",
+    "desc": "Каждый 4-й удар вызывает цепную молнию.",
+    "effect": "storm_chain"
+   },
+   {
+    "id": "blood_sun",
+    "plants": ["sunleaf", "moonroot", "emberfern"],
+    "name": "Кровавое солнце",
+    "desc": "Каждое 3-е убийство восстанавливает 8% здоровья.",
+    "effect": "blood_feast"
+   },
+   {
+    "id": "thorn_ward",
+    "plants": ["thornbud", "starflower", "frostbell"],
+    "name": "Терновый щит",
+    "desc": "Каждый 3-й полученный удар даёт щит на 10% HP.",
+    "effect": "ward_echo"
+   },
+   {
+    "id": "ashen_burst",
+    "plants": ["bloodpoppy", "emberfern", "ironthorn"],
+    "name": "Пепельный взрыв",
+    "desc": "При смерти врага взрывается, нанося урон вокруг.",
+    "effect": "death_burst"
+   },
+   {
+    "id": "first_dawn",
+    "plants": ["sunleaf", "sugarvine", "sunpumpkin"],
+    "name": "Первый рассвет",
+    "desc": "Первые 5 секунд боя герой атакует на 50% быстрее.",
+    "effect": "first_haste"
+   },
+   {
+    "id": "storm_opening",
+    "plants": ["stormlotus", "starflower", "moonroot"],
+    "name": "Гроза первого удара",
+    "desc": "Первый навык в бою срабатывает дважды.",
+    "effect": "first_skill_double"
+   },
+   {
+    "id": "hunters_instinct",
+    "plants": ["dreampollen", "starflower", "stormlotus"],
+    "name": "Охотничий инстинкт",
+    "desc": "Навыки по одной цели наносят на 25% больше урона.",
+    "effect": "single_target_bonus"
+   },
+   {
+    "id": "blood_thorn",
+    "plants": ["bloodpoppy", "thornbud", "bonemoss"],
+    "name": "Кровавый шип",
+    "desc": "При наложении кровотечения есть шанс добавить ещё один стак.",
+    "effect": "bleed_extra"
+   }
   ],
   "gems": {
    "ruby": {

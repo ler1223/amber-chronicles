@@ -151,34 +151,28 @@ def default_loadout(data, cls, lvl):
 
 
 def one_skill_choices(data, cls, lvl, hero=None):
-    """Навыки, которые герой может взять единственной способностью в бесконечном забеге.
-    В отличие от обычного набора, ультимейт здесь — такой же выбор, а не отдельная кнопка R.
-    Если передан герой, выбор ограничен его текущим набором (ветки и ранги продолжают работать)."""
+    """Обычные навыки, которые герой может взять единственной способностью в бесконечном забеге.
+    Ультимейт не выбирается: он открывается отдельно на 10 уровне и добавляется к выбранной способности.
+    В окне выбора показываются все обычные навыки класса, включая ещё закрытые по уровню; здесь —
+    только уже доступные. Если у старого героя есть навык вне пула класса, он тоже остаётся доступным."""
     if notes_of(data, cls):
         pool = notes_of(data, cls)
     else:
-        pool = all_skills(data, cls)
+        pool = [e["id"] for e in entries(data, cls) if not e.get("ult")]
     out = [sid for sid in pool if sid in data.skills and is_unlocked(data, cls, sid, lvl)]
     if hero is not None:
-        always = cfg(data)["classes"].get(cls, {}).get("always", [])
-        own = list(getattr(hero, "skills", [])) + list(always)
-        extra = [s for s in own if s in data.skills and s not in out
-                 and (s in always or not is_ult(data, cls, s) or is_unlocked(data, cls, s, lvl))]
-        if extra:
-            out += extra
-        own = [s for s in out if s in own]
-        if own:
-            out = own
+        known = set(all_skills(data, cls))
+        own = [s for s in getattr(hero, "skills", []) if s in data.skills and not is_ult(data, cls, s)]
+        for sid in own:
+            if sid not in out and (sid not in known or is_unlocked(data, cls, sid, lvl)):
+                out.append(sid)
     return out
 
 
 def default_one_skill(data, cls, lvl, hero=None):
-    """Разумный стартовый выбор: открытый ультимейт, иначе первый доступный навык."""
+    """Разумный стартовый выбор: первый доступный обычный навык (ульт откроется на 10 уровне)."""
     choices = one_skill_choices(data, cls, lvl, hero)
-    if not choices:
-        return None
-    ults = set(ults_of(data, cls))
-    return next((s for s in choices if s in ults), choices[0])
+    return choices[0] if choices else None
 
 
 def doctrine_entries(data, cls):

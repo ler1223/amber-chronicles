@@ -79,18 +79,27 @@ def test_hall_click_opens_sheet_and_shows_resume(tmp_path):
     assert isinstance(app.scene, R.HallRoom)
 
 
-def test_endless_muster_cycles_one_ability(tmp_path):
+def test_endless_muster_opens_skill_picker(tmp_path):
     from game import tavern_rooms as R
+    from sim import story_meta
     app = new_app(tmp_path)
     app.switch_mode("solo")
     app.to_hub()
     key(app, pygame.K_2)
     assert isinstance(app.scene, R.MusterRoom)
-    frame(app)
     h = app.profile.hall()[0]
-    old = h.endless_skill
+    h.level = 10
+    frame(app)
     click(app, ("endless_skill", h.uid))
-    assert h.endless_skill and h.endless_skill != old
+    assert isinstance(app.scene.overlay, R.EndlessSkillOverlay)
+    ov = app.scene.overlay
+    assert len(ov.regular()) >= len(story_meta.one_skill_choices(app.profile.data, h.cls, h.level, h))
+    assert ov.ults()
+    old = h.endless_skill
+    choices = story_meta.one_skill_choices(app.profile.data, h.cls, h.level, h)
+    sid = next(s for s in choices if s != old)
+    click(app, ("pick", sid))
+    assert h.endless_skill == sid
 
 
 def test_muster_chest_equips_artifact(tmp_path):

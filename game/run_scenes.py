@@ -146,6 +146,8 @@ class MapScene:
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEBUTTONDOWN:
+            if ev.button not in (1, 3):
+                return
             self.mouse = ev.pos
             if ev.button == 3:
                 self.picked_item = None

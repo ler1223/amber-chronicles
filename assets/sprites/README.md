@@ -23,6 +23,13 @@
 - Имя = id юнита из `data/classes.json`, `data/enemies.json`, `data/paths.json`, `data/objects.json`.
 - Окружение — в подпапке `env/`, см. ниже.
 
+## Сад (`garden/`)
+Спрайты растений: `garden/<вид>_<стадия>.png`, где стадия — `0` (росток), `1` (молодое), `2` (взрослое).
+Виды: `sunleaf`, `moonroot`, `thornbud`, `starflower`, `emberfern`, `frostbell`. Если файла нет,
+`ui/garden_sprites.py` рисует процедурный спрайт. Промпты — `prompts_garden.md`.
+
+
+
 ## Окружение (`env/`)
 Билборды укрытий и декора поля: `env/<материал>_<вид>.png` (материал главы — `grass` болото, `ash` кузни, `dirt`
 склеп, `snow` перевалы, `dry` степь, `sand` гробницы, `moss` лес фей, `wet` затонувший город, `marble` цитадель).

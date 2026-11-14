@@ -5,7 +5,8 @@
   set    — сет (у сета своя редкость), бонусы за 2 и 4 вещи сета на герое;
   q      — качество ковки (мини-игра) 0.7–1.3;
   level  — улучшение +0…+10 (алхимия);
-  extra  — свойство зачарования {"id": свойство вещи, "q": качество} или None;
+  extra  — зачарование {"id": сильное свойство, "q": качество} или None; старые свойства-аффиксы
+           из items.stat_affixes поддерживаются для совместимости;
   gems   — вставленные самоцветы [{"id", "q", "size", "col", "cl", "cut", "star"}] (гнёзд — по редкости),
            сила — sim/gems.power (4C: караты, цвет, чистота, огранка).
 Слой артефактов множится на остальной рост героя (бонусы внутри слоя складываются)."""
@@ -86,9 +87,23 @@ def effects(xd, arts, owner="h"):
         k = power_k(xd, art)
         for entry in a["kinds"][art["kind"]]["stats"]:
             add(*_stat(xd, entry, k))
+        for pid in art.get("garden_plants", []):        # базовые эффекты выбранных растений
+            entry = a.get("plant_effects", {}).get(pid)
+            if entry:
+                add(*_stat(xd, entry, 1.0))
         ex = art.get("extra")
-        if ex and ex["id"] in xd["items"]["stat_affixes"]:
-            add(*_stat(xd, xd["items"]["stat_affixes"][ex["id"]], a["extra_k"] * k * ex.get("q", 1.0) / art.get("q", 1.0)))
+        if ex:
+            ec = a.get("enchants", {}).get(ex["id"])
+            if ec:                                       # сильное зачарование: правило или особый боевой эффект
+                tier = 1 + RARITY_ORDER.index(art["rarity"]) // 2
+                if ec.get("type") in ("extra_shot", "double_spell", "first_haste", "first_skill_double",
+                                      "single_target_bonus", "bleed_extra", "death_burst"):
+                    extra.setdefault("enchants", []).append({"id": ex["id"], "q": ex.get("q", 1.0)})
+                for n, spec in enumerate(ec.get("rules", [])):
+                    rules.append(make_rule(xd, spec, tier, f"{owner}:ench:{art['uid']}:{n}"))
+            elif ex["id"] in xd["items"]["stat_affixes"]:  # совместимость со старыми сохранениями
+                add(*_stat(xd, xd["items"]["stat_affixes"][ex["id"]],
+                           a["extra_k"] * k * ex.get("q", 1.0) / art.get("q", 1.0)))
         for g in art.get("gems", []):
             gd = a["gems"].get(g["id"])
             if gd:
@@ -164,12 +179,15 @@ def entry_text(entry, k=1.0):
              "dot_bleed_mult": "урона кровотечением", "dot_mult": "силы всех дотов",
              "dot_duration_mult": "длительности дотов"}
     if "pct" in entry and "vs" in entry:
-        vs = {"burning": "горящим", "wet": "мокрым", "cold": "замёрзшим", "dot": "отравленным и горящим"}
+        vs = {"burning": "горящим", "wet": "мокрым", "cold": "замёрзшим", "bleeding": "кровоточащим",
+              "dot": "отравленным и горящим"}
         return f"+{entry['pct'] * k * 100:.1f}% урона по {vs.get(entry['vs'], 'ослабленным')}"
     if "reaction" in entry:
         return f"+{entry['reaction'] * k * 100:.1f}% урона реакций героя"
     if entry.get("extra") == "dodge":
         return f"+{entry['add'] * k * 100:.1f}% уклонения"
+    if entry.get("extra") == "heal_taken":
+        return f"+{entry['add'] * k * 100:.1f}% получаемого лечения"
     if entry.get("extra") == "crit_mult":
         return f"+{entry['add'] * k * 100:.1f}% силы крита"
     if "pct" in entry:
@@ -195,11 +213,29 @@ def art_lines(xd, art):
     a = cfg(xd)
     k = power_k(xd, art)
     out = [entry_text(e, k) for e in a["kinds"][art["kind"]]["stats"]]
+    plants = art.get("garden_plants") or []
+    if plants:
+        seeds = xd.get("garden", {}).get("seeds", {})
+        names = [seeds.get(pid, {}).get("name", pid) for pid in plants]
+        out.append("Растения: " + ", ".join(names))
+        for pid in plants:
+            entry = a.get("plant_effects", {}).get(pid)
+            if entry:
+                out.append("  " + entry_text(entry, 1.0))
     ex = art.get("extra")
     if ex:
-        v = a["extra_k"] * k * ex.get("q", 1.0) / art.get("q", 1.0)
-        s = xd["items"]["stat_affixes"][ex["id"]]
-        out.append("Свойство: " + _affix_scaled(xd, s, v, affix_text))
+        ec = a.get("enchants", {}).get(ex["id"])
+        combo = next((c for c in a.get("enchant_combos", []) if c["id"] == ex.get("combo")), None)
+        if combo:
+            out.append("Комбинация: " + combo["name"] + " — " + combo.get("desc", ""))
+            if ec:
+                out.append("  Эффект: " + ec.get("desc", ""))
+        elif ec:
+            out.append("Зачарование: " + ec["name"] + " — " + ec.get("desc", ""))
+        elif ex["id"] in xd["items"]["stat_affixes"]:
+            v = a["extra_k"] * k * ex.get("q", 1.0) / art.get("q", 1.0)
+            s = xd["items"]["stat_affixes"][ex["id"]]
+            out.append("Свойство: " + _affix_scaled(xd, s, v, affix_text))
     for g in art.get("gems", []):
         gd = a["gems"][g["id"]]
         out.append(f"{gd['name']}: " + "; ".join(entry_text(e, GM.power(xd, g)) for e in gd["stats"]))
@@ -257,7 +293,8 @@ def make(xd, uid, kind, set_id, q, rng=None):
     art = {"uid": uid, "kind": kind, "set": set_id, "rarity": a["sets"][set_id]["rarity"], "q": q, "level": 0,
            "extra": None, "gems": []}
     if q >= a["extra_at"]:
-        art["extra"] = {"id": rng.choice(a["extras"]), "q": q}
+        pool = a.get("enchants") or a["extras"]
+        art["extra"] = {"id": rng.choice(list(pool)), "q": q}
     return art
 
 
@@ -267,7 +304,10 @@ def upgrade_cost(xd, art):
     lv = art.get("level", 0)
     rk = RARITY_ORDER.index(art["rarity"]) + 1
     out = {"glory": int((u["gold"] + u["gold_per_level"] * lv) * rk),
-           "herbs": u["herbs"] + lv // u["herbs_every"]}
+           "sunleaf": u.get("sunleaf", 1) + lv // u.get("sunleaf_every", 2),
+           "thornbud": u.get("thornbud", 1) + lv // u.get("thornbud_every", 3)}
+    if lv + 1 >= u.get("emberfern_from", 6):
+        out["emberfern"] = 1
     if lv + 1 >= u["rare_from"]:
         mat = a["sets"][art["set"]]["mat"] or "stardust"
         out[mat] = out.get(mat, 0) + 1
@@ -277,7 +317,7 @@ def upgrade_cost(xd, art):
 def enchant_cost(xd, art):
     a = cfg(xd)
     e = a["enchant_cost"]
-    out = {"glory": e["gold"] * (RARITY_ORDER.index(art["rarity"]) + 1), "herbs": e["herbs"]}
+    out = {"glory": e["gold"] * (RARITY_ORDER.index(art["rarity"]) + 1)}
     if RARITY_ORDER.index(art["rarity"]) >= RARITY_ORDER.index(e["rare_from"]):
         mat = a["sets"][art["set"]]["mat"] or "stardust"
         out[mat] = out.get(mat, 0) + 1

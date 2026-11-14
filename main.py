@@ -60,6 +60,8 @@ def dispatch(scene, ev):
     """Событие → сцена. Сцена-колонка (stage, 1280×800 по центру широкого окна): мышь сдвигается в её координаты,
     а обработка идёт в размере 1280×800 — в тех же координатах, в которых сцена рисуется (иначе кнопки и области,
     посчитанные от ширины экрана, «уезжают» от курсора)."""
+    if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
+        return
     if not getattr(scene, "stage", False):
         scene.handle(ev)
         return
@@ -107,6 +109,9 @@ def main():
     while running:
         dt = clock.tick(60) / 1000.0
         for ev in pygame.event.get():
+            # Колесо (старые кнопки 4/5), средняя и боковые кнопки — не клики интерфейса.
+            if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
+                continue
             if ev.type == pygame.QUIT:
                 running = False
             elif ev.type == pygame.KEYDOWN and (ev.key == pygame.K_F11 or

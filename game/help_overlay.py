@@ -111,7 +111,8 @@ class HelpOverlay:
                 self.close()
             return True
         if ev.type == pygame.MOUSEBUTTONDOWN:
-            self.step(1 if ev.button == 1 else -1)
+            if ev.button in (1, 3):
+                self.step(1 if ev.button == 1 else -1)
             return True
         return ev.type in (pygame.MOUSEBUTTONUP, pygame.KEYUP)
 

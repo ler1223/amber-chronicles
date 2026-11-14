@@ -1144,6 +1144,10 @@ class Combat:
         dps = max(0.0, float(dps) * self._dot_mult(tag, attacker) * getattr(u, "dot_taken", 1.0))
         if dps_pct is not None:
             dps = 0.0
+        if tag == "bleed" and attacker is not None and self._has_enchant(attacker, "bleed_extra"):
+            if self.rng.random() < 0.35:
+                stacks += 1
+                self.emit("enchant_proc", unit=attacker, id="bleed_extra", name="Кровавый шип")
         max_stacks = max(1, int(cfg.get("stacks", 1)))
         old = u.dots.get(tag)
         if old is None:
@@ -1457,6 +1461,8 @@ class Combat:
             return
         kind = u.atk_kind or ("melee" if u.atk_range <= 1 else "ranged")
         u.attack_timer = u.atk_cd * u.slow_mult(self.tags) * u.buff("atk_speed", 1.0) * PS.atk_cd_mult(self, u)
+        if self.time < 5.0 and self._has_enchant(u, "first_haste"):
+            u.attack_timer *= 0.65
         u.last_target = t
         tag = u.buff("atk_tag", None) or u.atk_tag          # ядовитый клинок и т.п. — тег на время
         amount = u.atk_damage * u.buff("atk_mult", 1.0) * self._reveal(u) * self.blood_mult(u)
@@ -1495,6 +1501,25 @@ class Combat:
             kit.basic_rider(self, u, t)
         if u.lifesteal and dealt and u.alive:
             self.heal(u, int(round(dealt * u.lifesteal)))
+        if u.enchants:
+            self._enchant_basic(u, t, amount, tag, kind)
+
+    def _enchant_basic(self, u, t, amount, tag, kind):
+        """Сильные зачарования на обычных атаках: каждый N-й удар — дополнительная цель."""
+        for e in u.enchants:
+            if e.get("id") != "fifth_shot":
+                continue
+            n = u.enchant_counts.get("fifth_shot", 0) + 1
+            u.enchant_counts["fifth_shot"] = n
+            if n % 5:
+                continue
+            foes = [f for f in self.foes_of(u) if f is not t and f.alive and not f.obj]
+            if not foes:
+                continue
+            other = min(foes, key=lambda f: (cheb(u.cell, f.cell), f.hp))
+            self.emit("link", src=t, dst=other, color=(255, 215, 130))
+            self.damage(other, max(1, int(round(amount * 0.65))), u, tag, kind)
+            self.emit("enchant_proc", unit=u, id="fifth_shot", name="Пятый выстрел")
 
     def _start_cast(self, u, sid, target):
         sk = u.skill_defs[sid]
@@ -1581,6 +1606,27 @@ class Combat:
             return h["ally"]
         return h["area"]
 
+    def _has_enchant(self, u, eid):
+        return any(e.get("id") == eid for e in getattr(u, "enchants", []))
+
+    def _is_single_target_skill(self, sk, effects):
+        if sk.get("target") != "enemy" or int(sk.get("radius", 0) or 0) > 0:
+            return False
+        if any(e.get("to") == "area" or int(e.get("radius", 0) or 0) > 0 for e in effects):
+            return False
+        return any(e.get("type") in ("damage", "bonus_damage") for e in effects)
+
+    def _scale_damage_effects(self, effects, mult):
+        out = []
+        for e in effects:
+            e = dict(e)
+            if e.get("type") in ("damage", "bonus_damage"):
+                for key in ("amount", "atk_pct", "hp_pct"):
+                    if key in e and isinstance(e[key], (int, float)):
+                        e[key] = round(e[key] * mult, 4)
+            out.append(e)
+        return out
+
     def _resolve_skill(self, u, sid, target, auto=False):
         sk = u.skill_defs[sid]
         if sk["target"] == "self":
@@ -1615,13 +1661,38 @@ class Combat:
             effects = [dict(e, _powder=pm) for e in effects]
         if spent or u.ambush > 1.0:           # потраченная шкала и удар из тени — в эффекты (урон по прилёте)
             effects = [dict(e, _spent=spent, _shadow=u.ambush) for e in effects]
+        if self._has_enchant(u, "single_target_bonus") and self._is_single_target_skill(sk, effects):
+            effects = self._scale_damage_effects(effects, 1.25)
+        echo = next((e for e in getattr(u, "enchants", []) if e.get("id") == "third_spell"), None)
+        if echo:
+            n = u.enchant_counts.get("third_spell", 0) + 1
+            u.enchant_counts["third_spell"] = n
+            if n % 3:
+                echo = None
+        first = next((e for e in getattr(u, "enchants", []) if e.get("id") == "first_skill_double"), None)
+        if first:
+            if u.enchant_counts.get("first_skill_double", 0) == 0:
+                u.enchant_counts["first_skill_double"] = 1
+            else:
+                first = None
+        double = bool(echo or first)
         if hit > 0:                           # эффекты — по прилёте (_delayed_update)
             self.delayed.append({"left": hit, "total": hit, "caster": u, "effects": effects,
                                  "center": tuple(center), "tunit": tunit, "name": sk["name"], "skill": sid})
+            if double:                        # эхо / первый навык — второе такое же
+                self.delayed.append({"left": hit, "total": hit, "caster": u, "effects": effects,
+                                     "center": tuple(center), "tunit": tunit,
+                                     "name": sk["name"] + " (эхо)", "skill": sid})
         else:
             self._skill = sid                 # вид контроля зависит от навыка (корни, сеть, лёд — config.control_looks)
             self.apply_effects(u, effects, center, tunit)
+            if double:
+                self.apply_effects(u, effects, center, tunit)
             self._skill = None
+        if echo:
+            self.emit("enchant_proc", unit=u, id="third_spell", name="Двойное заклинание")
+        if first:
+            self.emit("enchant_proc", unit=u, id="first_skill_double", name="Гроза первого удара")
         u.ambush = 1.0
         p = u.passive
         if p and p["kind"] == "encore" and u.pp >= p["pp"] and sk["ap"] >= p.get("min_ap", 3):
@@ -2411,6 +2482,7 @@ class Combat:
         if target.alive and amount + absorbed > 0:
             self.rules.fire("hit", {kind, tag} - {None}, unit=target, source=attacker)
         if target.hp <= 0:
+            self._death_burst(target, attacker)
             self.rules.fire("kill", ({kind, tag} - {None}) | C.unit_tags(self, target), unit=target, source=attacker)
             if attacker is not None and attacker.team == PLAYER and attacker.alive and self.fx.get("kill_ap"):
                 attacker.ap = min(attacker.ap_max, attacker.ap + self.fx["kill_ap"])
@@ -2418,6 +2490,24 @@ class Combat:
             self._kill(target, tag=tag)
             kit.on_kill(self, attacker, target)
         return amount
+
+    def _death_burst(self, target, attacker):
+        """Пепельный взрыв: смерть врага наносит урон вокруг него."""
+        if attacker is None or target.obj or getattr(self, "_death_bursting", False):
+            return
+        if not self._has_enchant(attacker, "death_burst"):
+            return
+        self._death_bursting = True
+        try:
+            amount = max(1, int(round(target.max_hp * 0.15 + attacker.atk_damage * 0.5)))
+            self.emit("death_burst", unit=target, src=attacker, pos=target.cell, tag="fire")
+            for v in self.units_in_radius(target.cell, 1):
+                if v is target or not v.alive or v.obj:
+                    continue
+                if attacker.is_enemy(v):
+                    self.damage(v, amount, attacker, "fire", "reaction")
+        finally:
+            self._death_bursting = False
 
     # ---------- объекты поля ----------
 
@@ -3200,7 +3290,7 @@ class Combat:
             dot = u.dots.get(t)
             mult = self._dot_heal_mult(u, t, dot) if dot else self.tags.get(t, {}).get("heal_mult", 1.0)
             amount = int(round(amount * mult))
-        amount = int(round(amount * u.buff("heal_taken", 1.0)))    # проклятие склепа
+        amount = int(round(amount * u.buff("heal_taken", 1.0) * u.heal_taken))    # проклятие склепа и растения
         real = min(amount, u.max_hp - u.hp)
         u.hp += real
         u.tally["healed_in"] += real

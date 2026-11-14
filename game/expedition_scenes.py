@@ -475,7 +475,7 @@ class XScene:
             return
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
-        elif ev.type == pygame.MOUSEBUTTONDOWN:
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button in (1, 3):
             self.mouse = ev.pos
             for r, action, _ in reversed(self.hits):
                 if action is not None and r.collidepoint(ev.pos):

@@ -23,8 +23,9 @@
 Правило:
   {"id": "...", "name": "...", "on": "collision", "tags": [...все нужны], "not": [...ни одного],
    "unit_has": [...], "owner": "source|unit|any" (только для правил юнита), "chance": 0..1, "icd": сек,
-   "do": [действия]}
-chance — шанс срабатывания, icd — не чаще раза в столько секунд (у каждого владельца свой счёт).
+   "every": N, "do": [действия]}
+chance — шанс срабатывания, icd — не чаще раза в столько секунд (у каждого владельца свой счёт),
+every — срабатывает каждый N-й подходящий раз (сильные зачарования «каждый пятый удар»).
 Действие: {"type": status|cleanse|damage|stun|buff|hazard|push|heal|shield|ap, "to": unit|other|source|owner|area,
   ...параметры}
   status: tag; cleanse: tags; damage: amount, tag, kind; stun: duration, look; buff: stat, value, duration;
@@ -45,6 +46,7 @@ class Rules:
         self.depth = 0
         self.fired = []          # (id правила, событие) — для тестов и журнала
         self.ready_at = {}       # (id правила, id владельца) -> когда снова может сработать (icd)
+        self.counts = {}         # (id правила, id владельца) -> сколько раз событие подошло (для «каждый N-й»)
 
     def fire(self, event, tags, unit=None, source=None, other=None, **extra):
         if self.depth >= MAX_DEPTH or unit is None:
@@ -71,6 +73,11 @@ class Rules:
         """Шанс и внутренний откат правила."""
         if r.get("chance", 1.0) < 1.0 and self.c.rng.random() >= r["chance"]:
             return False
+        if r.get("every"):
+            key = (r.get("id"), getattr(owner, "id", None))
+            self.counts[key] = self.counts.get(key, 0) + 1
+            if self.counts[key] % int(r["every"]):
+                return False
         if r.get("icd"):
             key = (r.get("id"), owner.id)
             if self.c.time < self.ready_at.get(key, -1.0):

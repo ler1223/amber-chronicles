@@ -83,20 +83,19 @@ def test_endless_acts_grow_and_do_not_end_on_boss():
     assert run.act == 3 and run.act_def is not None
 
 
-def test_endless_one_skill_can_be_any_kit_skill():
+def test_endless_one_skill_and_ult_at_level_ten():
     _, run = endless_run()
     h = run.heroes[0]
     choices = story_meta.one_skill_choices(run.data, h.cls, h.level, h)
-    assert len(choices) >= 2
-    non_ult = next(s for s in choices if not story_meta.is_ult(run.data, h.cls, s))
-    h.endless_skill = non_ult
-    assert run.battle_skills(h) == [non_ult]
+    assert choices and all(not story_meta.is_ult(run.data, h.cls, s) for s in choices)
+    h.endless_skill = choices[0]
+    assert run.battle_skills(h) == [choices[0]]
     h.level = 10
-    ults = [s for s in story_meta.one_skill_choices(run.data, h.cls, h.level, h)
-            if story_meta.is_ult(run.data, h.cls, s)]
-    if ults:
-        h.endless_skill = ults[0]
-        assert run.battle_skills(h) == [ults[0]]
+    skills = run.battle_skills(h)
+    ult = story_meta.ult_of(run.data, h.cls, h.skills)
+    assert skills[0] == h.endless_skill and ult in skills and len(skills) == 2
+    assert not any(story_meta.is_ult(run.data, h.cls, s) for s in
+                   story_meta.one_skill_choices(run.data, h.cls, h.level, h))
 
 
 def test_endless_elites_grow_with_act_and_get_modifiers():

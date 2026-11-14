@@ -174,7 +174,7 @@ class TrainScene:
                 self.back()
             else:
                 self.stop = True
-        elif ev.type == pygame.MOUSEBUTTONDOWN and self.finished:
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button in (1, 3) and self.finished:
             self.back()
 
     def draw(self, surf):

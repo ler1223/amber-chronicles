@@ -17,6 +17,7 @@ class Unit:
         self.hp = self.max_hp
         self.armor = proto.get("armor", 0)
         self.power = proto.get("power", 1.0)   # множитель урона, лечения и щитов навыков
+        self.heal_taken = proto.get("heal_taken", 1.0)   # бонус к получаемому лечению (базовый, не бафф)
         self.move_time = proto["move_time"]
         atk = proto["attack"]
         self.atk_damage = atk["damage"]
@@ -42,6 +43,8 @@ class Unit:
         self.resist = proto.get("resist", {})
         self.elite = proto.get("elite", False)
         self.on_death = proto.get("on_death")
+        self.enchants = list(proto.get("enchants", []))   # сильные зачарования артефактов
+        self.enchant_counts = {}                          # id зачарования -> счётчик событий
 
         self.cell = tuple(cell)
         self.prev_cell = self.cell

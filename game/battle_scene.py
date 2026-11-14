@@ -262,6 +262,8 @@ class BattleScene:
         return self.ground_cell(mx, my)
 
     def handle(self, ev):
+        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
+            return
         if self.ctl is not None and ev.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
             before = {u.id: u.order for u in self.combat.units}
             self._handle(ev)
@@ -279,6 +281,8 @@ class BattleScene:
         self.paused = True                           # настраиваем приоритет на паузе
 
     def _handle(self, ev):
+        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
+            return
         if self.prio_open:                           # панель приоритета: её события — первыми
             u = self.selected
             if u is None or not u.alive:

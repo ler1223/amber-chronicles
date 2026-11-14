@@ -9,6 +9,7 @@ assets/sprites/obj_*.png (лист O); пока их нет — рисуются
 import math
 import os
 import random
+import time
 
 import pygame
 
@@ -19,6 +20,7 @@ from game import workshop_games as G
 from game import workshop_scenes as WS
 from sim import artifacts as A
 from ui import aa as AA
+from ui import garden_sprites as GS
 from sim import expedition as X
 from sim import gems as GM
 from sim import story_meta
@@ -114,6 +116,10 @@ def res_icon(xd, k, size):
     """Значок ресурса: материал — иконка, трофей главы — камень его цвета, золото — монета (None)."""
     if k == "glory":
         return None
+    if k in xd.get("garden", {}).get("seeds", {}):
+        img = GS.plant_sprite(k, 2, size)
+        if img is not None:
+            return img
     img = icon(f"mat_{k}", size)
     if img is not None:
         return img
@@ -491,7 +497,7 @@ class RoomScene(XScene):
         if ev.type == pygame.MOUSEWHEEL:
             (self.overlay or self).wheel(ev.y)
             return
-        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button in (4, 5, 6, 7):
+        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
             return
         super().handle(ev)
 
@@ -576,7 +582,10 @@ class RoomScene(XScene):
         self.draw_top(surf)
         self.draw_strip(surf)
         self.draw_tip(surf)
-        self.draw_toast(surf, strip_y() - 24)
+        toast_y = strip_y() - 24
+        if getattr(self.overlay, "ws", None) == "ws_alchemy" and getattr(self.overlay, "mode", None) == "garden":
+            toast_y = strip_y() - 176              # не накрывать карточки семян
+        self.draw_toast(surf, toast_y)
 
     def draw_room(self, surf):
         pass
@@ -991,6 +1000,128 @@ class ChapterRoom(RoomScene):
 
 # ---------- Сборы ----------
 
+class EndlessSkillOverlay(Overlay):
+    """Окно выбора единственной обычной способности героя в бесконечном забеге.
+
+    Показывает весь пул класса: открытые навыки можно выбрать, закрытые — видны с уровнем открытия.
+    Ультимейты не выбираются: на 10 уровне ультимейт героя автоматически добавляется к выбранной способности.
+    """
+
+    def __init__(self, scene, hero):
+        super().__init__(scene)
+        self.hero = hero
+
+    def regular(self):
+        data = self.app.profile.data
+        return [e for e in story_meta.entries(data, self.hero.cls) if not e.get("ult")]
+
+    def ults(self):
+        data = self.app.profile.data
+        return [e for e in story_meta.entries(data, self.hero.cls) if e.get("ult")]
+
+    def act(self, action, button=1):
+        prof = self.app.profile
+        data = prof.data
+        h = self.hero
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "pick":
+            sid = action[1]
+            lv = story_meta.skill_level(data, h.cls, sid)
+            if not story_meta.is_unlocked(data, h.cls, sid, h.level):
+                self.scene.say(f"«{data.skills.get(sid, {}).get('name', sid)}» откроется на {lv} уровне")
+                return
+            h.endless_skill = sid
+            prof.save()
+            self.scene.say(f"Выбрана способность: {data.skills.get(sid, {}).get('name', sid)}")
+
+    def key(self, k):
+        if k in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self.scene.overlay = None
+            return True
+        return False
+
+    def draw(self, surf):
+        prof = self.app.profile
+        data = prof.data
+        h = self.hero
+        r = self.frame(surf, f"Одна способность — {h.name}")
+        choices = story_meta.one_skill_choices(data, h.cls, h.level, h)
+        chosen = h.endless_skill if h.endless_skill in choices else story_meta.default_one_skill(
+            data, h.cls, h.level, h)
+        T.text(surf, f"{data.classes[h.cls]['name']} · уровень {h.level} · выбрана: "
+                     f"{data.skills.get(chosen, {}).get('name', '—')}",
+               (r.x + 20, r.y + 52), 15, T.TEXT, True)
+        T.text(surf, "Все обычные способности класса. Закрытые видны, но выбрать их можно с их уровня.",
+               (r.x + 20, r.y + 74), 12, T.TEXT_DIM)
+
+        reg = self.regular()
+        cols = 4
+        gap = 10
+        top = r.y + 98
+        area_bottom = r.bottom - 208
+        cw = (r.w - 40 - gap * (cols - 1)) // cols
+        ch = min(104, max(82, (area_bottom - top - gap * ((len(reg) + cols - 1) // cols - 1))
+                          // max(1, (len(reg) + cols - 1) // cols)))
+        for i, e in enumerate(reg):
+            sid = e["id"]
+            sk = data.skills.get(sid)
+            if not sk:
+                continue
+            cr = pygame.Rect(r.x + 20 + (i % cols) * (cw + gap), top + (i // cols) * (ch + gap), cw, ch)
+            unlocked = story_meta.is_unlocked(data, h.cls, sid, h.level)
+            on = sid == chosen
+            hot = cr.collidepoint(self.scene.mouse)
+            bg = (62, 48, 30) if on else (42, 33, 24) if hot and unlocked else (30, 23, 17)
+            pygame.draw.rect(surf, bg, cr, border_radius=8)
+            pygame.draw.rect(surf, GOLD if on else (110, 82, 52) if unlocked else (68, 58, 50), cr,
+                             2 if on else 1, border_radius=8)
+            col = T.TEXT if unlocked else T.TEXT_DIM
+            T.text(surf, fit(sk["name"], 15, cr.w - 20), (cr.x + 10, cr.y + 8), 15, col, True)
+            T.text(surf, f"ур. {e['level']}" + (" · открыт" if unlocked else ""),
+                   (cr.x + 10, cr.y + 29), 11, GOLD if on else T.TEXT_DIM)
+            T.text(surf, fit(f"AP {sk.get('ap', 0)} · кд {sk.get('cooldown') or 0:g} с · дал. {sk.get('range') or 0}",
+                             11, cr.w - 20), (cr.x + 10, cr.y + 44), 11, (180, 170, 150))
+            for j, line in enumerate(T.wrap(sk.get("desc", ""), 11, cr.w - 20)[:2]):
+                T.text(surf, line, (cr.x + 10, cr.y + 62 + j * 14), 11, col)
+            if on:
+                T.text(surf, "ВЫБРАНА", (cr.right - 68, cr.y + 8), 10, GOLD, True)
+            tip = [sk["name"], sk.get("desc", ""), f"Уровень: {e['level']}"]
+            tip.append("ЛКМ — выбрать" if unlocked else f"Откроется на {e['level']} уровне")
+            self.scene.hit(cr, ("pick", sid) if unlocked else None, tip)
+
+        uy = r.bottom - 190
+        T.text(surf, "Ультимейты класса — не выбираются; ультимейт героя открывается на 10 уровне",
+               (r.x + 20, uy), 14, GLORY, True)
+        ult = story_meta.ult_of(data, h.cls, h.skills)
+        ue = self.ults()
+        ugap = 10
+        uw = (r.w - 40 - ugap * (max(1, len(ue)) - 1)) // max(1, len(ue))
+        for i, e in enumerate(ue):
+            sid = e["id"]
+            sk = data.skills.get(sid)
+            if not sk:
+                continue
+            cr = pygame.Rect(r.x + 20 + i * (uw + ugap), uy + 24, uw, 72)
+            own = sid == ult
+            open_ = h.level >= story_meta.skill_level(data, h.cls, sid)
+            pygame.draw.rect(surf, (48, 40, 25) if own else (28, 23, 18), cr, border_radius=8)
+            pygame.draw.rect(surf, GOLD if own and open_ else (95, 75, 50) if own else (60, 52, 44), cr,
+                             2 if own else 1, border_radius=8)
+            T.text(surf, fit(sk["name"] + (" · ваш" if own else ""), 13, cr.w - 16),
+                   (cr.x + 8, cr.y + 7), 13, T.TEXT if own else T.TEXT_DIM, True)
+            T.text(surf, fit(sk.get("desc", ""), 10, cr.w - 16), (cr.x + 8, cr.y + 26), 10, T.TEXT_DIM)
+            state = "открыт" if open_ else f"с {story_meta.skill_level(data, h.cls, sid)} ур."
+            T.text(surf, state, (cr.x + 8, cr.y + 51), 11, GOLD if own and open_ else T.TEXT_DIM)
+            self.scene.hit(cr, None, [sk["name"], sk.get("desc", ""),
+                                      "Ваш ультимейт" if own else "У героя другой ультимейт",
+                                      "Автоматически с 10 уровня"])
+
+        T.text(surf, "Выбранная способность работает весь забег; ультимейт не занимает её место.",
+               (r.x + 20, r.bottom - 84), 11, T.TEXT_DIM)
+        self.scene.btn(surf, pygame.Rect(r.right - 210, r.bottom - 54, 190, 36), "Готово (Esc)", "close",
+                       True, primary=True)
+
+
 class MusterRoom(RoomScene):
     """Сборы: глава и ступень, формат и автокаст; крупные карточки героев с ячейками артефактов; «В поход»."""
     room = "muster"
@@ -1012,16 +1143,13 @@ class MusterRoom(RoomScene):
         kind = action[0] if isinstance(action, tuple) else action
         if kind == "recruit" and button == 3:
             self.app.switch(E.TavernHeroScene(self.app, self, action[1]))
-        elif kind == "endless_skill":
+        elif kind in ("endless_skill", "endless_pick"):
             h = next((x for x in self.heroes() if x.uid == action[1]), None)
             if h is not None:
-                choices = story_meta.one_skill_choices(prof.data, h.cls, h.level, h)
-                if choices:
-                    cur = h.endless_skill if h.endless_skill in choices else story_meta.default_one_skill(
-                        prof.data, h.cls, h.level, h)
-                    i = choices.index(cur) if cur in choices else -1
-                    h.endless_skill = choices[(i + 1) % len(choices)]
-                    prof.save()
+                if button == 3:
+                    self.app.switch(E.TavernHeroScene(self.app, self, h.uid))
+                else:
+                    self.overlay = EndlessSkillOverlay(self, h)
         elif kind == "recruit":
             msg = toggle_pick(self.app, action[1])
             if msg:
@@ -1134,7 +1262,7 @@ class MusterRoom(RoomScene):
         mech = (meta.get("mechanics") or [""])[0]
         T.text(surf, fit("• " + mech, 12, panel.w - 260), (panel.x + 14, panel.y + 56), 12, (220, 200, 160))
         if prof.solo:
-            T.text(surf, "Бесконечный забег: у каждого героя 1 способность, акты не кончаются",
+            T.text(surf, "Бесконечный забег: у каждого героя 1 способность; ультимейт откроется на 10 уровне",
                    (panel.x + 14, panel.y + 73), 11, (150, 220, 170))
         t = xd["config"]["tiers"][s["tier"]]
         T.text(surf, f"Ступень {s['tier'] + 1} · {t['name']}", (panel.right - 226, panel.y + 10), 15,
@@ -1193,14 +1321,21 @@ class MusterRoom(RoomScene):
             tag = ("в отряде" + (f" · найм {prof.hire_cost(h)}" if prof.hire_cost(h) else ""), GOLD)
         if tag:
             T.text(surf, fit(tag[0], 13, r.w - 16), (r.centerx, r.y + 200), 13, tag[1], True, center=True)
-        if prof.solo:                               # бесконечный забег: ровно одна способность
+        if prof.solo:                               # бесконечный забег: ровно одна обычная способность
             choices = story_meta.one_skill_choices(data, h.cls, h.level, h)
             sid = h.endless_skill if h.endless_skill in choices else story_meta.default_one_skill(
                 data, h.cls, h.level, h)
             sk = data.skills.get(sid, {})
+            ult = story_meta.ult_of(data, h.cls, h.skills)
             T.text(surf, "Способность", (r.x + 12, r.y + 220), 12, T.TEXT_DIM, True)
             T.text(surf, fit(sk.get("name", "—"), 14, r.w - 24), (r.x + 12, r.y + 237), 14, GOLD, True)
-            T.text(surf, "клик — сменить", (r.x + 12, r.y + 255), 11, T.TEXT_DIM)
+            if ult:
+                uopen = h.level >= story_meta.skill_level(data, h.cls, ult)
+                T.text(surf, fit("Ульт: " + data.skills.get(ult, {}).get("name", "—")
+                                 + ("" if uopen else f" · с {story_meta.skill_level(data, h.cls, ult)} ур."),
+                                 11, r.w - 24), (r.x + 12, r.y + 255), 11,
+                       GOLD if uopen else T.TEXT_DIM)
+            T.text(surf, "ЛКМ — окно выбора", (r.x + 12, r.y + 271), 11, T.TEXT_DIM)
         else:
             ult = story_meta.ult_of(data, h.cls, h.skills)
             yy = r.y + 222
@@ -1211,9 +1346,10 @@ class MusterRoom(RoomScene):
                 yy += 17
         self.hit(r, ("recruit", h.uid), [(h.name, tn["accent"]),
                                          "клик — " + ("убрать из отряда" if on else "взять в поход"), "ПКМ — лист героя"])
-        if prof.solo:                               # клик по строке способности — следующая
-            self.hit(pygame.Rect(r.x + 8, r.y + 214, r.w - 16, 54), ("endless_skill", h.uid),
-                     ["Одна способность на весь забег", "клик — следующая способность"])
+        if prof.solo:                               # клик по способности — окно со всеми навыками класса
+            self.hit(pygame.Rect(r.x + 8, r.y + 214, r.w - 16, 70), ("endless_skill", h.uid),
+                     ["Одна способность на весь забег", "ЛКМ — окно выбора всех способностей",
+                      "ультимейт откроется на 10 уровне"])
         slots = prof.art_slots(h)
         worn = prof.worn(h)
         sw = 34
@@ -1805,7 +1941,7 @@ class MarketRoom(RoomScene):
     (продать за половину цены). Клик по камню — рассмотреть."""
     room = "market"
     title = "Рынок"
-    sub = "Самоцветы — редкость: товар обновляется после каждого похода"
+    sub = "Самоцветы и семена: товар обновляется после каждого похода"
     art = "room_market"
     dim = 150
 
@@ -1825,6 +1961,8 @@ class MarketRoom(RoomScene):
             self.overlay = WandererOverlay(self)
         elif kind == "jeweler":
             self.overlay = JewelerOverlay(self)
+        elif kind == "seed_trader":
+            self.overlay = SeedTraderOverlay(self)
         elif kind == "gem_view":
             g = next((x for x in prof.gems + prof.rough + prof.market.get("rough", []) + prof.market.get("cut", [])
                       if x["uid"] == action[1]), None)
@@ -1839,8 +1977,10 @@ class MarketRoom(RoomScene):
         for r, title in ((left, "Лавка самоцветов"), (right, "Ваши камни — продать за половину цены")):
             T.frame(surf, r, 236)
             T.text(surf, title, (r.x + 16, r.y + 12), 20, GLORY, True)
+        self.btn(surf, pygame.Rect(left.x + 16, left.y + 44, 260, 32), "Семена у торговца", "seed_trader",
+                 bool(prof.market.get("seeds")), tip="Новые растения для сада: покупка открывает вид навсегда")
         stock = [("rough", x) for x in prof.market.get("rough", [])] + [("cut", x) for x in prof.market.get("cut", [])]
-        draw_stone_grid(self, surf, pygame.Rect(left.x + 16, left.y + 50, left.w - 32, left.h - 64), "market_stock",
+        draw_stone_grid(self, surf, pygame.Rect(left.x + 16, left.y + 84, left.w - 32, left.h - 98), "market_stock",
                         stock, lambda kind, g: ("gem_view", g["uid"]), "Прилавок пуст — загляните после похода.",
                         price=prof.market_price,
                         button=lambda kind, g: ("Купить", ("buy", kind, g["uid"]),
@@ -1859,6 +1999,211 @@ class MarketRoom(RoomScene):
                         own, lambda kind, g: ("gem_view", g["uid"]), "Своих камней нет.",
                         price=prof.sell_price,
                         button=lambda kind, g: ("Продать", ("sell", kind, g["uid"]), True))
+
+
+class SeedTraderOverlay(Overlay):
+    """Торговец семенами: новые виды растений открываются в саду навсегда."""
+
+    def act(self, action, button=1):
+        prof = self.app.profile
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "seed_trader_buy":
+            sid = action[1]
+            if prof.buy_trader_seed(sid):
+                self.scene.say("Семя куплено — новый вид открыт в саду")
+            else:
+                self.scene.say("Не хватает золота")
+        elif kind == "garden_upgrade":
+            if prof.garden_upgrade():
+                self.scene.say(f"Сад расширен до {prof.garden_cols()}×{prof.garden_rows()}")
+            else:
+                self.scene.say("Не хватает золота или сад уже максимального размера")
+
+    def draw(self, surf):
+        prof = self.app.profile
+        xd = prof.xd
+        r = self.frame(surf, "Торговец семенами")
+        offers = list(prof.market.get("seeds") or [])
+        T.text(surf, "Новое семя открывает вид растения в саду навсегда. Повторная покупка даёт ещё одно семя.",
+               (r.x + 20, r.y + 54), 14, T.TEXT_DIM)
+        T.text(surf, f"Золото: {prof.glory}", (r.right - 20 - T.font(14, True).size(f"Золото: {prof.glory}")[0],
+                                               r.y + 54), 14, GOLD, True)
+        info = prof.garden_upgrade_info()
+        T.text(surf, f"Поле сада: {prof.garden_cols()}×{prof.garden_rows()}", (r.x + 20, r.y + 78), 14, GLORY, True)
+        if info:
+            self.scene.btn(surf, pygame.Rect(r.right - 380, r.y + 70, 360, 34),
+                           f"Расширить до {info['cols']}×{info['rows']} · {info['price']}",
+                           "garden_upgrade", prof.glory >= info["price"], primary=True,
+                           tip="Больше клеток для посадки")
+        else:
+            T.text(surf, "Сад максимального размера", (r.x + 220, r.y + 80), 12, T.TEXT_DIM)
+        if not offers:
+            T.text(surf, "Торговец разобрал семена — загляните после следующего похода.",
+                   (r.centerx, r.y + 180), 20, T.TEXT_DIM, center=True)
+            return
+        cols = min(3, len(offers))
+        gap = 16
+        cw = min(380, (r.w - 40 - gap * (cols - 1)) // max(1, cols))
+        ch = 250
+        x0 = r.centerx - (cw * cols + gap * (cols - 1)) // 2
+        y0 = r.y + 124
+        for i, offer in enumerate(offers[:6]):
+            sid = offer.get("id")
+            seed = prof.garden_seed(sid)
+            if not seed:
+                continue
+            cr = pygame.Rect(x0 + (i % cols) * (cw + gap), y0 + (i // cols) * (ch + gap), cw, ch)
+            locked = sid not in prof.garden_unlocked
+            hot = cr.collidepoint(self.scene.mouse)
+            pygame.draw.rect(surf, (48, 38, 26) if hot else (31, 24, 17), cr, border_radius=10)
+            pygame.draw.rect(surf, T.AMBER if locked else (88, 70, 46), cr, 2 if locked else 1, border_radius=10)
+            icon = GS.plant_sprite(sid, 2, 92)
+            surf.blit(icon, (cr.centerx - icon.get_width() // 2, cr.y + 12))
+            T.text(surf, fit(seed["name"], 18, cr.w - 24), (cr.centerx, cr.y + 106), 18,
+                   T.TEXT if not locked else T.TEXT_DIM, True, center=True)
+            T.text(surf, "НОВЫЙ ВИД" if locked else "ЕЩЁ СЕМЕНА", (cr.centerx, cr.y + 130), 11,
+                   GOLD if locked else T.TEXT_DIM, True, center=True)
+            for j, line in enumerate(T.wrap(seed.get("desc", ""), 12, cr.w - 28)[:2]):
+                T.text(surf, line, (cr.x + 14, cr.y + 148 + j * 15), 12, T.TEXT_DIM)
+            T.text(surf, f"в саду: {prof.garden_seeds.get(sid, 0)} · собрано: {prof.mats.get(sid, 0)}",
+                   (cr.x + 14, cr.y + 181), 11, T.TEXT_DIM)
+            price = int(offer.get("price", 30))
+            self.scene.btn(surf, pygame.Rect(cr.x + 14, cr.bottom - 48, cr.w - 28, 34),
+                           f"Купить · {price}", ("seed_trader_buy", sid), prof.glory >= price, primary=True,
+                           tip=[seed["name"], "Откроет новый вид в саду" if locked else "Добавит одно семя"])
+            self.scene.hit(cr, ("seed_trader_buy", sid), [seed["name"], seed.get("desc", "")])
+
+
+class EnchantOverlay(Overlay):
+    """Зачарование: три растения из сада; базовые эффекты складываются, комбинация даёт сильный эффект."""
+
+    def __init__(self, scene, uid, back=None):
+        super().__init__(scene)
+        self.uid = uid
+        self.back = back
+        self.slots = []
+        self.result = None
+
+    def art(self):
+        return self.app.profile.stash.get(self.uid)
+
+    def act(self, action, button=1):
+        prof = self.app.profile
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "plant":
+            sid = action[1]
+            if sid not in prof.garden_unlocked:
+                self.scene.say("Этот вид ещё не открыт")
+            elif len(self.slots) >= 3:
+                self.scene.say("Уже выбраны 3 растения")
+            elif prof.mats.get(sid, 0) <= self.slots.count(sid):
+                self.scene.say("Этого растения не хватает")
+            else:
+                self.slots.append(sid)
+        elif kind == "slot":
+            if 0 <= action[1] < len(self.slots):
+                self.slots.pop(action[1])
+        elif kind == "clear":
+            self.slots = []
+            self.result = None
+        elif kind == "apply":
+            art = self.art()
+            if art is None or len(self.slots) != 3:
+                return
+            res = prof.enchant_with_plants(self.uid, self.slots)
+            if res:
+                self.result = res
+                self.scene.say("Зачарование собрано")
+            else:
+                self.scene.say("Не хватает растений, золота или редкого материала")
+
+    def draw(self, surf):
+        prof = self.app.profile
+        xd = prof.xd
+        a = xd["artifacts"]
+        art = self.art()
+        r = self.frame(surf, "Зачарование — выбор трёх растений")
+        if art is None:
+            return
+        T.text(surf, A.art_name(xd, art), (r.x + 20, r.y + 52), 20, WS.rar_color(xd, art["rarity"]), True)
+        T.text(surf, "Три растения дают свои базовые эффекты. Особая комбинация добавляет сильный эффект.",
+               (r.x + 20, r.y + 78), 12, T.TEXT_DIM)
+
+        # Три выбранных растения.
+        for i in range(3):
+            cr = pygame.Rect(r.x + 20 + i * 180, r.y + 104, 174, 92)
+            sid = self.slots[i] if i < len(self.slots) else None
+            pygame.draw.rect(surf, (42, 33, 23) if sid else (27, 22, 17), cr, border_radius=8)
+            pygame.draw.rect(surf, GOLD if sid else (80, 64, 45), cr, 2 if sid else 1, border_radius=8)
+            if sid:
+                seed = prof.garden_seed(sid) or {}
+                icon = GS.plant_sprite(sid, 2, 54)
+                surf.blit(icon, (cr.x + 8, cr.y + 8))
+                T.text(surf, fit(seed.get("name", sid), 12, cr.w - 70), (cr.x + 68, cr.y + 12), 12, T.TEXT, True)
+                T.text(surf, "ЛКМ — убрать", (cr.x + 68, cr.y + 38), 11, T.TEXT_DIM)
+                self.scene.hit(cr, ("slot", i), [seed.get("name", sid), "Убрать из комбинации"])
+            else:
+                T.text(surf, "Растение " + str(i + 1), (cr.centerx, cr.y + 30), 14, T.TEXT_DIM, center=True)
+                T.text(surf, "ЛКМ по карточке ниже", (cr.centerx, cr.y + 52), 11, T.TEXT_DIM, center=True)
+
+        # Доступные растения.
+        y0 = r.y + 200
+        T.text(surf, "Растения в саду", (r.x + 20, y0), 15, GLORY, True)
+        seeds = list((xd.get("garden", {}).get("seeds") or {}).items())
+        cols = 4
+        gap = 8
+        cw = (r.w - 40 - gap * (cols - 1)) // cols
+        for i, (sid, seed) in enumerate(seeds):
+            cr = pygame.Rect(r.x + 20 + (i % cols) * (cw + gap), y0 + 24 + (i // cols) * 58, cw, 54)
+            unlocked = sid in prof.garden_unlocked
+            used = self.slots.count(sid)
+            have = prof.mats.get(sid, 0)
+            hot = cr.collidepoint(self.scene.mouse)
+            pygame.draw.rect(surf, (46, 37, 25) if hot and unlocked else (30, 24, 18), cr, border_radius=8)
+            pygame.draw.rect(surf, T.AMBER if unlocked and used else (82, 66, 44) if unlocked else (64, 56, 48),
+                             cr, 1, border_radius=8)
+            icon = GS.plant_sprite(sid, 2, 34)
+            if not unlocked:
+                icon = icon.copy()
+                icon.fill((110, 100, 95, 255), special_flags=pygame.BLEND_RGBA_MULT)
+            surf.blit(icon, (cr.x + 7, cr.y + 7))
+            T.text(surf, fit(seed["name"], 11, cr.w - 52), (cr.x + 48, cr.y + 5), 11,
+                   T.TEXT if unlocked else T.TEXT_DIM, True)
+            effect = a.get("plant_effects", {}).get(sid)
+            T.text(surf, fit(A.entry_text(effect, 1.0) if effect else "", 9, cr.w - 52),
+                   (cr.x + 48, cr.y + 21), 9, (155, 195, 135) if unlocked else T.TEXT_DIM)
+            T.text(surf, f"в саду: {have}" + (f" · выбрано: {used}" if used else ""),
+                   (cr.x + 48, cr.y + 35), 9, T.TEXT_DIM)
+            if not unlocked:
+                T.text(surf, "не открыто — у торговца", (cr.x + 48, cr.y + 44), 9, (220, 150, 100))
+            self.scene.hit(cr, ("plant", sid) if unlocked else None,
+                           [seed["name"], seed.get("desc", ""), "ЛКМ — добавить в комбинацию"])
+
+        # Предпросмотр комбинации и цена.
+        y = r.y + 452
+        combo = prof.enchant_combo(self.slots) if len(self.slots) == 3 else None
+        if combo:
+            T.text(surf, "Комбинация: " + combo["name"], (r.x + 20, y), 17, GOLD, True)
+            T.text(surf, fit(combo.get("desc", ""), 13, r.w - 40), (r.x + 20, y + 24), 13, BLESS)
+            ec = a.get("enchants", {}).get(combo.get("effect"))
+            if ec:
+                T.text(surf, fit("Эффект: " + ec.get("name", ""), 12, r.w - 40), (r.x + 20, y + 44), 12, T.TEXT_DIM)
+        else:
+            T.text(surf, "Особой комбинации нет — останутся только базовые эффекты растений.",
+                   (r.x + 20, y), 14, T.TEXT_DIM)
+        cost = A.enchant_cost(xd, art)
+        for pid in self.slots:
+            cost[pid] = cost.get(pid, 0) + 1
+        T.text(surf, "Цена:", (r.x + 20, y + 70), 14, GLORY, True)
+        cost_icons(self.scene, surf, prof, cost, r.x + 70, y + 65, size=22)
+        self.scene.btn(surf, pygame.Rect(r.x + 20, r.bottom - 56, 280, 38), "Собрать зачарование", "apply",
+                       len(self.slots) == 3 and prof.can_pay(cost), primary=True)
+        self.scene.btn(surf, pygame.Rect(r.x + 310, r.bottom - 56, 150, 38), "Очистить", "clear",
+                       bool(self.slots))
+        if self.result:
+            combo = self.result.get("combo")
+            text = "Готово: " + (combo["name"] if combo else "базовые эффекты растений")
+            T.text(surf, text, (r.right - 20 - T.font(15, True).size(text)[0], r.bottom - 50), 15, GOLD, True)
 
 
 # ---------- Мастерская ----------
@@ -1937,7 +2282,10 @@ class StationOverlay(Overlay):
         kinds = [k for k, v in xd["artifacts"]["kinds"].items() if v["workshop"] == ws]
         self.kind = kinds[0] if kinds else None
         self.set_sel = next(iter(xd["artifacts"]["sets"]))
-        self.mode = "craft"
+        self.mode = "garden" if ws == "ws_alchemy" else "craft"
+        seeds = xd.get("garden", {}).get("seeds", {})
+        unlocked = set(getattr(self.app.profile, "garden_unlocked", []))
+        self.seed_sel = next((sid for sid in seeds if sid in unlocked), next(iter(seeds), None))
         self.art_sel = None
         self.result = None
         self.scroll = 0
@@ -1959,6 +2307,8 @@ class StationOverlay(Overlay):
         """Вкладки станции (для клавиш 1–9 и Tab на отдельном экране)."""
         if self.ws == "ws_jewel":
             return [("craft", "Оправа"), ("cut", "Огранка"), ("socket", "Вставка"), ("show", "Витрина")]
+        if self.ws == "ws_alchemy":
+            return [("garden", "Сад"), ("art", "Артефакты")]
         return []
 
     def play(self, title, done, diff=1, color=None, seed=None):
@@ -1979,6 +2329,42 @@ class StationOverlay(Overlay):
         if kind == "mode":
             self.mode = action[1]
             self.result = None
+        elif kind == "seed":
+            if action[1] not in prof.garden_unlocked:
+                self.scene.say("Этот вид ещё не открыт — семена продаются у торговца на рынке")
+            else:
+                self.seed_sel = action[1]
+        elif kind == "seed_locked":
+            self.scene.say("Семена этого вида продаются у торговца на рынке")
+        elif kind == "plot":
+            i = action[1]
+            st = prof.garden_plot(i)
+            if not st:
+                return
+            if st["state"] == "empty":
+                sid = self.seed_sel
+                if not sid:
+                    self.scene.say("Сначала выберите семена")
+                elif prof.garden_seeds.get(sid, 0) <= 0:
+                    self.scene.say("Этих семян нет — купите на грядке")
+                elif prof.garden_plant(i, sid):
+                    self.scene.say(f"Посажено: {prof.garden_seed(sid)['name']}. Теперь полейте.")
+            elif st["state"] == "dry":
+                if prof.garden_water(i):
+                    self.scene.say("Полито — растение пошло в рост")
+            elif st["state"] == "ready":
+                got = prof.garden_harvest(i)
+                if got:
+                    mats = xd.get("materials", {})
+                    txt = ", ".join(f"{mats.get(k, {}).get('name', k)} +{v}" for k, v in got.items())
+                    self.scene.say("Собрано: " + txt)
+            else:
+                self.scene.say(f"Растёт ещё {int(st['left'] + 0.9)} с")
+        elif kind == "buy_seed":
+            if prof.garden_buy_seed(action[1]):
+                self.scene.say("Семена куплены")
+            else:
+                self.scene.say("Не хватает золота")
         elif kind == "set":
             self.set_sel = action[1]
         elif kind == "kind":
@@ -2095,19 +2481,57 @@ class StationOverlay(Overlay):
                 self.scene.say("Не хватает материалов, золота или достигнут потолок мастерской")
         elif kind == "enchant":
             art = prof.stash.get(self.art_sel)
-            if not art or not prof.can_pay(A.enchant_cost(xd, art)) or prof.art_locked(art["uid"]):
-                self.scene.say("Не хватает материалов или золота")
+            if not art or prof.art_locked(art["uid"]):
+                self.scene.say("Сначала выберите артефакт из сундука")
                 return
-            uid = art["uid"]
+            self.scene.overlay = EnchantOverlay(self.scene, art["uid"], back=self)
 
-            def done(q):
-                ex = prof.enchant(uid, q, seed=int(self.scene.clock * 1000))
-                a2 = prof.stash[uid]
-                self.result = ([(A.art_name(xd, a2), WS.rar_color(xd, a2["rarity"])),
-                                (f"Новое свойство · качество {ex['q'] * 100:.0f}%", GLORY)]
-                               + [(ln, T.TEXT) for ln in A.art_lines(xd, a2) if ln.startswith("Свойство")], a2) \
-                    if ex else None
-            self.play("Зачарование", done, A.RARITY_ORDER.index(art["rarity"]))
+    def pointer(self, ev):
+        """Изометрическое поле сада: клик по ромбу клетки, а не по прямоугольной сетке."""
+        if self.ws != "ws_alchemy" or self.mode != "garden":
+            return False
+        if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            i = self.garden_cell_at(ev.pos)
+            if i is not None:
+                self.act(("plot", i))
+                return True
+        return False
+
+    def garden_cell_at(self, pos):
+        geom = getattr(self, "garden_geom", None)
+        if not geom:
+            return None
+        ox, oy, tw, th, cols, rows = geom
+        prof = self.app.profile
+        # Сначала спрайт растения: он поднимается над ромбом, и клик по цветку
+        # должен попадать в свою клетку, а не в пустую клетку позади.
+        best, best_key = None, None
+        for y in range(rows):
+            for x in range(cols):
+                i = y * cols + x
+                p = prof.garden[i] if 0 <= i < len(prof.garden) else None
+                if not p:
+                    continue
+                cx = ox + (x - y) * tw / 2
+                cy = oy + (x + y) * th / 2
+                if abs(pos[0] - cx) <= tw * 0.38 and -92 <= pos[1] - cy <= th * 0.55:
+                    score = abs(pos[0] - cx) / max(1.0, tw * 0.38) + max(0.0, cy - pos[1]) / 92
+                    key = (score, -(x + y))
+                    if best_key is None or key < best_key:
+                        best, best_key = i, key
+        if best is not None:
+            return best
+        u = (pos[0] - ox) / max(1.0, tw / 2)
+        v = (pos[1] - oy) / max(1.0, th / 2)
+        x = int(round((u + v) / 2))
+        y = int(round((v - u) / 2))
+        if not (0 <= x < cols and 0 <= y < rows):
+            return None
+        cx = ox + (x - y) * tw / 2
+        cy = oy + (x + y) * th / 2
+        if abs(pos[0] - cx) / max(1.0, tw / 2) + abs(pos[1] - cy) / max(1.0, th / 2) > 1.15:
+            return None
+        return y * cols + x
 
     def key(self, k):
         if k in (pygame.K_RETURN, pygame.K_KP_ENTER) and self.mode == "craft" and self.ws != "ws_alchemy" and self.level():
@@ -2140,11 +2564,14 @@ class StationOverlay(Overlay):
             self.scene.btn(surf, pygame.Rect(r.centerx - 130, r.bottom - 76, 260, 52), "В Стройку (5)", "build", True,
                            primary=True)
             return
-        if self.ws == "ws_jewel":
+        if self.ws in ("ws_jewel", "ws_alchemy"):
             self.scene.seg(surf, r.right - 500, r.y + 12, [(m, f"{i + 1} {lab}") for i, (m, lab) in
                                                             enumerate(self.modes())], self.mode, "mode", h=34)
         if self.ws == "ws_alchemy":
-            self.draw_alchemy(surf, r)
+            if self.mode == "garden":
+                self.draw_garden(surf, r)
+            else:
+                self.draw_alchemy(surf, r)
         elif self.mode == "cut":
             self.draw_cut(surf, r)
         elif self.mode == "socket":
@@ -2419,6 +2846,135 @@ class StationOverlay(Overlay):
                    + (" · в походе" if locked else ""), (tr.x + 68, tr.y + 36), 13, T.TEXT_DIM)
             self.scene.hit(tr, ("pick_art", art["uid"]) if not locked else None, WS.art_tip(prof, art))
 
+    def draw_garden(self, surf, r):
+        """Сад алхимика: изометрическое поле, соседские бонусы и три стадии растений."""
+        prof = self.app.profile
+        xd = prof.xd
+        gc = xd.get("garden", {})
+        seeds = gc.get("seeds", {})
+        cols, rows = prof.garden_cols(), prof.garden_rows()
+        T.text(surf, "Сад алхимика", (r.x + 20, r.y + 54), 21, GLORY, True)
+        total = sum(prof.mats.get(sid, 0) for sid in seeds)
+        info = f"Поле {cols}×{rows} · растений собрано: {total}"
+        T.text(surf, info, (r.right - 20 - T.font(14).size(info)[0], r.y + 58), 14, T.TEXT_DIM)
+        T.text(surf, "ЛКМ по клетке: посадить, полить или собрать. Соседи ускоряют или замедляют рост.",
+               (r.x + 20, r.y + 80), 13, T.TEXT_DIM)
+
+        seed_h = 150
+        area = pygame.Rect(r.x + 20, r.y + 96, r.w - 40, max(130, r.bottom - seed_h - r.y - 108))
+        span_x = max(1, cols + rows - 1)
+        span_y = max(1, cols + rows - 2)
+        th = int(min(76, area.w / span_x, (area.h - 70) * 2 / span_y))
+        th = max(30, th)
+        tw = th * 2
+        ox = r.centerx - ((cols - 1) - (rows - 1)) * tw / 4
+        oy = area.centery - (cols + rows - 2) * th / 4 + 18
+        self.garden_geom = (ox, oy, tw, th, cols, rows)
+        hover_i = self.garden_cell_at(self.scene.mouse)
+        overlays = []
+        order = sorted(((x, y) for y in range(rows) for x in range(cols)), key=lambda q: q[0] + q[1])
+        for x, y in order:
+            i = y * cols + x
+            cx = ox + (x - y) * tw / 2
+            cy = oy + (x + y) * th / 2
+            pts = [(cx, cy - th / 2), (cx + tw / 2, cy), (cx, cy + th / 2), (cx - tw / 2, cy)]
+            st = prof.garden_plot(i) or {"state": "empty", "factor": 1.0, "stage": 0}
+            p = st.get("plot")
+            seed = prof.garden_seed(p.get("seed")) if p else None
+            state = st.get("state", "empty")
+            on = i == hover_i
+            fill = (55, 70, 45) if state == "ready" else (42, 58, 40) if state == "growing" else \
+                (67, 48, 31) if state == "dry" else (42, 33, 24)
+            if on:
+                fill = T.mix(fill, (230, 180, 90), 0.22)
+            pygame.draw.polygon(surf, fill, pts)
+            pygame.draw.polygon(surf, T.AMBER if state == "ready" else (116, 91, 61) if on else (78, 61, 43),
+                                pts, 2 if state == "ready" or on else 1)
+            if p and seed:
+                pygame.draw.ellipse(surf, (45, 29, 18),
+                                    (cx - tw * 0.25, cy + th * 0.20, tw * 0.5, th * 0.24))
+                sprite = GS.plant_sprite(p["seed"], st.get("stage", 0), 64)
+                surf.blit(sprite, (round(cx - sprite.get_width() / 2),
+                                   round(cy + th * 0.18 - sprite.get_height())))
+                overlays.append((i, cx, cy, st, state))
+            elif state == "empty" and on:
+                T.text(surf, "+", (round(cx), round(cy - 8)), 18, (185, 150, 90), True, center=True)
+
+            tip = []
+            if seed:
+                tip = [seed["name"], seed.get("desc", ""),
+                       f"Стадия {st.get('stage', 0) + 1}/3 · ×{st.get('factor', 1.0):.2f}"]
+                if state == "dry":
+                    tip.append("Нужно полить")
+                elif state == "growing":
+                    tip.append(f"Растёт {int(st.get('progress', 0) * 100)}% · ещё {int(st.get('left', 0) + 0.9)} с")
+                else:
+                    tip.append("Созрело — ЛКМ, чтобы собрать растение")
+                for nname, mult in prof.garden_neighbor_effects(i):
+                    tip.append(f"Сосед {nname}: {'быстрее' if mult > 1 else 'медленнее'} ×{mult:.2f}")
+            elif state == "empty":
+                sel = seeds.get(self.seed_sel, {})
+                tip = ["Пустая клетка", "ЛКМ — посадить " + sel.get("name", "растение") if sel else "Выберите семена"]
+            self.scene.hit(pygame.Rect(round(cx - tw / 2), round(cy - th / 2 - 82),
+                                       round(tw), round(th + 90)), ("plot", i), tip)
+
+        # Полоски роста и бейджи соседей — отдельным слоем поверх всех клеток,
+        # иначе передняя клетка изометрии перекрывает прогресс задней.
+        for _, cx, cy, st, state in overlays:
+            if state == "dry":
+                wx, wy = round(cx + tw * 0.28), round(cy - th * 0.12)
+                pygame.draw.polygon(surf, (105, 185, 245),
+                                    [(wx, wy - 7), (wx - 4, wy + 2), (wx + 4, wy + 2)])
+                pygame.draw.circle(surf, (220, 245, 255), (wx, wy), 2)
+            if state in ("growing", "ready"):
+                bw = int(tw * 0.58)
+                bar = pygame.Rect(round(cx - bw / 2), round(cy + th * 0.35), bw, 7)
+                pygame.draw.rect(surf, (12, 11, 8), bar.inflate(4, 4), border_radius=4)
+                pygame.draw.rect(surf, (54, 42, 29), bar, border_radius=3)
+                pygame.draw.rect(surf, (125, 220, 105) if state == "growing" else (255, 210, 95),
+                                 (bar.x + 1, bar.y + 1, max(0, int((bar.w - 2) * st.get("progress", 0))), bar.h - 2),
+                                 border_radius=2)
+                pygame.draw.rect(surf, (155, 125, 80), bar, 1, border_radius=3)
+            if abs(st.get("factor", 1.0) - 1.0) > 0.01:
+                mult = st.get("factor", 1.0)
+                col = (135, 235, 135) if mult > 1 else (245, 135, 105)
+                txt = f"+{round((mult - 1) * 100)}%" if mult > 1 else f"{round((mult - 1) * 100)}%"
+                T.text(surf, txt, (round(cx), round(cy - th * 0.72)), 10, col, True, center=True, shadow=True)
+
+        sy = r.bottom - seed_h
+        left, right = r.x + 20, r.right - 20
+        T.text(surf, "Семена — покупаются у торговца на рынке", (left, sy), 16, GLORY, True)
+        sg = 6
+        sw = (right - left - sg * 6) // 7
+        ch = (seed_h - 30) // 2
+        for j, (sid, seed) in enumerate(seeds.items()):
+            cr = pygame.Rect(left + (j % 7) * (sw + sg), sy + 22 + (j // 7) * (ch + 4), sw, ch)
+            unlocked = sid in prof.garden_unlocked
+            on = sid == self.seed_sel and unlocked
+            pygame.draw.rect(surf, (48, 38, 26) if on else (31, 25, 19) if not unlocked else (35, 29, 20),
+                             cr, border_radius=8)
+            pygame.draw.rect(surf, T.AMBER if on else (82, 66, 44) if not unlocked else (86, 68, 45), cr,
+                             2 if on else 1, border_radius=8)
+            icon = GS.plant_sprite(sid, 2, 34)
+            if not unlocked:
+                icon = icon.copy()
+                icon.fill((110, 100, 95, 255), special_flags=pygame.BLEND_RGBA_MULT)
+            surf.blit(icon, (cr.x + 6, cr.y + 5))
+            T.text(surf, fit(seed["name"], 10, cr.w - 46), (cr.x + 44, cr.y + 5), 10,
+                   T.TEXT if unlocked else T.TEXT_DIM, True)
+            if unlocked:
+                T.text(surf, f"семян {prof.garden_seeds.get(sid, 0)} · собрано {prof.mats.get(sid, 0)}",
+                       (cr.x + 44, cr.y + 21), 9, T.TEXT_DIM)
+                T.text(surf, f"{int(seed.get('time', 60))} с · урожай +{int(seed.get('yield', 1))}",
+                       (cr.x + 44, cr.y + 34), 9, (145, 185, 125))
+                T.text(surf, "семена — на рынке", (cr.x + 44, cr.y + 46), 9, (150, 175, 130))
+            else:
+                T.text(surf, "не открыто", (cr.x + 44, cr.y + 21), 9, (220, 150, 100))
+                T.text(surf, "купить у торговца", (cr.x + 44, cr.y + 34), 9, T.TEXT_DIM)
+            self.scene.hit(cr, ("seed", sid) if unlocked else ("seed_locked", sid),
+                           [seed["name"], seed.get("desc", ""),
+                            "Семена продаются у торговца на рынке" if not unlocked else "ЛКМ — выбрать"])
+
     def draw_alchemy(self, surf, r):
         prof = self.app.profile
         xd = prof.xd
@@ -2451,11 +3007,14 @@ class StationOverlay(Overlay):
         else:
             T.text(surf, "Потолок улучшения", (x0, y), 15, T.TEXT_DIM)
         y += 124
-        T.text(surf, "Зачарование — новое свойство, мини-игра задаёт его силу", (x0, y), 18, GLORY, True)
+        T.text(surf, "Зачарование — выберите 3 растения", (x0, y), 18, GLORY, True)
+        T.text(surf, "Базовые эффекты складываются; особая комбинация даёт сильный эффект.",
+               (x0, y + 24), 12, T.TEXT_DIM)
         cost = A.enchant_cost(xd, art)
-        cost_icons(self.scene, surf, prof, cost, x0, y + 30)
-        self.scene.btn(surf, pygame.Rect(x0, y + 62, 280, 48), "Перезачаровать" if art.get("extra") else "Зачаровать",
-                       "enchant", prof.can_pay(cost), tip="Старое свойство заменится" if art.get("extra") else None)
+        cost_icons(self.scene, surf, prof, cost, x0, y + 46)
+        self.scene.btn(surf, pygame.Rect(x0, y + 78, 300, 48), "Пересобрать зачарование" if art.get("extra")
+                       else "Собрать зачарование", "enchant", True, primary=True,
+                       tip="Выбрать 3 растения из сада")
 
     def draw_cut(self, surf, r):
         """Огранка: свои необработанные камни — каждый свой (форма заготовки задана), клик — на станок."""
@@ -3957,7 +4516,7 @@ class MineRoom(RoomScene):
 
 STATION_MATS = {"ws_forge": ["ore", "coal", "copper", "tin", "silver", "gold", "meteor", "embersteel", "stardust"],
                 "ws_jewel": ["gems", "pearl", "stardust"],
-                "ws_alchemy": ["herbs", "pearl", "embersteel", "stardust"],
+                "ws_alchemy": ["herbs", "essence", "pearl", "embersteel", "stardust"],
                 "ws_leather": ["leather", "pearl", "embersteel", "stardust"]}
 STATION_ART = {"ws_forge": "ws_bench_forge", "ws_jewel": "ws_bench_jewel", "ws_alchemy": "ws_bench_alchemy",
                "ws_leather": "ws_bench_leather"}
@@ -3996,7 +4555,10 @@ class StationScene(RoomScene):
         self.overlay.draw(surf)
         self.draw_top(surf)
         self.draw_tip(surf)
-        self.draw_toast(surf, T.SCREEN_H - 30)
+        toast_y = T.SCREEN_H - 30
+        if getattr(self.overlay, "ws", None) == "ws_alchemy" and getattr(self.overlay, "mode", None) == "garden":
+            toast_y = T.SCREEN_H - 246
+        self.draw_toast(surf, toast_y)
 
     def act(self, action, button=1):
         kind = action[0] if isinstance(action, tuple) else action

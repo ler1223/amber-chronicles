@@ -22,6 +22,7 @@ import json
 import os
 import random
 import re
+import time
 
 from . import stats, story_meta
 from .build import build_proto
@@ -258,6 +259,8 @@ def make_rule(xd, spec, tier, rid):
     icd = spec.get("icd", trig.get("icd"))
     if icd:
         r["icd"] = icd
+    if spec.get("every"):
+        r["every"] = max(1, int(spec["every"]))
     if spec.get("cond"):
         key = "unit_has" if trig["foe"] == "unit" else "source_has"
         r[key] = list(it["conditions"][spec["cond"]]["tags"])
@@ -950,8 +953,8 @@ class Expedition:
         return sorted(out)
 
     def battle_skills(self, h):
-        """Навыки героя в бой. В бесконечном забеге — ровно одна выбранная способность,
-        в обычной вылазке — слоты и ультимейт."""
+        """Навыки героя в бой. В бесконечном забеге — одна выбранная обычная способность;
+        на 10 уровне к ней автоматически добавляется ультимейт героя. В обычной вылазке — слоты и ультимейт."""
         if self.endless:
             choices = story_meta.one_skill_choices(self.data, h.cls, h.level, h)
             sid = h.endless_skill if h.endless_skill in choices else None
@@ -959,8 +962,13 @@ class Expedition:
                 sid = story_meta.default_one_skill(self.data, h.cls, h.level, h)
                 h.endless_skill = sid
             if sid is None:
-                sid = next((s for s in h.skills if s in self.data.skills), None)
-            return [sid] if sid else []
+                sid = next((s for s in h.skills if s in self.data.skills and not story_meta.is_ult(
+                    self.data, h.cls, s)), None)
+            out = [sid] if sid else []
+            ult = story_meta.ult_of(self.data, h.cls, h.skills)
+            if ult and ult not in out and ult_open(self.data, h):
+                out.append(ult)
+            return out
         ult = story_meta.ult_of(self.data, h.cls, h.skills)
         always = [s for s in story_meta.cfg(self.data)["classes"][h.cls].get("always", []) if s in self.data.skills]
         regular = [s for s in h.skills if s != ult and s not in always]
@@ -1042,6 +1050,8 @@ class Expedition:
                     vs[k[3:]] = vs.get(k[3:], 1.0) + v
                 elif k == "reaction":
                     react += v
+                elif k == "enchants":
+                    extra.setdefault("enchants", []).extend(v)
                 else:
                     extra[k] = extra.get(k, 0) + v
         for k, v in tr.get("extra", {}).items():
@@ -1059,7 +1069,10 @@ class Expedition:
         p["crit"] = round(min(0.75, p["crit"] + extra.get("crit", 0)), 3)
         p["dodge"] = round(min(0.45, p["dodge"] + extra.get("dodge", 0)), 3)
         p["crit_mult"] = round(p["crit_mult"] + extra.get("crit_mult", 0), 3)
+        p["heal_taken"] = round(1.0 + extra.get("heal_taken", 0.0), 3)
         p["rules"] = rules
+        if extra.get("enchants"):
+            p["enchants"] = list(extra["enchants"])
         if vs:
             p["dmg_vs"] = {k: round(v, 3) for k, v in vs.items()}
         if react != 1.0:
@@ -2595,9 +2608,16 @@ class ExpeditionProfile:
         self.jtools = []                         # лупа ювелира: оправа и купленные линзы (sim/gems.py LOUPE)
         self.showcase = {"slots": [], "log": []}  # витрина Ювелирной: 6 мест под камни
         self.art_n = 0
+        gc = self.xd.get("garden", {})
+        self.garden_level = 0
+        start = gc.get("start", {})
+        self.garden = [None] * (int(start.get("cols", 3)) * int(start.get("rows", 3)))
+        self.garden_seeds = dict(gc.get("starter", {}))
+        self.garden_unlocked = list(gc.get("starter_unlocked") or gc.get("starter", {}).keys())
         self.glory = self.xd["tavern"].get("start_treasury", 0)     # новая таверна: стартовая казна на найм
         if path and os.path.exists(path):
             self._load()
+        self.ensure_garden()
         self.sync_masters()
         if not self.offers:
             self.refresh_offers()
@@ -2624,6 +2644,13 @@ class ExpeditionProfile:
         from . import artifacts as AR
         xd = self.xd
         self.glory = max(self.glory, 99999)
+        gc = xd.get("garden", {})
+        self.garden_level = len(gc.get("upgrades", []))
+        self.ensure_garden()
+        for sid in gc.get("seeds", {}):
+            if sid not in self.garden_unlocked:
+                self.garden_unlocked.append(sid)
+            self.garden_seeds[sid] = max(self.garden_seeds.get(sid, 0), 99)
         for k in xd.get("materials", {}):
             self.mats[k] = max(self.mats.get(k, 0), 999)
         for k in xd.get("trophies", {}):
@@ -2772,7 +2799,21 @@ class ExpeditionProfile:
         self.forge = dict(d.get("forge") or {})
         self.mine = dict(d.get("mine") or {})
         self.market = dict(d.get("market") or {})
+        self.market.setdefault("seeds", [])
         self.art_n = d.get("art_n", 0)
+        if "garden" in d:
+            self.garden = list(d.get("garden") or [])
+        if "garden_level" in d:
+            self.garden_level = int(d.get("garden_level") or 0)
+        elif "garden" in d:
+            gc = self.garden_cfg()
+            full = int(gc.get("cols", 6)) * int(gc.get("rows", 4))
+            if len(d.get("garden") or []) >= full:
+                self.garden_level = len(gc.get("upgrades", []))
+        if "garden_seeds" in d:
+            self.garden_seeds = dict(d.get("garden_seeds") or {})
+        if "garden_unlocked" in d:
+            self.garden_unlocked = list(d.get("garden_unlocked") or [])
         self.cuts = list(d.get("cuts") or [])
         self.jtools = list(d.get("jtools") or [])
         self.showcase = dict(d.get("showcase") or {"slots": [], "log": []})
@@ -2813,7 +2854,8 @@ class ExpeditionProfile:
             return
         os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
         d = {"mode": "expedition", "version": VERSION, "glory": self.glory, "upgrades": self.upgrades,
-             "runs": self.runs, "wins": self.wins, "best_act": self.best_act, "uid_n": self.uid_n,
+             "runs": self.runs, "wins": self.wins, "best_act": self.best_act,
+             "uid_n": self.uid_n,
              "seed_n": self.seed_n, "roster": [h.to_dict() for h in self.roster], "run": self.run_state,
              "tier_open": self.tier_open, "chapter_tiers": self.chapter_tiers, "chapter_wins": self.chapter_wins,
              "trophies": self.trophies, "buildings": self.buildings, "vows": self.vows, "fallen": self.fallen,
@@ -2821,7 +2863,9 @@ class ExpeditionProfile:
              "away": self.away, "stash": self.stash, "gems": self.gems, "art_n": self.art_n, "tiers10": 1,
              "rough": self.rough, "market": self.market, "smith": self.smith, "cuts": self.cuts,
              "forge": self.forge, "mine": self.mine,
-             "jtools": self.jtools, "showcase": self.showcase}
+             "jtools": self.jtools, "showcase": self.showcase,
+             "garden": self.garden, "garden_seeds": self.garden_seeds,
+             "garden_unlocked": self.garden_unlocked, "garden_level": self.garden_level}
         tmp = self.path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(d, f, ensure_ascii=False)
@@ -3303,6 +3347,269 @@ class ExpeditionProfile:
         self.save()
         return True
 
+    def garden_cfg(self):
+        return self.xd.get("garden", {})
+
+    def garden_size(self):
+        gc = self.garden_cfg()
+        level = max(0, min(int(self.garden_level), len(gc.get("upgrades", []))))
+        if level:
+            up = gc["upgrades"][level - 1]
+            return max(1, int(up["cols"])), max(1, int(up["rows"]))
+        start = gc.get("start", {})
+        return max(1, int(start.get("cols", 3))), max(1, int(start.get("rows", 3)))
+
+    def garden_cols(self):
+        return self.garden_size()[0]
+
+    def garden_rows(self):
+        return self.garden_size()[1]
+
+    def garden_upgrade_info(self):
+        gc = self.garden_cfg()
+        ups = gc.get("upgrades", [])
+        if self.garden_level >= len(ups):
+            return None
+        up = ups[self.garden_level]
+        return {"level": self.garden_level + 1, "cols": int(up["cols"]), "rows": int(up["rows"]),
+                "price": int(up.get("price", 0))}
+
+    def garden_upgrade(self):
+        info = self.garden_upgrade_info()
+        if not info or not self.pay({"glory": info["price"]}):
+            return False
+        old_cols, old_rows = self.garden_cols(), self.garden_rows()
+        old = list(self.garden)
+        self.garden_level += 1
+        new_cols, new_rows = info["cols"], info["rows"]
+        new = [None] * (new_cols * new_rows)
+        for y in range(old_rows):
+            for x in range(old_cols):
+                if y * old_cols + x < len(old):
+                    new[y * new_cols + x] = old[y * old_cols + x]
+        self.garden = new
+        self.save()
+        return True
+
+    def ensure_garden(self):
+        """Садовое поле: клетки и стартовые семена; старые сейвы дополняются до нового размера."""
+        gc = self.garden_cfg()
+        n = self.garden_cols() * self.garden_rows()
+        if len(self.garden) != n:
+            self.garden = (list(self.garden) + [None] * n)[:n]
+        starter = gc.get("starter", {})
+        seeds = gc.get("seeds", {})
+        if not self.garden_unlocked:
+            self.garden_unlocked = list(gc.get("starter_unlocked") or starter.keys())
+        # Старые сейвы: если растение уже было посажено/собрано, оно открыто.
+        old_plants = [p.get("seed") for p in self.garden if p and p.get("seed")]
+        for sid in seeds:
+            if (self.garden_seeds.get(sid, 0) > 0 or sid in old_plants) and sid not in self.garden_unlocked:
+                self.garden_unlocked.append(sid)
+        allowed = set(self.garden_unlocked)
+        self.garden_unlocked = [sid for sid in seeds if sid in allowed]
+        for sid in seeds:
+            self.garden_seeds.setdefault(sid, int(starter.get(sid, 0)) if sid in allowed else 0)
+            if sid not in allowed:
+                self.garden_seeds[sid] = 0
+        return self.garden
+
+    def garden_seed(self, sid):
+        return self.garden_cfg().get("seeds", {}).get(sid)
+
+    def garden_neighbors(self, i):
+        """Соседи по клеткам (четыре стороны): [(индекс, id растения)]."""
+        cols, rows = self.garden_cols(), self.garden_rows()
+        if not 0 <= i < cols * rows:
+            return []
+        x, y = i % cols, i // cols
+        out = []
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < cols and 0 <= ny < rows:
+                j = ny * cols + nx
+                p = self.garden[j] if 0 <= j < len(self.garden) else None
+                if p and p.get("seed"):
+                    out.append((j, p["seed"]))
+        return out
+
+    def garden_factor(self, i):
+        """Множитель скорости роста от соседей: >1 быстрее, <1 медленнее."""
+        p = self.garden[i] if 0 <= i < len(self.garden) else None
+        seed = self.garden_seed(p.get("seed")) if p else None
+        if not seed:
+            return 1.0
+        factor = 1.0
+        for _, nid in self.garden_neighbors(i):
+            factor *= float(seed.get("neighbors", {}).get(nid, 1.0))
+        gc = self.garden_cfg()
+        return max(float(gc.get("min_factor", 0.55)), min(float(gc.get("max_factor", 2.0)), factor))
+
+    def garden_progress(self, i, now=None):
+        p = self.garden[i] if 0 <= i < len(self.garden) else None
+        seed = self.garden_seed(p.get("seed")) if p else None
+        if not seed or not p.get("watered"):
+            return 0.0
+        now = time.time() if now is None else now
+        total = max(1.0, float(seed.get("time", 60)) / max(0.1, self.garden_factor(i)))
+        return max(0.0, min(1.0, (now - float(p["watered"])) / total))
+
+    def garden_stage(self, i, now=None):
+        """Три визуальные стадии: 0 — росток, 1 — молодое, 2 — взрослое."""
+        progress = self.garden_progress(i, now)
+        return 0 if progress < 0.34 else 1 if progress < 0.75 else 2
+
+    def garden_neighbor_effects(self, i):
+        """Влияющие соседи для подсказки: [(имя, множитель)]."""
+        p = self.garden[i] if 0 <= i < len(self.garden) else None
+        seed = self.garden_seed(p.get("seed")) if p else None
+        if not seed:
+            return []
+        out = []
+        for _, nid in self.garden_neighbors(i):
+            mult = float(seed.get("neighbors", {}).get(nid, 1.0))
+            if abs(mult - 1.0) > 1e-6:
+                nseed = self.garden_seed(nid) or {}
+                out.append((nseed.get("name", nid), mult))
+        return out
+
+    def garden_plot(self, i, now=None):
+        """Состояние клетки: empty | dry | growing | ready, плюс стадия и множитель соседей."""
+        if not 0 <= i < len(self.garden):
+            return None
+        p = self.garden[i]
+        if not p:
+            return {"state": "empty", "plot": None, "progress": 0.0, "stage": 0, "factor": 1.0}
+        now = time.time() if now is None else now
+        seed = self.garden_seed(p.get("seed")) or {}
+        factor = self.garden_factor(i)
+        total = max(1.0, float(seed.get("time", 60)) / max(0.1, factor))
+        if not p.get("watered"):
+            return {"state": "dry", "plot": p, "progress": 0.0, "stage": 0,
+                    "factor": factor, "total": total, "left": total}
+        progress = self.garden_progress(i, now)
+        left = max(0.0, total * (1.0 - progress))
+        return {"state": "ready" if progress >= 1.0 else "growing", "plot": p,
+                "progress": progress, "stage": self.garden_stage(i, now),
+                "factor": factor, "total": total, "left": left}
+
+    def garden_plant(self, i, sid):
+        if sid not in self.garden_unlocked:
+            return False
+        if not 0 <= i < len(self.garden) or self.garden[i] or self.garden_seeds.get(sid, 0) <= 0:
+            return False
+        if not self.garden_seed(sid):
+            return False
+        self.garden[i] = {"seed": sid, "planted": time.time(), "watered": None}
+        self.garden_seeds[sid] -= 1
+        self.save()
+        return True
+
+    def garden_water(self, i):
+        if not 0 <= i < len(self.garden) or not self.garden[i]:
+            return False
+        p = self.garden[i]
+        if p.get("watered"):
+            return False
+        p["watered"] = time.time()
+        self.save()
+        return True
+
+    def garden_harvest(self, i):
+        if not 0 <= i < len(self.garden) or not self.garden[i]:
+            return None
+        p = self.garden[i]
+        st = self.garden_plot(i)
+        if not st or st["state"] != "ready":
+            return None
+        seed = self.garden_seed(p["seed"]) or {}
+        got = {p["seed"]: int(seed.get("yield", 1))}
+        self.add_mats(got)
+        self.garden[i] = None
+        self.save()
+        return got
+
+    def garden_buy_seed(self, sid):
+        seed = self.garden_seed(sid)
+        if not seed or sid not in self.garden_unlocked:
+            return False
+        price = int(self.garden_cfg().get("seed_price", 30))
+        if self.glory < price:
+            return False
+        self.glory -= price
+        self.garden_seeds[sid] = self.garden_seeds.get(sid, 0) + 1
+        self.save()
+        return True
+
+    def roll_seed_offers(self, rng):
+        """Товар торговца семенами: сначала закрытые виды, потом — повторы открытых."""
+        gc = self.garden_cfg()
+        seeds = gc.get("seeds", {})
+        unlocked = set(self.garden_unlocked)
+        tr = gc.get("trader", {})
+        base = int(gc.get("seed_price", 30))
+        prices = {}
+        for tier in tr.get("tiers", []):
+            need = tier.get("chapter")
+            if not need or self.chapter_wins.get(need, 0) > 0:
+                for sid in tier.get("seeds", []):
+                    if sid in seeds:
+                        prices[sid] = int(tier.get("price", base))
+        if not prices:
+            prices = {sid: base for sid in seeds}
+        locked = [sid for sid in prices if sid not in unlocked]
+        pool = locked or list(prices)
+        if not pool:
+            return []
+        lo, hi = tr.get("stock", [1, 2])
+        n = min(len(pool), max(1, int(rng.randint(int(lo), int(hi)))))
+        out = []
+        for sid in rng.sample(pool, n):
+            mult = tr.get("unlocked_mult", 1.0) if sid in unlocked else 1.0
+            price = prices.get(sid, base) * float(mult)
+            out.append({"id": sid, "price": max(1, int(round(price)))})
+        return out
+
+    def buy_trader_seed(self, sid):
+        """Купить семя у торговца: новый вид навсегда открывается в саду."""
+        offer = next((x for x in (self.market.get("seeds") or []) if x.get("id") == sid), None)
+        if not offer or not self.pay({"glory": int(offer["price"])}):
+            return False
+        self.market["seeds"].remove(offer)
+        if sid not in self.garden_unlocked:
+            self.garden_unlocked.append(sid)
+        self.garden_seeds[sid] = self.garden_seeds.get(sid, 0) + 1
+        self.save()
+        return True
+
+    def enchant_combo(self, plants):
+        """Особая комбинация трёх растений (порядок не важен)."""
+        key = tuple(sorted(plants))
+        return next((c for c in self.xd["artifacts"].get("enchant_combos", [])
+                     if tuple(sorted(c.get("plants", []))) == key), None)
+
+    def enchant_with_plants(self, uid, plants):
+        """Зачарование тремя выбранными растениями: базовые эффекты + особая комбинация."""
+        from . import artifacts as AR
+        art = self.stash.get(uid)
+        if not art or self.art_locked(uid) or not self.upgrade_cap():
+            return None
+        plants = list(plants)
+        if len(plants) != int(self.xd["artifacts"].get("enchant_cost", {}).get("plants", 3)):
+            return None
+        if any(p not in self.garden_unlocked or self.garden_seed(p) is None for p in plants):
+            return None
+        cost = AR.enchant_cost(self.xd, art)
+        for pid in plants:
+            cost[pid] = cost.get(pid, 0) + 1
+        if not self.pay(cost):
+            return None
+        combo = self.enchant_combo(plants)
+        art["garden_plants"] = plants
+        art["extra"] = ({"id": combo["effect"], "q": 1.0, "combo": combo["id"]} if combo else None)
+        self.save()
+        return {"extra": art["extra"], "combo": combo}
+
     def upgrade_cap(self):
         return building_value(self.xd, self.buildings, "ws_alchemy") or 0
 
@@ -3329,7 +3636,9 @@ class ExpeditionProfile:
         a = self.xd["artifacts"]
         rng = random.Random(f"ench:{uid}:{art['level']}:{seed}")
         old = (art.get("extra") or {}).get("id")
-        pool = [x for x in a["extras"] if x != old]
+        pool = [x for x in (a.get("enchants") or a["extras"]) if x != old]
+        if not pool:
+            pool = list(a.get("enchants") or a["extras"])
         lo, hi = a["quality"]
         art["extra"] = {"id": rng.choice(pool), "q": round(max(lo, min(hi, q)), 3)}
         self.save()
@@ -3764,7 +4073,8 @@ class ExpeditionProfile:
             smith["forge"] = self.roll_smith_offer(rng)
         jeweler = GM.roll_jeweler(self.xd, rng, self.cuts, lambda r_: self.new_rough(
             r_.choices(ids, weights)[0], r_, premium=True), self.jtools) if self.can_cut() else None
-        self.market = {"key": self.runs, "rough": rough, "cut": cut, "smith": smith, "jeweler": jeweler}
+        self.market = {"key": self.runs, "rough": rough, "cut": cut, "smith": smith, "jeweler": jeweler,
+                       "seeds": self.roll_seed_offers(rng)}
         self.stock_wanderers(rng)
 
     def market_price(self, kind, item):

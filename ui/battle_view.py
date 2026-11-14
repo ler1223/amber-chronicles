@@ -556,6 +556,9 @@ class BattleView:
             if settings.SETTINGS.get("text_status", True):      # «ПАР!» и т. п. — в группе состояний
                 self.fx.append(Fx("text", 1.4, x=x, y0=y - 70, s=e["name"].upper() + "!", color=T.mix(c1, c2, 0.5),
                                   size=24))
+        elif t == "enchant_proc":
+            self.float_text(e["unit"], e.get("name", "Зачарование"), (255, 215, 130), 15, ttl=1.0)
+            V.play("buff_good", self._ctx(target=e["unit"]))
         elif t == "passive":
             u = e["unit"]
             same = next((f for f in self.fx if f.kind == "badge" and f.unit is u and f.name == e["name"]), None)
@@ -908,6 +911,16 @@ class BattleView:
                     V.play("fire_explosion", {"target": (gx, gy - 24), "target_ground": (gx, gy), "cells": [(gx, gy)],
                                               "color": col, "scale": 1.0})
             self.vfx.screen_fx(shake=5)
+        elif t == "death_burst":
+            gx, gy = T.cell_feet(e["pos"])
+            if pix:
+                self.pix.arch.burst(e["pos"][0] + 0.5, e["pos"][1] + 0.5, 0.35, "fire",
+                                    n=55, speed=2.6, life=0.65)
+            else:
+                V.play("fire_explosion", {"target": (gx, gy - 24), "target_ground": (gx, gy),
+                                          "cells": [(gx, gy)], "color": (255, 150, 60), "scale": 1.0})
+            self.vfx.screen_fx(shake=3)
+            self.float_text(e["unit"], "Взрыв!", (255, 175, 80), 16, ttl=0.9, dy=12)
         elif t == "boss_phase":
             self.float_text(e["unit"], "БЕШЕНСТВО!" if e.get("rage") else "Подмога!", (255, 110, 90), 20, ttl=1.4, dy=16)
             self.vfx.screen_fx(shake=6)
