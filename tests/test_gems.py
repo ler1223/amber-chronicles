@@ -30,6 +30,7 @@ def prof(tmp_path=None):
 def test_masters_open_workshops_by_chapter(tmp_path):
     p = prof(tmp_path)
     p.glory = 99999
+    p.mats = {m: 99 for m in XD["materials"]}
     for ws in ("ws_forge", "ws_jewel", "ws_leather", "ws_alchemy"):
         assert not p.master_free(ws) and not p.build(ws) and p.building_level(ws) == 0
     assert p.master_chapter("ws_jewel") == XD["chapters"]["forge"]["name"]

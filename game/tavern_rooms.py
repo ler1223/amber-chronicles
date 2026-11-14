@@ -177,6 +177,8 @@ def cost_icons(scene, surf, prof, cost, x, y, size=24):
     """Цена значками: «[монета] 400 [руда] 12 …», нехватка — красным. Возвращает правый край."""
     xd = prof.xd
     for k, v in cost.items():
+        if k == "cut_gems":
+            continue
         have = prof.have(k)
         ok = have >= v
         r0 = x
@@ -189,6 +191,21 @@ def cost_icons(scene, surf, prof, cost, x, y, size=24):
         x = T.text(surf, str(v), (x, y + size // 2 - 9), 17, T.TEXT if ok else CURSE, True).right + 12
         scene.hit(pygame.Rect(r0, y, x - r0 - 8, size), None,
                   [res_name(xd, k), f"нужно {v}, есть {have}" + ("" if ok else " — не хватает")])
+    specs = cost.get("cut_gems") or []
+    gems_ok = prof.select_cut_gems(specs) is not None
+    for spec in specs:
+        ok = gems_ok
+        r0 = x
+        img = res_icon(xd, "gems", size)
+        if img is None:
+            coin(surf, (x + size // 2, y + size // 2), size // 2 - 2)
+        else:
+            surf.blit(img, (x, y))
+        x += size + 3
+        x = T.text(surf, "камень", (x, y + size // 2 - 9), 15, T.TEXT if ok else CURSE, True).right + 12
+        scene.hit(pygame.Rect(r0, y, x - r0 - 8, size), None,
+                  ["Гранёный камень", prof.gem_spec_text(spec),
+                   "есть" if ok else "подходящего камня нет"])
     return x
 
 
@@ -1932,8 +1949,9 @@ class JewelerOverlay(TradeMixin, Overlay):
         stock = [("rough", x) for x in j.get("rough", [])]
         draw_stone_grid(self.scene, surf, pygame.Rect(x0, r.y + 92, r.right - x0 - 20, r.bottom - r.y - 110),
                         "jeweler_stock", stock, lambda kind, g: ("gem_view", g["uid"]), "Камни разобраны.",
-                        price=prof.market_price,
-                        button=lambda kind, g: ("Купить", ("jrough", g["uid"]), prof.glory >= prof.market_price(kind, g)))
+                        price=prof.market_buy_price,
+                        button=lambda kind, g: ("Купить", ("jrough", g["uid"]),
+                                                prof.glory >= prof.market_buy_price(kind, g)))
 
 
 class MarketRoom(RoomScene):
@@ -1974,7 +1992,7 @@ class MarketRoom(RoomScene):
         half = (T.SCREEN_W - 48) // 2
         left = pygame.Rect(16, TOP_H + 10, half, strip_y() - TOP_H - 20)
         right = pygame.Rect(32 + half, TOP_H + 10, half, strip_y() - TOP_H - 20)
-        for r, title in ((left, "Лавка самоцветов"), (right, "Ваши камни — продать за половину цены")):
+        for r, title in ((left, "Лавка самоцветов"), (right, "Ваши камни — продать за 30% оценки")):
             T.frame(surf, r, 236)
             T.text(surf, title, (r.x + 16, r.y + 12), 20, GLORY, True)
         self.btn(surf, pygame.Rect(left.x + 16, left.y + 44, 260, 32), "Семена у торговца", "seed_trader",
@@ -1982,9 +2000,9 @@ class MarketRoom(RoomScene):
         stock = [("rough", x) for x in prof.market.get("rough", [])] + [("cut", x) for x in prof.market.get("cut", [])]
         draw_stone_grid(self, surf, pygame.Rect(left.x + 16, left.y + 84, left.w - 32, left.h - 98), "market_stock",
                         stock, lambda kind, g: ("gem_view", g["uid"]), "Прилавок пуст — загляните после похода.",
-                        price=prof.market_price,
+                        price=prof.market_buy_price,
                         button=lambda kind, g: ("Купить", ("buy", kind, g["uid"]),
-                                                prof.glory >= prof.market_price(kind, g)))
+                                                prof.glory >= prof.market_buy_price(kind, g)))
         w = prof.market.get("smith")
         if w:                                          # бродячий кузнец — иногда заходит
             self.btn(surf, pygame.Rect(left.right - 300, left.y + 8, 284, 36), "Бродячий кузнец: " + w["name"].split()[-1],
@@ -2017,7 +2035,7 @@ class SeedTraderOverlay(Overlay):
             if prof.garden_upgrade():
                 self.scene.say(f"Сад расширен до {prof.garden_cols()}×{prof.garden_rows()}")
             else:
-                self.scene.say("Не хватает золота или сад уже максимального размера")
+                self.scene.say("Не хватает золота/растений или сад уже максимального размера")
 
     def draw(self, surf):
         prof = self.app.profile
@@ -2031,10 +2049,15 @@ class SeedTraderOverlay(Overlay):
         info = prof.garden_upgrade_info()
         T.text(surf, f"Поле сада: {prof.garden_cols()}×{prof.garden_rows()}", (r.x + 20, r.y + 78), 14, GLORY, True)
         if info:
+            extra = " + растения" if info.get("mats") else ""
+            need = ", ".join(f"{xd.get('materials', {}).get(k, {}).get('name', k)} {v}"
+                             for k, v in (info.get("mats") or {}).items())
             self.scene.btn(surf, pygame.Rect(r.right - 380, r.y + 70, 360, 34),
-                           f"Расширить до {info['cols']}×{info['rows']} · {info['price']}",
-                           "garden_upgrade", prof.glory >= info["price"], primary=True,
-                           tip="Больше клеток для посадки")
+                           f"Расширить до {info['cols']}×{info['rows']} · {info['price']}{extra}",
+                           "garden_upgrade", prof.can_pay({"glory": info["price"], **info.get("mats", {})}),
+                           primary=True, tip=("Нужно: " + need) if need else "Больше клеток для посадки")
+            if need:
+                T.text(surf, fit("Нужно: " + need, 12, r.w - 40), (r.x + 20, r.y + 106), 12, T.TEXT_DIM)
         else:
             T.text(surf, "Сад максимального размера", (r.x + 220, r.y + 80), 12, T.TEXT_DIM)
         if not offers:
@@ -2417,8 +2440,8 @@ class StationOverlay(Overlay):
                       WS.rar_color(xd, xd["artifacts"]["sets"][sid]["rarity"]))
         elif kind == "cut":
             rough = next((r for r in prof.rough if r["uid"] == action[1]), None)
-            if rough is None or not prof.can_pay({"glory": xd["artifacts"]["gem_cost"]["gold"]}):
-                self.scene.say("Нужен необработанный камень (рынок, вылазки) и немного золота")
+            if rough is None or not prof.can_pay({"glory": prof.gem_cut_cost(rough["uid"])}):
+                self.scene.say("Нужен необработанный камень (рынок, вылазки) и золото на работу")
                 return
             gid, ruid = rough["id"], rough["uid"]
             gd = xd["artifacts"]["gems"][gid]
@@ -2539,8 +2562,15 @@ class StationOverlay(Overlay):
             return True
         return False
 
+    def set_list_rows(self):
+        r = self.rect
+        return max(1, (r.bottom - 12 - (r.y + 58)) // 70)
+
     def wheel(self, dy):
-        self.scroll = max(0, self.scroll - dy)
+        if self.mode != "craft":
+            return
+        n = len(self.app.profile.xd["artifacts"]["sets"])
+        self.scroll = max(0, min(max(0, n - self.set_list_rows()), self.scroll - dy))
 
     def draw(self, surf):
         prof = self.app.profile
@@ -2603,8 +2633,11 @@ class StationOverlay(Overlay):
         a = xd["artifacts"]
         lv = building_value(prof, self.ws)
         kinds = [k for k, v in a["kinds"].items() if v["workshop"] == self.ws]
+        sets = list(a["sets"].items())
+        rows = self.set_list_rows()
+        self.scroll = max(0, min(max(0, len(sets) - rows), self.scroll))
         y = r.y + 58
-        for sid, s in a["sets"].items():
+        for sid, s in sets[self.scroll:self.scroll + rows]:
             rk = a["rarities"][s["rarity"]]["rank"]
             ok = lv >= rk
             sr = pygame.Rect(r.x + 16, y, 470, 64)
@@ -2627,6 +2660,12 @@ class StationOverlay(Overlay):
             self.scene.hit(sr, ("set", sid), [(s["name"], col)] + [(f"{n} вещи: {b['text']}", BLESS)
                                                                    for n, b in sorted(s["bonus"].items())])
             y += 70
+        if len(sets) > rows:
+            bar = pygame.Rect(r.x + 16 + 470 + 6, r.y + 58, 4, rows * 70 - 8)
+            pygame.draw.rect(surf, (50, 40, 30), bar, border_radius=2)
+            th = max(18, int(bar.h * rows / len(sets)))
+            top = bar.y + int((bar.h - th) * self.scroll / max(1, len(sets) - rows))
+            pygame.draw.rect(surf, T.AMBER_DIM, pygame.Rect(bar.x, top, bar.w, th), border_radius=2)
         s = a["sets"][self.set_sel]
         x0 = r.x + 510
         col = WS.rar_color(xd, s["rarity"])
@@ -3021,8 +3060,8 @@ class StationOverlay(Overlay):
         prof = self.app.profile
         xd = prof.xd
         a = xd["artifacts"]
-        cost = {"glory": a["gem_cost"]["gold"]}
-        T.text(surf, f"Необработанные камни: {len(prof.rough)} — редкость: рынок и вылазки. Цена работы:",
+        cost = {"glory": prof.gem_cut_cost()}
+        T.text(surf, f"Необработанные камни: {len(prof.rough)} — редкость: рынок и вылазки. Работа — от:",
                (r.x + 18, r.y + 64), 17, GLORY, True)
         cost_icons(self.scene, surf, prof, cost, r.x + 640, r.y + 60)
         known = ", ".join(GM.cut_name(c) for c in prof.cuts) or "—"
@@ -3054,8 +3093,10 @@ class StationOverlay(Overlay):
             T.text(surf, fit(GM.describe(xd, rough, rough=True)[1], 12, tr.w - 12), (tr.centerx, tr.y + 204), 12,
                    T.TEXT_DIM, center=True)
             self.scene.hit(tr, None, [g["name"]] + GM.describe(xd, rough, rough=True))
+            work = {"glory": prof.gem_cut_cost(rough["uid"])}
             self.scene.btn(surf, pygame.Rect(tr.x + 16, tr.bottom - 58, tr.w - 32, 44), "Огранить",
-                           ("cut", rough["uid"]), prof.can_pay(cost), primary=True)
+                           ("cut", rough["uid"]), prof.can_pay(work), primary=True,
+                           tip=f"Работа: {work['glory']} золота")
 
     def draw_socket(self, surf, r):
         prof = self.app.profile
@@ -3517,8 +3558,10 @@ class SmithOverlay(StationOverlay):
             fits = [a for a in prof.stash.values() if SM.order_ok(xd, o, a) and not prof.art_locked(a["uid"])]
             x = orr.x + 380
             for a in fits[:4]:
-                self.scene.btn(surf, pygame.Rect(x, orr.y + 66, 190, 40), fit("Сдать: " + A.art_name(xd, a), 14, 180),
-                               ("fulfil", o["id"], a["uid"]), True, primary=True)
+                self.scene.btn(surf, pygame.Rect(x, orr.y + 66, 190, 40),
+                               fit("Сдать: " + A.art_name(xd, a), 18, 160),
+                               ("fulfil", o["id"], a["uid"]), True, primary=True,
+                               tip=A.art_name(xd, a))
                 x += 198
             if not fits:
                 T.text(surf, "подходящих вещей нет", (orr.x + 380, orr.y + 76), 14, T.TEXT_DIM)
@@ -4606,10 +4649,10 @@ class BuildRoom(RoomScene):
         kind = action[0] if isinstance(action, tuple) else action
         if kind == "buy":
             if not prof.buy_upgrade(action[1]):
-                self.say("Не хватает золота")
+                self.say("Не хватает золота, ресурсов или подходящего камня")
         elif kind == "build":
             if not prof.build(action[1]):
-                self.say("Не хватает золота или трофеев глав")
+                self.say("Не хватает золота, ресурсов мастерских, трофеев или подходящего камня")
 
     def items(self):
         prof = self.app.profile
@@ -4626,7 +4669,7 @@ class BuildRoom(RoomScene):
                     cost = prof.upgrade_cost(uid)
                     out.append((group, up["name"], up["desc"], lv, top, value_text(prof, uid, lv),
                                 value_text(prof, uid, lv + 1) if cost is not None else None,
-                                {"glory": cost} if cost is not None else None, ("buy", uid)))
+                                cost, ("buy", uid)))
                 elif bid in xd.get("buildings", {}):
                     b = xd["buildings"][bid]
                     lv, top = prof.building_level(bid), len(b["levels"])
@@ -4664,9 +4707,9 @@ class BuildRoom(RoomScene):
                 self.hit(r, None, [(name, GLORY), desc, now, nxt])
                 continue
             T.text(surf, fit("Дальше: " + nxt, 14, cw - 28), (r.x + 14, r.y + 78), 14, BLESS)
-            cost_icons(self, surf, prof, cost, r.x + 14, r.bottom - 40, size=22)
+            cost_icons(self, surf, prof, cost, r.x + 14, r.bottom - 58, size=18)
             ok = prof.can_pay(cost)
-            self.btn(surf, pygame.Rect(r.right - 118, r.bottom - 46, 106, 36),
+            self.btn(surf, pygame.Rect(r.right - 118, r.bottom - 36, 106, 34),
                      "Построить" if action[0] == "build" else "Купить", action, ok, primary=True)
             self.hit(r, None, [(name, GLORY), desc, "Сейчас: " + now, "Дальше: " + nxt])
 

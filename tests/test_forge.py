@@ -109,6 +109,9 @@ def test_gold_frame_gives_socket(tmp_path):
     from sim import artifacts as A
     p = prof(tmp_path)
     sid = next(s for s, v in XD["artifacts"]["sets"].items() if v["rarity"] == "rare")
+    for n in range(2):
+        p.gems.append({"uid": f"frame-gem{n}", "id": "ruby", "q": 0.95, "size": 1.0, "col": 0.6,
+                       "cl": 0.8, "cut": "table"})
     p.forge["prims"] = [{"uid": "g1", "kind": "wire", "alloy": "gold18", "mass": 40, "q": 0.9}]
     gold = p.make_item("ring", sid, ["g1"], heat=0.3)        # ниже потолка сборки — видно разницу
     p.forge["prims"] = [{"uid": "s1", "kind": "wire", "alloy": "bronze", "mass": 40, "q": 0.9}]
@@ -519,7 +522,8 @@ def test_wandering_jeweler_buys_stones():
     goods = p.trade_goods("jeweler")
     row = next(g for g in goods if g[1] == r["uid"])
     assert row[0] == "rough" and row[3] == 1.6
-    assert p.trade_price("jeweler", "rough", r["uid"]) == int(p.market_price("rough", r) * 0.5 * 1.6)
+    assert p.trade_price("jeweler", "rough", r["uid"]) == int(
+        p.market_price("rough", r) * XD["market"]["jeweler_sell_k"] * 1.6)
     assert p.trade_sell("jeweler", "rough", r["uid"], 1.0)[0] == "sold" and r not in p.rough
 
 

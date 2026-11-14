@@ -109,6 +109,7 @@ def test_tavern_roster_and_upgrades(tmp_path):
         assert h.skills[3] in story_meta.ults_of(ED, h.cls)                  # ультимейт — четвёртым, на R
         assert story_meta.kit_ok(ED, h.cls, h.skills[:3])                    # набор не ломает механику класса
     prof.glory = 1000
+    prof.mats.update({"leather": 9, "ore": 9, "herbs": 9})
     assert prof.buy_upgrade("hall") and len(prof.roster) == 8
     assert prof.buy_upgrade("guests") and "shaman" in prof.classes()
     again = X.ExpeditionProfile(ED, prof.path)

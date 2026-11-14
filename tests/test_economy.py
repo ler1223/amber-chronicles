@@ -68,9 +68,9 @@ def test_hire_cost_for_higher_ranks():
         assert False, "без золота дорогого новичка не нанять"
     except ValueError:
         pass
-    p.glory = 100
+    p.glory = 500
     p.start([h.uid] + [x.uid for x in others], seed=1)
-    assert p.glory == 100 - XD["tavern"]["hire_cost"]["2"]
+    assert p.glory == 500 - XD["tavern"]["hire_cost"]["2"]
 
 
 def test_dorm_keeps_bought_veteran_others_leave():

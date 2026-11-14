@@ -281,6 +281,10 @@ def craft_cost(xd, ws, set_id):
         out[s["mat"] or "stardust"] = out.get(s["mat"] or "stardust", 0) + c["rare"]
     if c.get("stardust"):
         out["stardust"] = out.get("stardust", 0) + c["stardust"]
+    if ws == "ws_jewel":
+        specs = a.get("jewel_cut_gems", {}).get(s["rarity"], [])
+        if specs:
+            out["cut_gems"] = [dict(spec) for spec in specs]
     return out
 
 
@@ -303,24 +307,41 @@ def upgrade_cost(xd, art):
     u = a["upgrade_cost"]
     lv = art.get("level", 0)
     rk = RARITY_ORDER.index(art["rarity"]) + 1
-    out = {"glory": int((u["gold"] + u["gold_per_level"] * lv) * rk),
+    mult = float((u.get("rarity_mult") or {}).get(art["rarity"], rk))
+    out = {"glory": int((u["gold"] + u["gold_per_level"] * lv) * mult),
            "sunleaf": u.get("sunleaf", 1) + lv // u.get("sunleaf_every", 2),
            "thornbud": u.get("thornbud", 1) + lv // u.get("thornbud_every", 3)}
     if lv + 1 >= u.get("emberfern_from", 6):
         out["emberfern"] = 1
-    if lv + 1 >= u["rare_from"]:
-        mat = a["sets"][art["set"]]["mat"] or "stardust"
-        out[mat] = out.get(mat, 0) + 1
+    if lv + 1 >= u.get("emberfern_2_from", 99):
+        out["emberfern"] = 2
+    mat = a["sets"][art["set"]]["mat"]
+    if mat and lv + 1 >= u["rare_from"]:
+        out[mat] = 1
+        if lv + 1 >= u.get("rare_2_from", 99):
+            out[mat] = 2
+    if art["rarity"] in u.get("cut_gem_rarities", []):
+        specs = []
+        if lv + 1 >= u.get("cut_gem_from", 99):
+            specs.append({"min_q": u.get("cut_gem_q", 1.0), "min_ct": u.get("cut_gem_ct", 0.8)})
+        if lv + 1 >= u.get("cut_gem_2_from", 999):
+            specs.append({"min_q": u.get("cut_gem_2_q", 1.15), "min_ct": u.get("cut_gem_2_ct", 1.0)})
+        if specs:
+            out["cut_gems"] = specs
     return out
 
 
 def enchant_cost(xd, art):
     a = cfg(xd)
     e = a["enchant_cost"]
-    out = {"glory": e["gold"] * (RARITY_ORDER.index(art["rarity"]) + 1)}
+    mult = float((e.get("rarity_mult") or {}).get(art["rarity"],
+                  RARITY_ORDER.index(art["rarity"]) + 1))
+    out = {"glory": int(e["gold"] * mult)}
     if RARITY_ORDER.index(art["rarity"]) >= RARITY_ORDER.index(e["rare_from"]):
         mat = a["sets"][art["set"]]["mat"] or "stardust"
         out[mat] = out.get(mat, 0) + 1
+    if art["rarity"] == e.get("cut_gem_from"):
+        out["cut_gems"] = [{"min_q": e.get("cut_gem_q", 1.0), "min_ct": e.get("cut_gem_ct", 0.8)}]
     return out
 
 

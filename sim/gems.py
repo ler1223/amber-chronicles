@@ -814,7 +814,7 @@ def roll_cut(xd, rng, uid, gid):
 
 # ---------- витрина ----------
 # Витрина Ювелирной: 6 мест под огранённые камни; с ценником гости таверны покупают камень после похода.
-SHOWCASE = {"slots": 6, "sale_k": 0.75, "chance": 0.3}
+SHOWCASE = {"slots": 6, "sale_k": 0.45, "chance": 0.3}
 
 
 def showcase_price(xd, g):

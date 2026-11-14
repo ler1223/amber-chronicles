@@ -109,7 +109,11 @@ def test_garden_ui_plant_water_harvest(tmp_path):
 def test_garden_expands_through_trader():
     p = X.ExpeditionProfile(ED)
     p.glory = 9999
+    p.mats.update({k: 99 for k, v in XD["materials"].items() if v.get("plant")})
     p.garden[0] = {"seed": "sunleaf", "watered": None}
+    p.mats = {}
+    assert not p.garden_upgrade()                    # растения тоже нужны
+    p.mats.update({k: 99 for k, v in XD["materials"].items() if v.get("plant")})
     sizes = []
     while p.garden_upgrade_info():
         assert p.garden_upgrade()

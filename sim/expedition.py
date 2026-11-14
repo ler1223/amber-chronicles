@@ -2886,13 +2886,15 @@ class ExpeditionProfile:
     def upgrade_cost(self, uid):
         up = self.xd["tavern"]["upgrades"][uid]
         lv = self.level(uid)
-        return up["costs"][lv] if lv < len(up["costs"]) else None
+        if lv >= len(up["costs"]):
+            return None
+        cost = up["costs"][lv]
+        return dict(cost) if isinstance(cost, dict) else {"glory": int(cost)}
 
     def buy_upgrade(self, uid):
         cost = self.upgrade_cost(uid)
-        if cost is None or self.glory < cost:
+        if cost is None or not self.pay(cost):
             return False
-        self.glory -= cost
         self.upgrades[uid] = self.level(uid) + 1
         if uid in ("hall", "guests", "renown"):
             self.roll_roster(keep=True)
@@ -3372,11 +3374,12 @@ class ExpeditionProfile:
             return None
         up = ups[self.garden_level]
         return {"level": self.garden_level + 1, "cols": int(up["cols"]), "rows": int(up["rows"]),
-                "price": int(up.get("price", 0))}
+                "price": int(up.get("price", 0)), "mats": dict(up.get("mats") or {})}
 
     def garden_upgrade(self):
         info = self.garden_upgrade_info()
-        if not info or not self.pay({"glory": info["price"]}):
+        cost = {"glory": info["price"], **info.get("mats", {})} if info else None
+        if not info or not self.pay(cost):
             return False
         old_cols, old_rows = self.garden_cols(), self.garden_rows()
         old = list(self.garden)
@@ -3668,6 +3671,18 @@ class ExpeditionProfile:
         return next((r for r in self.rough if r["uid"] == src), None) or \
             next((r for r in self.rough if r["id"] == src), None)
 
+    def gem_cut_cost(self, src=None):
+        """Работа огранщика: базовая плата + доля оценки сырья (крупные камни дороже)."""
+        from . import gems as GM
+        a = self.xd["artifacts"]
+        gc = a.get("gem_cost", {})
+        base = int(gc.get("gold", 20))
+        r = self.find_rough(src) if src is not None else None
+        pct = float(gc.get("value_pct", 0.0))
+        if r is not None and pct:
+            base = max(base, int(round(GM.rough_value(self.xd, r) * pct)))
+        return max(1, base)
+
     def cut_gem(self, src, q, shape=None, cut=None, ct=None, incl=None, star=0.0, cf=None, cz=None, axis=None):
         """Огранка (ювелирная): именно этот необработанный камень (uid или вид) — в огранённый. Качество огранки —
         из мини-игры; караты и оставшиеся примеси — по итогу (без них: обычный выход массы, примеси «как есть»)."""
@@ -3676,7 +3691,7 @@ class ExpeditionProfile:
         r = self.find_rough(src)
         if not (building_value(self.xd, self.buildings, "ws_jewel") or 0) or r is None:
             return None
-        if not self.pay({"glory": a["gem_cost"]["gold"]}):
+        if not self.pay({"glory": self.gem_cut_cost(r)}):
             return None
         GM.ensure_rough(self.xd, r)
         self.rough.remove(r)
@@ -3812,7 +3827,7 @@ class ExpeditionProfile:
     def buy_jeweler_rough(self, uid):
         j = self.market.get("jeweler") or {}
         r = next((x for x in j.get("rough", []) if x["uid"] == uid), None)
-        if r is None or not self.pay({"glory": self.market_price("rough", r)}):
+        if r is None or not self.pay({"glory": self.market_buy_price("rough", r)}):
             return False
         j["rough"].remove(r)
         self.rough.append(r)
@@ -4015,7 +4030,10 @@ class ExpeditionProfile:
         row = next((r for r in self.trade_goods(who) if r[0] == kind and r[1] == key), None)
         if row is None:
             return 0
-        return max(1, int(self.trade_value(kind, row[2]) * FG.TRADE["sell_k"] * row[3] * ask))
+        k = FG.TRADE["sell_k"]
+        if who == "jeweler" and kind in ("rough", "cut"):
+            k = float(self.xd.get("market", {}).get("jeweler_sell_k", k))
+        return max(1, int(self.trade_value(kind, row[2]) * k * row[3] * ask))
 
     def trade_sell(self, who, kind, key, ask=1.0, rng=None):
         """Продать мастеру с торгом: ask — во сколько раз выше обычной цены просим. Отказ — терпение падает;
@@ -4081,6 +4099,11 @@ class ExpeditionProfile:
         from . import gems as GM
         return GM.rough_value(self.xd, item) if kind == "rough" else GM.cut_value(self.xd, item)
 
+    def market_buy_price(self, kind, item):
+        """Цена покупки на рынке: оценка камня плюс наценка рынка."""
+        k = float(self.xd.get("market", {}).get("buy_k", 1.0))
+        return max(1, int(round(self.market_price(kind, item) * k)))
+
     def sell_price(self, kind, item):
         return int(self.market_price(kind, item) * self.xd["market"]["sell_k"])
 
@@ -4088,7 +4111,7 @@ class ExpeditionProfile:
         """Купить камень с рынка (kind: rough | cut)."""
         lot = self.market.get(kind, [])
         item = next((x for x in lot if x["uid"] == uid), None)
-        if item is None or not self.pay({"glory": self.market_price(kind, item)}):
+        if item is None or not self.pay({"glory": self.market_buy_price(kind, item)}):
             return False
         lot.remove(item)
         (self.rough if kind == "rough" else self.gems).append(item)
@@ -4339,19 +4362,80 @@ class ExpeditionProfile:
             return self.mats.get(k, 0)
         return self.trophies.get(k, 0)
 
+    def gem_matches(self, gem, spec):
+        """Подходит ли огранённый камень под требование стоимости (cut_gems)."""
+        if not gem:
+            return False
+        if spec.get("id") and gem.get("id") != spec["id"]:
+            return False
+        if spec.get("cut") and gem.get("cut") != spec["cut"]:
+            return False
+        if spec.get("cuts") and gem.get("cut") not in spec["cuts"]:
+            return False
+        if float(gem.get("q", 0.0)) < float(spec.get("min_q", 0.0)):
+            return False
+        if float(gem.get("size", 0.0)) < float(spec.get("min_ct", 0.0)):
+            return False
+        if spec.get("min_cl") is not None and float(gem.get("cl", 0.0)) < float(spec["min_cl"]):
+            return False
+        return True
+
+    def select_cut_gems(self, specs):
+        """Подобрать разные камни под список требований; None — не хватает."""
+        chosen, used = [], set()
+        for spec in specs or []:
+            gem = next((g for g in self.gems if g.get("uid") not in used and self.gem_matches(g, spec)), None)
+            if gem is None:
+                return None
+            used.add(gem.get("uid"))
+            chosen.append(gem)
+        return chosen
+
+    def has_cut_gem(self, spec):
+        return any(self.gem_matches(g, spec) for g in self.gems)
+
+    def gem_spec_text(self, spec):
+        """Короткое описание требования к камню для интерфейса."""
+        from . import gems as GM
+        if spec.get("id"):
+            name = self.xd.get("artifacts", {}).get("gems", {}).get(spec["id"], {}).get("name", spec["id"])
+        else:
+            name = "любой камень"
+        bits = [name]
+        if spec.get("cut"):
+            bits.append(GM.cut_name(spec["cut"]))
+        elif spec.get("cuts"):
+            bits.append("/".join(GM.cut_name(c) for c in spec["cuts"]))
+        if spec.get("min_q") is not None:
+            bits.append(f"качество ≥{float(spec['min_q']):.2f}")
+        if spec.get("min_ct") is not None:
+            bits.append(f"≥{float(spec['min_ct']):.1f} кар.")
+        return ", ".join(bits)
+
     def can_pay(self, cost):
-        return all(self.have(k) >= v for k, v in cost.items())
+        for k, v in cost.items():
+            if k == "cut_gems":
+                if self.select_cut_gems(v) is None:
+                    return False
+            elif self.have(k) < v:
+                return False
+        return True
 
     def pay(self, cost):
-        if not self.can_pay(cost):
+        chosen = self.select_cut_gems(cost.get("cut_gems") or [])
+        if chosen is None or not self.can_pay({k: v for k, v in cost.items() if k != "cut_gems"}):
             return False
         for k, v in cost.items():
+            if k == "cut_gems":
+                continue
             if k == "glory":
                 self.glory -= v
             elif k in self.xd.get("materials", {}):
                 self.mats[k] = self.mats.get(k, 0) - v
             else:
                 self.trophies[k] = self.trophies.get(k, 0) - v
+        for gem in chosen:
+            self.gems.remove(gem)
         return True
 
     # ---------- мастера мастерских: спасаются победой над боссом главы ----------

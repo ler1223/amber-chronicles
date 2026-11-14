@@ -29,6 +29,10 @@ def rich(tmp_path=None, **builds):
     for gid in XD["artifacts"]["gems"]:                # необработанные камни — огранять есть что
         for _ in range(3):
             p.add_rough(gid, rng)
+    for gid in XD["artifacts"]["gems"]:                # готовые камни для ювелирных оправ
+        for n in range(3):
+            p.gems.append({"uid": f"rich-{gid}-{n}", "id": gid, "q": 1.25, "size": 2.0, "col": 0.7,
+                           "cl": 0.85, "cut": "table"})
     return p
 
 
@@ -370,6 +374,52 @@ def test_minigames_score_range():
         assert g.done and G.Q_LO <= g.quality <= G.Q_HI
 
 
+def test_cut_gem_costs_and_high_upgrades():
+    p = rich()
+    cost = {"cut_gems": [{"id": "ruby", "cut": "table", "min_q": 1.2, "min_ct": 1.5}]}
+    assert p.can_pay(cost)
+    before = len(p.gems)
+    assert p.pay(cost) and len(p.gems) == before - 1
+    assert not p.can_pay({"cut_gems": [{"id": "ruby", "min_q": 2.0}]})
+
+    art = A.make(XD, "high", "bracers", sets_of("legendary")[0], 1.0)
+    art["level"] = 9
+    up = A.upgrade_cost(XD, art)
+    assert up["glory"] > 1000 and len(up["cut_gems"]) == 2
+    ench = A.enchant_cost(XD, art)
+    assert ench["cut_gems"] and ench["glory"] >= 500
+
+
+def test_forge_sets_are_data_driven():
+    expected = {"blood_anvil": "bleed", "hammer_anvil": "dmg_taken",
+                "slag_armor": "thorns", "forge_ward": "atk_speed"}
+    for sid, effect in expected.items():
+        assert sid in ART["sets"]
+        two = [A.make(XD, f"{sid}-2-{i}", k, sid, 1.0) for i, k in enumerate(("bracers", "belt"))]
+        mods, extra, rules = A.effects(XD, two)
+        assert mods and not rules
+        four = [A.make(XD, f"{sid}-4-{i}", k, sid, 1.0)
+                for i, k in enumerate(("bracers", "belt", "ring", "amulet"))]
+        mods, extra, rules = A.effects(XD, four)
+        assert mods and rules and rules[0]["do"]
+        assert any(effect in str(r["do"]) for r in rules)
+
+
+def test_building_cost_uses_workshop_resources():
+    p = rich()
+    p.glory, p.trophies = 99999, {t: 99 for t in XD["trophies"]}
+    p.mats = {m: 99 for m in XD["materials"]}
+    p.buildings["smithy"] = 0
+    cost = p.building_cost("smithy")
+    assert cost["ore"] > 0 and cost["coal"] > 0
+    assert p.build("smithy") and p.building_level("smithy") == 1
+    p.buildings["smithy"] = 2
+    cost = p.building_cost("smithy")
+    assert cost["cut_gems"] and p.build("smithy") and p.building_level("smithy") == 3
+    up = p.upgrade_cost("hall")
+    assert isinstance(up, dict) and up["leather"] > 0
+
+
 def test_rough_gems_are_rare_and_traded(tmp_path):
     """Самоцветы — редкость: огранить можно только свой необработанный камень; рынок продаёт и покупает,
     товар — после каждого похода; в вылазке — шанс от добытой крошки."""
@@ -380,7 +430,8 @@ def test_rough_gems_are_rare_and_traded(tmp_path):
     assert p.cut_gem("ruby", 1.0) is None                 # нет камня — нечего гранить
     assert p.market.get("rough")
     lot = p.market["rough"][0]
-    price = p.market_price("rough", lot)
+    price = p.market_buy_price("rough", lot)
+    assert price > p.market_price("rough", lot)
     assert p.buy("rough", lot["uid"]) and p.glory == 5000 - price and lot in p.rough
     g = p.cut_gem(lot["uid"], 1.2)
     assert g and g["id"] == lot["id"] and not p.rough and g["size"] == round(lot["size"] * 0.2, 2)
@@ -417,6 +468,8 @@ def test_jeweler_crafts_rings_without_minigame(tmp_path):
     prof = app.profile
     prof.glory, prof.mats = 5000, {m: 50 for m in XD["materials"]}
     prof.buildings["ws_jewel"] = 1
+    prof.gems.append({"uid": "ui-gem", "id": "ruby", "q": 0.9, "size": 1.0, "col": 0.6,
+                      "cl": 0.8, "cut": "table"})
     key(app, pygame.K_3)
     room = app.scene
     room.overlay = R.StationOverlay(room, "ws_jewel")

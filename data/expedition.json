@@ -842,8 +842,22 @@
     "name": "Большой зал",
     "desc": "Больше героев в зале таверны",
     "costs": [
-     100,
-     225
+     {
+      "glory": 250,
+      "leather": 2,
+      "ore": 2
+     },
+     {
+      "glory": 600,
+      "leather": 4,
+      "ore": 4,
+      "cut_gems": [
+       {
+        "min_q": 0.8,
+        "min_ct": 0.8
+       }
+      ]
+     }
     ],
     "values": [
      6,
@@ -855,8 +869,20 @@
     "name": "Слава таверны",
     "desc": "К вам заходят герои опытнее (выше ранг)",
     "costs": [
-     125,
-     300
+     {
+      "glory": 300,
+      "herbs": 2
+     },
+     {
+      "glory": 800,
+      "herbs": 4,
+      "cut_gems": [
+       {
+        "min_q": 0.9,
+        "min_ct": 0.8
+       }
+      ]
+     }
     ],
     "values": [
      {
@@ -880,9 +906,28 @@
     "name": "Гостевые комнаты",
     "desc": "Открывает новые классы героев",
     "costs": [
-     150,
-     250,
-     400
+     {
+      "glory": 350,
+      "leather": 2,
+      "herbs": 2
+     },
+     {
+      "glory": 700,
+      "amber": 1,
+      "leather": 4,
+      "herbs": 3
+     },
+     {
+      "glory": 1500,
+      "amber": 2,
+      "leather": 6,
+      "cut_gems": [
+       {
+        "min_q": 1.0,
+        "min_ct": 1.0
+       }
+      ]
+     }
     ],
     "values": [
      [],
@@ -907,8 +952,16 @@
     "name": "Кладовая",
     "desc": "Больше золота в начале похода",
     "costs": [
-     75,
-     175
+     {
+      "glory": 200,
+      "herbs": 2
+     },
+     {
+      "glory": 500,
+      "amber": 1,
+      "herbs": 4,
+      "sunleaf": 2
+     }
     ],
     "values": [
      0,
@@ -920,8 +973,8 @@
   "reroll_cost": 15,
   "hire_cost": {
    "1": 0,
-   "2": 30,
-   "3": 80
+   "2": 120,
+   "3": 300
   },
   "dorm_cost": {
    "base": 60,
@@ -12922,7 +12975,9 @@
    "levels": [
     {
      "cost": {
-      "glory": 125
+      "glory": 300,
+      "ore": 3,
+      "coal": 1
      },
      "value": {
       "rarity": "common"
@@ -12931,8 +12986,10 @@
     },
     {
      "cost": {
-      "glory": 250,
-      "ember": 2
+      "glory": 800,
+      "ember": 2,
+      "ore": 6,
+      "copper": 2
      },
      "value": {
       "rarity": "rare"
@@ -12941,8 +12998,15 @@
     },
     {
      "cost": {
-      "glory": 450,
-      "ember": 4
+      "glory": 2000,
+      "ember": 4,
+      "ore": 10,
+      "cut_gems": [
+       {
+        "min_q": 0.9,
+        "min_ct": 0.8
+       }
+      ]
      },
      "value": {
       "rarity": "epic",
@@ -12958,8 +13022,10 @@
    "levels": [
     {
      "cost": {
-      "glory": 200,
-      "amber": 1
+      "glory": 400,
+      "amber": 1,
+      "herbs": 3,
+      "sunleaf": 1
      },
      "value": {
       "offers": 2
@@ -12968,8 +13034,10 @@
     },
     {
      "cost": {
-      "glory": 350,
-      "amber": 3
+      "glory": 900,
+      "amber": 3,
+      "herbs": 5,
+      "moonroot": 2
      },
      "value": {
       "offers": 3
@@ -12978,8 +13046,15 @@
     },
     {
      "cost": {
-      "glory": 600,
-      "amber": 5
+      "glory": 2200,
+      "amber": 5,
+      "herbs": 8,
+      "cut_gems": [
+       {
+        "min_q": 1.0,
+        "min_ct": 1.0
+       }
+      ]
      },
      "value": {
       "offers": 3,
@@ -12995,7 +13070,9 @@
    "levels": [
     {
      "cost": {
-      "glory": 175
+      "glory": 300,
+      "leather": 3,
+      "herbs": 2
      },
      "value": {
       "rerolls": 2
@@ -13004,8 +13081,16 @@
     },
     {
      "cost": {
-      "glory": 350,
-      "amber": 2
+      "glory": 800,
+      "amber": 2,
+      "leather": 5,
+      "herbs": 4,
+      "cut_gems": [
+       {
+        "min_q": 0.8,
+        "min_ct": 0.8
+       }
+      ]
      },
      "value": {
       "rerolls": 4,
@@ -13021,15 +13106,25 @@
    "levels": [
     {
      "cost": {
-      "glory": 150
+      "glory": 300,
+      "ore": 4,
+      "leather": 2
      },
      "value": 1,
      "text": "+1 уровень в начале похода"
     },
     {
      "cost": {
-      "glory": 300,
-      "ember": 1
+      "glory": 800,
+      "ember": 1,
+      "ore": 6,
+      "leather": 4,
+      "cut_gems": [
+       {
+        "min_q": 0.9,
+        "min_ct": 0.8
+       }
+      ]
      },
      "value": 2,
      "text": "+2 уровня в начале похода"
@@ -13042,15 +13137,24 @@
    "levels": [
     {
      "cost": {
-      "glory": 150
+      "glory": 300,
+      "herbs": 4,
+      "sunleaf": 1
      },
      "value": 0.1,
      "text": "+10% лечения после боя"
     },
     {
      "cost": {
-      "glory": 300,
-      "amber": 2
+      "glory": 800,
+      "amber": 2,
+      "herbs": 6,
+      "cut_gems": [
+       {
+        "min_q": 0.9,
+        "min_ct": 0.8
+       }
+      ]
      },
      "value": 0.2,
      "text": "+20% лечения после боя"
@@ -13063,22 +13167,33 @@
    "levels": [
     {
      "cost": {
-      "glory": 100
+      "glory": 250,
+      "leather": 3,
+      "herbs": 1
      },
      "value": 2,
      "text": "2 места"
     },
     {
      "cost": {
-      "glory": 250
+      "glory": 600,
+      "leather": 5,
+      "herbs": 3
      },
      "value": 4,
      "text": "4 места"
     },
     {
      "cost": {
-      "glory": 500,
-      "amber": 2
+      "glory": 1500,
+      "amber": 2,
+      "leather": 8,
+      "cut_gems": [
+       {
+        "min_q": 0.9,
+        "min_ct": 0.8
+       }
+      ]
      },
      "value": 6,
      "text": "6 мест"
@@ -13091,22 +13206,33 @@
    "levels": [
     {
      "cost": {
-      "glory": 60
+      "glory": 250,
+      "leather": 2,
+      "herbs": 1
      },
      "value": 3,
      "text": "3 поручения одновременно"
     },
     {
      "cost": {
-      "glory": 200
+      "glory": 600,
+      "leather": 3,
+      "herbs": 3
      },
      "value": 4,
      "text": "4 поручения одновременно"
     },
     {
      "cost": {
-      "glory": 450,
-      "ember": 2
+      "glory": 1500,
+      "ember": 2,
+      "leather": 5,
+      "cut_gems": [
+       {
+        "min_q": 0.9,
+        "min_ct": 0.8
+       }
+      ]
      },
      "value": 5,
      "text": "5 поручений одновременно"
@@ -13120,30 +13246,44 @@
    "levels": [
     {
      "cost": {
-      "glory": 80
+      "glory": 300,
+      "ore": 3,
+      "coal": 2
      },
      "value": 1,
      "text": "обычные"
     },
     {
      "cost": {
-      "glory": 250
+      "glory": 900,
+      "ore": 6,
+      "copper": 3,
+      "coal": 2
      },
      "value": 2,
      "text": "редкие"
     },
     {
      "cost": {
-      "glory": 600,
-      "ember": 1
+      "glory": 2200,
+      "ember": 1,
+      "ore": 10,
+      "tin": 2
      },
      "value": 3,
      "text": "эпические"
     },
     {
      "cost": {
-      "glory": 1200,
-      "ember": 3
+      "glory": 4500,
+      "ember": 3,
+      "ore": 14,
+      "cut_gems": [
+       {
+        "min_q": 1.1,
+        "min_ct": 1.2
+       }
+      ]
      },
      "value": 4,
      "text": "легендарные"
@@ -13163,30 +13303,50 @@
    "levels": [
     {
      "cost": {
-      "glory": 80
+      "glory": 300,
+      "gems": 3,
+      "copper": 1
      },
      "value": 1,
      "text": "обычные, огранка"
     },
     {
      "cost": {
-      "glory": 250
+      "glory": 900,
+      "gems": 5,
+      "silver": 2
      },
      "value": 2,
      "text": "редкие"
     },
     {
      "cost": {
-      "glory": 600,
-      "amber": 1
+      "glory": 2200,
+      "amber": 1,
+      "gems": 8,
+      "silver": 3,
+      "cut_gems": [
+       {
+        "min_q": 1.0,
+        "min_ct": 1.0
+       }
+      ]
      },
      "value": 3,
      "text": "эпические"
     },
     {
      "cost": {
-      "glory": 1200,
-      "amber": 3
+      "glory": 5000,
+      "amber": 3,
+      "gems": 12,
+      "cut_gems": [
+       {
+        "cut": "brilliant",
+        "min_q": 1.15,
+        "min_ct": 1.2
+       }
+      ]
      },
      "value": 4,
      "text": "легендарные"
@@ -13206,30 +13366,43 @@
    "levels": [
     {
      "cost": {
-      "glory": 80
+      "glory": 300,
+      "leather": 4,
+      "herbs": 1
      },
      "value": 1,
      "text": "обычные"
     },
     {
      "cost": {
-      "glory": 250
+      "glory": 900,
+      "leather": 7,
+      "herbs": 3
      },
      "value": 2,
      "text": "редкие"
     },
     {
      "cost": {
-      "glory": 600,
-      "amber": 1
+      "glory": 2200,
+      "amber": 1,
+      "leather": 10,
+      "thornbud": 4
      },
      "value": 3,
      "text": "эпические"
     },
     {
      "cost": {
-      "glory": 1200,
-      "ember": 2
+      "glory": 4500,
+      "ember": 2,
+      "leather": 14,
+      "cut_gems": [
+       {
+        "min_q": 1.1,
+        "min_ct": 1.2
+       }
+      ]
      },
      "value": 4,
      "text": "легендарные"
@@ -13249,23 +13422,34 @@
    "levels": [
     {
      "cost": {
-      "glory": 100
+      "glory": 400,
+      "herbs": 4,
+      "sunleaf": 2
      },
      "value": 3,
      "text": "улучшение до +3, зачарование"
     },
     {
      "cost": {
-      "glory": 350
+      "glory": 1000,
+      "herbs": 8,
+      "moonroot": 3,
+      "thornbud": 2
      },
      "value": 6,
      "text": "улучшение до +6"
     },
     {
      "cost": {
-      "glory": 800,
+      "glory": 2500,
       "amber": 2,
-      "ember": 2
+      "emberfern": 1,
+      "cut_gems": [
+       {
+        "min_q": 1.0,
+        "min_ct": 1.0
+       }
+      ]
      },
      "value": 10,
      "text": "улучшение до +10"
@@ -13908,17 +14092,17 @@
   }
  },
  "garden": {
-  "_note": "Стартовые растения открыты сразу; остальные виды покупаются у торговца семенами на рынке и остаются открытыми навсегда. Поле начинается с 3×3 и расширяется прокачками у торговца. Соседи ускоряют/замедляют рост. Улучшение артефактов тратит фиксированные растения, зачарование — выбранные 3 растения; особые тройки дают сильную комбинацию.",
+  "_note": "Стартовые растения открыты сразу; остальные виды покупаются у торговца семенами на рынке и остаются открытыми навсегда. Поле начинается с 3×3 и расширяется прокачками у торговца за золото и растения. Соседи ускоряют/замедляют рост. Улучшение артефактов тратит фиксированные растения, зачарование — выбранные 3 растения; особые тройки дают сильную комбинацию.",
   "cols": 6,
   "rows": 4,
   "start": {"cols": 3, "rows": 3},
   "upgrades": [
-   {"cols": 4, "rows": 3, "price": 60},
-   {"cols": 5, "rows": 3, "price": 140},
-   {"cols": 6, "rows": 3, "price": 260},
-   {"cols": 6, "rows": 4, "price": 420}
+   {"cols": 4, "rows": 3, "price": 100, "mats": {"sunleaf": 4, "moonroot": 2}},
+   {"cols": 5, "rows": 3, "price": 250, "mats": {"sunleaf": 6, "moonroot": 4, "thornbud": 2}},
+   {"cols": 6, "rows": 3, "price": 500, "mats": {"sunleaf": 8, "moonroot": 6, "thornbud": 4, "starflower": 2}},
+   {"cols": 6, "rows": 4, "price": 900, "mats": {"sunleaf": 10, "moonroot": 8, "thornbud": 6, "starflower": 4, "emberfern": 2}}
   ],
-  "seed_price": 30,
+  "seed_price": 50,
   "min_factor": 0.55,
   "max_factor": 2.0,
   "starter": {
@@ -13934,11 +14118,11 @@
    "locked_mult": 1.6,
    "unlocked_mult": 1.0,
    "tiers": [
-    {"chapter": null, "price": 30, "seeds": ["thornbud", "starflower", "emberfern", "frostbell"]},
-    {"chapter": "swamp", "price": 45, "seeds": ["sugarvine", "sunpumpkin"]},
-    {"chapter": "forge", "price": 70, "seeds": ["bloodpoppy", "stormlotus"]},
-    {"chapter": "crypt", "price": 100, "seeds": ["bonemoss", "tearcap"]},
-    {"chapter": "pass", "price": 140, "seeds": ["dreampollen", "ironthorn"]}
+    {"chapter": null, "price": 50, "seeds": ["thornbud", "starflower", "emberfern", "frostbell"]},
+    {"chapter": "swamp", "price": 80, "seeds": ["sugarvine", "sunpumpkin"]},
+    {"chapter": "forge", "price": 120, "seeds": ["bloodpoppy", "stormlotus"]},
+    {"chapter": "crypt", "price": 180, "seeds": ["bonemoss", "tearcap"]},
+    {"chapter": "pass", "price": 260, "seeds": ["dreampollen", "ironthorn"]}
    ]
   },
   "seeds": {
@@ -14231,39 +14415,104 @@
   "craft_cost": {
    "common": {
     "main": 3,
-    "gold": 30
+    "gold": 50
    },
    "rare": {
     "main": 5,
     "rare": 1,
-    "gold": 80
+    "gold": 150
    },
    "epic": {
     "main": 8,
     "rare": 3,
-    "gold": 180
+    "gold": 350
    },
    "legendary": {
     "main": 12,
     "rare": 4,
     "stardust": 2,
-    "gold": 400
+    "gold": 800
    }
   },
+  "jewel_cut_gems": {
+   "common": [
+    {
+     "min_q": 0.7,
+     "min_ct": 0.5
+    }
+   ],
+   "rare": [
+    {
+     "min_q": 0.9,
+     "min_ct": 0.6
+    }
+   ],
+   "epic": [
+    {
+     "min_q": 1.0,
+     "min_ct": 0.8
+    },
+    {
+     "min_q": 1.0,
+     "min_ct": 0.8
+    }
+   ],
+   "legendary": [
+    {
+     "min_q": 1.1,
+     "min_ct": 1.0
+    },
+    {
+     "min_q": 1.1,
+     "min_ct": 1.0
+    },
+    {
+     "min_q": 1.1,
+     "min_ct": 1.0
+    }
+   ]
+  },
   "upgrade_cost": {
-   "gold": 20,
-   "gold_per_level": 15,
-   "sunleaf": 1,
+   "gold": 50,
+   "gold_per_level": 30,
+   "rarity_mult": {
+    "common": 1.0,
+    "rare": 2.0,
+    "epic": 3.5,
+    "legendary": 6.0
+   },
+   "sunleaf": 2,
    "sunleaf_every": 2,
    "thornbud": 1,
-   "thornbud_every": 3,
-   "emberfern_from": 6,
-   "rare_from": 6
+   "thornbud_every": 2,
+   "emberfern_from": 4,
+   "emberfern_2_from": 8,
+   "rare_from": 4,
+   "rare_2_from": 8,
+   "cut_gem_rarities": [
+    "epic",
+    "legendary"
+   ],
+   "cut_gem_from": 8,
+   "cut_gem_q": 1.0,
+   "cut_gem_ct": 0.8,
+   "cut_gem_2_from": 10,
+   "cut_gem_2_q": 1.15,
+   "cut_gem_2_ct": 1.0
   },
   "enchant_cost": {
-   "gold": 50,
+   "gold": 100,
    "plants": 3,
-   "rare_from": "epic"
+   "rare_from": "epic",
+   "rarity_mult": {
+    "common": 1.0,
+    "rare": 2.0,
+    "epic": 3.5,
+    "legendary": 6.0
+   },
+   "cut_gem_from": "legendary",
+   "cut_gem_q": 1.0,
+   "cut_gem_ct": 0.8
   },
   "extras": [
    "vital",
@@ -14541,7 +14790,8 @@
    }
   },
   "gem_cost": {
-   "gold": 20
+   "gold": 50,
+   "value_pct": 0.03
   },
   "sets": {
    "militia": {
@@ -14831,11 +15081,178 @@
       ]
      }
     }
+   },
+   "blood_anvil": {
+     "name": "Кровавая наковальня",
+     "rarity": "rare",
+     "mat": "embersteel",
+     "bonus": {
+      "2": {
+       "text": "+15% урона кровотечением, +4% урона атак",
+       "stats": [
+        {
+         "stat": "dot_bleed_mult",
+         "pct": 0.15
+        },
+        {
+         "stat": "atk_damage",
+         "pct": 0.04
+        }
+       ]
+      },
+      "4": {
+       "text": "При крите: кровотечение; +10% урона атак и +10% урона кровотечением",
+       "stats": [
+        {
+         "stat": "atk_damage",
+         "pct": 0.1
+        },
+        {
+         "stat": "dot_bleed_mult",
+         "pct": 0.1
+        }
+       ],
+       "rules": [
+        {
+         "trigger": "crit",
+         "do": [
+          "bleed"
+         ],
+         "icd": 0.5
+        }
+       ]
+      }
+     }
+    },
+    "hammer_anvil": {
+     "name": "Молот и наковальня",
+     "rarity": "epic",
+     "mat": "embersteel",
+     "bonus": {
+      "2": {
+       "text": "+8% урона атак, +3% шанса крита",
+       "stats": [
+        {
+         "stat": "atk_damage",
+         "pct": 0.08
+        },
+        {
+         "extra": "crit",
+         "add": 0.03
+        }
+       ]
+      },
+      "4": {
+       "text": "При крите: цель получает +25% урона 4 с; +8% урона атак и +8% силы крита",
+       "stats": [
+        {
+         "stat": "atk_damage",
+         "pct": 0.08
+        },
+        {
+         "extra": "crit_mult",
+         "add": 0.08
+        }
+       ],
+       "rules": [
+        {
+         "trigger": "crit",
+         "do": [
+          "expose"
+         ],
+         "icd": 4.0
+        }
+       ]
+      }
+     }
+    },
+    "slag_armor": {
+     "name": "Шлаковый панцирь",
+     "rarity": "epic",
+     "mat": "embersteel",
+     "bonus": {
+      "2": {
+       "text": "+6% здоровья, +18% шипов",
+       "stats": [
+        {
+         "stat": "hp",
+         "pct": 0.06
+        },
+        {
+         "stat": "thorns",
+         "add": 0.18
+        }
+       ]
+      },
+      "4": {
+       "text": "Когда ранен: отражать 40% ближнего урона 4 с (раз в 6 с); +8% здоровья и +18% шипов",
+       "stats": [
+        {
+         "stat": "hp",
+         "pct": 0.08
+        },
+        {
+         "stat": "thorns",
+         "add": 0.18
+        }
+       ],
+       "rules": [
+        {
+         "trigger": "hurt",
+         "do": [
+          "reflect"
+         ],
+         "icd": 6.0
+        }
+       ]
+      }
+     }
+    },
+    "forge_ward": {
+     "name": "Кузнечный оберег",
+     "rarity": "legendary",
+     "mat": "embersteel",
+     "bonus": {
+      "2": {
+       "text": "+8% здоровья, +10% восстановления AP",
+       "stats": [
+        {
+         "stat": "hp",
+         "pct": 0.08
+        },
+        {
+         "ap_regen": 0.1
+        }
+       ]
+      },
+      "4": {
+       "text": "При навыке (40%): союзники рядом атакуют на 15% быстрее 4 с; +6% здоровья и +8% силы навыков",
+       "stats": [
+        {
+         "stat": "hp",
+         "pct": 0.06
+        },
+        {
+         "stat": "power",
+         "pct": 0.08
+        }
+       ],
+       "rules": [
+        {
+         "trigger": "cast",
+         "do": [
+          "rally"
+         ],
+         "icd": 8.0
+        }
+       ]
+      }
+     }
+    }
    }
-  }
- },
+  },
  "market": {
-  "_note": "Рынок таверны: товар обновляется после каждого похода. Необработанные самоцветы — редкость: только рынок, бродячий ювелир и небольшой шанс в конце вылазки. Каждый камень свой: караты, цвет, примеси (sim/gems.py).",
+  "_note": "Рынок таверны: товар обновляется после каждого похода. Необработанные самоцветы — редкость: только рынок, бродячий ювелир и небольшой шанс в конце вылазки. Каждый камень свой: караты, цвет, примеси (sim/gems.py). Рынок покупает за 30% оценки, бродячий ювелир — за 35%.",
   "rough_stock": [
    2,
    4
@@ -14844,7 +15261,9 @@
    0,
    2
   ],
-  "sell_k": 0.5,
+  "buy_k": 1.25,
+  "sell_k": 0.3,
+  "jeweler_sell_k": 0.35,
   "rough_drop_per_chip": 0.05,
   "rough_drop_max": 0.6
  },

@@ -25,7 +25,11 @@ def draw_art_icon(surf, r, xd, art, dim=False):
         col = T.mix(col, (40, 40, 40), 0.55)
     pygame.draw.rect(surf, T.mix((22, 18, 15), col, 0.18), r, border_radius=8)
     pygame.draw.rect(surf, col, r, 2, border_radius=8)
-    img = E.icon(f"art_{art['kind']}_{art['rarity']}", int(min(r.w, r.h) - 8))   # лист A1 промптов
+    size = int(min(r.w, r.h) - 8)
+    set_id = art.get("set")
+    img = E.icon(f"art_{set_id}_{art['kind']}", size) if set_id else None        # лист сетов
+    if img is None:
+        img = E.icon(f"art_{art['kind']}_{art['rarity']}", size)                  # лист A1 промптов
     if img is not None:
         if dim:
             img = img.copy()

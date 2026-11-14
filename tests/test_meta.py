@@ -35,6 +35,7 @@ def test_buildings_cost_glory_and_trophies_and_work(tmp_path):
     prof = profile(tmp_path)
     assert not prof.build("altar")                                   # нет ни славы, ни янтаря
     prof.glory, prof.trophies = 5000, {"amber": 9, "ember": 9}
+    prof.mats = {m: 99 for m in XD["materials"]}
     for bid in ("smithy", "altar", "library", "yard", "infirmary"):
         assert prof.build(bid)
     assert prof.glory < 5000 and prof.trophies["amber"] < 9
@@ -79,10 +80,10 @@ def test_veterans_return_stronger_and_fallen_go_to_hall():
 
 def test_tavern_is_shared_between_squad_and_endless(tmp_path):
     prof = profile(tmp_path)
-    prof.glory = 77
+    prof.glory = 1000
     prof.save()
     endless = profile(tmp_path, solo=True)
-    assert endless.glory == 77 and endless.solo and not any(h.solo for h in endless.roster)
+    assert endless.glory == 1000 and endless.solo and not any(h.solo for h in endless.roster)
     run = endless.start([h.uid for h in endless.roster[:2]], seed=7)
     assert run.endless and not run.solo and len(run.heroes) == 2
     run.result = "defeat"
