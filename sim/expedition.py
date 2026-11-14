@@ -2598,6 +2598,7 @@ class ExpeditionProfile:
         self.news = []                           # вести с поручений после последнего похода
         self.away = []                           # ушедшие ветераны (могут вернуться в таверну)
         self.stash = {}                          # хранилище артефактов таверны: {uid: артефакт}
+        self.art_presets = {}                    # сохранённые сборки артефактов: {hero_uid: [artifact_uid]}
         self.gems = []                           # огранённые самоцветы: [{"uid", "id", "q", "size", "shape"}]
         self.rough = []                          # необработанные самоцветы: [{"uid", "id", "seed", "size"}]
         self.smith = {}                          # кузня: куски, пакеты, части, инструменты, заказы (sim/smithing.py)
@@ -2795,6 +2796,7 @@ class ExpeditionProfile:
         self.news = list(d.get("news") or [])
         self.away = list(d.get("away") or [])
         self.stash = dict(d.get("stash") or {})
+        self.art_presets = dict(d.get("art_presets") or {})
         self.gems = list(d.get("gems") or [])
         self.rough = list(d.get("rough") or [])
         self.smith = dict(d.get("smith") or {})
@@ -2868,7 +2870,8 @@ class ExpeditionProfile:
              "tier_open": self.tier_open, "chapter_tiers": self.chapter_tiers, "chapter_wins": self.chapter_wins,
              "trophies": self.trophies, "buildings": self.buildings, "vows": self.vows, "fallen": self.fallen,
              "solo": self.solo, "econ": 1, "mats": self.mats, "offers": self.offers, "news": self.news,
-             "away": self.away, "stash": self.stash, "gems": self.gems, "art_n": self.art_n, "tiers10": 1,
+             "away": self.away, "stash": self.stash, "art_presets": self.art_presets,
+             "gems": self.gems, "art_n": self.art_n, "tiers10": 1,
              "rough": self.rough, "market": self.market, "smith": self.smith, "cuts": self.cuts,
              "forge": self.forge, "mine": self.mine,
              "jtools": self.jtools, "showcase": self.showcase,
@@ -3028,6 +3031,61 @@ class ExpeditionProfile:
 
     def art_owner(self, uid):
         return next((h for h in self.roster if uid in h.arts), None)
+
+    def art_flag(self, uid, flag):
+        return bool(self.stash.get(uid, {}).get(flag))
+
+    def toggle_art_flag(self, uid, flag):
+        art = self.stash.get(uid)
+        if art is None:
+            return False
+        art[flag] = not bool(art.get(flag))
+        self.save()
+        return True
+
+    def save_art_preset(self, h):
+        self.art_presets[h.uid] = list(h.arts)
+        self.save()
+        return True
+
+    def apply_art_preset(self, h):
+        uids = list(self.art_presets.get(h.uid) or [])
+        if not uids:
+            return 0
+        for uid in list(h.arts):
+            self.unequip(h, uid)
+        n = 0
+        for uid in uids:
+            if uid in self.stash and not self.art_locked(uid) and self.equip(h, uid):
+                n += 1
+        return n
+
+    def auto_equip_best(self, h):
+        """Надеть лучшие по силе артефакты каждого вида, не трогая занятые в походе."""
+        from . import artifacts as AR
+        n = 0
+        for kind in self.xd["artifacts"]["kinds"]:
+            current = next((self.stash[u] for u in h.arts if self.stash.get(u, {}).get("kind") == kind), None)
+            cur_power = AR.power_score(self.xd, [current]) if current else 0.0
+            cands = [a for a in self.stash.values()
+                     if a.get("kind") == kind and not self.art_locked(a["uid"]) and a["uid"] not in h.arts]
+            if not cands:
+                continue
+            best = max(cands, key=lambda a: AR.power_score(self.xd, [a]))
+            if AR.power_score(self.xd, [best]) > cur_power and self.equip(h, best["uid"]):
+                n += 1
+        return n
+
+    def missing_cost(self, cost):
+        """Чего не хватает для оплаты: [(ключ, не хватает)]; для камней — описание требования."""
+        out = []
+        for k, v in cost.items():
+            if k == "cut_gems":
+                if self.select_cut_gems(v) is None:
+                    out.append(("cut_gems", 1))
+            elif self.have(k) < v:
+                out.append((k, v - self.have(k)))
+        return out
 
     def art_locked(self, uid):
         """Артефакт на герое в идущем походе — не снять."""
@@ -4104,12 +4162,17 @@ class ExpeditionProfile:
             return
         from . import gems as GM, smithing as SM
         rng = random.Random(f"market:{self.seed_n}:{self.runs}")
+        history = list(self.market.get("history") or [])
         ids, weights = self.gem_weights()
         rough = [self.new_rough(rng.choices(ids, weights)[0], rng) for _ in range(rng.randint(*m["rough_stock"]))]
         cut = []
         for _ in range(rng.randint(*m["cut_stock"])):
             self.art_n += 1
             cut.append(GM.roll_cut(self.xd, rng, f"g{self.art_n}", rng.choices(ids, weights)[0]))
+        rough_avg = int(sum(GM.rough_value(self.xd, r) for r in rough) / len(rough)) if rough else 0
+        cut_avg = int(sum(GM.cut_value(self.xd, g) for g in cut) / len(cut)) if cut else 0
+        history.append({"run": self.runs, "rough": rough_avg, "cut": cut_avg})
+        history = history[-8:]
         smith = SM.roll_wanderer(self.xd, rng, self.smith.get("tools", []), lambda: self.suid("p")) \
             if self.xd.get("smithing") else None
         if smith is not None and self.master_free("ws_forge"):
@@ -4117,7 +4180,7 @@ class ExpeditionProfile:
         jeweler = GM.roll_jeweler(self.xd, rng, self.cuts, lambda r_: self.new_rough(
             r_.choices(ids, weights)[0], r_, premium=True), self.jtools) if self.can_cut() else None
         self.market = {"key": self.runs, "rough": rough, "cut": cut, "smith": smith, "jeweler": jeweler,
-                       "seeds": self.roll_seed_offers(rng)}
+                       "seeds": self.roll_seed_offers(rng), "history": history}
         self.stock_wanderers(rng)
 
     def market_price(self, kind, item):

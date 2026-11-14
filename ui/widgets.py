@@ -7,12 +7,23 @@ GOLD = (240, 200, 80)
 XP = (170, 140, 255)
 
 
+def _fit_button(label, width):
+    """Подпись кнопки под её фактический шрифт: без наложений на соседние кнопки."""
+    f = T.font(18, True)
+    if f.size(label)[0] <= width:
+        return label
+    s = label
+    while s and f.size(s + "…")[0] > width:
+        s = s[:-1]
+    return s + "…"
+
+
 def button(surf, rect, label, mouse, enabled=True, accent=(90, 180, 255)):
     hot = enabled and rect.collidepoint(mouse)
     bg = T.mix(accent, (0, 0, 0), 0.55 if hot else 0.7) if enabled else (44, 36, 30)
     pygame.draw.rect(surf, bg, rect, border_radius=8)
     pygame.draw.rect(surf, accent if enabled else T.PANEL_EDGE, rect, 2, border_radius=8)
-    T.text(surf, label, rect.center, 18, T.TEXT if enabled else T.TEXT_DIM, True, center=True)
+    T.text(surf, _fit_button(label, rect.w - 18), rect.center, 18, T.TEXT if enabled else T.TEXT_DIM, True, center=True)
 
 
 def card(surf, rect, title, lines, mouse, accent=(90, 180, 255), enabled=True, header=None, badge=None):

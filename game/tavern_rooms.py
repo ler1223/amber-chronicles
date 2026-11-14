@@ -478,6 +478,51 @@ class Overlay:
         pass
 
 
+class ConfirmOverlay(Overlay):
+    """Небольшое подтверждение опасного действия."""
+
+    modal = True
+
+    def __init__(self, scene, text, on_yes, back=None):
+        super().__init__(scene)
+        self.text = text
+        self.on_yes = on_yes
+        self.back = back
+
+    def close(self):
+        self.scene.overlay = self.back
+
+    def act(self, action, button=1):
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "confirm_yes":
+            self.on_yes()
+            self.close()
+        elif kind in ("close", "confirm_no"):
+            self.close()
+
+    def key(self, k):
+        if k in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self.on_yes()
+            self.close()
+            return True
+        if k == pygame.K_ESCAPE:
+            self.close()
+            return True
+        return False
+
+    def draw(self, surf):
+        shade = pygame.Surface((T.SCREEN_W, T.SCREEN_H), pygame.SRCALPHA)
+        shade.fill((4, 3, 2, 150))
+        surf.blit(shade, (0, 0))
+        r = pygame.Rect(T.SCREEN_W // 2 - 330, T.SCREEN_H // 2 - 120, 660, 240)
+        T.frame(surf, r, 250, accent=CURSE)
+        T.text(surf, "Подтверждение", (r.x + 22, r.y + 18), 24, CURSE, True)
+        for i, line in enumerate(T.wrap(self.text, 17, r.w - 44)):
+            T.text(surf, line, (r.x + 22, r.y + 58 + i * 24), 17, T.TEXT)
+        self.scene.btn(surf, pygame.Rect(r.x + 22, r.bottom - 58, 180, 38), "Да", "confirm_yes", True, primary=True)
+        self.scene.btn(surf, pygame.Rect(r.x + 214, r.bottom - 58, 180, 38), "Отмена", "confirm_no", True)
+
+
 class RoomScene(XScene):
     room = "hall"
     title = ""
@@ -517,6 +562,9 @@ class RoomScene(XScene):
             if ev.type == pygame.MOUSEMOTION:
                 self.mouse = ev.pos
             if self.overlay.pointer(ev):
+                return
+        if ev.type == pygame.KEYDOWN and self.overlay is not None and hasattr(self.overlay, "text_input"):
+            if self.overlay.text_input(ev):
                 return
         if ev.type == pygame.MOUSEWHEEL:
             (self.overlay or self).wheel(ev.y)
@@ -655,7 +703,9 @@ class RoomScene(XScene):
                                                                          "за походы, поручения; тратится на всё вне похода"])
         x -= 44
         if self.mats:
-            for k in reversed(self.mat_keys()):
+            keys = list(reversed(self.mat_keys()))
+            limit = 7
+            for k in keys[:limit]:
                 n = str(prof.mats.get(k, 0))
                 w = T.font(16, True).size(n)[0]
                 x -= w
@@ -663,8 +713,18 @@ class RoomScene(XScene):
                 img = res_icon(prof.xd, k, 26)
                 surf.blit(img, (x - 29, 15))
                 self.hit(pygame.Rect(x - 30, 12, w + 32, 32), None,
-                         [res_name(prof.xd, k), prof.xd["materials"][k].get("desc", "материал для мастерских")])
+                         [res_name(prof.xd, k), prof.xd["materials"][k].get("desc", "материал для мастерских"),
+                          "Источники: бои, поручения, шахта, сад"])
                 x -= 42
+            hidden = keys[limit:]
+            if hidden:
+                label = f"+{len(hidden)}"
+                w = T.font(14, True).size(label)[0]
+                x -= w
+                T.text(surf, label, (x, 20), 14, T.TEXT_DIM, True)
+                self.hit(pygame.Rect(x - 8, 12, w + 16, 32), None,
+                         ["Ещё ресурсы"] + [res_name(prof.xd, k) for k in hidden[:12]])
+                x -= 22
         if self.sub:
             T.text(surf, fit(self.sub, 14, x - codex_r.right - 24), (codex_r.right + 12, 22), 14, T.TEXT_DIM)
 
@@ -1431,10 +1491,49 @@ class ChestOverlay(Overlay):
         self.hero = hero
         self.tab = "arts"
         self.scroll = 0
+        self.filter = "all"
+        self.sort = "rarity"
+        self.query = ""
+        self.search_focus = False
+
+    def text_input(self, ev):
+        if not self.search_focus or ev.type != pygame.KEYDOWN:
+            return False
+        if ev.key == pygame.K_ESCAPE:
+            self.search_focus = False
+            return True
+        if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self.search_focus = False
+            return True
+        if ev.key == pygame.K_BACKSPACE:
+            self.query = self.query[:-1]
+            return True
+        ch = getattr(ev, "unicode", "")
+        if ch and ch.isprintable():
+            self.query += ch
+        return True
 
     def arts(self):
         prof = self.app.profile
-        return sorted(prof.stash.values(), key=lambda a: (-A.RARITY_ORDER.index(a["rarity"]), a["set"], a["kind"]))
+        arts = list(prof.stash.values())
+        if self.query.strip():
+            q = self.query.strip().lower()
+            arts = [a for a in arts if q in A.art_name(prof.xd, a).lower()
+                    or q in prof.xd["artifacts"]["sets"][a["set"]]["name"].lower()
+                    or q in prof.xd["artifacts"]["kinds"][a["kind"]]["name"].lower()]
+        if self.filter == "fav":
+            arts = [a for a in arts if prof.art_flag(a["uid"], "favorite")]
+        elif self.filter == "junk":
+            arts = [a for a in arts if prof.art_flag(a["uid"], "junk")]
+        if self.sort == "power":
+            arts.sort(key=lambda a: -A.power_score(prof.xd, [a]))
+        elif self.sort == "set":
+            arts.sort(key=lambda a: (a["set"], -A.RARITY_ORDER.index(a["rarity"])))
+        elif self.sort == "level":
+            arts.sort(key=lambda a: (-a.get("level", 0), -A.RARITY_ORDER.index(a["rarity"])))
+        else:
+            arts.sort(key=lambda a: (-A.RARITY_ORDER.index(a["rarity"]), a["set"], a["kind"]))
+        return arts
 
     def act(self, action, button=1):
         prof = self.app.profile
@@ -1443,6 +1542,30 @@ class ChestOverlay(Overlay):
         if kind == "tab":
             self.tab = action[1]
             self.scroll = 0
+        elif kind == "filter":
+            self.filter = action[1]
+        elif kind == "sort":
+            self.sort = action[1]
+        elif kind == "search":
+            self.search_focus = True
+        elif kind == "fav":
+            prof.toggle_art_flag(action[1], "favorite")
+        elif kind == "junk":
+            prof.toggle_art_flag(action[1], "junk")
+        elif kind == "sets":
+            self.scene.overlay = SetCollectionOverlay(self.scene, back=self)
+        elif kind == "auto":
+            if h is not None:
+                n = prof.auto_equip_best(h)
+                self.scene.say(f"Надето лучших артефактов: {n}" if n else "Уже надето лучшее")
+        elif kind == "preset_save":
+            if h is not None:
+                prof.save_art_preset(h)
+                self.scene.say("Сборка сохранена")
+        elif kind == "preset_apply":
+            if h is not None:
+                n = prof.apply_art_preset(h)
+                self.scene.say(f"Сборка надета: {n}" if n else "Сборка пуста")
         elif kind == "art" and h is not None:
             if action[1] in h.arts:
                 prof.unequip(h, action[1])
@@ -1499,6 +1622,9 @@ class ChestOverlay(Overlay):
                                                 ("rough", f"Необработанные · {len(prof.rough)}"), ("mats", "Материалы")),
                            self.tab, "tab", h=34)
             y0 += 48
+        if self.tab == "arts":
+            self.draw_art_toolbar(surf, r, y0)
+            y0 += 76
         if self.tab == "gems" and not h:
             self.draw_gems(surf, r, y0)
         elif self.tab == "rough" and not h:
@@ -1509,6 +1635,27 @@ class ChestOverlay(Overlay):
             self.draw_mats(surf, r, y0)
         else:
             self.draw_arts(surf, r, y0)
+
+    def draw_art_toolbar(self, surf, r, y):
+        x = self.scene.seg(surf, r.x + 18, y, (("all", "Все"), ("fav", "Изб."), ("junk", "Мусор")),
+                           self.filter, "filter", h=30)
+        x = self.scene.seg(surf, x + 10, y,
+                           (("rarity", "Редкость"), ("power", "Сила"), ("set", "Сет"), ("level", "Ур.")),
+                           self.sort, "sort", h=30)
+        self.scene.btn(surf, pygame.Rect(r.right - 128, y, 110, 30), "Сеты", "sets", True)
+        sr = pygame.Rect(r.x + 18, y + 36, 270, 30)
+        pygame.draw.rect(surf, (28, 22, 16), sr, border_radius=6)
+        pygame.draw.rect(surf, GOLD if self.search_focus else (80, 62, 42), sr, 1, border_radius=6)
+        T.text(surf, fit(self.query or "Поиск: название, сет, вид", 14, sr.w - 18), (sr.x + 8, sr.y + 7), 14,
+               T.TEXT if self.query else T.TEXT_DIM)
+        self.scene.hit(sr, "search", "Клик — ввести поиск; Esc — выйти")
+        if self.hero is not None:
+            self.scene.btn(surf, pygame.Rect(r.x + 302, y + 36, 120, 30), "Лучшее", "auto", True,
+                           tip="Надеть лучшие артефакты по силе")
+            self.scene.btn(surf, pygame.Rect(r.x + 430, y + 36, 120, 30), "Сохранить", "preset_save", True,
+                           tip="Сохранить текущую сборку артефактов")
+            self.scene.btn(surf, pygame.Rect(r.x + 558, y + 36, 100, 30), "Надеть", "preset_apply", True,
+                           tip="Надеть сохранённую сборку")
 
     def draw_arts(self, surf, r, y0):
         prof = self.app.profile
@@ -1546,7 +1693,21 @@ class ChestOverlay(Overlay):
             act = ("art", art["uid"]) if h is not None and not locked else None
             tip = WS.art_tip(prof, art) + ([("клик — " + ("снять" if mine else f"надеть на {h.name}"), T.TEXT_DIM)]
                                            if act else [])
+            if h is not None:
+                cur = next((a for a in prof.worn(h) if a["kind"] == art["kind"]), None)
+                if cur and cur["uid"] != art["uid"]:
+                    delta = A.power_score(xd, [art]) - A.power_score(xd, [cur])
+                    tip += [(f"Сейчас: {A.art_name(xd, cur)}", T.TEXT_DIM),
+                            (f"Δ силы: {delta:+.0%}", BLESS if delta >= 0 else CURSE)]
             self.scene.hit(tr, act, tip)
+            star = pygame.Rect(tr.right - 26, tr.y + 6, 18, 18)
+            T.text(surf, "И" if prof.art_flag(art["uid"], "favorite") else "·", star.center, 14,
+                   GOLD if prof.art_flag(art["uid"], "favorite") else T.TEXT_DIM, True, center=True)
+            self.scene.hit(star, ("fav", art["uid"]), ["Избранное", "клик — переключить"])
+            junk = pygame.Rect(tr.right - 46, tr.y + 6, 18, 18)
+            T.text(surf, "М" if prof.art_flag(art["uid"], "junk") else "·", junk.center, 14,
+                   CURSE if prof.art_flag(art["uid"], "junk") else T.TEXT_DIM, True, center=True)
+            self.scene.hit(junk, ("junk", art["uid"]), ["Мусор", "клик — пометить/снять"])
 
     def draw_gems(self, surf, r, y0):
         prof = self.app.profile
@@ -1591,6 +1752,54 @@ class ChestOverlay(Overlay):
             x += 292
             if x + 280 > r.right - 18:
                 x, y = r.x + 18, y + 106
+
+
+class SetCollectionOverlay(Overlay):
+    """Коллекция сетов: сколько предметов собрано и каких видов не хватает."""
+
+    def __init__(self, scene, back=None):
+        super().__init__(scene)
+        self.back = back
+
+    def draw(self, surf):
+        prof = self.app.profile
+        xd = prof.xd
+        r = self.frame(surf, "Коллекция сетов")
+        kinds = list(xd["artifacts"]["kinds"])
+        owned = {}
+        for a in prof.stash.values():
+            owned.setdefault(a["set"], set()).add(a["kind"])
+        for h in prof.roster:
+            for a in prof.worn(h):
+                owned.setdefault(a["set"], set()).add(a["kind"])
+        sets = list(xd["artifacts"]["sets"].items())
+        cols = 3
+        gap = 12
+        cw = (r.w - 40 - gap * (cols - 1)) // cols
+        ch = 132
+        y0 = r.y + 64
+        for i, (sid, s) in enumerate(sets):
+            cr = pygame.Rect(r.x + 20 + (i % cols) * (cw + gap), y0 + (i // cols) * (ch + gap), cw, ch)
+            have = owned.get(sid, set())
+            col = WS.rar_color(xd, s["rarity"])
+            pygame.draw.rect(surf, (34, 26, 18), cr, border_radius=9)
+            pygame.draw.rect(surf, col, cr, 2, border_radius=9)
+            T.text(surf, fit(s["name"], 18, cw - 28), (cr.x + 14, cr.y + 10), 18, col, True)
+            T.text(surf, f"{len(have)}/{len(kinds)} · {xd['artifacts']['rarities'][s['rarity']]['name']}",
+                   (cr.x + 14, cr.y + 34), 13, T.TEXT_DIM)
+            for j, kind in enumerate(kinds):
+                kr = pygame.Rect(cr.x + 14 + j * 46, cr.y + 60, 40, 40)
+                ok = kind in have
+                pygame.draw.rect(surf, (54, 44, 30) if ok else (22, 17, 13), kr, border_radius=6)
+                pygame.draw.rect(surf, col if ok else (65, 55, 45), kr, 1, border_radius=6)
+                T.text(surf, xd["artifacts"]["kinds"][kind]["name"][:1], kr.center, 16,
+                       T.TEXT if ok else T.TEXT_DIM, True, center=True)
+            missing = [xd["artifacts"]["kinds"][k]["name"] for k in kinds if k not in have]
+            T.text(surf, fit("Не хватает: " + (", ".join(missing) if missing else "всё собрано"), 12, cw - 28),
+                   (cr.x + 14, cr.bottom - 24), 12, T.TEXT_DIM)
+            self.scene.hit(cr, None, [s["name"], f"Собрано {len(have)} из {len(kinds)}",
+                                      "Не хватает: " + (", ".join(missing) if missing else "—")])
+        self.scene.btn(surf, pygame.Rect(r.right - 130, r.y + 12, 110, 32), "Назад", "close", True)
 
 
 class GemViewer(Overlay):
@@ -1983,14 +2192,39 @@ class JewelerOverlay(TradeMixin, Overlay):
                                                 prof.glory >= prof.market_buy_price(kind, g)))
 
 
+class MarketHistoryOverlay(Overlay):
+    """Короткая история средних цен на камни по походам."""
+
+    def __init__(self, scene, back=None):
+        super().__init__(scene)
+        self.back = back
+
+    def draw(self, surf):
+        prof = self.app.profile
+        r = self.frame(surf, "История цен")
+        hist = list(prof.market.get("history") or [])
+        T.text(surf, "Средняя оценка камней на прилавке после похода.", (r.x + 20, r.y + 56), 14, T.TEXT_DIM)
+        y = r.y + 92
+        if not hist:
+            T.text(surf, "История появится после первого обновления рынка.", (r.x + 20, y), 16, T.TEXT_DIM)
+        for row in reversed(hist):
+            T.text(surf, f"Поход {row.get('run', 0)}: сырые ~{row.get('rough', 0)}, гранёные ~{row.get('cut', 0)}",
+                   (r.x + 20, y), 16, T.TEXT)
+            y += 24
+        self.scene.btn(surf, pygame.Rect(r.right - 130, r.y + 12, 110, 32), "Назад", "close", True)
+
+
 class MarketRoom(RoomScene):
-    """Рынок: торговцы самоцветами (товар — после каждого похода). Слева — что продают, справа — ваши камни
-    (продать за половину цены). Клик по камню — рассмотреть."""
+    """Рынок: торговцы самоцветами (товар — после каждого похода). Слева — что продают, справа — ваши камни."""
     room = "market"
     title = "Рынок"
     sub = "Самоцветы и семена: товар обновляется после каждого похода"
     art = "room_market"
     dim = 150
+
+    def __init__(self, app):
+        super().__init__(app)
+        self.filter = "all"
 
     def room_act(self, action, button=1):
         prof = self.app.profile
@@ -2010,11 +2244,27 @@ class MarketRoom(RoomScene):
             self.overlay = JewelerOverlay(self)
         elif kind == "seed_trader":
             self.overlay = SeedTraderOverlay(self)
+        elif kind == "mfilter":
+            self.filter = action[1]
+        elif kind == "mhistory":
+            self.overlay = MarketHistoryOverlay(self, back=self)
+        elif kind == "sell_all":
+            self.overlay = ConfirmOverlay(self, "Продать все камни из сундука?",
+                                          self.sell_all_stones, back=None)
         elif kind == "gem_view":
             g = next((x for x in prof.gems + prof.rough + prof.market.get("rough", []) + prof.market.get("cut", [])
                       if x["uid"] == action[1]), None)
             if g:
                 self.overlay = GemViewer(self, g)
+
+    def sell_all_stones(self):
+        prof = self.app.profile
+        n = 0
+        for kind, items in (("rough", list(prof.rough)), ("cut", list(prof.gems))):
+            for item in items:
+                if prof.sell(kind, item["uid"]):
+                    n += 1
+        self.say(f"Продано камней: {n}" if n else "Камней нет")
 
     def draw_room(self, surf):
         prof = self.app.profile
@@ -2026,12 +2276,20 @@ class MarketRoom(RoomScene):
             T.text(surf, title, (r.x + 16, r.y + 12), 20, GLORY, True)
         self.btn(surf, pygame.Rect(left.x + 16, left.y + 44, 260, 32), "Семена у торговца", "seed_trader",
                  bool(prof.market.get("seeds")), tip="Новые растения для сада: покупка открывает вид навсегда")
+        self.btn(surf, pygame.Rect(left.x + 286, left.y + 44, 150, 32), "История цен", "mhistory", True)
+        self.seg(surf, left.x + 16, left.y + 84,
+                 (("all", "Все"), ("rough", "Сырые"), ("cut", "Гранёные")), self.filter, "mfilter", h=28)
         stock = [("rough", x) for x in prof.market.get("rough", [])] + [("cut", x) for x in prof.market.get("cut", [])]
-        draw_stone_grid(self, surf, pygame.Rect(left.x + 16, left.y + 84, left.w - 32, left.h - 98), "market_stock",
+        if self.filter != "all":
+            stock = [x for x in stock if x[0] == self.filter]
+        draw_stone_grid(self, surf, pygame.Rect(left.x + 16, left.y + 122, left.w - 32, left.h - 136), "market_stock",
                         stock, lambda kind, g: ("gem_view", g["uid"]), "Прилавок пуст — загляните после похода.",
                         price=prof.market_buy_price,
                         button=lambda kind, g: ("Купить", ("buy", kind, g["uid"]),
                                                 prof.glory >= prof.market_buy_price(kind, g)))
+        if prof.rough or prof.gems:
+            self.btn(surf, pygame.Rect(right.x + 16, right.y + 44, 220, 30), "Продать все камни", "sell_all", True,
+                     tip="Массовая продажа с подтверждением")
         w = prof.market.get("smith")
         if w:                                          # бродячий кузнец — иногда заходит
             self.btn(surf, pygame.Rect(left.right - 300, left.y + 8, 284, 36), "Бродячий кузнец: " + w["name"].split()[-1],
@@ -2042,7 +2300,7 @@ class MarketRoom(RoomScene):
                      "Бродячий ювелир: " + j["name"].split()[-1], "jeweler", True, primary=True,
                      tip=[j["name"], "книги огранок и отборные камни"])
         own = [("rough", x) for x in prof.rough] + [("cut", x) for x in prof.gems]
-        draw_stone_grid(self, surf, pygame.Rect(right.x + 16, right.y + 50, right.w - 32, right.h - 64), "market_own",
+        draw_stone_grid(self, surf, pygame.Rect(right.x + 16, right.y + 84, right.w - 32, right.h - 98), "market_own",
                         own, lambda kind, g: ("gem_view", g["uid"]), "Своих камней нет.",
                         price=prof.sell_price,
                         button=lambda kind, g: ("Продать", ("sell", kind, g["uid"]), True))
@@ -4677,11 +4935,17 @@ class BuildRoom(RoomScene):
         prof = self.app.profile
         kind = action[0] if isinstance(action, tuple) else action
         if kind == "buy":
+            cost = prof.upgrade_cost(action[1]) or {}
             if not prof.buy_upgrade(action[1]):
-                self.say("Не хватает золота, ресурсов или подходящего камня")
+                miss = prof.missing_cost(cost)
+                self.say("Не хватает: " + ", ".join(res_name(prof.xd, k) if k != "cut_gems" else "подходящий камень"
+                                                   for k, _ in miss) if miss else "Не хватает ресурсов")
         elif kind == "build":
+            cost = prof.building_cost(action[1]) or {}
             if not prof.build(action[1]):
-                self.say("Не хватает золота, ресурсов мастерских, трофеев или подходящего камня")
+                miss = prof.missing_cost(cost)
+                self.say("Не хватает: " + ", ".join(res_name(prof.xd, k) if k != "cut_gems" else "подходящий камень"
+                                                   for k, _ in miss) if miss else "Не хватает ресурсов")
 
     def items(self):
         prof = self.app.profile
