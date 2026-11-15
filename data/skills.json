@@ -624,25 +624,84 @@
   "hook": {
     "name": "Крюк",
     "ap": 3,
-    "cast": 0.0,
+    "cast": 0,
     "cooldown": 6,
     "range": 4,
     "target": "enemy",
-    "auto": {"on": true, "conds": [{"type": "target_casting"}]},
-    "effects": [{"type": "pull", "cells": 3}, {"type": "damage", "amount": 10, "kind": "melee", "on_hit_buff": {"stat": "slow", "value": 1.5, "duration": 3}}],
-    "desc": "Притягивает врага (до 4 клеток) на 3 клетки: урон 100% атаки, замедление."
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "pull",
+        "cells": 3
+      },
+      {
+        "type": "damage",
+        "amount": 10,
+        "kind": "melee",
+        "on_hit_buff": {
+          "stat": "slow",
+          "value": 1.5,
+          "duration": 3
+        }
+      },
+      {
+        "type": "guardian_zone_taunt",
+        "duration": 2
+      }
+    ],
+    "desc": "Притягивает врага в конус: урон 100% атаки, замедление и 2 сек провокации на Стража."
   },
   "shield_wall": {
     "name": "Стена щитов",
     "ap": 4,
-    "cast": 0.0,
+    "cast": 0,
     "cooldown": 10,
     "range": 0,
     "target": "self",
-    "radius": 1,
-    "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 2}]},
-    "effects": [{"type": "buff", "stat": "armor", "value": 5, "duration": 6}, {"type": "shield", "amount": 20, "duration": 6, "radius": 1}],
-    "desc": "+5 брони себе 6 сек, союзникам рядом — щит 200% силы навыков."
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 70
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "guardian_radius",
+        "value": 1,
+        "duration": 6,
+        "at": "caster"
+      },
+      {
+        "type": "buff",
+        "stat": "guardian_length",
+        "value": 1,
+        "duration": 6,
+        "at": "caster"
+      },
+      {
+        "type": "guardian_zone_buff",
+        "effects": [
+          {
+            "type": "shield",
+            "amount": 20,
+            "duration": 6
+          }
+        ]
+      }
+    ],
+    "desc": "Расширяет конус на 1 и даёт союзникам в зоне щит 200% силы навыков на 6 сек."
   },
   "brace": {
     "name": "Упор", "ap": 2, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self",
@@ -3966,5 +4025,369 @@
       }
     ],
     "desc": "Условие: потеряно 50% HP. Радиус 3: лечение, +30% входящего лечения и −20% получаемого урона на 6 сек."
+  },
+  "guardian_cover": {
+    "name": "Прикрытие",
+    "ap": 3,
+    "cast": 0,
+    "cooldown": 6,
+    "range": 5,
+    "target": "ally",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 60
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "guard",
+        "duration": 4
+      },
+      {
+        "type": "shield",
+        "amount": 15,
+        "duration": 6
+      }
+    ],
+    "desc": "Союзник 4 сек под защитой Стража: удары по нему идут в Стража, щит 150% силы навыков."
+  },
+  "guardian_stance": {
+    "name": "Стойка",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 10,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "guardian_redirect",
+        "value": 0.5,
+        "duration": 5,
+        "at": "caster"
+      },
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 3,
+        "duration": 5,
+        "at": "caster"
+      },
+      {
+        "type": "buff",
+        "stat": "slow",
+        "value": 1.15,
+        "duration": 5,
+        "at": "caster"
+      }
+    ],
+    "desc": "5 сек: доля перехвата в конусе 50%, +3 брони, но Страж двигается на 15% медленнее."
+  },
+  "guardian_rotate": {
+    "name": "Разворот строя",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 10,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "guardian_radius",
+        "value": 1,
+        "duration": 6,
+        "at": "caster"
+      },
+      {
+        "type": "buff",
+        "stat": "guardian_length",
+        "value": 1,
+        "duration": 6,
+        "at": "caster"
+      },
+      {
+        "type": "guardian_zone_buff",
+        "effects": [
+          {
+            "type": "buff",
+            "stat": "armor",
+            "value": 2,
+            "duration": 6
+          }
+        ]
+      }
+    ],
+    "desc": "6 сек: конус шире и длиннее, союзники в нём получают +2 брони."
+  },
+  "guardian_spear_guard": {
+    "name": "Копейный заслон",
+    "ap": 3,
+    "cast": 0,
+    "cooldown": 6,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "guardian_zone_strike",
+        "amount": 0.8,
+        "of": "atk",
+        "slow": 1.25,
+        "duration": 2
+      }
+    ],
+    "desc": "Удар по всем врагам в конусе: 80% атаки и замедление на 2 сек."
+  },
+  "guardian_taunt": {
+    "name": "Провокация",
+    "ap": 3,
+    "cast": 0,
+    "cooldown": 8,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "guardian_zone_taunt",
+        "duration": 4
+      }
+    ],
+    "desc": "Враги в конусе 4 сек атакуют только Стража."
+  },
+  "guardian_rescue": {
+    "name": "Рывок к союзнику",
+    "ap": 3,
+    "cast": 0,
+    "cooldown": 8,
+    "range": 5,
+    "target": "ally",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 50
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "leap_to"
+      },
+      {
+        "type": "guard",
+        "duration": 3
+      },
+      {
+        "type": "shield",
+        "amount": 15,
+        "duration": 5
+      }
+    ],
+    "desc": "Прыжок к союзнику: 3 сек удары по нему идут в Стража, щит 150% силы навыков."
+  },
+  "guardian_pull_ally": {
+    "name": "Вытащить",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 6,
+    "range": 4,
+    "target": "ally",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 50
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "guardian_pull_ally"
+      },
+      {
+        "type": "shield",
+        "amount": 10,
+        "duration": 5
+      }
+    ],
+    "desc": "Перемещает союзника в конус за спину Стража и даёт щит."
+  },
+  "guardian_oath": {
+    "name": "Обет защиты",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 12,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 60
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "guardian_oath",
+        "hp": 0.08,
+        "shield": 25,
+        "duration": 6
+      }
+    ],
+    "desc": "Страж жертвует 8% HP: союзники в конусе получают щит 250% силы навыков."
+  },
+  "guardian_warcry": {
+    "name": "Клич защиты",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "ult": true,
+    "ult_cond": {
+      "count": "intercept",
+      "need": 2,
+      "desc": "2 перехваченных удара"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 55
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "shield",
+        "amount": 0.2,
+        "of": "hp",
+        "pct": true,
+        "duration": 8,
+        "radius": 2
+      },
+      {
+        "type": "taunt",
+        "radius": 2,
+        "duration": 4
+      }
+    ],
+    "desc": "Условие: 2 перехваченных удара. Щит всем союзникам на 20% HP и провокация врагов на 4 сек."
+  },
+  "guardian_save": {
+    "name": "Спасение строя",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 24,
+    "range": 5,
+    "target": "ally",
+    "ult": true,
+    "ult_cond": {
+      "count": "intercept",
+      "need": 3,
+      "desc": "3 перехваченных удара"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 40
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "leap_to"
+      },
+      {
+        "type": "guard",
+        "duration": 3
+      },
+      {
+        "type": "shield",
+        "amount": 0.15,
+        "of": "hp",
+        "pct": true,
+        "duration": 6
+      }
+    ],
+    "desc": "Условие: 3 перехваченных удара. Прыжок к союзнику, 3 сек весь урон по нему идёт в Стража, щит 15% HP."
+  },
+  "guardian_break": {
+    "name": "Приказ на прорыв",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "ult": true,
+    "ult_cond": {
+      "count": "intercept",
+      "need": 4,
+      "desc": "4 перехваченных удара"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "guardian_zone_buff",
+        "effects": [
+          {
+            "type": "buff",
+            "stat": "armor_pen",
+            "value": 0.2,
+            "duration": 5
+          },
+          {
+            "type": "buff",
+            "stat": "atk_mult",
+            "value": 1.15,
+            "duration": 5
+          }
+        ]
+      }
+    ],
+    "desc": "Условие: 4 перехваченных удара. Союзники в конусе 5 сек игнорируют 20% брони и наносят +15% урона."
   }
 }

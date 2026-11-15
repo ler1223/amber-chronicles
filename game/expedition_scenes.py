@@ -2100,7 +2100,7 @@ class GiftDetailScene(XScene):
         self._show()
 
     def _prect(self):
-        return pygame.Rect(T.SCREEN_W - 24 - 700, 96, 700, 420)
+        return pygame.Rect(T.REAL_W - 24 - 700, 96, 700, 420)
 
     def relayout(self):
         if hasattr(self, "preview"):
@@ -2185,7 +2185,7 @@ class GiftDetailScene(XScene):
         run, g = self.run, self.g
         self.hits = []
         surf.fill(T.BG)
-        left = pygame.Rect(24, 24, T.SCREEN_W - 24 - 700 - 24 - 24, T.SCREEN_H - 110)
+        left = pygame.Rect(24, 24, T.REAL_W - 24 - 700 - 24 - 24, T.SCREEN_H - 110)
         T.frame(surf, left, 245, accent=BLESS, corner=BLESS)
         ic = icon(f"gift_{self.gid}", 64)
         x, y = left.x + 16, left.y + 14
@@ -2258,9 +2258,9 @@ class GiftDetailScene(XScene):
             col = T.TEXT if a == b else (BLESS if better else CURSE)
             T.text(surf, f"{name}: {a} → {b}{pct}", (r.x, y2), 16, col, True)
             y2 += 22
-        self.button(surf, pygame.Rect(T.SCREEN_W - 24 - 260, T.SCREEN_H - 64, 260, 46), "Взять дар (Enter)", "take",
+        self.button(surf, pygame.Rect(T.REAL_W - 24 - 260, T.SCREEN_H - 64, 260, 46), "Взять дар (Enter)", "take",
                     bool(self.fit), BLESS)
-        self.button(surf, pygame.Rect(T.SCREEN_W - 24 - 260 - 270, T.SCREEN_H - 64, 250, 46), "Другой дар (Esc)",
+        self.button(surf, pygame.Rect(T.REAL_W - 24 - 260 - 270, T.SCREEN_H - 64, 250, 46), "Другой дар (Esc)",
                     "back", True, (170, 160, 210))
         self.draw_tip(surf)
 
@@ -2353,7 +2353,7 @@ class PickScene(XScene):
         self.preview = SkillPreview(self.run.data, self._prect(), zoom=62)
 
     def _prect(self):
-        return pygame.Rect(T.SCREEN_W - 24 - 640, 92, 640, 330)
+        return pygame.Rect(T.REAL_W - 24 - 640, 92, 640, 330)
 
     def relayout(self):
         if hasattr(self, "preview"):
@@ -2523,7 +2523,7 @@ class PickScene(XScene):
         T.text(surf, f"{run.data.classes[h.cls]['name']} · ур. {h.level} — выберите улучшение"
                + (f" (ещё {h.sp - 1})" if h.sp > 1 else ""), (24 + img.get_width() + 12, 118), 15, T.TEXT)
         cards = run.pick_cards(h)
-        left_w = T.SCREEN_W - 24 - 640 - 24 - 24
+        left_w = T.REAL_W - 24 - 640 - 24 - 24
         y = 160
         for i, c in enumerate(cards):
             r = pygame.Rect(24, y, left_w, 150)

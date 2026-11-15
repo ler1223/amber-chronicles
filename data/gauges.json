@@ -6,7 +6,6 @@
   "priest": {"name": "Вера", "color": [255, 240, 170], "trickle": 8.0, "gain": {"heal_given": 1}, "desc": "+1 за лечение союзника; чудеса стоят Веры", "max": 5},
   "assassin": {"name": "Тень", "color": [170, 130, 230], "trickle": 8.0, "gain": {"unseen": 1.5}, "desc": "+1 за 1.5 сек, пока никто из врагов не целится в ассасина"},
   "druid": {"name": "Дикость", "color": [140, 210, 100], "trickle": 8.0, "gain": {"form_time": 2.0, "hit_taken": 1}, "desc": "+1 за 2 сек в облике зверя, +1 за пропущенный удар"},
-  "guardian": {"name": "Рубеж", "color": [200, 210, 230], "trickle": 8.0, "gain": {"still": 2.5, "collision": 1}, "desc": "+1 за 2.5 сек на месте"},
   "shaman": {"name": "Заряд", "color": [120, 190, 255], "trickle": 8.0, "gain": {"aura": 1}, "desc": "+1 за срабатывание своего тотема"},
   "bard": {"name": "Ноты", "color": [255, 170, 220], "trickle": 8.0, "gain": {"ally_skill": 1}, "desc": "+1 за навык союзника рядом (3 клетки)"},
   "alchemist": {"name": "Запал", "color": [255, 200, 90], "trickle": 8.0, "gain": {"reaction": 1, "collision": 1}, "desc": "+1 за реакцию тегов от удара отряда и за столкновение"},

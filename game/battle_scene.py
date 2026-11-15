@@ -75,6 +75,8 @@ class BattleScene:
         self.view.reset(self.combat)
         self.phase = "battle" if self.autoplay else "deploy"
         self.paused = not self.autoplay
+        self.auto_pause = bool(self.on_finish) and not self.autoplay and not self.view.simple
+        self._auto_hp_cd = 0.0
         self.slowmo = False
         self.acc = 0.0
         self.targeting = None
@@ -82,6 +84,7 @@ class BattleScene:
         self.mouse = (0, 0)
         self.toast = None
         self.inspect = None      # враг, чьё описание закреплено кликом
+        self.inspect_hero = None # герой, чья карточка открыта слева
         self.picked = None       # юнит, взятый для перестановки
         self.route = None        # маршрут, который игрок рисует правой кнопкой: [клетки]
         self.pick = None         # юнит под курсором (подсвечен кольцом)
@@ -160,6 +163,20 @@ class BattleScene:
             self.combat.step()
             self.acc -= self.combat.dt
             steps += 1
+        if self._auto_hp_cd > 0:
+            self._auto_hp_cd = max(0.0, self._auto_hp_cd - real_dt)
+        if self.auto_pause and not self.paused and not self.combat.result:
+            enemy_cast = any(u.team == ENEMY and getattr(u, "cast", None) for u in self.combat.units) or \
+                any(e.get("t") == "skill" and getattr(e.get("unit"), "team", None) == ENEMY
+                    for e in self.combat.events)
+            low_hp = any(h.alive and h.hp / max(1, h.max_hp) <= 0.3 for h in self.combat.heroes(PLAYER))
+            if enemy_cast:
+                self.paused = True
+                self.say("Автопауза: враг применяет навык")
+            elif low_hp and self._auto_hp_cd <= 0:
+                self.paused = True
+                self._auto_hp_cd = 8.0
+                self.say("Автопауза: у героя мало HP")
         if self.tutorial:
             self.tutorial.observe(self.combat.events)
         self.view.consume(self.combat.events)
@@ -314,6 +331,18 @@ class BattleScene:
             self._autocast_wheel(ev.y)
         elif ev.type == pygame.MOUSEBUTTONDOWN:
             self.mouse = ev.pos
+            if ev.button == 1 and self.view.info_close and self.view.info_close.collidepoint(ev.pos):
+                self.inspect = None
+                self.inspect_hero = None
+                return
+            if ev.button == 1 and self.view.hero_info_rect and self.view.hero_info_rect.collidepoint(ev.pos):
+                u = self.selected if self.selected and self.selected.team == PLAYER else None
+                if u is None:
+                    u = next((h for h in self.combat.heroes(PLAYER) if h.alive), None)
+                if u is not None:
+                    self.inspect_hero = u
+                    self.inspect = None
+                return
             if ev.button in (4, 5) or self._autocast_click(ev.pos, ev.button):
                 return
             if self.phase == "deploy":
@@ -506,6 +535,18 @@ class BattleScene:
         if key == pygame.K_F9:                      # пиксельный пилот огня и льда ↔ старые эффекты
             self.say("Эффекты огня и льда: " + self.view.pix.toggle())
             return
+        if key == pygame.K_F4:
+            self.auto_pause = not self.auto_pause
+            self.say("Автопауза: " + ("вкл" if self.auto_pause else "выкл"))
+            return
+        if key == pygame.K_h:
+            u = self.selected if self.selected and self.selected.team == PLAYER else None
+            if u is None:
+                u = next((h for h in self.combat.heroes(PLAYER) if h.alive), None)
+            if u is not None:
+                self.inspect_hero = u
+                self.inspect = None
+            return
         if key == pygame.K_F5 and not self.run_mode:
             self.start(self.encounter_index)
         elif key == pygame.K_F6 and not self.run_mode:
@@ -551,8 +592,9 @@ class BattleScene:
             settings.put("battle_speed", self.speed_idx)      # переходит в следующие бои и запуски
         elif key == pygame.K_ESCAPE:
             queued = [u for u in self._selected_team() if u.queue]
-            if self.inspect is not None:
+            if self.inspect is not None or self.inspect_hero is not None:
                 self.inspect = None
+                self.inspect_hero = None
             elif self.targeting:
                 self.targeting = None
                 self.target_queue = False
@@ -573,6 +615,7 @@ class BattleScene:
         self.selected_units = [u] if u is not None else []
         self.targeting = None
         self.inspect = None
+        self.inspect_hero = None
 
     def _selected_team(self):
         """Выделенные живые герои. Основной выбранный всегда входит в список."""
@@ -838,8 +881,10 @@ class BattleScene:
         target_unit = c.unit_at(cell)
         if target_unit is not None and target_unit.team == ENEMY and not target_unit.obj:
             self.inspect = target_unit
+            self.inspect_hero = None
         elif target_unit is None and button == 1:
             self.inspect = None
+            self.inspect_hero = None
 
         if self.targeting:
             if button == 3:

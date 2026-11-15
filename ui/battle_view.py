@@ -164,6 +164,8 @@ class BattleView:
         self.depth_surf = None     # с OpenGL: глубина фигурок по силуэтам (частицы прячутся за ближними)
         self.enemies_collapsed = False   # сюжет и экспедиция: список врагов свёрнут
         self.toggle_rect = None
+        self.info_close = None      # крестик открытой карточки юнита
+        self.hero_info_rect = None  # отдельная кнопка «Инфо» выбранного героя
         self.names = {}            # сюжет: класс → имя персонажа
         self._portraits = {}
         self._ground = None
@@ -186,6 +188,8 @@ class BattleView:
         self.combat = combat
         self.grid = combat.grid
         self.banner = None         # крупная надпись над полем: волна, передышка, фаза босса
+        self.info_close = None
+        self.hero_info_rect = None
         self._meteor_warn = 0.0    # метеорный дождь: тёмная рамка по краям экрана
         self.fx.clear()
         self.log.clear()
@@ -1482,6 +1486,7 @@ class BattleView:
                 pygame.draw.rect(self.overlay, (*f.color, int(40 + 110 * f.k * pulse)), r)
                 pygame.draw.rect(self.overlay, (*f.color, 230), r.inflate(-int(30 * (1 - f.k)), -int(30 * (1 - f.k))), 3)
         self._draw_mechanics_ground(c)
+        self._draw_guardian_zones(c)
         hover = scene.hover_cell if not scene.dragging else None
         if hover:                                  # мягкая сетка: клетка под курсором подсвечена на земле
             pygame.draw.rect(self.overlay, (255, 255, 255, 40), FR(hover))
@@ -1540,6 +1545,18 @@ class BattleView:
                 blink = int(self.clock * 10) % 2
                 pygame.draw.circle(self.overlay, (255, 80, 50, 160 if blink else 60), (fx, fy), 30, 4)
 
+    def _draw_guardian_zones(self, c):
+        """Конус Стража: цвет класса, мягкая заливка и пульсация при перехвате."""
+        for g in c.heroes(PLAYER):
+            if not g.alive or (g.passive or {}).get("core") != "guardian_zone":
+                continue
+            col = self.tint(g)["accent"]
+            pulse = 0.5 + 0.5 * math.sin(self.clock * 3.0)
+            for p in c.guardian_zone_cells(g):
+                r = FR(p)
+                pygame.draw.rect(self.overlay, (*col, int(18 + 12 * pulse)), r)
+                pygame.draw.rect(self.overlay, (*col, int(110 + 55 * pulse)), r, 1)
+
     def _draw_objective_ground(self, c):
         """Круг удержания и клетки, откуда выйдет следующая волна (в передышку и на разведке)."""
         ob = c.objective
@@ -1584,6 +1601,7 @@ class BattleView:
 
     def draw_ui(self, surf, scene):
         c = scene.combat
+        self.info_close = None
         self._draw_meteor_warn(surf)
         self.icon_tips = []
         for u in c.units:
@@ -1614,12 +1632,13 @@ class BattleView:
             self._draw_right(surf, scene)
         self._draw_bottom(surf, scene)
         self._draw_enemy_info(surf, scene)
+        self._draw_hero_info(surf, scene)
         if self.stats_open:
             u = scene.selected if scene.selected is not None and scene.selected.team == PLAYER else None
             u = u or next((h for h in c.heroes(PLAYER) if h.alive), None)
             if u is not None:
                 self._draw_stats_panel(surf, scene, u)
-        self._draw_hero_tip(surf, scene)
+        # Подсказка по наведению на портрет отключена: карточка героя открывается кликом.
         if getattr(scene, "route", None):
             cells, sec = scene.route_preview()
             if cells:
@@ -2320,12 +2339,44 @@ class BattleView:
         surf.blit(shade, rect.topleft)
         pygame.draw.rect(surf, (150, 225, 255), rect, 1)
 
+    def _forecast_damage(self, u, sk, target):
+        """Грубый прогноз прямого урона навыка до реакции: цифра для решения, не точная формула."""
+        total = 0.0
+        for eff in sk.get("effects", []):
+            if eff.get("type") not in ("damage", "bonus_damage"):
+                continue
+            if eff.get("atk_pct") is not None:
+                total += u.atk_damage * float(eff["atk_pct"])
+            elif eff.get("amount") is not None:
+                amount = float(eff["amount"])
+                if eff.get("of") == "atk":
+                    amount *= u.atk_damage
+                elif eff.get("of") == "hp":
+                    amount *= target.max_hp
+                total += amount
+            elif eff.get("pct") is not None:
+                total += target.max_hp * float(eff["pct"])
+        if total and sk.get("target") == "enemy":
+            total = max(1, total - target.total_armor())
+        return int(round(total))
+
+    def _reaction_preview(self, sk, target):
+        incoming = {e.get("tag") for e in sk.get("effects", []) if e.get("tag")}
+        have = set(target.statuses)
+        for r in self.data.reactions.get("unit", []):
+            a, b = r.get("tags", [None, None])[:2]
+            if (a in incoming and b in have) or (b in incoming and a in have):
+                return r
+        return None
+
     def _draw_hover(self, surf, scene):
         pos = scene.hover_cell
         if not pos:
             return
         c = scene.combat
         u = c.unit_at(pos)
+        if u is not None:
+            return
         lines = []
         if u and u.obj:
             col = T.TEAM_PLAYER if u.team == PLAYER else T.TEAM_ENEMY if u.team == ENEMY else (230, 210, 170)
@@ -2388,6 +2439,24 @@ class BattleView:
                 lines.append((f"Кастует: {u.skill_defs[u.cast['skill']]['name']} ({u.cast['left']:.1f}с)", T.CAST))
             if u.on_death:
                 lines.append((f"При смерти: {u.on_death['name']}", (255, 170, 90)))
+            if u.cast and u.cast.get("target") is not None:
+                tgt = u.cast.get("target")
+                tname = getattr(tgt, "name", None)
+                if tname:
+                    lines.append((f"Цель каста: {tname}", T.CAST))
+        if scene.targeting and scene.selected and u is not None and not u.obj:
+            sk = scene.selected.skill_defs.get(scene.targeting)
+            if sk and sk.get("target") == "enemy":
+                lines.append(("Прогноз навыка", T.AMBER))
+                dmg = self._forecast_damage(scene.selected, sk, u)
+                if dmg:
+                    lines.append((f"≈{dmg} урона до реакции и укрытия", (255, 215, 140)))
+                react = self._reaction_preview(sk, u)
+                if react:
+                    lines.append((f"Реакция: {react['name']} — {react['desc']}", (255, 170, 110)))
+                tags = list(dict.fromkeys(e.get("tag") for e in sk.get("effects", []) if e.get("tag")))
+                if tags:
+                    lines.append(("Теги: " + ", ".join(self.data.tags[t]["name"] for t in tags), T.TEXT_DIM))
         cell = c.grid.get(pos)
         cfg = self.data.config
         desc = cfg["terrain"][cell.terrain]["name"]
@@ -2451,9 +2520,13 @@ class BattleView:
             T.text(surf, "ЗАМЕДЛЕНИЕ", (T.GRID_X + 590, 18), 22, (150, 210, 255), True)
         if self.simple:
             return
-        T.text(surf, "Space пауза · Shift замедл. · F1–F3 скорость", (RIGHT_X, 10), 13, T.TEXT_DIM)
-        T.text(surf, "Q–R навыки · Shift — в очередь (ход, атака, навык) · Esc — очистить", (RIGHT_X, 30), 13, T.TEXT_DIM)
-        T.text(surf, "Рамка / Shift+клик — выделение · Ctrl+1–4 — группа · ПКМ — приказ", (RIGHT_X, 50), 13, T.TEXT_DIM)
+        hint_w = T.SCREEN_W - RIGHT_X - 8
+        T.text(surf, fit("Space — пауза · Shift — замедл. · F1–F3 — скорость", 13, hint_w),
+               (RIGHT_X, 10), 13, T.TEXT_DIM)
+        T.text(surf, fit("F4 — автопауза · Q–R — навыки · Shift — очередь", 13, hint_w),
+               (RIGHT_X, 30), 13, T.TEXT_DIM)
+        T.text(surf, fit("Esc — очистить · Shift+клик — выделение · Ctrl+1–4 — группа · ПКМ — приказ",
+                         12, hint_w), (RIGHT_X, 50), 12, T.TEXT_DIM)
 
     def _side_panel(self, surf, h=None):
         panel = pygame.Rect(RIGHT_X, PANEL_Y, T.SCREEN_W - RIGHT_X - 16, h or T.SCREEN_H - PANEL_Y - 16)
@@ -2512,60 +2585,145 @@ class BattleView:
                 T.text(surf, text, (box.x + 7, box.y + 3), 13, T.TEXT)
                 return
 
-    def _draw_enemy_info(self, surf, scene):
-        """Закреплённая карточка врага в правом верхнем углу: описание, пассивка, навыки и особые черты."""
-        u = getattr(scene, "inspect", None)
-        if u is None or not u.alive or u.obj:
-            return
-        w = min(400, T.SCREEN_W - 32)
+    def _draw_info_card(self, surf, u, side, scene=None):
+        """Большая карточка юнита: модель, HP-полоса с числами, статы и описание."""
+        w = min(470, T.SCREEN_W - 32)
+        x = 16 if side == "left" else T.SCREEN_W - w - 16
+        y = 8
+        col = u.color
         rows = []                       # (текст, цвет, размер, жирный)
-        rows.append((fit(u.name, 19, w - 24), T.TEAM_ENEMY, 19, True))
-        tier = "Босс" if u.boss else "Элита" if u.elite else "Рядовой"
-        rows.append((fit(f"{tier} · {self.role_name(u.proto)} · HP {u.hp}/{u.max_hp} · "
-                         f"броня {u.total_armor()} · атака {u.atk_damage}", 13, w - 24), T.TEXT, 13, False))
-        desc = u.proto.get("desc")
-        if desc:
-            rows.append(("", T.TEXT_DIM, 6, False))
-            for line in T.wrap(desc, 13, w - 24):
-                rows.append((line, (230, 220, 200), 13, False))
-        rows.append(("", T.TEXT_DIM, 6, False))
-        rows.append(("Пассивка", T.AMBER, 14, True))
-        p = u.passive
-        if p:
-            for line in T.wrap(f"{p['name']} — {p.get('desc', '')}", 13, w - 24):
-                rows.append((line, (255, 190, 120), 13, False))
+        if side == "left":
+            cls = self.data.classes.get(u.proto_id, {})
+            who = self.names.get(u.proto_id)
+            cls_name = cls.get("name", u.name)
+            title = f"{who} · {cls_name}" if who else (u.name if u.name != cls_name else cls_name)
+            rows.append((fit(title, 21, w - 48), T.TEAM_PLAYER, 21, True))
+            rows.append((fit(f"Уровень {u.level or 1} · {self.role_name(u.proto)}", 13, w - 28), T.TEXT, 13, False))
+            about = cls.get("about", "")
+            if about:
+                rows.append(("", T.TEXT_DIM, 5, False))
+                for line in T.wrap(about, 13, w - 28):
+                    rows.append((line, (230, 220, 200), 13, False))
+            rows.append(("", T.TEXT_DIM, 5, False))
+            rows.append(("Пассивка и шкала", T.AMBER, 14, True))
+            p = u.passive
+            if p:
+                for line in T.wrap(f"{p['name']} — {p.get('desc', '')}", 13, w - 28):
+                    rows.append((line, (255, 190, 120), 13, False))
+            if u.gauge:
+                for line in T.wrap(f"{u.gauge['name']}: {u.gauge['desc']}", 13, w - 28):
+                    rows.append((line, self.gauge_color(u), 13, False))
         else:
-            rows.append(("Нет", T.TEXT_DIM, 13, False))
+            title = u.name
+            rows.append((fit(title, 21, w - 48), T.TEAM_ENEMY, 21, True))
+            tier = "Босс" if u.boss else "Элита" if u.elite else "Рядовой"
+            rows.append((fit(f"{tier} · {self.role_name(u.proto)}", 13, w - 28), T.TEXT, 13, False))
+            if scene is not None and scene.targeting and scene.selected:
+                sk = scene.selected.skill_defs.get(scene.targeting)
+                if sk and sk.get("target") == "enemy":
+                    rows.append(("", T.TEXT_DIM, 5, False))
+                    rows.append(("Прогноз навыка", T.AMBER, 14, True))
+                    dmg = self._forecast_damage(scene.selected, sk, u)
+                    if dmg:
+                        rows.append((f"≈{dmg} урона до реакции и укрытия", (255, 215, 140), 13, False))
+                    react = self._reaction_preview(sk, u)
+                    if react:
+                        rows.append((f"Реакция: {react['name']} — {react['desc']}", (255, 170, 110), 13, False))
+            desc = u.proto.get("desc")
+            if desc:
+                rows.append(("", T.TEXT_DIM, 5, False))
+                for line in T.wrap(desc, 13, w - 28):
+                    rows.append((line, (230, 220, 200), 13, False))
+            rows.append(("", T.TEXT_DIM, 5, False))
+            rows.append(("Пассивка", T.AMBER, 14, True))
+            p = u.passive
+            if p:
+                for line in T.wrap(f"{p['name']} — {p.get('desc', '')}", 13, w - 28):
+                    rows.append((line, (255, 190, 120), 13, False))
+            else:
+                rows.append(("Нет", T.TEXT_DIM, 13, False))
+        rows.append(("", T.TEXT_DIM, 5, False))
+        rows.append(("Статы", T.AMBER, 14, True))
+        for label, value, col in self.full_stats(u):
+            rows.append((f"{label}: {value}", col, 12, False))
         skills = [u.skill_defs[sid] for sid in u.skills if sid in u.skill_defs]
-        rows.append(("", T.TEXT_DIM, 6, False))
+        rows.append(("", T.TEXT_DIM, 5, False))
         rows.append((f"Навыки ({len(skills)})", T.AMBER, 14, True))
         if skills:
             for sk in skills:
-                for line in T.wrap(f"{sk['name']} — {sk.get('desc', '')}", 13, w - 24):
+                for line in T.wrap(f"{sk['name']} — {sk.get('desc', '')}", 13, w - 28):
                     rows.append((line, T.TEXT, 13, False))
         else:
             rows.append(("Нет", T.TEXT_DIM, 13, False))
-        traits = self.enemy_traits(u)
-        if traits:
-            rows.append(("", T.TEXT_DIM, 6, False))
-            rows.append(("Особенности", T.AMBER, 14, True))
-            for trait in traits:
-                for line in T.wrap(trait, 13, w - 24):
-                    rows.append((line, (170, 210, 255), 13, False))
-        rows.append(("", T.TEXT_DIM, 6, False))
-        rows.append(("Esc — закрыть · клик по другому врагу — сменить", T.TEXT_DIM, 11, False))
-        h = sum(size + 4 for _, _, size, _ in rows) + 12
-        x = T.SCREEN_W - w - 16
-        y = 8
+        if side != "left":
+            traits = self.enemy_traits(u)
+            if traits:
+                rows.append(("", T.TEXT_DIM, 5, False))
+                rows.append(("Особенности", T.AMBER, 14, True))
+                for trait in traits:
+                    for line in T.wrap(trait, 13, w - 28):
+                        rows.append((line, (170, 210, 255), 13, False))
+        # высота: шапка + модель + строки; слишком длинное — обрезаем с многоточием
+        top_h = 184
+        avail = T.SCREEN_H - y - 16 - top_h - 24
+        shown, used = [], 0
+        for row in rows[1:]:
+            rh = row[2] + 4
+            if used + rh > avail:
+                shown.append(("…", T.TEXT_DIM, 13, False))
+                break
+            shown.append(row)
+            used += rh
+        h = top_h + used + 24
         box = pygame.Rect(x, y, w, h)
         pygame.draw.rect(surf, (12, 14, 18), box, border_radius=8)
         pygame.draw.rect(surf, T.PANEL_EDGE, box, 1, border_radius=8)
-        pygame.draw.rect(surf, u.color, (box.x, box.y, 4, box.h), border_radius=2)
-        ty = box.y + 8
-        for text, col, size, bold in rows:
+        pygame.draw.rect(surf, col, (box.x, box.y, 4, box.h), border_radius=2)
+        # заголовок и крестик
+        T.text(surf, fit(rows[0][0], 21, w - 48), (box.x + 14, box.y + 10), 21, rows[0][1], True)
+        close = pygame.Rect(box.right - 32, box.y + 8, 22, 22)
+        pygame.draw.rect(surf, (42, 30, 22), close, border_radius=5)
+        pygame.draw.rect(surf, T.PANEL_EDGE, close, 1, border_radius=5)
+        T.text(surf, "×", close.center, 17, T.TEXT, True, center=True)
+        self.info_close = close
+        # модель
+        img = self.sprite_of(u)
+        k = min(112 / max(1, img.get_width()), 126 / max(1, img.get_height()))
+        if k > 0:
+            img = pygame.transform.scale(img, (max(1, int(img.get_width() * k)), max(1, int(img.get_height() * k))))
+        mr = pygame.Rect(box.x + 14, box.y + 44, 126, 130)
+        pygame.draw.rect(surf, (22, 18, 15), mr, border_radius=7)
+        pygame.draw.rect(surf, T.mix(col, (0, 0, 0), 0.35), mr, 1, border_radius=7)
+        surf.blit(img, (mr.centerx - img.get_width() // 2, mr.bottom - 8 - img.get_height()))
+        # HP-полоса с числами
+        hp_r = pygame.Rect(box.x + 152, box.y + 48, w - 174, 18)
+        pygame.draw.rect(surf, (30, 20, 18), hp_r, border_radius=4)
+        fill = max(0.0, min(1.0, u.hp / max(1, u.max_hp)))
+        pygame.draw.rect(surf, T.mix((220, 65, 55), (90, 210, 100), fill),
+                         (hp_r.x, hp_r.y, int(hp_r.w * fill), hp_r.h), border_radius=4)
+        if u.shield:
+            pygame.draw.rect(surf, (225, 235, 255),
+                             (hp_r.x, hp_r.y, int(hp_r.w * min(1.0, u.shield / max(1, u.max_hp))), 3))
+        T.text(surf, f"{u.hp} / {u.max_hp}", hp_r.center, 13, (255, 255, 255), True, center=True)
+        T.text(surf, f"Броня {u.total_armor()} · атака {u.atk_damage} · AP {u.ap}/{u.ap_max}",
+               (box.x + 152, box.y + 74), 13, T.TEXT_DIM)
+        # строки описания под моделью
+        ty = box.y + top_h
+        for text, c, size, bold in shown:
             if text:
-                T.text(surf, text, (box.x + 12, ty), size, col, bold)
+                T.text(surf, text, (box.x + 14, ty), size, c, bold)
             ty += size + 4
+        T.text(surf, "× / Esc — закрыть", (box.x + 14, box.bottom - 18), 11, T.TEXT_DIM)
+
+    def _draw_enemy_info(self, surf, scene):
+        u = getattr(scene, "inspect", None)
+        if u is not None and u.alive and not u.obj:
+            self._draw_info_card(surf, u, "right", scene)
+
+    def _draw_hero_info(self, surf, scene):
+        u = getattr(scene, "inspect_hero", None)
+        if u is not None and u.alive and not u.obj:
+            self._draw_info_card(surf, u, "left", scene)
 
     def _draw_right(self, surf, scene):
         if self.simple:
@@ -2729,6 +2887,11 @@ class BattleView:
         c = scene.combat
         y = panel.y + 8
         T.text(surf, "Отряд", (panel.x + 10, y), 16, T.TEXT_DIM, True)
+        info_r = pygame.Rect(panel.right - 166, y - 2, 76, 22)
+        pygame.draw.rect(surf, (44, 32, 22), info_r, border_radius=5)
+        pygame.draw.rect(surf, T.AMBER_DIM, info_r, 1, border_radius=5)
+        T.text(surf, "Инфо", info_r.center, 13, T.TEXT, True, center=True)
+        self.hero_info_rect = info_r
         T.text(surf, "C — статы", (panel.right - 80, y + 2), 12, T.TEXT_DIM)
         y += 24
         self.squad_rects = []
@@ -2970,6 +3133,15 @@ class BattleView:
             out.append((f"Урон по {names.get(tg, tg)}", f"×{k:.2f}", (255, 200, 120)))
         if p.get("reaction_mult"):
             out.append(("Реакции героя", f"×{p['reaction_mult']:.2f}", (255, 200, 120)))
+        return out
+
+    def full_stats(self, u):
+        """Все числа юнита для карточки: живые статы, шаг и сопротивления."""
+        out = list(self.live_stats(u))
+        out.append(("Шаг", f"{u.move_time:.2f} с/клетка", T.TEXT))
+        resist = [f"{tag} ×{v:.2f}" for tag, v in sorted(u.resist.items()) if abs(v - 1.0) > 0.01]
+        if resist:
+            out.append(("Сопротивления", ", ".join(resist), (175, 205, 255)))
         return out
 
     def _draw_stats_panel(self, surf, scene, u):

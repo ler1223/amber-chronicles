@@ -147,6 +147,27 @@ def test_gift_detail_shows_numbers_and_gives_gift(tmp_path):
     assert "glass_cannon" in run.heroes[det.hero_i].gifts
 
 
+def test_pick_scene_layout_uses_real_width_inside_design(tmp_path):
+    import test_expedition_ui as U
+    from game import expedition_scenes as XS
+    from ui import theme as T
+    app = U.new_app(tmp_path)
+    XS.start_run(app, [h.uid for h in app.profile.hall()[:2]])
+    run = app.exp
+    h = run.heroes[0]
+    for o in run.heroes:
+        o.sp, o.pick_offer = 0, None
+    h.sp, h.pick_offer = 1, None
+    old = (T.SCREEN_W, T.REAL_W)
+    try:
+        T.SCREEN_W, T.REAL_W = 1280, 1911
+        with T.design():
+            sc = XS.PickScene(app, then=lambda: None, only=h)
+        assert sc.preview.rect.right == 1911 - 24
+    finally:
+        T.SCREEN_W, T.REAL_W = old
+
+
 def test_pick_scene_two_cards_with_demo(tmp_path):
     """Выбор улучшения: две карты, клик — демонстрация навыка («станет» / «сейчас»), повторный клик — взять."""
     import test_expedition_ui as U

@@ -94,6 +94,7 @@ class Display:
         """Окно изменилось: пересчитать логический холст и сообщить презентеру/сцене."""
         w, h = self.size()
         lw, lh = layout.logical_size(w, h)
+        T.REAL_W, T.REAL_H = lw, lh
         if (lw, lh) == (T.SCREEN_W, T.SCREEN_H):
             return False
         T.SCREEN_W, T.SCREEN_H = lw, lh

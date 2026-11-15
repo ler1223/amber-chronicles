@@ -1,11 +1,13 @@
-"""Таверна из комнат (квиз 2026-11-11): полоса комнат внизу — Зал, Сборы, Мастерская, Двор, Стройка, Зал славы
-(клавиши 1–6). В каждой комнате своя иллюстрация (assets/illustrations/hd/room_<id>.png, промпты — лист R) и только
-свои действия. Объекты комнат (доска поручений, сундук, станции мастеров, кровать, надгробия) — спрайты
-assets/sprites/obj_*.png (лист O); пока их нет — рисуются заглушки.
+"""Таверна из комнат (квиз 2026-11-11): полоса комнат внизу — Зал, Сборы, Мастерская, Двор, Стройка,
+Зал славы, Рынок, Шахта, Главы и Полигон (клавиши 1–9, 0). В каждой комнате своя иллюстрация
+(assets/illustrations/hd/room_<id>.png, промпты — лист R) и только свои действия. Объекты комнат
+(доска поручений, сундук, станции мастеров, кровать, надгробия) — спрайты assets/sprites/obj_*.png
+(лист O); пока их нет — рисуются заглушки.
 
 Зал — атмосфера и осмотр героев; Сборы — отряд, артефакты, глава и ступень, «В поход»; Мастерская — станции
 мастеров (ковка, огранка, алхимия) и сундук-хранилище; Двор — доска поручений внизу, выше — этажи общежития;
-Стройка — постройки таверны; Зал славы — кладбище павших (идти вперёд-назад) и летопись-книга."""
+Стройка — постройки таверны; Зал славы — кладбище павших (идти вперёд-назад) и летопись-книга; Полигон —
+тренировочный бой текущим отрядом и артефактами без похода, наград и потерь."""
 import math
 import os
 import random
@@ -42,9 +44,43 @@ ROOMS = (("hall", "Зал", "map_camp", "Герои таверны: осмотр
          ("fame", "Слава", "map_boss", "Кладбище павших и летопись героев"),
          ("market", "Рынок", "gem_ruby", "Самоцветы: купить необработанные и огранённые, продать свои"),
          ("mine", "Шахта", "mat_ore", "Шахта: рабочие добывают руды и самоцветы, пока игра открыта"),
-         ("chapters", "Главы", "map_boss", "Выбрать главу, ступень и прочитать её механики"))
+         ("chapters", "Главы", "map_boss", "Выбрать главу, ступень и прочитать её механики"),
+         ("polygon", "Полигон", "map_battle", "Тренировочный бой: проверить героев и артефакты без потерь"))
 FEATS = (("kills", "убийств"), ("battles", "боёв"), ("boss_kills", "боссов"), ("elite_kills", "элиты"),
          ("tasks", "поручений"), ("runs_won", "побед в походах"), ("falls", "падений"))
+
+
+def polygon_encounter_index(data, chapter, kind="normal"):
+    """Индекс тренировочного боя в общем списке encounters: глава + тип, с запасным вариантом."""
+    want = "normal" if kind in ("dummy", "dummies") else kind
+    rows = [(i, e) for i, e in enumerate(data.encounters)
+            if e.get("chapter", "swamp") == chapter and e.get("kind", "normal") == want]
+    if not rows:
+        rows = [(i, e) for i, e in enumerate(data.encounters) if e.get("kind", "normal") == want]
+    if not rows:
+        rows = list(enumerate(data.encounters))
+    return rows[0][0] if rows else 0
+
+
+def polygon_enemy_scale(tier=0, kind="normal"):
+    """Мягкие враги для проверки билда: сложность растёт со ступенью, но не убивает сразу."""
+    hp, dmg = {"dummy": (0.55, 0.28), "normal": (0.85, 0.55),
+               "elite": (1.45, 0.95), "boss": (2.15, 1.30)}.get(kind, (0.85, 0.55))
+    k = max(0, int(tier))
+    hp *= 1 + 0.18 * k
+    dmg *= 1 + 0.12 * k
+    return {"hp": round(hp, 3), "damage": round(dmg, 3), "power": round(dmg, 3), "level": 1 + k}
+
+
+def polygon_squad(run, heroes):
+    """Боевые прототипы выбранных героев без запуска похода: вещи, ранги и ветки сохраняются."""
+    out = []
+    for h in heroes:
+        p = run.proto(h)
+        run.preset_autocast(h, p["skill_defs"])
+        out.append({"cls": h.cls, "proto": p, "hp": run.hp_of(h), "autocast": h.autocast or None,
+                    "ac_order": h.ac_order, "ac_reserve": h.ac_reserve})
+    return out
 
 
 def hero_fit(data, cls, height):
@@ -620,6 +656,8 @@ class RoomScene(XScene):
             return
         if pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(ROOMS):
             go(self.app, ROOMS[k - pygame.K_1][0])
+        elif k == pygame.K_0 and len(ROOMS) >= 10:
+            go(self.app, ROOMS[9][0])
         elif k == pygame.K_ESCAPE:
             self.escape()
         elif self.overlay is None:
@@ -746,7 +784,12 @@ class RoomScene(XScene):
         pygame.draw.line(surf, T.AMBER_DIM, (0, y), (T.SCREEN_W, y), 2)
         menu_w, gap = 116, 6
         n = len(ROOMS)
+        compact = n >= 10
+        if compact:
+            menu_w, gap = 104, 4
         tw = (T.SCREEN_W - 16 - menu_w - gap * n) // n
+        icon_sz = 32 if compact else 40
+        label_x = 46 if compact else 58
         x = 8
         for i, (rid, name, ic, tip) in enumerate(ROOMS):
             r = pygame.Rect(x, y + 8, tw, STRIP_H - 14)
@@ -756,17 +799,18 @@ class RoomScene(XScene):
             pygame.draw.rect(surf, T.AMBER if on else (92, 68, 42), r, 2 if on else 1, border_radius=8)
             if on:
                 pygame.draw.rect(surf, T.AMBER, (r.x + 10, r.y, r.w - 20, 3))
-            img = icon(f"tab_{rid}", 40) or icon(ic, 40)
+            img = icon(f"tab_{rid}", icon_sz) or icon(ic, icon_sz)
             if img is not None:
-                surf.blit(img, (r.x + 10, r.centery - 20))
-            fs = 18 if T.font(18, True).size(name)[0] <= r.w - 70 else 15
-            T.text(surf, fit(name, fs, r.w - 66), (r.x + 58, r.centery - fs * 0.6), fs, T.AMBER if on else T.TEXT, True)
-            T.text(surf, str(i + 1), (r.right - 14, r.y + 6), 12, T.TEXT_DIM, True)
+                surf.blit(img, (r.x + 8, r.centery - icon_sz // 2))
+            fs = 16 if compact else 18 if T.font(18, True).size(name)[0] <= r.w - 70 else 15
+            T.text(surf, fit(name, fs, r.w - label_x - 6), (r.x + label_x, r.centery - fs * 0.6), fs,
+                   T.AMBER if on else T.TEXT, True)
+            T.text(surf, "0" if i == 9 else str(i + 1), (r.right - 14, r.y + 6), 12, T.TEXT_DIM, True)
             b = self.badge_for(rid)
             if b:
-                pygame.draw.circle(surf, (200, 70, 50), (r.x + 46, r.y + 12), 9)
-                T.text(surf, b, (r.x + 46, r.y + 12), 12, (255, 240, 220), True, center=True)
-            self.hit(r, ("room", rid), [(name, T.AMBER), tip, f"клавиша {i + 1}"])
+                pygame.draw.circle(surf, (200, 70, 50), (r.x + label_x - 8, r.y + 12), 9)
+                T.text(surf, b, (r.x + label_x - 8, r.y + 12), 12, (255, 240, 220), True, center=True)
+            self.hit(r, ("room", rid), [(name, T.AMBER), tip, "клавиша 0" if i == 9 else f"клавиша {i + 1}"])
             x += tw + gap
         r = pygame.Rect(T.SCREEN_W - 8 - menu_w, y + 8, menu_w, STRIP_H - 14)
         hot = r.collidepoint(self.mouse)
@@ -1353,6 +1397,8 @@ class MusterRoom(RoomScene):
             T.text(surf, f"Найм новичков: {hire} золота", (24, y + 32), 14, GLORY if hire <= prof.glory else CURSE)
         ok = cfg["squad_min"] <= len(self.picked) <= cfg["squad_start"] and hire <= prof.glory
         self.btn(surf, pygame.Rect(T.SCREEN_W - 300, y, 280, 54), "В поход  (Пробел)", "go", ok, primary=True)
+        self.btn(surf, pygame.Rect(T.SCREEN_W - 500, y, 180, 54), "Полигон", ("room", "polygon"), True,
+                 tip=["Проверить героев и артефакты", "без похода, наград и потерь"])
 
     def draw_summary(self, surf):
         prof = self.app.profile
@@ -1479,6 +1525,111 @@ class MusterRoom(RoomScene):
                 T.text(surf, "+", sr.center, 20, T.AMBER_DIM, True, center=True)
                 self.hit(sr, ("slot", h.uid), ["Пустая ячейка", "клик — надеть артефакт из сундука"])
         return hot
+
+
+class PolygonRoom(MusterRoom):
+    """Полигон: тренировочный бой с текущими героями, вещами и ветками — без похода, наград и потерь."""
+    room = "polygon"
+    title = "Полигон"
+    art = "room_muster"
+    dim = 150
+
+    def pick_for_test(self, uid):
+        prof = self.app.profile
+        s = sel(self.app)
+        h = next((x for x in self.heroes() if x.uid == uid), None)
+        if h is None:
+            return
+        if uid in s["picked"]:
+            s["picked"].remove(uid)
+            return
+        if not prof.ready(h):
+            self.say(f"{h.name} ранен — сначала дайте ему отдохнуть")
+            return
+        if len(s["picked"]) >= 4:
+            self.say("На полигон можно взять до 4 героев")
+            return
+        s["picked"].append(uid)
+
+    def room_act(self, action, button=1):
+        kind = action[0] if isinstance(action, tuple) else action
+        if kind == "polygon_start":
+            self.start_test(action[1])
+            return
+        if kind == "recruit" and button != 3:
+            self.pick_for_test(action[1])
+            return
+        super().room_act(action, button)
+
+    def start_test(self, kind):
+        prof = self.app.profile
+        if prof.run_state:
+            self.say("Сначала завершите текущий поход — полигон не трогает сохранение")
+            return
+        picked = [h for h in self.heroes() if h.uid in self.picked and prof.ready(h)][:4]
+        if not picked:                       # пустой отряд: берём первых готовых, чтобы кнопка не молчала
+            picked = [h for h in self.heroes() if prof.ready(h)][:4]
+            sel(self.app)["picked"] = [h.uid for h in picked]
+        if not picked:
+            self.say("Нет готовых героев для полигона")
+            return
+        from sim.expedition import Expedition
+        arts = {}
+        for h in picked:
+            for art in prof.worn(h):
+                uid = art.get("uid")
+                if uid in prof.stash:
+                    arts[uid] = dict(prof.stash[uid])
+        run = Expedition(prof.data, [h.to_dict() for h in picked], seed=0, chapter=self.chapter,
+                         tier=self.tier, arts=arts)
+        squad = polygon_squad(run, run.heroes)
+        idx = polygon_encounter_index(prof.data, self.chapter, kind)
+        scale = polygon_enemy_scale(self.tier, kind)
+        from game.battle_scene import BattleScene
+        self.app.switch(BattleScene(prof.data, idx, squad=squad, on_finish=self.finish_test,
+                                    enemy_scale=scale, difficulty="normal", cheats=True, simple=False))
+
+    def finish_test(self, combat, formation):
+        self.app.polygon_last = {"result": combat.result or "—", "time": round(combat.time, 1)}
+        self.app.switch(PolygonRoom(self.app))
+
+    def room_key(self, k):
+        if self.app.profile.run_state:
+            return
+        if k in (pygame.K_SPACE, pygame.K_RETURN):
+            self.start_test("dummy")
+        elif k == pygame.K_e:
+            self.start_test("elite")
+        elif k == pygame.K_b:
+            self.start_test("boss")
+
+    def draw_room(self, surf):
+        prof = self.app.profile
+        if prof.run_state:
+            draw_resume(self, surf)
+            return
+        self.draw_summary(surf)
+        self.draw_cards(surf)
+        y = strip_y() - 66
+        names = [h.name for h in self.heroes() if h.uid in self.picked]
+        msg = ("Полигон: " + ", ".join(names)) if names else "Выберите до 4 героев — клик по карточке"
+        T.text(surf, msg, (24, y - 24), 16, GOLD if names else T.TEXT, True, shadow=True)
+        T.text(surf, "Бой не тратит золото, HP и вещи; артефакты и ветки — как в Сборах.",
+               (24, y - 4), 12, T.TEXT_DIM)
+        last = getattr(self.app, "polygon_last", None)
+        if last:
+            result = "победа" if last.get("result") == "victory" else "поражение"
+            T.text(surf, f"Последний тест: {result} · {last.get('time', 0):g} с",
+                   (24, y + 18), 12, (150, 220, 170) if result == "победа" else CURSE)
+        bw, gap = 154, 8
+        labels = (("dummy", "Чучела", True), ("normal", "Обычный", False),
+                  ("elite", "Элита  E", False), ("boss", "Босс  B", False))
+        x = T.SCREEN_W - 24 - len(labels) * bw - (len(labels) - 1) * gap - 170
+        for kind, label, primary in labels:
+            self.btn(surf, pygame.Rect(x, y, bw, 54), label, ("polygon_start", kind), True, primary=primary,
+                     tip=["Тренировочный бой без наград", "текущий отряд и артефакты"])
+            x += bw + gap
+        self.btn(surf, pygame.Rect(T.SCREEN_W - 186, y, 162, 54), "В Сборы", ("room", "muster"), True)
 
 
 # ---------- сундук (хранилище артефактов) ----------
@@ -2854,7 +3005,7 @@ class StationOverlay(Overlay):
         return max(1, (r.bottom - 12 - (r.y + 58)) // 70)
 
     def wheel(self, dy):
-        if self.mode != "craft":
+        if self.mode not in ("craft", "item"):
             return
         n = len(self.app.profile.xd["artifacts"]["sets"])
         self.scroll = max(0, min(max(0, n - self.set_list_rows()), self.scroll - dy))
@@ -5427,4 +5578,4 @@ class BookScene(RoomScene):
 
 
 ROOM_CLASSES = {"hall": HallRoom, "chapters": ChapterRoom, "muster": MusterRoom, "workshop": WorkshopRoom, "yard": YardRoom,
-                "build": BuildRoom, "fame": FameRoom, "market": MarketRoom, "mine": MineRoom}
+                "build": BuildRoom, "fame": FameRoom, "market": MarketRoom, "mine": MineRoom, "polygon": PolygonRoom}

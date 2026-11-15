@@ -23,6 +23,21 @@ def battle(run, kind="battle"):
                   difficulty=run.difficulty)
 
 
+def test_swamp_duo_first_tier_is_eased():
+    h = [X.Hero({"uid": f"d{i}", "name": "Д", "cls": c, "skills": []})
+         for i, c in enumerate(("warrior", "priest"))]
+    run = X.Expedition(ED, h, seed=3, tier=0)
+    assert run.cfg["post_battle_heal"] == 0.55                # 35% + 5% главы + 15% для двух героев
+    node = next(n for n in run.nodes.values() if n["type"] == "battle" and n["layer"] == 0)
+    scale = run.enemy_scale(node)
+    assert scale["hp"] < 1.66
+    assert scale["damage"] < 0.42
+    assert scale["trim"] == 1
+    hard = X.Expedition(ED, h, seed=3, tier=4)
+    hard_node = next(n for n in hard.nodes.values() if n["type"] == "battle" and n["layer"] == 0)
+    assert hard.enemy_scale(hard_node)["hp"] < 1.66 * hard.tier_now()["hp"]
+
+
 def test_wanderer_is_unchanged_and_harder_tiers_add_variety_and_mutators():
     r0, r2 = run_on(0), run_on(2)
     r0.act = r2.act = 2                                        # к третьему акту — в полную силу

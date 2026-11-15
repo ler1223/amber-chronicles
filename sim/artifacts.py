@@ -121,6 +121,8 @@ def effects(xd, arts, owner="h"):
             else:
                 mods.append(m)
     for n, (sid, need, b) in enumerate(active_bonuses(xd, arts)):
+        if sid == "guardian_rescue" and need == 4:
+            extra["guardian_rescue_set"] = 1
         for entry in b.get("stats", []):
             add(*_stat(xd, entry, 1.0))
         tier = 1 + RARITY_ORDER.index(a["sets"][sid]["rarity"]) // 2

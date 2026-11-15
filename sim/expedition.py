@@ -567,6 +567,13 @@ class Expedition:
         self.cfg = run_cfg(self.xd, False, self.vows, self.build)
         cap = (self.xd["config"].get("squad_by_chapter") or {}).get(self.chapter, self.cfg["squad_max"])
         self.cfg["squad_max"] = max(self.cfg["squad_min"], int(cap))
+        chapter_bal = (self.xd["config"].get("chapter_balance") or {}).get(self.chapter)
+        if chapter_bal and len(heroes) <= 2:
+            self.cfg["post_battle_heal"] = round(
+                self.cfg["post_battle_heal"] + float(chapter_bal.get("heal", 0.0)), 3)
+        duo = (self.xd["config"].get("duo_balance") or {}).get(self.chapter)
+        if duo and len(heroes) <= 2 and tier == 0:
+            self.cfg["post_battle_heal"] = round(self.cfg["post_battle_heal"] + float(duo.get("heal", 0.0)), 3)
         self.trophies = {}                     # трофеи глав, добытые в этом походе
         self.seed = seed if seed is not None else random.randrange(1_000_000)
         self.rng = random.Random(self.seed)
@@ -855,6 +862,14 @@ class Expedition:
         dmg *= power.get("damage", 1.0)
         t = self.tier_now()
         hp, dmg = hp * t["hp"], dmg * t["dmg"]
+        chapter_bal = (self.xd["config"].get("chapter_balance") or {}).get(self.chapter)
+        if chapter_bal and len(self.heroes) <= 2:
+            hp *= float(chapter_bal.get("hp", 1.0))
+            dmg *= float(chapter_bal.get("damage", 1.0))
+        duo = (self.xd["config"].get("duo_balance") or {}).get(self.chapter)
+        if duo and len(self.heroes) <= 2 and self.tier == 0:
+            hp *= float(duo.get("hp", 1.0))
+            dmg *= float(duo.get("damage", 1.0))
         for m in self.battle_mods:                 # последствия выборов: засада, ослабленные враги
             hp *= m.get("hp", 1.0)
             dmg *= m.get("dmg", 1.0)
@@ -883,6 +898,8 @@ class Expedition:
             out["extra_adds"] = adds
         if guests:
             out["guests"] = guests
+        if chapter_bal and len(self.heroes) <= 2 and int(chapter_bal.get("trim", 0)):
+            out["trim"] = int(chapter_bal["trim"])
         if self.solo:                              # одиночка: врагов в бою меньше, у босса — меньше свиты
             out["solo"] = {k: self.cfg["solo"][k] for k in ("keep", "boss_keep", "phase_max")}
         if self.heat_on():                         # опасности поля чаще с Жаром; в огненном бою — ещё чаще
@@ -1073,6 +1090,8 @@ class Expedition:
         p["rules"] = rules
         if extra.get("enchants"):
             p["enchants"] = list(extra["enchants"])
+        if extra.get("guardian_rescue_set"):
+            p["guardian_rescue_set"] = True
         if vs:
             p["dmg_vs"] = {k: round(v, 3) for k, v in vs.items()}
         if react != 1.0:

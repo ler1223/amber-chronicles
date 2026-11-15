@@ -485,3 +485,8 @@ def test_jeweler_crafts_rings_without_minigame(tmp_path):
     assert app.scene is room and len(prof.stash) == 1 and art["alloys"] == ["silver925"] and not prof.forge["prims"]
     key(app, pygame.K_7)
     assert isinstance(app.scene, R.MarketRoom)
+
+def test_guardian_set_available_in_all_artifact_workshops():
+    p = rich()
+    for ws in ("ws_forge", "ws_jewel", "ws_leather"):
+        assert p.can_craft(ws, "guardian_rescue"), ws

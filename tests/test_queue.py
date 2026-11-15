@@ -80,5 +80,6 @@ def test_scene_shift_select_groups_and_queue():
     assert s.selected_units == [archer]
     key(s, pygame.K_1)                                       # 1 — вернуть группу
     assert set(s.selected_units) == {war, mage}
+    key(s, pygame.K_ESCAPE)                                  # Esc — закрыть карточку героя
     key(s, pygame.K_ESCAPE)                                  # Esc — очистить очередь
     assert not war.queue and not mage.queue

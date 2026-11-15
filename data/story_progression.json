@@ -473,58 +473,78 @@
     "requires": {}
   },
   "guardian": {
-   "skills": [
-    {
-     "id": "lunge",
-     "level": 1
-    },
-    {
-     "id": "hook",
-     "level": 2
-    },
-    {
-     "id": "shield_wall",
-     "level": 3
-    },
-    {
-     "id": "sentinel",
-     "level": 5
-    },
-    {
-     "id": "long_spear",
-     "level": 7
-    },
-    {
-     "id": "brace",
-     "level": 9
-    },
-    {
-     "id": "bastion",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "spear_sweep",
-     "level": 12
-    }
-   ],
-   "doctrines": [
-    {
-     "id": "sentinel",
-     "level": 4
-    },
-    {
-     "id": "dragoon",
-     "level": 4
-    }
-   ],
-   "core": [
-    "sentinel",
-    "long_spear",
-    "hook"
-   ],
-   "requires": {}
-  },
+  "skills": [
+   {
+    "id": "shield_wall",
+    "level": 1
+   },
+   {
+    "id": "hook",
+    "level": 2
+   },
+   {
+    "id": "guardian_cover",
+    "level": 3
+   },
+   {
+    "id": "guardian_stance",
+    "level": 5
+   },
+   {
+    "id": "guardian_rotate",
+    "level": 7
+   },
+   {
+    "id": "guardian_spear_guard",
+    "level": 8
+   },
+   {
+    "id": "guardian_taunt",
+    "level": 9
+   },
+   {
+    "id": "guardian_pull_ally",
+    "level": 10
+   },
+   {
+    "id": "guardian_rescue",
+    "level": 11
+   },
+   {
+    "id": "guardian_oath",
+    "level": 12
+   },
+   {
+    "id": "guardian_warcry",
+    "level": 10,
+    "ult": true
+   },
+   {
+    "id": "guardian_save",
+    "level": 10,
+    "ult": true
+   },
+   {
+    "id": "guardian_break",
+    "level": 10,
+    "ult": true
+   }
+  ],
+  "doctrines": [
+   {
+    "id": "sentinel",
+    "level": 4
+   },
+   {
+    "id": "dragoon",
+    "level": 4
+   }
+  ],
+  "core": [
+   "shield_wall"
+  ],
+  "requires": {}
+ },
   "shaman": {
    "skills": [
     {

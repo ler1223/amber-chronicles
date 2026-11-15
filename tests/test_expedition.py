@@ -337,9 +337,11 @@ def test_tag_items_are_rare():
 def test_skill_values_grow_with_level_and_items():
     from sim import stats
     _, run = new_run()
-    h = run.heroes[0]
-    sid = next(s for s in h.skills if stats.skill_values(run.proto(h), DATA.skills[s]))
-    v1 = stats.skill_values(run.proto(h), run.proto(h)["skill_defs"][sid])[0]
+    h = next(h for h in run.heroes
+             if any(stats.skill_values(run.proto(h), sk) for sk in run.proto(h)["skill_defs"].values()))
+    proto = run.proto(h)
+    sid = next(s for s, sk in proto["skill_defs"].items() if stats.skill_values(proto, sk))
+    v1 = stats.skill_values(proto, proto["skill_defs"][sid])[0]
     for _ in range(6):
         run.gain_xp(h, run.xp_next(h))
     h.sp += 2

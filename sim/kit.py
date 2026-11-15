@@ -21,7 +21,8 @@ TYPES = {"mark", "zone", "vault", "barrage", "shackle", "fletch", "trail", "igni
          "reactive", "totem_pulse", "totem_move", "totem_link", "shadow_dance", "trap_pull",
          "time_theft", "detonate_charges", "song_notes", "inferno", "consume_fire", "bleed_feast", "raise_all",
          "song_tempo", "song_finale", "corpse_pulse", "reagent_area", "cut_tethers", "tether_heal", "tether_all",
-         "terrain_wave", "note", "finale"}
+         "terrain_wave", "note", "finale", "guardian_zone_strike", "guardian_zone_taunt",
+         "guardian_zone_buff", "guardian_pull_ally", "guardian_oath"}
 HELD_LOOKS = ("trap", "net", "root", "freeze")
 
 
@@ -1023,6 +1024,62 @@ def special(c, caster, eff, center, tunit):
             c.apply_effects(caster, [dict(e, radius=0) for e in effs], v.cell, v)
 
 
+    elif t == "guardian_zone_strike":              # удар по врагам в конусе Стража
+        cells = c.guardian_zone_cells(caster)
+        hit = 0
+        for v in c.units:
+            if not v.alive or v.obj or not caster.is_enemy(v) or v.cell not in cells:
+                continue
+            amt = float(eff.get("amount", 0))
+            if eff.get("of") == "atk":
+                amt *= c.stat_k(caster, "atk", True)
+            c.damage(v, amt, caster, eff.get("tag"), "melee")
+            if eff.get("slow"):
+                c.add_buff(v, "slow", eff["slow"], eff.get("duration", 3))
+            hit += 1
+        if not hit:
+            c.emit("fizzle", unit=caster, skill=None)
+    elif t == "guardian_zone_taunt":               # враги в конусе бьют Стража
+        cells = c.guardian_zone_cells(caster)
+        hit = 0
+        for v in c.units:
+            if v.alive and not v.obj and caster.is_enemy(v) and v.cell in cells:
+                v.taunted_by, v.taunt_time = caster, eff.get("duration", 4)
+                hit += 1
+        if not hit:
+            c.emit("fizzle", unit=caster, skill=None)
+    elif t == "guardian_zone_buff":                # бафф союзникам в конусе
+        cells = c.guardian_zone_cells(caster)
+        hit = 0
+        for v in c.units:
+            if v.alive and not v.obj and not caster.is_enemy(v) and v is not caster and v.cell in cells:
+                c.apply_effects(caster, eff.get("effects", []), v.cell, v)
+                hit += 1
+        if not hit:
+            c.emit("fizzle", unit=caster, skill=None)
+    elif t == "guardian_pull_ally":                # вытащить союзника за спину
+        if tunit is None or not tunit.alive or tunit.obj:
+            c.emit("fizzle", unit=caster, skill=None)
+            return
+        cells = [p for p in c.guardian_zone_cells(caster) if c.is_free(p, exclude=tunit)]
+        if not cells:
+            c.emit("fizzle", unit=caster, skill=None)
+            return
+        spot = min(cells, key=lambda p: cheb(p, caster.cell))
+        c._place(tunit, spot, 0.12)
+        c.emit("rewind", unit=tunit, src=tunit.prev_cell, dst=spot)
+    elif t == "guardian_oath":                     # жертвует HP ради щита союзникам в конусе
+        cost = int(caster.max_hp * float(eff.get("hp", 0.1)))
+        caster.hp = max(1, caster.hp - cost)
+        cells = c.guardian_zone_cells(caster)
+        hit = 0
+        for v in c.units:
+            if v.alive and not v.obj and not caster.is_enemy(v) and v is not caster and v.cell in cells:
+                c.apply_effects(caster, [{"type": "shield", "amount": eff.get("shield", 20),
+                                          "duration": eff.get("duration", 6)}], v.cell, v)
+                hit += 1
+        if not hit:
+            c.emit("fizzle", unit=caster, skill=None)
     elif t == "note":                              # бард: нота в мелодию
         play_note(c, caster, eff["note"])
     elif t == "finale":                            # финал: последняя мелодия ещё раз, сильнее

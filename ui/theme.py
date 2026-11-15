@@ -6,6 +6,7 @@ import pygame
 from ui import layout, projection
 
 SCREEN_W, SCREEN_H = layout.BASE_W, layout.BASE_H
+REAL_W, REAL_H = layout.BASE_W, layout.BASE_H      # фактический холст даже внутри with design()
 
 
 def content_ox():

@@ -10,7 +10,7 @@ def test_rooms_strip_switches_rooms(tmp_path):
     app = new_app(tmp_path)
     assert isinstance(app.scene, R.HallRoom)
     for i, (rid, *_rest) in enumerate(R.ROOMS):
-        key(app, pygame.K_1 + i)
+        key(app, pygame.K_0 if i == 9 else pygame.K_1 + i)
         assert isinstance(app.scene, R.ROOM_CLASSES[rid])
         frame(app)
     click(app, ("room", "hall"))

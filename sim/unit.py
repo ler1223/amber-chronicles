@@ -48,6 +48,7 @@ class Unit:
 
         self.cell = tuple(cell)
         self.prev_cell = self.cell
+        self.facing = (1, 0)   # куда смотрит юнит; у Стража от этого зависит конус за спиной
         self.move_t = 1.0      # прогресс шага 0..1
         self.move_dur = 0.0
 

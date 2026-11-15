@@ -1186,12 +1186,178 @@
     "B": {"name": "Сокрушитель строя", "tiers": [{"name": "Сокрушитель строя", "desc": "Одна цель: урон 280% атаки и отталкивание на 1.", "mods": [{"set": {"name": "Сокрушитель строя", "desc": "Враг (дальность 2): урон 280% атаки и отталкивание на 1."}, "effects": [{"type": "damage", "amount": 28, "kind": "melee"}, {"type": "knockback", "cells": 1}]}]}, {"name": "Опрокинуть", "desc": "И оглушение 1 сек.", "mods": [{"set": {"desc": "Враг: урон 280% атаки, отталкивание и оглушение 1 сек."}}, {"add_effect": {"type": "stun", "duration": 1.0}}]}]}
   },
   "hook": {
-    "A": {"name": "Цепь", "tiers": [{"name": "Цепь", "desc": "Притянутый оглушён на 1.2 сек.", "mods": [{"set": {"desc": "Притягивает врага на 3 клетки: урон 100% атаки и оглушение 1.2 сек."}}, {"add_effect": {"type": "stun", "duration": 1.2}}]}, {"name": "Длинная цепь", "desc": "Дальность 5.", "mods": [{"set": {"desc": "Дальность 5: притягивает, урон 100% атаки, оглушение 1.2 сек.", "range": 5}}]}]},
-    "B": {"name": "Подсечка", "tiers": [{"name": "Подсечка", "desc": "Без притягивания: урон 160% атаки и оглушение 1.5 сек (дальность 2).", "mods": [{"set": {"name": "Подсечка", "desc": "Враг (дальность 2): урон 160% атаки и оглушение 1.5 сек.", "range": 2}, "effects": [{"type": "damage", "amount": 16, "kind": "melee"}, {"type": "stun", "duration": 1.5}]}]}, {"name": "Круговая подсечка", "desc": "По всем врагам рядом с целью.", "mods": [{"set": {"desc": "Враг и все рядом: урон 160% атаки и оглушение 1.5 сек.", "radius": 1}}, {"effect": {"type": "damage", "set": {"radius": 1}}}, {"effect": {"type": "stun", "set": {"radius": 1}}}]}]}
+    "A": {
+      "name": "Цепь",
+      "tiers": [
+        {
+          "name": "Цепь",
+          "desc": "Оглушение 1.2 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Оглушение 1.2 сек."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 1.2
+              }
+            }
+          ]
+        },
+        {
+          "name": "Длинная цепь",
+          "desc": "Дальность 5.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Дальность 5."
+              }
+            },
+            {
+              "set": {
+                "range": 5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Подсечка",
+      "tiers": [
+        {
+          "name": "Подсечка",
+          "desc": "Урон и оглушение 1.5 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Урон и оглушение 1.5 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "damage",
+                "set": {
+                  "amount": 16
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Круговая подсечка",
+          "desc": "По врагам рядом.",
+          "mods": [
+            {
+              "set": {
+                "desc": "По врагам рядом."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 1.5,
+                "radius": 1
+              }
+            }
+          ]
+        }
+      ]
+    }
   },
   "shield_wall": {
-    "A": {"name": "Фаланга", "tiers": [{"name": "Фаланга", "desc": "Щит 250% силы навыков союзникам в радиусе 2.", "mods": [{"set": {"desc": "+5 брони себе, щит 250% силы навыков союзникам в радиусе 2.", "radius": 2}}, {"effect": {"type": "shield", "set": {"radius": 2, "amount": 25}}}]}, {"name": "Строй", "desc": "Союзникам рядом ещё +3 брони.", "mods": [{"set": {"desc": "+5 брони себе, щит 250% силы навыков и +3 брони союзникам в радиусе 2."}}, {"add_effect": {"type": "buff", "stat": "armor", "value": 3, "duration": 6, "radius": 2}}]}]},
-    "B": {"name": "Ёж", "tiers": [{"name": "Ёж", "desc": "Отражает 60% ближнего урона 6 сек.", "mods": [{"set": {"desc": "+5 брони и отражение 60% ближнего урона 6 сек."}}, {"add_effect": {"type": "buff", "stat": "thorns", "value": 0.6, "duration": 6}}]}, {"name": "Вызов", "desc": "Враги в радиусе 2 атакуют стража 4 сек.", "mods": [{"set": {"desc": "+5 брони, отражение 60%, провокация в радиусе 2."}}, {"add_effect": {"type": "taunt", "radius": 2, "duration": 4}}]}]}
+    "A": {
+      "name": "Фаланга",
+      "tiers": [
+        {
+          "name": "Фаланга",
+          "desc": "Конус шире на 2.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Конус шире на 2."
+              }
+            },
+            {
+              "effect": {
+                "type": "buff",
+                "set": {
+                  "stat": "guardian_radius",
+                  "value": 2,
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Великая фаланга",
+          "desc": "Конус шире на 3.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Конус шире на 3."
+              }
+            },
+            {
+              "effect": {
+                "type": "buff",
+                "set": {
+                  "stat": "guardian_radius",
+                  "value": 3,
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Ёж",
+      "tiers": [
+        {
+          "name": "Ёж",
+          "desc": "+50% шипов.",
+          "mods": [
+            {
+              "set": {
+                "desc": "+50% шипов."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.5,
+                "duration": 6
+              }
+            }
+          ]
+        },
+        {
+          "name": "Стальной ёж",
+          "desc": "+70% шипов.",
+          "mods": [
+            {
+              "set": {
+                "desc": "+70% шипов."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.7,
+                "duration": 6
+              }
+            }
+          ]
+        }
+      ]
+    }
   },
   "brace": {
     "A": {"name": "Несокрушимый", "tiers": [
@@ -6097,6 +6263,992 @@
                   "affects": "allies"
                 }
               ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_cover": {
+    "A": {
+      "name": "Долгая опека",
+      "tiers": [
+        {
+          "name": "Долгая опека",
+          "desc": "Защита союзника 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Защита союзника 8 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guard",
+                "set": {
+                  "duration": 8
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Несокрушимая опека",
+          "desc": "Защита 10 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Защита 10 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guard",
+                "set": {
+                  "duration": 10
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Щит-брат",
+      "tiers": [
+        {
+          "name": "Щит-брат",
+          "desc": "Дополнительный щит 20.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Дополнительный щит 20."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "shield",
+                "amount": 20,
+                "duration": 6
+              }
+            }
+          ]
+        },
+        {
+          "name": "Стальной брат",
+          "desc": "И +3 брони союзнику.",
+          "mods": [
+            {
+              "set": {
+                "desc": "И +3 брони союзнику."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "armor",
+                "value": 3,
+                "duration": 6
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_stance": {
+    "A": {
+      "name": "Глухая стойка",
+      "tiers": [
+        {
+          "name": "Глухая стойка",
+          "desc": "Перехват 65% на 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Перехват 65% на 6 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "buff",
+                "set": {
+                  "stat": "guardian_redirect",
+                  "value": 0.65,
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Стена",
+          "desc": "Перехват 75% на 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Перехват 75% на 6 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "buff",
+                "set": {
+                  "stat": "guardian_redirect",
+                  "value": 0.75,
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Ответный удар",
+      "tiers": [
+        {
+          "name": "Ответный удар",
+          "desc": "+40% шипов на 5 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "+40% шипов на 5 сек."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.4,
+                "duration": 5
+              }
+            }
+          ]
+        },
+        {
+          "name": "Колючая стойка",
+          "desc": "+60% шипов.",
+          "mods": [
+            {
+              "set": {
+                "desc": "+60% шипов."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "thorns",
+                "value": 0.6,
+                "duration": 5
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_rotate": {
+    "A": {
+      "name": "Широкий строй",
+      "tiers": [
+        {
+          "name": "Широкий строй",
+          "desc": "Конус шире на 2.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Конус шире на 2."
+              }
+            },
+            {
+              "effect": {
+                "type": "buff",
+                "set": {
+                  "stat": "guardian_radius",
+                  "value": 2,
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Огромный строй",
+          "desc": "Конус шире на 3.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Конус шире на 3."
+              }
+            },
+            {
+              "effect": {
+                "type": "buff",
+                "set": {
+                  "stat": "guardian_radius",
+                  "value": 3,
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Стальной разворот",
+      "tiers": [
+        {
+          "name": "Стальной разворот",
+          "desc": "+3 брони союзникам в конусе.",
+          "mods": [
+            {
+              "set": {
+                "desc": "+3 брони союзникам в конусе."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_buff",
+                "effects": [
+                  {
+                    "type": "buff",
+                    "stat": "armor",
+                    "value": 3,
+                    "duration": 6
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Бастион",
+          "desc": "Щит 10 союзникам в конусе.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 10 союзникам в конусе."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_buff",
+                "effects": [
+                  {
+                    "type": "shield",
+                    "amount": 10,
+                    "duration": 6
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_spear_guard": {
+    "A": {
+      "name": "Остриё",
+      "tiers": [
+        {
+          "name": "Остриё",
+          "desc": "Урон 120% атаки.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Урон 120% атаки."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_zone_strike",
+                "set": {
+                  "amount": 1.2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Пронзание",
+          "desc": "Урон 150% атаки.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Урон 150% атаки."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_zone_strike",
+                "set": {
+                  "amount": 1.5
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Тяжёлый заслон",
+      "tiers": [
+        {
+          "name": "Тяжёлый заслон",
+          "desc": "Замедление сильнее.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Замедление сильнее."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_zone_strike",
+                "set": {
+                  "slow": 1.5,
+                  "duration": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Оглушающий заслон",
+          "desc": "Ещё и оглушение.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Ещё и оглушение."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "stun",
+                "duration": 0.6,
+                "radius": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_taunt": {
+    "A": {
+      "name": "Долгий вызов",
+      "tiers": [
+        {
+          "name": "Долгий вызов",
+          "desc": "Провокация 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Провокация 6 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_zone_taunt",
+                "set": {
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Неотвязный вызов",
+          "desc": "Провокация 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Провокация 8 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_zone_taunt",
+                "set": {
+                  "duration": 8
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Насмешка",
+      "tiers": [
+        {
+          "name": "Насмешка",
+          "desc": "Урон по врагам в конусе.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Урон по врагам в конусе."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_strike",
+                "amount": 0.4,
+                "of": "atk"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Жёсткая насмешка",
+          "desc": "Урон 60% атаки.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Урон 60% атаки."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_strike",
+                "amount": 0.6,
+                "of": "atk"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_rescue": {
+    "A": {
+      "name": "Дальний рывок",
+      "tiers": [
+        {
+          "name": "Дальний рывок",
+          "desc": "Дальность 6.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Дальность 6."
+              }
+            },
+            {
+              "set": {
+                "range": 6,
+                "cooldown": 5
+              }
+            }
+          ]
+        },
+        {
+          "name": "Сверхдальний рывок",
+          "desc": "Дальность 7.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Дальность 7."
+              }
+            },
+            {
+              "set": {
+                "range": 7,
+                "cooldown": 5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Спасательный щит",
+      "tiers": [
+        {
+          "name": "Спасательный щит",
+          "desc": "Щит 25.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 25."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "shield",
+                "amount": 25,
+                "duration": 6
+              }
+            }
+          ]
+        },
+        {
+          "name": "Крепкий щит",
+          "desc": "Щит 25 и +3 брони.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 25 и +3 брони."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "armor",
+                "value": 3,
+                "duration": 6
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_pull_ally": {
+    "A": {
+      "name": "Дальний рывок",
+      "tiers": [
+        {
+          "name": "Дальний рывок",
+          "desc": "Дальность 5.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Дальность 5."
+              }
+            },
+            {
+              "set": {
+                "range": 5
+              }
+            }
+          ]
+        },
+        {
+          "name": "Очень дальний",
+          "desc": "Дальность 6.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Дальность 6."
+              }
+            },
+            {
+              "set": {
+                "range": 6
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Щит при вытаскивании",
+      "tiers": [
+        {
+          "name": "Щит при вытаскивании",
+          "desc": "Щит 20.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 20."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "shield",
+                "amount": 20,
+                "duration": 6
+              }
+            }
+          ]
+        },
+        {
+          "name": "Крепкий щит",
+          "desc": "Щит 20 и +3 брони.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 20 и +3 брони."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "armor",
+                "value": 3,
+                "duration": 6
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_oath": {
+    "A": {
+      "name": "Большая клятва",
+      "tiers": [
+        {
+          "name": "Большая клятва",
+          "desc": "Щит 35 союзникам.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 35 союзникам."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_oath",
+                "set": {
+                  "shield": 35
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Великая клятва",
+          "desc": "Щит 45.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 45."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_oath",
+                "set": {
+                  "shield": 45
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Обет очищения",
+      "tiers": [
+        {
+          "name": "Обет очищения",
+          "desc": "Снимает контроль.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Снимает контроль."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_buff",
+                "effects": [
+                  {
+                    "type": "cleanse"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Стойкость обета",
+          "desc": "+3 брони союзникам.",
+          "mods": [
+            {
+              "set": {
+                "desc": "+3 брони союзникам."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_buff",
+                "effects": [
+                  {
+                    "type": "buff",
+                    "stat": "armor",
+                    "value": 3,
+                    "duration": 6
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_warcry": {
+    "A": {
+      "name": "Долгий клич",
+      "tiers": [
+        {
+          "name": "Долгий клич",
+          "desc": "Провокация 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Провокация 6 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "taunt",
+                "set": {
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Несмолкаемый клич",
+          "desc": "Провокация 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Провокация 8 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "taunt",
+                "set": {
+                  "duration": 8
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Большой щит",
+      "tiers": [
+        {
+          "name": "Большой щит",
+          "desc": "Щит 30% HP.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 30% HP."
+              }
+            },
+            {
+              "effect": {
+                "type": "shield",
+                "set": {
+                  "amount": 0.3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Нерушимый щит",
+          "desc": "Щит 30% и +3 брони.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Щит 30% и +3 брони."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "armor",
+                "value": 3,
+                "duration": 8,
+                "radius": 2,
+                "affects": "allies"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_save": {
+    "A": {
+      "name": "Долгая защита",
+      "tiers": [
+        {
+          "name": "Долгая защита",
+          "desc": "Защита 5 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Защита 5 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guard",
+                "set": {
+                  "duration": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Несокрушимая защита",
+          "desc": "Защита 6 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Защита 6 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guard",
+                "set": {
+                  "duration": 6
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Спасение с очищением",
+      "tiers": [
+        {
+          "name": "Спасение с очищением",
+          "desc": "Снимает контроль.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Снимает контроль."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "cleanse"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Спасение с бронёй",
+          "desc": "+4 брони.",
+          "mods": [
+            {
+              "set": {
+                "desc": "+4 брони."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "buff",
+                "stat": "armor",
+                "value": 4,
+                "duration": 6
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guardian_break": {
+    "A": {
+      "name": "Долгий приказ",
+      "tiers": [
+        {
+          "name": "Долгий приказ",
+          "desc": "Эффект 8 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Эффект 8 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_zone_buff",
+                "set": {
+                  "duration": 8
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Длинный приказ",
+          "desc": "Эффект 10 сек.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Эффект 10 сек."
+              }
+            },
+            {
+              "effect": {
+                "type": "guardian_zone_buff",
+                "set": {
+                  "duration": 10
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "Пробитие",
+      "tiers": [
+        {
+          "name": "Пробитие",
+          "desc": "Игнор 30% брони.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Игнор 30% брони."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_buff",
+                "effects": [
+                  {
+                    "type": "buff",
+                    "stat": "armor_pen",
+                    "value": 0.1,
+                    "duration": 5
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Полное пробитие",
+          "desc": "Игнор 40% брони.",
+          "mods": [
+            {
+              "set": {
+                "desc": "Игнор 40% брони."
+              }
+            },
+            {
+              "add_effect": {
+                "type": "guardian_zone_buff",
+                "effects": [
+                  {
+                    "type": "buff",
+                    "stat": "armor_pen",
+                    "value": 0.2,
+                    "duration": 5
+                  }
+                ]
+              }
             }
           ]
         }

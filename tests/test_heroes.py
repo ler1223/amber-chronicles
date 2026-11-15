@@ -92,15 +92,18 @@ def test_bear_form_toggles_stats():
     assert d.form is None and d.armor == armor and d.atk_range == rng and d.max_hp == hp
 
 
-def test_zone_of_control_hits_approaching_enemy():
+def test_guardian_cone_redirects_damage_from_ally_to_guardian():
     c = Combat(DATA, 1, squad=squad_of(["guardian", "warrior", "mage", "priest"]))
-    g, f = unit(c, "guardian"), foe(c)
+    g, ally = unit(c, "guardian"), unit(c, "warrior")
+    f = foe(c)
     g.cell = g.prev_cell = (4, 3)
-    f.cell = f.prev_cell = (6, 3)
-    g.pp = g.pp_max
-    hp, pp = f.hp, g.pp
-    c._step_toward(f, g.cell, 1)
-    assert f.hp < hp and g.pp == pp - 1 and f.wait > 0
+    g.facing = (1, 0)                 # конус за спиной — влево
+    ally.cell = ally.prev_cell = (3, 3)
+    f.cell = f.prev_cell = (2, 3)
+    gh, ah = g.hp, ally.hp
+    c.damage(ally, 100, f, None, "melee")
+    assert ally.hp < ah and g.hp < gh
+    assert ally.hp > ah - 100          # часть урона ушла в Стража
 
 
 def test_pull_brings_target_next_to_caster():
@@ -198,3 +201,63 @@ def test_control_looks_come_from_skill_and_reaction():
     c.apply_status(g, "water")
     c.apply_status(g, "ice")
     assert g.stun > 0 and g.stun_look == "freeze"
+
+
+def test_guardian_has_full_pool_and_branches():
+    from sim import story_meta
+    pool = story_meta.all_skills(DATA, "guardian")
+    ults = story_meta.ults_of(DATA, "guardian")
+    assert len([s for s in pool if s not in ults]) == 10
+    assert len(ults) == 3
+    for sid in pool:
+        assert set(DATA.branches[sid]) == {"A", "B"}
+        for branch in ("A", "B"):
+            assert len(DATA.branches[sid][branch]["tiers"]) == 2
+
+
+def test_guardian_cone_is_behind_facing():
+    c = Combat(DATA, 1, squad=squad_of(["guardian", "warrior", "mage", "priest"]))
+    g = unit(c, "guardian")
+    g.cell = g.prev_cell = (4, 3)
+    g.facing = (1, 0)
+    cells = c.guardian_zone_cells(g)
+    assert (3, 3) in cells and (2, 3) in cells
+    assert (5, 3) not in cells and (6, 3) not in cells
+    g.facing = (-1, 0)
+    cells = c.guardian_zone_cells(g)
+    assert (5, 3) in cells and (3, 3) not in cells
+
+
+def test_guardian_spear_guard_hits_only_cone():
+    c = Combat(DATA, 1, squad=squad_of(["guardian", "warrior", "mage", "priest"]))
+    g, f = unit(c, "guardian"), foe(c)
+    g.cell = g.prev_cell = (4, 3)
+    g.facing = (1, 0)
+    f.cell = f.prev_cell = (3, 3)
+    g.skill_defs["guardian_spear_guard"] = DATA.skills["guardian_spear_guard"]
+    hp = f.hp
+    c._resolve_skill(g, "guardian_spear_guard", g)
+    assert f.hp < hp
+
+
+def test_guardian_rescue_set_bonus_marks_hero():
+    from sim import artifacts as A
+    from sim import expedition as X
+    xd = X.expedition_data(DATA).expedition
+    arts = [A.make(xd, f"g{i}", kind, "guardian_rescue", 1.0)
+            for i, kind in enumerate(list(xd["artifacts"]["kinds"])[:4])]
+    _, extra, _ = A.effects(xd, arts, "guardian")
+    assert extra.get("guardian_rescue_set") == 1
+
+def test_guardian_rescue_set_shields_target():
+    proto = build_proto(DATA, "guardian", skills=["guardian_rescue"])
+    proto["guardian_rescue_set"] = True
+    squad = squad_of(["warrior", "mage", "priest"])
+    squad.insert(0, {"cls": "guardian", "proto": proto})
+    c = Combat(DATA, 1, squad=squad)
+    g, ally = unit(c, "guardian"), unit(c, "warrior")
+    g.cell = g.prev_cell = (4, 3)
+    ally.cell = ally.prev_cell = (3, 3)
+    before = ally.shield
+    c._resolve_skill(g, "guardian_rescue", ally)
+    assert ally.shield > before

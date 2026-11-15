@@ -87,6 +87,8 @@ class Combat:
             u = self._spawn(ENEMY, etype, data.enemies[etype], pos)
             self._scale_enemy(u, scale)
         self._apply_affixes(self.diff.get("affixes", 0))
+        if scale.get("trim"):                         # Болото для двух героев: на одного врага меньше
+            self._trim_regular(int(scale["trim"]))
         for etype in scale.get("extra_adds", []):     # последствия событий: засада, подмога боссу
             if etype in data.enemies:
                 MU.spawn_add(self, etype, scale)
@@ -685,6 +687,54 @@ class Combat:
         foes = any(u.team == ENEMY for u in inside)
         if mine and not foes:
             self.hold = min(ob["time"], self.hold + dt)
+
+    def guardian_zone_cells(self, g):
+        """Клетки конуса за спиной Стража. Ширина растёт с расстоянием, длина — от баффов."""
+        if not g or not g.alive or (g.passive or {}).get("core") != "guardian_zone":
+            return set()
+        length = max(1, int(g.buff("guardian_length", 2)))
+        radius = max(1, int(g.buff("guardian_radius", 2)))
+        fx, fy = getattr(g, "facing", (1, 0))
+        bx, by = -sign(fx), -sign(fy)
+        cells = set()
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                dot = dx * bx + dy * by
+                perp = abs(dx * by - dy * bx)
+                if 0 < dot <= length and perp <= max(1, dot // 2 + 1):
+                    p = (g.cell[0] + dx, g.cell[1] + dy)
+                    if p in self.grid.cells:
+                        cells.add(p)
+        return cells
+
+    def guardian_redirect(self, target, amount, attacker, kind):
+        """Перенаправить часть прямого урона по союзнику в Стража, если он в конусе."""
+        if target is None or target.obj or target.team != PLAYER or attacker is None \
+                or attacker.team == target.team or kind not in DIRECT:
+            return amount
+        for g in self.heroes(PLAYER):
+            if g is target or not g.alive or (g.passive or {}).get("core") != "guardian_zone":
+                continue
+            if target.cell not in self.guardian_zone_cells(g):
+                continue
+            frac = float(g.buff("guardian_redirect", 0.3))
+            if frac <= 0:
+                continue
+            moved = amount * min(0.9, frac)
+            amount -= moved
+            self.gain(g, "intercept")
+            self.emit("guardian_redirect", unit=g, dst=target, amount=moved)
+            self.damage(g, max(1, moved - g.total_armor()), attacker, None, "redirect")
+            break
+        return amount
+
+    def _trim_regular(self, n):
+        """Убрать n обычных врагов (не боссов и не элиту), не трогая свиту главарей."""
+        if n <= 0:
+            return
+        rest = [u for u in self.units if u.team == ENEMY and not u.obj and not u.boss and not u.elite]
+        drop = {id(u) for u in rest[-n:]}
+        self.units = [u for u in self.units if id(u) not in drop]
 
     def _solo_trim(self, s):
         """Бой одного героя: босс и элита остаются, остальных — сколько велено (у босса свита меньше)."""
@@ -1337,6 +1387,9 @@ class Combat:
 
     def _place(self, u, dest, dur):
         u.prev_cell = u.cell
+        dx, dy = dest[0] - u.prev_cell[0], dest[1] - u.prev_cell[1]
+        if dx or dy:
+            u.facing = (sign(dx), sign(dy))
         u.cell = tuple(dest)
         u.move_t = 0.0
         u.move_dur = max(dur, 0.01)
@@ -1694,6 +1747,11 @@ class Combat:
         if first:
             self.emit("enchant_proc", unit=u, id="first_skill_double", name="Гроза первого удара")
         u.ambush = 1.0
+        if u.proto.get("guardian_rescue_set") and sid in ("guardian_rescue", "guardian_save") \
+                and tunit is not None and tunit.alive and not tunit.obj:
+            self.apply_effects(u, [{"type": "shield", "amount": 0.15, "of": "hp", "pct": True,
+                                    "duration": 6}], tunit.cell, tunit)
+            self.apply_effects(u, [{"type": "cleanse"}], tunit.cell, tunit)
         p = u.passive
         if p and p["kind"] == "encore" and u.pp >= p["pp"] and sk["ap"] >= p.get("min_ap", 3):
             self._use_passive(u, f"+{p['ap']} AP")
@@ -2437,7 +2495,9 @@ class Combat:
             if not target.alive:
                 return 0
         if direct:
-            amount = max(1, amount - target.total_armor())
+            amount = self.guardian_redirect(target, amount, attacker, kind)
+            pen = min(0.8, attacker.buff("armor_pen", 0.0)) if attacker is not None else 0.0
+            amount = max(1, amount - target.total_armor() * (1.0 - pen))
             if target.asleep:
                 target.asleep, target.stun = False, 0.0
                 self.emit("wake", unit=target)
