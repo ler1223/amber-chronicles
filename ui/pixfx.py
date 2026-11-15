@@ -275,8 +275,9 @@ def family(sk):
         if tag == "fire" and t in ("damage", "cell_tag", "status") or e.get("hazard") == "fire" \
                 or t in ("detonate", "spread_fire") or e.get("terrain") == "lava":
             fire += 1
-        if tag == "ice" and t in ("damage", "cell_tag", "status", "shatter") or e.get("hazard") == "ice" \
-                or t == "wall" or e.get("terrain") == "ice_floor":
+        if tag == "ice" and t in ("damage", "cell_tag", "status", "shatter") or e.get("hazard") in ("ice", "ice_cataclysm") \
+                or t in ("wall", "weather", "snow_vortex", "ice_heart", "cryo_cataclysm") \
+                or e.get("mark") == "cold" or e.get("terrain") == "ice_floor":
             ice += 1
     if fire or ice:
         return "fire" if fire >= ice else "ice"

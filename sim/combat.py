@@ -3099,7 +3099,7 @@ class Combat:
                     kit.add_mark(self, v, "cold", 3, 6, u)
             for cell in self.grid.cells.values():
                 if cell.passable and cell.terrain not in ("water", "lava", "chasm"):
-                    cell.hazard, cell.hazard_time, cell.hazard_team = "ice", row.get("ice", 3), u.team
+                    cell.hazard, cell.hazard_time, cell.hazard_team = "ice_cataclysm", row.get("ice", 3), u.team
             self.emit("cryo_cataclysm", unit=u, level=level, name="Ледяной век")
             u.pp = 0
         finally:

@@ -106,6 +106,7 @@ class PixelPilot:
             if self.on and self.view.combat is not None:
                 self._burn(dt, self.view.combat)
                 c = self.view.combat
+                self._cryo_ambient(dt, c)
                 self.extra.gas(dt, c)
                 self.extra.barriers_step(dt, c)
                 self.extra.hourglass_step(c)
@@ -121,7 +122,8 @@ class PixelPilot:
         S = self.spells
         cells = [pos for pos, cell in c.grid.cells.items() if cell.hazard == "fire" and not S.held(pos)]
         self.fire.update(dt, cells, c.grid.w, c.grid.h)
-        frozen = [pos for pos, cell in c.grid.cells.items() if cell.hazard == "ice" and not S.held(pos)]
+        frozen = [pos for pos, cell in c.grid.cells.items()
+                  if cell.hazard in ("ice", "ice_cataclysm") and not S.held(pos)]
         self.ice.update(dt, frozen, c.grid.w, c.grid.h)
         fog = [pos for pos, cell in c.grid.cells.items() if cell.hazard == "fog" and not S.held(pos)]
         self.fog.update(dt, fog, c.grid.w, c.grid.h)
@@ -187,6 +189,45 @@ class PixelPilot:
                        jitter=0.06, life_var=0.3)
 
         S.emitter(max(0.2, duration), step)
+
+    def _cryo_ambient(self, dt, c):
+        """Пиксельный снег погоды, вихрей и холодный шлейф Криоманта/ледяных стен."""
+        S, r = self.spells, self.spells.rng
+        weather = getattr(c, "weather", None)
+        if weather:
+            n = self._rate(("pix_weather_snow",), 55, dt)
+            if n:
+                xs, ys = r.uniform(0, c.grid.w, n), r.uniform(0, c.grid.h, n)
+                S.ps.spawn(n, (xs, ys, np.full(n, 1.7)),
+                           (np.full(n, 0.9), np.full(n, 0.2), np.full(n, -0.7)),
+                           life=1.2, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=0.25,
+                           size=1.0, pal="ice", smoke=None, land=DIE)
+            n = self._rate(("pix_weather_wind",), 12, dt)
+            if n:
+                xs, ys = r.uniform(-1, c.grid.w, n), r.uniform(0, c.grid.h, n)
+                S.ps.spawn(n, (xs, ys, np.full(n, 1.2)),
+                           (np.full(n, 2.4), np.full(n, 0.15), np.zeros(n)),
+                           life=0.5, temp=0.8, cool=0.0, drag=0.1, size=1.1,
+                           pal="ice", smoke=None, streak=0.07, land=DIE)
+        for v in getattr(c, "vortices", []):
+            x, y = v["center"]
+            n = self._rate(("pix_vortex", tuple(v["center"])), 26, dt)
+            if n:
+                a = r.uniform(0, math.tau, n)
+                rr = r.uniform(0.15, v["radius"] + 0.25, n)
+                S.ps.spawn(n, (x + np.cos(a) * rr, y + np.sin(a) * rr, r.uniform(0.1, 1.2, n)),
+                           (np.cos(a + 1.4) * 1.4, np.sin(a + 1.4) * 1.4, r.uniform(0.5, 1.4, n)),
+                           life=0.8, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=1.0,
+                           size=1.0, pal="ice", smoke=None, spread=0.25, land=DIE)
+        for u in c.alive():
+            if u.proto_id != "cryo" and not (u.obj and u.proto_id == "ice_wall"):
+                continue
+            n = self._rate(("pix_cold", u.id), 3 if not u.obj else 1.5, dt)
+            if n:
+                S.ps.spawn(n, (u.cell[0] + r.uniform(0.15, 0.85, n), u.cell[1] + r.uniform(0.15, 0.85, n),
+                               np.full(n, 0.15)), (0, 0, r.uniform(0.4, 1.0, n)),
+                           life=0.8, temp=r.uniform(0.5, 0.9, n), cool=0.0, buoy=0.3,
+                           size=0.9, pal="ice", smoke=None, spread=0.2)
 
     def _cell_tongues(self, dt, ncells):
         """Пламя на клетках — отдельные языки, как у настоящего огня: у каждого свой корень, живёт пару секунд,
@@ -491,10 +532,14 @@ class PixelPilot:
 
     def impact(self, fam, impact, ctx, radius, tier, sk=None):
         V, X = self.view.vfx, self.fx
+        S = self.spells
         g = ctx.get("target_ground") or ctx.get("target")
         pts = ctx.get("cells") or [g]
         tgt = ctx.get("target_unit")
         sz = 1.0 + 0.14 * tier
+        if impact in ("weather_snow", "cryo_cataclysm", "ice_heart", "snow_vortex"):
+            self._cryo_impact(impact, g, ctx, radius, sz)
+            return
         if sk and not any(e.get("type") in AREA_EFFECTS for e in sk.get("effects", [])):
             # стена, каток, раздуть, вспышка: виден сам результат (стена, лёд, пламя клеток) — тут только всплеск
             if fam == "fire":
@@ -524,15 +569,39 @@ class PixelPilot:
         if "prison" in impact and tgt is not None:
             self.prison(tgt, 1.6)
         if radius == 0 and tgt is not None:
-            p = self.view.feet_pos(tgt)
-            self._at("bloom_s", p, lift=0.9, scale=sz * 1.3)
-            self._at("chip", p, lift=1.0, delay=0.1)
-        else:                                    # одна снежинка на заклинание, шипы — не по клеткам, один иней
+            fx, fy = self.view.feet_pos(tgt)
+            S.ice_hit_unit((fx, fy, 0.0), (0, 0, 1), tgt, sz, radius)
+        else:                                    # морозный разрыв, волна инея, шипы и снежный вихрь
             c = P.unproject(*g)
             if c is not None:
-                self._ice_area(c[0], c[1], radius + 0.5, sz)
+                S.ice_hit_area((c[0], c[1], 0.0), (0, 1), self._area(ctx), max(0, radius), scale=sz)
         self._light((g[0], g[1] - 16), ICE_LIGHT, 110 + 50 * radius, 0.9, 0.6)
         V.screen_fx(shake=2 + 2 * radius)
+
+    def _cryo_impact(self, impact, g, ctx, radius, sz):
+        """Выразительные ледяные удары Криоманта: снежинка, морозная волна, шипы и шквал."""
+        S = self.spells
+        V = self.view.vfx
+        c = P.unproject(*g) if g else None
+        if c is None:
+            return
+        x, y = c
+        if impact == "snow_vortex":
+            S.ice_hit_area((x, y, 0.0), (0, 1), self._area(ctx), max(1, radius), scale=sz)
+        elif impact == "ice_heart":
+            S.big_snowflake(x, y, max(2.0, radius + 1.0))
+            S._frost_wave(x, y, max(2.0, radius + 1.0), 1.2)
+            S._flurry(x, y, max(1.5, radius), 1.2)
+        elif impact == "weather_snow":
+            S.big_snowflake(x, y, 2.6)
+            S._frost_wave(x, y, 3.0, 1.3)
+            S._flurry(x, y, 2.4, 1.4)
+            V.screen_fx(shake=4, flash=0.06, color=ICE_LIGHT)
+        else:                                    # Ледяной век
+            S.ice_hit_area((x, y, 0.0), (0, 1), self._area(ctx), max(2, radius), scale=1.8 * sz)
+            V.screen_fx(shake=12, hitstop=0.08, flash=0.3, flash_color=ICE_LIGHT,
+                        zoom=1.05, zoom_time=0.3)
+        self._light((g[0], g[1] - 16), ICE_LIGHT, 150 + 70 * radius, 1.3, 0.65)
 
     def _ice_area(self, x, y, R, s=1.0, spikes=True):
         """Лёд по площади (кроме Бурана): одна большая снежинка в центре, шипы в случайных местах площади,

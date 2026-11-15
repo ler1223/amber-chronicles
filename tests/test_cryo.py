@@ -18,7 +18,25 @@ def test_cold_fills_frost_gauge_and_full_gauge_casts_icy_century():
     c.apply_effects(h, [{"type": "mark", "mark": "cold", "stacks": 1, "duration": 6}], f.cell, f)
     assert h.pp == 0
     assert events(c, "cryo_cataclysm")
-    assert any(cell.hazard == "ice" for cell in c.grid.cells.values())
+    assert any(cell.hazard == "ice_cataclysm" for cell in c.grid.cells.values())
+
+
+def test_icy_century_does_not_hit_allies():
+    data = GameData()
+    p = build_proto(data, "cryo", skills=["frost_needle"])
+    q = build_proto(data, "warrior")
+    c = Combat(data, 1, squad=[{"cls": "cryo", "proto": p}, {"cls": "warrior", "proto": q}])
+    c.ais = []
+    c.autocaster.update = lambda dt: None
+    cryo = next(u for u in c.heroes() if u.proto_id == "cryo")
+    ally = next(u for u in c.heroes() if u.proto_id == "warrior")
+    foe = c.fighters(__import__("sim.teams", fromlist=["ENEMY"]).ENEMY)[0]
+    cryo.pp = 9
+    hp = ally.hp
+    c.apply_effects(cryo, [{"type": "mark", "mark": "cold", "stacks": 1, "duration": 6}], foe.cell, foe)
+    assert events(c, "cryo_cataclysm")
+    assert ally.hp == hp
+    assert "ice" not in ally.statuses
 
 
 def test_weather_ticks_cold_and_extends_for_ap():

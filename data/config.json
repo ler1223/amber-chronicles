@@ -164,6 +164,19 @@
         "expose": 8,
         "expose_mult": 1.15
       }
+    },
+    "ice_cataclysm": {
+      "name": "Ледяной век",
+      "color": [
+        190,
+        225,
+        255
+      ],
+      "status": "ice",
+      "dps": 0,
+      "move": 1.2,
+      "covers": true,
+      "foes_only": true
     }},
   "legend": {
     "T": {"terrain": "grass", "passable": false, "cover": "full", "deco": "tree"},

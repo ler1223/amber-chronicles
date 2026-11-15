@@ -1360,7 +1360,7 @@ class BattleView:
                             V.emit("smoke", x, y - 40, count=1)
                     for _ in range(self._rate(("he", pos), 4, dt)):
                         V.emit("heat_embers", x, y - 6)
-                elif cell.hazard == "ice":
+                elif cell.hazard in ("ice", "ice_cataclysm"):
                     for _ in range(self._rate(("hz", pos), 4, dt)):
                         V.emit("ice_cell", x, y - 10)
                 elif cell.hazard == "poison" and pix:
@@ -1448,7 +1448,7 @@ class BattleView:
                 x, y = T.cell_feet(pos)
                 k = 0.55 + 0.15 * math.sin(t * 13 + pos[0] * 3.1) * math.sin(t * 5.3 + pos[1])
                 fl.append(Light((x, y - 10), resolve_color((255, 130, 40), None), 95, k, fadein=0))
-            elif cell.hazard == "ice":
+            elif cell.hazard in ("ice", "ice_cataclysm"):
                 fl.append(Light(T.cell_feet(pos), resolve_color((120, 190, 255), None), 80, 0.3, fadein=0))
             elif cell.hazard == "poison":
                 fl.append(Light(T.cell_feet(pos), resolve_color((130, 220, 90), None), 70, 0.25, fadein=0))
@@ -1822,7 +1822,7 @@ class BattleView:
                         hy = r.y + 16 + (pos[1] * 23 + i * 13) % (r.h - 26)
                         pygame.draw.line(surf, (40, 70, 30), (hx, hy + 8), (hx + 4, hy), 2)
                         pygame.draw.line(surf, (40, 70, 30), (hx + 4, hy), (hx + 8, hy + 7), 2)
-                if cell.hazard == "ice" and not self.pix.on:
+                if cell.hazard in ("ice", "ice_cataclysm") and not self.pix.on:
                     pygame.draw.line(surf, (235, 250, 255), (r.x + 12, r.y + 16), (r.centerx, r.centery), 2)
                     pygame.draw.line(surf, (235, 250, 255), (r.centerx, r.centery), (r.right - 16, r.y + 24), 2)
                     pygame.draw.line(surf, (235, 250, 255), (r.centerx, r.centery), (r.x + 30, r.bottom - 10), 2)
