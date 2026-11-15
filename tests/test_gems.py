@@ -43,6 +43,12 @@ def test_masters_open_workshops_by_chapter(tmp_path):
     p.sync_masters()
     assert p.building_level("ws_jewel") == 1 and p.cuts == [GM.START_CUT]
     assert not p.master_free("ws_leather")             # глава 3 ещё не вышла
+    p.chapter_wins["crypt"] = 1                        # Склеп — кожевник
+    p.sync_masters()
+    assert p.master_free("ws_leather") and p.building_level("ws_leather") == 1
+    p.chapter_wins["pass"] = 1                         # Ледяные перевалы — алхимик
+    p.sync_masters()
+    assert p.master_free("ws_alchemy") and p.building_level("ws_alchemy") == 1
     p.save()
     again = X.ExpeditionProfile(ED, p.path)
     assert again.cuts == [GM.START_CUT] and again.building_level("ws_forge") == 2

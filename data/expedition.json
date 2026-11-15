@@ -14085,8 +14085,8 @@
     }
    ],
    "master": {
-    "chapter": "ch3",
-    "chapter_name": "глава 3",
+    "chapter": "crypt",
+    "chapter_name": "Склеп нежити",
     "name": "кожевник",
     "text": "Кожевник спасён — кожевня открыта"
    }
@@ -14132,8 +14132,8 @@
     }
    ],
    "master": {
-    "chapter": "ch4",
-    "chapter_name": "глава 4",
+    "chapter": "pass",
+    "chapter_name": "Ледяные перевалы",
     "name": "алхимик",
     "text": "Алхимик спасён — алхимия открыта"
    }
