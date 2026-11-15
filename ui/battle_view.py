@@ -176,6 +176,7 @@ class BattleView:
         self._dim = {}
         self._line = ("pierce_line", (235, 240, 255), 1.0, 0)
         self.gl_camera = False     # рисуем через OpenGL — интерфейс над юнитами следует за камерой
+        self.fx_bounds = (0, 0, T.SCREEN_W, T.SCREEN_H)   # область экранных частиц (в превью — его окно)
         self.pix = FxRouter(self)  # стиль эффектов огня и льда: пиксельный или стили ui/fxlab (art_style.md)
 
     # ---------- события симуляции → эффекты ----------
@@ -451,6 +452,11 @@ class BattleView:
         radius = sk.get("radius", 0) if sk else 1
         center = e["center"]
         cells = self._fx_cells(center, radius) if radius else None
+        if u.proto_id == "cryo":                    # лёд у всех способностей Криоманта
+            for p in (cells or [center])[:4]:
+                gx, gy = T.cell_feet(p)
+                self.vfx.emit("snowflakes", gx, gy - 18, count=5, scale=0.8)
+            self.vfx.emit("frost_mist", *self.feet_pos(u), count=3)
         tunit = e["target"] if e["target"] is not None and e["target"] is not u else None
         scale = spec.get("scale", 1.0) * (1 + 0.14 * tier + 0.05 * len(sk.get("runes", []) if sk else []))
         ctx = self._ctx(u, tunit, center if tunit is None and center != u.cell else None, cells, color, scale, tier)
@@ -1403,9 +1409,34 @@ class BattleView:
             elif "oil" in u.statuses:
                 for _ in range(self._rate(("oil", u.id), 3, dt)):
                     V.emit("oil_drips", x, y + 6)
+            if u.proto_id == "cryo" or (u.obj and u.proto_id == "ice_wall"):
+                for _ in range(self._rate(("cold", u.id), 3 if not u.obj else 1.5, dt)):
+                    V.emit("frost_sparkle", x, y - 8)
+                if not u.obj and u.moving:
+                    for _ in range(self._rate(("cold_trail", u.id), 5, dt)):
+                        V.emit("snowflakes", x, y - 20, count=2, scale=0.8)
             if u.asleep:
                 for _ in range(self._rate(("zz", u.id), 1.5, dt)):
                     V.emit("zzz", x + 10, y - 30)
+        weather = getattr(self.combat, "weather", None)
+        if weather:
+            wd = self.combat.data.weathers.get(weather.get("id"), {})
+            bx, by, bw, bh = self.fx_bounds
+            for _ in range(self._rate(("weather_snow",), 55, dt)):
+                V.emit("snowflakes", self.vfx.prng.uniform(bx, bx + bw), by - 12, count=1, scale=1.15)
+            for _ in range(self._rate(("weather_wind",), 12, dt)):
+                V.emit("wind_lines", bx - 40, self.vfx.prng.uniform(by + 30, by + bh - 30), count=1, angle=0,
+                       scale=1.0)
+            if wd.get("id") == "eternal_winter" or weather.get("id") == "eternal_winter":
+                for _ in range(self._rate(("weather_mist",), 3, dt)):
+                    V.emit("frost_mist", self.vfx.prng.uniform(bx, bx + bw),
+                           self.vfx.prng.uniform(by + 60, by + bh - 40), count=1)
+        for v in getattr(self.combat, "vortices", []):
+            vx, vy = T.cell_feet(v["center"])
+            for _ in range(self._rate(("vortex", tuple(v["center"])), 14, dt)):
+                V.emit("snowflakes", vx, vy - 14, count=2, scale=1.1)
+            for _ in range(self._rate(("vortex_wind", tuple(v["center"])), 2, dt)):
+                V.emit("wind_lines", vx - 45, vy - 18, count=1, angle=0, scale=0.8)
 
     def _frame_lights(self):
         """Свет на этот кадр: горящие клетки, лёд, горящие юниты."""

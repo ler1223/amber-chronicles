@@ -53,6 +53,7 @@ class SkillPreview:
         self.zoom = zoom
         self.terrain = {}             # клетка → рельеф поверх карты (галерея: вода, камень, лёд под целью)
         self.view = BattleView(data)
+        self.view.fx_bounds = self.rect
         self.scene = PreviewScene()
         enc = {"id": "preview", "name": "Тренировка", "kind": "normal", "chapter": "_preview",
                "map": ["." * 10 for _ in range(6)], "player_spawn": [[3, 3], [3, 1], [0, 0], [0, 5]],

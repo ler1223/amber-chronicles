@@ -76,6 +76,8 @@ def entries(data):
                 mark = {"fire": "  [огонь]", "ice": "  [лёд]"}.get(family(sk), "")
                 label = f"{c['name']} · {sk['name']}" + (f" ({br}2)" if br else "") + mark
                 out.append((label, cls, STORY, {sid: (br, 2)} if br else {}, sid))
+    if "cryo_century" in data.skills:             # автоматическая шкала Криоманта — тоже показываем
+        out.append(("Криомант · Ледяной век [авто]", "cryo", STORY, {}, "cryo_century"))
     for sid, sk in data.skills.items():
         if sid.startswith("e_") and family(sk):
             out.append((f"враг · {sk['name']}  [{'огонь' if family(sk) == 'fire' else 'лёд'}]", "mage", None, {},

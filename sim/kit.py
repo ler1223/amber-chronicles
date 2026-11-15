@@ -23,7 +23,8 @@ TYPES = {"mark", "zone", "vault", "barrage", "shackle", "fletch", "trail", "igni
          "song_tempo", "song_finale", "corpse_pulse", "reagent_area", "cut_tethers", "tether_heal", "tether_all",
          "terrain_wave", "note", "finale", "guardian_zone_strike", "guardian_zone_taunt",
          "guardian_zone_buff", "guardian_pull_ally", "guardian_oath", "storm_arc",
-         "prey_mark", "prey_feast", "beast_buff", "weather", "snow_vortex", "ice_heart"}
+         "prey_mark", "prey_feast", "beast_buff", "weather", "snow_vortex", "ice_heart",
+         "cryo_cataclysm"}
 HELD_LOOKS = ("trap", "net", "root", "freeze")
 
 
@@ -929,6 +930,8 @@ def special(c, caster, eff, center, tunit):
             v.ice_heart_freeze = eff.get("freeze", 1.0)
             c.emit("shield", unit=v, amount=amount)
         c.emit("ice_heart", center=center, radius=eff.get("radius", 3), src=caster)
+    elif t == "cryo_cataclysm":
+        c._cryo_cataclysm(caster)
     elif t == "zone":
         z = {"center": center, "radius": eff.get("radius", 1), "left": eff["duration"], "every": eff.get("every", 1.0),
              "t": eff.get("every", 1.0) if eff.get("now") else 0.0, "effects": eff["effects"], "caster": caster,
