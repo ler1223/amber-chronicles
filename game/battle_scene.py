@@ -78,6 +78,7 @@ class BattleScene:
         self.auto_pause = bool(self.on_finish) and not self.autoplay and not self.view.simple
         self._auto_hp_cd = 0.0
         self.slowmo = False
+        self.view.speed_rect = None
         self.acc = 0.0
         self.targeting = None
         self.hover_cell = None
@@ -590,6 +591,8 @@ class BattleScene:
             self.speed_idx = SPEED_KEYS[key]
             from ui import settings
             settings.put("battle_speed", self.speed_idx)      # переходит в следующие бои и запуски
+        elif key in (pygame.K_LEFTBRACKET, pygame.K_RIGHTBRACKET):
+            self._cycle_speed(1 if key == pygame.K_RIGHTBRACKET else -1)
         elif key == pygame.K_ESCAPE:
             queued = [u for u in self._selected_team() if u.queue]
             if self.inspect is not None or self.inspect_hero is not None:
@@ -861,7 +864,16 @@ class BattleScene:
         self.targeting = sid
         self.target_queue = queue
 
+    def _cycle_speed(self, step=1):
+        n = len(self.cfg["speeds"])
+        self.speed_idx = max(0, min(n - 1, self.speed_idx + step))
+        from ui import settings
+        settings.put("battle_speed", self.speed_idx)
+
     def _click(self, pos, button):
+        if getattr(self.view, "speed_rect", None) and self.view.speed_rect.collidepoint(pos):
+            self._cycle_speed(-1 if button == 3 else 1)
+            return
         if self._squad_click(pos):
             return
         for r, foe in self.view.enemy_rects:            # строка в списке врагов — описание и атака

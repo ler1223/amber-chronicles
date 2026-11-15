@@ -195,6 +195,7 @@ class BattleView:
         self.banner = None         # крупная надпись над полем: волна, передышка, фаза босса
         self.info_close = None
         self.hero_info_rect = None
+        self.speed_rect = None
         self._meteor_warn = 0.0    # метеорный дождь: тёмная рамка по краям экрана
         self.fx.clear()
         self.log.clear()
@@ -2512,13 +2513,21 @@ class BattleView:
                 T.text(surf, "или перетащите · ПКМ/Esc — отмена", (RIGHT_X, 30), 13, T.TEXT_DIM)
             return
         self.start_button = None
+        self.speed_rect = None
         speed = self.data.config["speeds"][scene.speed_idx]
         if not self.simple:
             m, s = divmod(int(c.time), 60)
             T.text(surf, f"{m}:{s:02d}", (T.GRID_X + 380, 20), 20, T.TEXT_DIM, True)
-            T.text(surf, f"скорость ×{speed:g}", (T.GRID_X + 450, 22), 16, T.TEXT_DIM)
+            sr = pygame.Rect(T.GRID_X + 430, 12, 132, 30)
+            self.speed_rect = sr
+            hot = sr.collidepoint(scene.mouse)
+            pygame.draw.rect(surf, (54, 40, 26) if hot else (34, 26, 18), sr, border_radius=6)
+            pygame.draw.rect(surf, T.AMBER_DIM, sr, 1, border_radius=6)
+            T.text(surf, f"×{speed:g}", sr.center, 17, T.AMBER if hot else T.TEXT_DIM, True, center=True)
         elif speed != 1:
-            T.text(surf, f"×{speed:g}", (T.GRID_X + 530, 20), 20, T.TEXT_DIM, True)
+            sr = pygame.Rect(T.GRID_X + 510, 10, 70, 30)
+            self.speed_rect = sr
+            T.text(surf, f"×{speed:g}", sr.center, 20, T.TEXT_DIM, True, center=True)
         if scene.paused and not c.result:
             T.text(surf, "ПАУЗА", (T.GRID_X + 590, 16), 24, T.SELECT, True)
         elif scene.slowmo:
@@ -2526,7 +2535,7 @@ class BattleView:
         if self.simple:
             return
         hint_w = T.SCREEN_W - RIGHT_X - 8
-        T.text(surf, fit("Space — пауза · Shift — замедл. · F1–F3 — скорость", 13, hint_w),
+        T.text(surf, fit("Space — пауза · Shift — замедл. · F1–F3 / [ ] — скорость", 13, hint_w),
                (RIGHT_X, 10), 13, T.TEXT_DIM)
         T.text(surf, fit("F4 — автопауза · Q–R — навыки · Shift — очередь", 13, hint_w),
                (RIGHT_X, 30), 13, T.TEXT_DIM)

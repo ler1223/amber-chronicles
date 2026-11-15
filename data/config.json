@@ -94,7 +94,7 @@
     "stat_per_level": 0.02,
     "path_unlock": 3
   },
-  "speeds": [0.5, 1.0, 2.0],
+  "speeds": [0.5, 1.0, 2.0, 3.0, 4.0],
   "cover": {"half": 0.75, "full": 0.5},
   "terrain": {
     "chasm": {"name": "Пропасть", "color": [14, 12, 28]},

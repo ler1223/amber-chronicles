@@ -29,6 +29,21 @@ def test_battle_speed_carries_over(tmp_path):
     assert BattleScene(data, 1, on_finish=lambda c, f: None).speed_idx == 2
 
 
+def test_battle_speed_has_x3_and_x4():
+    from game.battle_scene import BattleScene
+    from sim.data import GameData
+    data = GameData()
+    b = BattleScene(data, 0, on_finish=lambda c, f: None)
+    b.begin_battle()
+    b.speed_idx = 2
+    b._key(pygame.K_RIGHTBRACKET)
+    assert data.config["speeds"][b.speed_idx] == 3.0
+    b._key(pygame.K_RIGHTBRACKET)
+    assert data.config["speeds"][b.speed_idx] == 4.0
+    b._key(pygame.K_LEFTBRACKET)
+    assert data.config["speeds"][b.speed_idx] == 3.0
+
+
 def test_autocast_mode_at_start(tmp_path):
     from game.tavern_rooms import MusterRoom
     for mode, want in (("off", False), ("on", True)):
