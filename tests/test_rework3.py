@@ -100,7 +100,8 @@ def test_bloodrager_pays_hp_and_hits_harder_when_hurt():
     hp = bl.hp
     bl.order = {"type": "skill", "skill": "blood_strike", "target": f}
     c._start_cast(bl, "blood_strike", f)
-    assert any(e["t"] == "damage" and e["kind"] == "hp_cost" and e["unit"] is bl for e in c.events)
+    cost_event = next(e for e in c.events if e.get("t") == "damage" and e.get("kind") == "hp_cost" and e.get("unit") is bl)
+    assert cost_event["amount"] == max(1, round(bl.max_hp * DATA.skills["blood_strike"]["hp_cost_pct"]))
     assert c.blood_mult(bl) == 1.0 or bl.hp < bl.max_hp
     bl.hp = bl.max_hp // 5
     assert c.blood_mult(bl) > 1.5

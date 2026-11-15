@@ -30,7 +30,7 @@ _STAT_TERMS = {
     "slow": "Замедление", "armor": "Броня", "regen": "Регенерация", "atk_speed": "Ускорение",
     "atk_mult": "Ярость", "skill_mult": "Сила навыков", "ap_rate": "Восстановление AP",
     "armor_shred": "Снижение брони", "heal_taken": "Получаемое лечение", "shield": "Щит",
-    "dmg_taken": "Получаемый урон", "cleanse": "Очищение",
+    "dmg_taken": "Получаемый урон", "cleanse": "Очищение", "regen_pct": "Регенерация",
 }
 
 _MARKS = {
@@ -162,6 +162,8 @@ def _buff_detail(eff):
         return f"Получаемое лечение {_pct(value - 1)}"
     if stat == "regen":
         return f"Регенерация +{value:g} HP/сек"
+    if stat == "regen_pct":
+        return f"Регенерация +{value * 100:.0f}% HP/сек"
     if stat in ("silence", "stun", "sleep"):
         return {"silence": "Молчание", "stun": "Оглушение", "sleep": "Сон"}[stat] + \
                f" {float(eff.get('duration', 0)):g} сек"

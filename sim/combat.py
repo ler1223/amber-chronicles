@@ -436,13 +436,19 @@ class Combat:
             if u.alive and u.team == team and u.summon and u.owner is None and not u.obj:
                 self._retarget(u)
 
+    def _hp_cost(self, u, sk):
+        """Стоимость HP: доля максимума, если задана hp_cost_pct, иначе плоская."""
+        if sk.get("hp_cost_pct"):
+            return max(1, int(round(u.max_hp * float(sk["hp_cost_pct"]))))
+        return int(sk.get("hp_cost", 0) or 0)
+
     def check_skill(self, u, sid, target):
         sk = u.skill_defs[sid]
         if not u.alive or sid not in u.skills:
             return False, "Нет такого навыка"
         if u.cooldowns.get(sid, 0) > 0:
             return False, "Перезарядка"
-        if sk.get("hp_cost") and u.hp <= sk["hp_cost"]:
+        if self._hp_cost(u, sk) and u.hp <= self._hp_cost(u, sk):
             return False, "Мало HP"
         # AP тратятся только на старте каста, но с нехваткой лучше сразу сказать
         if u.ap + (u.cast["ap"] if u.cast else 0) < sk["ap"]:
@@ -876,11 +882,12 @@ class Combat:
             kit.tick_marks(self, u, dt)
         if u.passive and u.passive.get("core"):
             PS.tick(self, u, dt)
-        if "regen" in u.buffs:
+        regen = u.buff("regen", 0) + u.max_hp * u.buff("regen_pct", 0)
+        if regen > 0:
             u.regen_acc += dt
             if u.regen_acc >= 1.0:
                 u.regen_acc -= 1.0
-                self.heal(u, u.buff("regen", 0))
+                self.heal(u, int(round(regen)))
         else:
             u.regen_acc = 0.0
 
@@ -1058,7 +1065,10 @@ class Combat:
                     if ch:                             # мина героя: урон от силы навыков, свой радиус и оглушение
                         kit.blow_cell(self, src, c.pos, ch, tr.get("tag"), first=u)
                     else:
-                        self.damage(u, tr["damage"] * getattr(c, "mine_mult", 1.0), src, tr.get("tag"), "reaction")
+                        dmg = tr["damage"]
+                        if tr.get("damage_pct") and src is not None:
+                            dmg = src.atk_damage * tr["damage_pct"]
+                        self.damage(u, dmg * getattr(c, "mine_mult", 1.0), src, tr.get("tag"), "reaction")
                     stun = (ch or {}).get("stun") or tr.get("stun")
                     if stun and u.alive:
                         self.apply_stun(u, stun, tr.get("look", "trap"))
@@ -1610,8 +1620,8 @@ class Combat:
         o = u.order if u.order and u.order["type"] == "skill" else {}
         auto = o.get("auto", False)
         u.ap -= sk["ap"]
-        if sk.get("hp_cost"):                  # берсерк крови платит здоровьем
-            cost = min(sk["hp_cost"], u.hp - 1)
+        if self._hp_cost(u, sk):                # берсерк крови платит здоровьем
+            cost = min(self._hp_cost(u, sk), u.hp - 1)
             u.hp -= cost
             self.emit("damage", unit=u, amount=cost, absorbed=0, kind="hp_cost", tag=None, cover=False, blocked=None)
             self.gain(u, "blood")
@@ -2755,6 +2765,8 @@ class Combat:
             tunit.tethered_by, tunit.tether_time = caster, eff["duration"]
             if eff.get("regen"):
                 self.add_buff(tunit, "regen", eff["regen"], eff["duration"])
+            if eff.get("regen_pct"):
+                self.add_buff(tunit, "regen_pct", eff["regen_pct"], eff["duration"])
             self.emit("tether", unit=tunit, src=caster)
         elif t == "merge":                 # «Слияние»: связующий входит в союзника на привязи
             ally = next((v for v in self.units if v.alive and v.tethered_by is caster), None)
@@ -2770,7 +2782,9 @@ class Combat:
         elif t == "life_transfer":         # «Отдать силы»: HP связующего — союзнику
             if tunit is None or not tunit.alive or tunit is caster:
                 return
-            cost = min(eff["cost"], caster.hp - 1)
+            raw_cost = eff.get("cost_pct")
+            cost = int(round(caster.max_hp * raw_cost)) if raw_cost else int(eff.get("cost", 0))
+            cost = min(cost, caster.hp - 1)
             caster.hp -= cost
             self.emit("damage", unit=caster, amount=cost, absorbed=0, kind="hp_cost", tag=None, cover=False,
                       blocked=None)

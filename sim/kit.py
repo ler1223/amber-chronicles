@@ -991,6 +991,8 @@ def special(c, caster, eff, center, tunit):
             v.tethered_by, v.tether_time = caster, eff["duration"]
             if eff.get("regen"):
                 c.add_buff(v, "regen", eff["regen"], eff["duration"])
+            if eff.get("regen_pct"):
+                c.add_buff(v, "regen_pct", eff["regen_pct"], eff["duration"])
             c.emit("tether", unit=v, src=caster)
     elif t == "tether_heal":                       # общая жизнь: лечение каждому на нити и себе
         tied = [v for v in c.units if v.alive and v.tethered_by is caster]
@@ -1008,7 +1010,9 @@ def special(c, caster, eff, center, tunit):
             return
         for v in tied:
             v.tethered_by = None
-            c.heal(v, int(round(eff.get("heal", 20) * caster.power)))
+            heal = int(round(v.max_hp * eff["heal_pct"])) if eff.get("heal_pct") else \
+                int(round(eff.get("heal", 20) * caster.power))
+            c.heal(v, heal)
             c.emit("link", src=caster, dst=v, color=(150, 230, 255))
             for w in c.units_in_radius(v.cell, eff.get("blast", 1)):
                 if caster.is_enemy(w) and not w.obj:

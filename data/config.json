@@ -114,9 +114,9 @@
     "mine": {"name": "Мина", "color": [200, 80, 60], "trigger": {"damage": 30, "tag": "fire", "stun": 1.0}},
     "powder": {"name": "Пороховая дорожка", "color": [72, 60, 46]},
     "snare": {"name": "Капкан", "color": [190, 180, 150], "hidden": true, "look": "trap",
-              "trigger": {"damage": 12, "stun": 2.5, "look": "trap", "expose": 5, "expose_mult": 1.2}},
+              "trigger": {"damage": 12, "damage_pct": 1.2, "stun": 2.5, "look": "trap", "expose": 5, "expose_mult": 1.2}},
     "bear_trap": {"name": "Медвежий капкан", "color": [170, 150, 120], "hidden": true, "look": "trap",
-                  "trigger": {"damage": 30, "stun": 3.5, "look": "trap", "expose": 6, "expose_mult": 1.25}}
+                  "trigger": {"damage": 30, "damage_pct": 3.0, "stun": 3.5, "look": "trap", "expose": 6, "expose_mult": 1.25}}
   },
   "legend": {
     "T": {"terrain": "grass", "passable": false, "cover": "full", "deco": "tree"},
