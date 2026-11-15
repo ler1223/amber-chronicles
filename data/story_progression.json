@@ -640,37 +640,59 @@
   "bard": {
    "skills": [
     {
-     "id": "mel_life",
+     "id": "bard_march",
      "level": 1
     },
     {
-     "id": "mel_march",
+     "id": "bard_hymn",
      "level": 2
     },
     {
-     "id": "mel_wave",
+     "id": "bard_encore",
      "level": 3
     },
     {
-     "id": "mel_lullaby",
+     "id": "bard_lullaby",
      "level": 5
     },
     {
-     "id": "mel_discord",
+     "id": "bard_dissonance",
      "level": 7
     },
     {
-     "id": "mel_encore",
+     "id": "bard_serenade",
      "level": 9
     },
     {
-     "id": "finale",
+     "id": "bard_falsetto",
+     "level": 10
+    },
+    {
+     "id": "bard_cantilena",
+     "level": 11
+    },
+    {
+     "id": "bard_rhythm",
+     "level": 12
+    },
+    {
+     "id": "bard_piercing_note",
+     "level": 12
+    },
+    {
+     "id": "bard_crescendo",
      "level": 10,
      "ult": true
     },
     {
-     "id": "mel_serenade",
-     "level": 12
+     "id": "bard_requiem",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "bard_ovation",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -685,11 +707,7 @@
    ],
    "core": [],
    "requires": {},
-   "notes": [
-    "note_do",
-    "note_mi",
-    "note_sol"
-   ]
+   "motifs": true
   },
   "alchemist": {
    "skills": [

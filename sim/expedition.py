@@ -443,6 +443,7 @@ class Hero:
         self.solo = bool(d.get("solo"))                 # герой режима «Одиночка»: до 5 навыков + ультимейт
         self.vet = dict(d.get("vet") or {})             # ветеран таверны: {"runs", "wins", "chapters"}
         self.quivers = list(d.get("quivers") or [])     # лучник: выбранные колчаны (1 / 6 / 11 уровень)
+        self.motifs = list(d.get("motifs") or [])       # бард: выбранные мотивы поддержки (1 / 6 / 11 уровень)
         self.ac_order = list(d.get("ac_order") or [])   # приоритет автокаста (порядок навыков)
         self.ac_reserve = dict(d.get("ac_reserve") or {})   # резерв AP под навыки выше: {навык: AP}
         self.falls = int(d.get("falls", 0))              # падений в этом походе: третье — гибель
@@ -462,7 +463,8 @@ class Hero:
                 "branches": {k: list(v) for k, v in self.branches.items()}, "gear": self.gear, "hp": self.hp,
                 "wounded": self.wounded, "autocast": self.autocast, "gifts": self.gifts, "perks": self.perks,
                 "uses": self.uses, "pick_offer": self.pick_offer, "solo": self.solo, "vet": self.vet,
-                "quivers": self.quivers, "ac_order": self.ac_order, "ac_reserve": self.ac_reserve,
+                "quivers": self.quivers, "motifs": self.motifs,
+                "ac_order": self.ac_order, "ac_reserve": self.ac_reserve,
                 "falls": self.falls, "chronicle": self.chronicle, "feats": self.feats, "titles": self.titles,
                 "dorm": self.dorm, "task": self.task, "rest": self.rest, "arts": self.arts}
 
@@ -623,6 +625,7 @@ class Expedition:
                                   f", {self.xd['config']['tiers'][self.tier]['name'].lower()}")
         for h in self.heroes:                  # лучник: выбор колчанов, положенных по уровню
             self.fix_quivers(h)
+            self.fix_motifs(h)                 # бард: выбор мотивов поддержки
         self.new_map()
         for _ in range(int(vow_sum(self.xd, self.vows, "curses"))):     # обет рока: поход начинается с проклятиями
             free = [c for c in sorted(self.xd["curses"]) if c not in self.curses]
@@ -687,6 +690,7 @@ class Expedition:
         x.formation = x.formation or None
         for h in x.heroes:                     # старое сохранение: лучнику — выбор колчанов
             x.fix_quivers(h)
+            x.fix_motifs(h)                    # барду — выбор мотивов
         return x
 
     def new_uid(self, prefix="i"):
@@ -1100,6 +1104,9 @@ class Expedition:
         if h.quivers:                              # лучник: колчаны в бой, с 15 уровня — сильнее
             p["quivers"] = list(h.quivers)
             p["quiver_boost"] = h.level >= self.data.config["quiver_boost_level"]
+        if h.motifs:                               # бард: мотивы вместо автоатаки
+            p["motifs"] = list(h.motifs)
+            p["motif_boost"] = h.level >= self.data.config["motif_boost_level"]
         p["start_ap"] = max(0.0, self.data.config.get("start_ap", 0.5) + vow_sum(self.xd, self.vows, "start_ap"))
         if story_meta.notes_of(self.data, h.cls):
             p["melodies"] = story_meta.melodies(self.data, h.cls, h.level)
@@ -1175,6 +1182,24 @@ class Expedition:
         if need > h.sp:
             h.sp = need
 
+    # ---------- мотивы барда ----------
+
+    def has_motifs(self, h):
+        return bool(story_meta.cfg(self.data)["classes"].get(h.cls, {}).get("motifs"))
+
+    def motifs_due(self, h):
+        if not self.has_motifs(h):
+            return 0
+        return sum(1 for lv in self.data.config["motif_levels"] if h.level >= lv)
+
+    def motif_pending(self, h):
+        return max(0, self.motifs_due(h) - len(h.motifs))
+
+    def fix_motifs(self, h):
+        need = self.motif_pending(h)
+        if need > h.sp:
+            h.sp = need
+
     # ---------- опыт и рост ----------
 
     def xp_next(self, h):
@@ -1195,6 +1220,8 @@ class Expedition:
             if self.solo and h.level in self.cfg["solo"]["slot_levels"]:   # одиночка: открылся слот — новый навык
                 h.sp += 1
             if self.has_quivers(h) and h.level in self.data.config["quiver_levels"]:   # лучник: новый колчан
+                h.sp += 1
+            if self.has_motifs(h) and h.level in self.data.config["motif_levels"]:     # бард: новый мотив
                 h.sp += 1
             h.points = auto_points(self.data, h, h.points)
             if h.hp is not None:
@@ -1253,6 +1280,11 @@ class Expedition:
             free = [a for a in self.data.config["arrows"] if a not in h.quivers]
             rng.shuffle(free)
             h.pick_offer = [{"type": "quiver", "arrow": a} for a in free[:2]]
+            return h.pick_offer
+        if self.motif_pending(h):                  # бард: мотив на выбор — 1 из 2 ещё не взятых
+            free = [m for m in self.data.config["motifs"] if m not in h.motifs]
+            rng.shuffle(free)
+            h.pick_offer = [{"type": "motif", "motif": m} for m in free[:2]]
             return h.pick_offer
         learn = self.learnable(h)
         if learn:                                  # одиночка: свободный слот — сначала новый навык
@@ -1325,6 +1357,8 @@ class Expedition:
             hh.skills.append(card["skill"])
         elif card["type"] == "quiver":
             hh.quivers.append(card["arrow"])
+        elif card["type"] == "motif":
+            hh.motifs.append(card["motif"])
         else:
             hh.perks.append({"name": "", "mods": [{"stat": card["stat"], "mult": 1.08}]})
         return hh
@@ -1354,6 +1388,11 @@ class Expedition:
             n = len(h.quivers) + 1
             return f"Колчан {n}: {a['name']}", [a["desc"], "Стрелы колчанов чередуются: каждый выстрел — следующий",
                                                 "Числа — от силы навыков лучника"]
+        if card["type"] == "motif":
+            m = self.data.config["motifs"][card["motif"]]
+            n = len(h.motifs) + 1
+            return f"Мотив {n}: {m['name']}", [m["desc"], "Мотивы чередуются: каждая поддержка — следующий",
+                                               "Работает вместо автоатаки Барда"]
         if card["type"] == "rank":
             r = h.rank_of(card["skill"])
             hc = self.cfg["hero"]
@@ -1374,6 +1413,13 @@ class Expedition:
             if not self.quiver_pending(h) or c["arrow"] in h.quivers:
                 return False
             h.quivers.append(c["arrow"])
+            h.sp -= 1
+            h.pick_offer = None
+            return True
+        if c["type"] == "motif":
+            if not self.motif_pending(h) or c["motif"] in h.motifs:
+                return False
+            h.motifs.append(c["motif"])
             h.sp -= 1
             h.pick_offer = None
             return True

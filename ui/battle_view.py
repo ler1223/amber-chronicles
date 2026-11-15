@@ -2613,6 +2613,13 @@ class BattleView:
             if u.gauge:
                 for line in T.wrap(f"{u.gauge['name']}: {u.gauge['desc']}", 13, w - 28):
                     rows.append((line, self.gauge_color(u), 13, False))
+            if u.motifs:
+                rows.append(("", T.TEXT_DIM, 5, False))
+                rows.append(("Мотивы поддержки", T.AMBER, 14, True))
+                for mid in u.motifs:
+                    m = self.data.config.get("motifs", {}).get(mid)
+                    if m:
+                        rows.append((f"{m['name']} — {m['desc']}", tuple(m.get("color", T.TEXT)), 12, False))
         else:
             title = u.name
             rows.append((fit(title, 21, w - 48), T.TEAM_ENEMY, 21, True))

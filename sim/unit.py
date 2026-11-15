@@ -100,6 +100,11 @@ class Unit:
         self.ac_order = list(proto.get("skills", []))   # приоритет автокаста: порядок навыков (выше — раньше)
         self.ac_reserve = {}                           # резерв AP под навыки выше: {навык: AP}
         self.quivers = list(proto.get("quivers") or [])   # лучник: колчаны (до трёх), стрелы чередуются
+        self.motifs = list(proto.get("motifs") or [])     # бард: мотивы поддержки вместо автоатаки
+        if self.proto_id == "bard" and not self.motifs:
+            self.motifs = ["march"]                       # старые сохранения и прямые сборки
+        self.motif_i = 0
+        self.motif_boost = bool(proto.get("motif_boost"))
         self.arrow_i = 0
         self.stun = 0.0
         self.stun_total = 0.0  # длительность текущего оглушения (для таймера на значке)

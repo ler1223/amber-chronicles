@@ -1493,6 +1493,9 @@ class Combat:
         u.order = {"type": "attack", "target": t} if t else None
 
     def _auto_attack(self, u):
+        if u.team == PLAYER and (u.motifs or u.proto_id == "bard"):
+            self._bard_support(u)
+            return
         foes = [f for f in self.foes_of(u) if cheb(u.cell, f.cell) <= self.reach(u)]
         if not foes:
             return
@@ -1504,7 +1507,35 @@ class Combat:
             t = min(foes, key=lambda f: (cheb(u.cell, f.cell), f.hp))
         self._basic_attack(u, t)
 
+    def _bard_support(self, u):
+        """Бард не бьёт: вместо автоатаки направляет мотив раненому союзнику."""
+        if u.attack_timer > 0 or not u.motifs:
+            return
+        allies = [v for v in self.units if v.alive and not v.obj and v.team == u.team
+                  and cheb(u.cell, v.cell) <= 4]
+        if not allies:
+            return
+        target = min(allies, key=lambda v: (v.hp / max(1, v.max_hp), cheb(u.cell, v.cell)))
+        u.attack_timer = u.atk_cd * u.slow_mult(self.tags) * u.buff("atk_speed", 1.0)
+        u.last_target = target
+        mid = u.motifs[u.motif_i % len(u.motifs)]
+        u.motif_i += 1
+        motif = self.data.config.get("motifs", {}).get(mid)
+        if not motif:
+            return
+        effects = []
+        for e in motif.get("effects", []):
+            e = dict(e)
+            if u.motif_boost:
+                e["value"] = round(float(e.get("value", 1.0)) * float(e.pop("boost", 1.0)), 3)
+            effects.append(e)
+        self.apply_effects(u, effects, target.cell, target)
+        self.emit("motif", unit=u, dst=target, motif=mid)
+
     def _basic_attack(self, u, t):
+        if u.team == PLAYER and (u.motifs or u.proto_id == "bard"):
+            self._bard_support(u)
+            return
         if u.attack_timer > 0:
             return
         if PS.kind(u) == "commander":         # тактик сам не бьёт: приказывает союзнику ударить цель

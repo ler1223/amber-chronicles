@@ -1163,6 +1163,25 @@ class HeroScene(XScene):
                     T.text(surf, f"— откроется на {lv} уровне" if h.level < lv else "— выбор ждёт (улучшение)",
                            (r.x + 16, r.y), 13, T.TEXT_DIM)
                 qy += 18
+        if run.has_motifs(h):                    # бард: мотивы вместо автоатаки
+            motifs = data.config["motifs"]
+            my = y + 48
+            T.text(surf, "Мотивы (поддержка по очереди)" +
+                   ("  ·  усилены" if h.level >= data.config["motif_boost_level"] else ""),
+                   (left.x + 14, my), 13, T.TEXT_DIM, True)
+            my += 18
+            for n in range(3):
+                m = motifs.get(h.motifs[n]) if n < len(h.motifs) else None
+                lv = data.config["motif_levels"][n]
+                r = pygame.Rect(left.x + 14, my, 300, 18)
+                if m:
+                    pygame.draw.circle(surf, tuple(m["color"]), (r.x + 6, r.y + 8), 5)
+                    T.text(surf, m["name"], (r.x + 16, r.y), 13, tuple(m["color"]), True)
+                    self.hit(r, None, [(m["name"], tuple(m["color"])), m["desc"]])
+                else:
+                    T.text(surf, f"— откроется на {lv} уровне" if h.level < lv else "— выбор ждёт (улучшение)",
+                           (r.x + 16, r.y), 13, T.TEXT_DIM)
+                my += 18
         if h.doctrine:
             pd = data.paths[h.doctrine]
             dr = pygame.Rect(left.x + 14, y + 26, 300, 18)
@@ -2497,6 +2516,8 @@ class PickScene(XScene):
             name = self.run.data.skills[sid]["name"] if sid else ""
             if card["type"] == "quiver":
                 name = self.run.data.config["arrows"][card["arrow"]]["name"].lower()
+            elif card["type"] == "motif":
+                name = self.run.data.config["motifs"][card["motif"]]["name"].lower()
             when = "станет" if (self.after or card["type"] == "learn") else "сейчас"
             T.text(surf, f"Демонстрация: {name} — {when}", (r.x + 10, r.y + 8), 14, T.TEXT, True, shadow=True)
 
@@ -2530,7 +2551,7 @@ class PickScene(XScene):
             head, lines = run.card_text(h, c)
             accent = {"branch": (255, 150, 90), "rank": GOLD, "learn": SP}.get(c["type"], BLESS)
             kind = {"branch": "Ветка навыка", "rank": "Мастерство", "learn": "Новый навык",
-                    "quiver": "Колчан"}.get(c["type"], "Закалка")
+                    "quiver": "Колчан", "motif": "Мотив"}.get(c["type"], "Закалка")
             on = i == self.sel
             T.frame(surf, r, 240, accent=accent if on else T.mix(accent, (0, 0, 0), 0.5), corner=accent,
                     fill=T.mix(T.PANEL, accent, 0.16 if on else 0.04))

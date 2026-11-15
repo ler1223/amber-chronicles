@@ -4414,5 +4414,394 @@
       }
     ],
     "desc": "Молния бьёт цель на 180% силы навыков + Гроза; каждый тотем добавляет разряд по ближайшему врагу (55%, до 3)."
+  },
+  "bard_march": {
+    "name": "Боевой марш",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 8,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "atk_mult",
+        "value": 1.25,
+        "duration": 6,
+        "radius": 3
+      },
+      {
+        "type": "buff",
+        "stat": "atk_speed",
+        "value": 0.85,
+        "duration": 6,
+        "radius": 3
+      }
+    ],
+    "desc": "Союзникам рядом: +25% урона и +15% скорости атаки на 6 сек.",
+    "radius": 3
+  },
+  "bard_hymn": {
+    "name": "Гимн жизни",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 8,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "heal",
+        "pct": 0.1,
+        "radius": 3
+      },
+      {
+        "type": "buff",
+        "stat": "regen",
+        "value": 4,
+        "duration": 4,
+        "radius": 3
+      }
+    ],
+    "desc": "Лечит союзников рядом на 10% HP и даёт регенерацию на 4 сек.",
+    "radius": 3
+  },
+  "bard_encore": {
+    "name": "На бис",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 8,
+    "range": 4,
+    "target": "ally",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "refresh",
+        "ap": 3,
+        "cooldowns": true
+      }
+    ],
+    "desc": "Союзник получает 3 AP и сбрасывает перезарядки."
+  },
+  "bard_lullaby": {
+    "name": "Колыбельная",
+    "ap": 3,
+    "cast": 0.4,
+    "cooldown": 9,
+    "range": 4,
+    "target": "cell",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "sleep",
+        "duration": 3,
+        "radius": 1
+      }
+    ],
+    "desc": "Враги в области засыпают на 3 сек (удар будит).",
+    "radius": 1
+  },
+  "bard_dissonance": {
+    "name": "Диссонанс",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 8,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "silence",
+        "value": 1,
+        "duration": 3,
+        "radius": 3,
+        "affects": "enemies"
+      },
+      {
+        "type": "buff",
+        "stat": "exposed",
+        "value": 1.2,
+        "duration": 4,
+        "radius": 3,
+        "affects": "enemies"
+      }
+    ],
+    "desc": "Врагам рядом: 3 сек без навыков и +20% входящего урона 4 сек.",
+    "radius": 3
+  },
+  "bard_serenade": {
+    "name": "Серенада",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 9,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "cleanse",
+        "radius": 3
+      },
+      {
+        "type": "buff",
+        "stat": "dmg_taken",
+        "value": 0.85,
+        "duration": 5,
+        "radius": 3
+      }
+    ],
+    "desc": "Союзникам рядом: очищение и −15% входящего урона на 5 сек.",
+    "radius": 3
+  },
+  "bard_falsetto": {
+    "name": "Фальцет",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 7,
+    "range": 5,
+    "target": "enemy",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "atk_mult",
+        "value": 0.7,
+        "duration": 5,
+        "affects": "enemies"
+      }
+    ],
+    "desc": "Один враг теряет 30% атаки на 5 сек."
+  },
+  "bard_cantilena": {
+    "name": "Кантилена",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 7,
+    "range": 4,
+    "target": "ally",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 3,
+        "duration": 6
+      },
+      {
+        "type": "buff",
+        "stat": "dmg_taken",
+        "value": 0.85,
+        "duration": 6
+      }
+    ],
+    "desc": "Союзнику: +3 брони и −15% входящего урона на 6 сек. Без щита."
+  },
+  "bard_rhythm": {
+    "name": "Ритм",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 10,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "skill_mult",
+        "value": 1.2,
+        "duration": 6,
+        "radius": 3
+      },
+      {
+        "type": "buff",
+        "stat": "ap_rate",
+        "value": 1.2,
+        "duration": 6,
+        "radius": 3
+      }
+    ],
+    "desc": "Союзникам рядом: +20% силы навыков и AP на 20% быстрее 6 сек.",
+    "radius": 3
+  },
+  "bard_piercing_note": {
+    "name": "Пронзительная нота",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 7,
+    "range": 5,
+    "target": "enemy",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "armor_shred",
+        "value": 2,
+        "duration": 6,
+        "affects": "enemies"
+      },
+      {
+        "type": "buff",
+        "stat": "exposed",
+        "value": 1.2,
+        "duration": 6,
+        "affects": "enemies"
+      }
+    ],
+    "desc": "Один враг: −2 брони и +20% входящего урона на 6 сек."
+  },
+  "bard_crescendo": {
+    "name": "Крещендо",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "atk_mult",
+        "value": 1.3,
+        "duration": 8,
+        "radius": 3
+      },
+      {
+        "type": "buff",
+        "stat": "atk_speed",
+        "value": 0.8,
+        "duration": 8,
+        "radius": 3
+      },
+      {
+        "type": "refresh",
+        "ap": 2,
+        "radius": 3
+      }
+    ],
+    "desc": "Условие: 4 навыка союзников рядом. Союзникам: +30% урона, +20% скорости атаки и +2 AP на 8 сек.",
+    "radius": 3,
+    "ult": true,
+    "ult_cond": {
+      "count": "ally_skill",
+      "need": 4,
+      "desc": "4 навыка союзников рядом"
+    }
+  },
+  "bard_requiem": {
+    "name": "Реквием",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "silence",
+        "value": 1,
+        "duration": 4,
+        "radius": 4,
+        "affects": "enemies"
+      },
+      {
+        "type": "buff",
+        "stat": "atk_mult",
+        "value": 0.7,
+        "duration": 6,
+        "radius": 4,
+        "affects": "enemies"
+      },
+      {
+        "type": "buff",
+        "stat": "slow",
+        "value": 1.4,
+        "duration": 6,
+        "radius": 4,
+        "affects": "enemies"
+      }
+    ],
+    "desc": "Условие: 4 навыка союзников рядом. Врагам в большой области: молчание 4 сек, −30% атаки и замедление 6 сек.",
+    "radius": 4,
+    "ult": true,
+    "ult_cond": {
+      "count": "ally_skill",
+      "need": 4,
+      "desc": "4 навыка союзников рядом"
+    }
+  },
+  "bard_ovation": {
+    "name": "Овация",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": []
+    },
+    "effects": [
+      {
+        "type": "heal",
+        "pct": 0.2,
+        "radius": 3
+      },
+      {
+        "type": "cleanse",
+        "radius": 3
+      },
+      {
+        "type": "refresh",
+        "ap": 2,
+        "radius": 3
+      }
+    ],
+    "desc": "Условие: 4 навыка союзников рядом. Союзникам: сильное лечение, очищение и +2 AP. Без щита.",
+    "radius": 3,
+    "ult": true,
+    "ult_cond": {
+      "count": "ally_skill",
+      "need": 4,
+      "desc": "4 навыка союзников рядом"
+    }
   }
 }
