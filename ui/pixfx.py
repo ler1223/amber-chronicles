@@ -18,6 +18,9 @@ FPS = 12
 PX = 2                 # экранных пикселей на пиксель эффекта (в масштабе глубины 1)
 GROUND_PX = 2          # пикселей плоской карты на пиксель наземного эффекта (клетка 64 = 32 пикселя эффекта)
 VARIANTS = 3           # вариантов зерна на эффект — чтобы соседние взрывы не повторялись
+MAX_SIDE = 1024        # предел стороны готового кадра: ошибка проекции не должна просить гигантскую картинку
+MAX_DRAW_SCALE = 8.0   # предел масштаба эффекта на экране (глубина доски меняет его в разы, не в сотни)
+CACHE_BYTES = 256 * 1024 * 1024   # предел памяти на увеличенные кадры эффектов
 
 # имя → (симулятор(зерно) → кадры, петля)
 RECIPES = {
@@ -75,6 +78,7 @@ class Lib:
     def __init__(self):
         self.frames = {}
         self.cache = {}
+        self.cache_bytes = 0
 
     def get(self, name, var=0):
         key = (name, var % VARIANTS)
@@ -96,22 +100,28 @@ class Lib:
 
     def img(self, name, var, i, scale, glow=False, rot=0, flip=False):
         """Кадр i, увеличенный в scale раз (ступени 0.25 — пиксели остаются чёткими), повёрнутый на rot·45°."""
+        if not math.isfinite(scale) or scale <= 0:
+            return None
+        src = self.get(name, var)[i][1 if glow else 0]
+        if src is None:
+            return None
+        w, h = src.get_size()
         q = max(1.0, round(scale * 4) / 4)
+        q = min(q, MAX_SIDE / max(1, w, h))       # защита от гигантских кадров при ошибке проекции
         key = (name, var % VARIANTS, i, q, glow, rot % 8, flip)
         out = self.cache.get(key)
         if out is None:
-            src = self.get(name, var)[i][1 if glow else 0]
-            if src is None:
-                return None
             if flip:
                 src = pygame.transform.flip(src, True, False)
             if rot % 8:                    # поворот в малом разрешении: ступени пикселей сохраняются
                 src = pygame.transform.rotate(src, -45 * (rot % 8))
-            w, h = src.get_size()
             out = pygame.transform.scale(src, (max(1, round(w * q)), max(1, round(h * q))))
-            if len(self.cache) > 4000:
+            nbytes = out.get_width() * out.get_height() * 4
+            if len(self.cache) >= 4000 or self.cache_bytes + nbytes > CACHE_BYTES:
                 self.cache.clear()
+                self.cache_bytes = 0
             self.cache[key] = out
+            self.cache_bytes += nbytes
         return out
 
 
@@ -243,8 +253,13 @@ class PixFx:
     def draw(self, surf, glow, fx, dim=1.0):
         x, y = fx.point()
         gy = fx.ground_y()
+        if not (math.isfinite(x) and math.isfinite(y) and math.isfinite(gy)):
+            return None
         g = P.unproject(x, gy)
         k = (P.scale_at(g[1]) if g is not None else 1.0) * fx.scale
+        if not math.isfinite(k) or k <= 0:
+            return None
+        k = min(k, MAX_DRAW_SCALE)
         return self.blit(surf, glow, fx.name, fx.var, self.frame(fx), x, y, k, fx.anchor, int(fx.opacity() * dim),
                          fx.flip, fx.rot)
 

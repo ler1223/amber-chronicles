@@ -11,8 +11,9 @@ import pygame  # noqa: E402
 from game.battle_scene import BattleScene  # noqa: E402
 from sim.build import build_proto  # noqa: E402
 from sim.data import GameData  # noqa: E402
+from sim.teams import ENEMY  # noqa: E402
 from ui import theme as T  # noqa: E402
-from ui.pixfx import RECIPES, VARIANTS, Lib, family  # noqa: E402
+from ui.pixfx import CACHE_BYTES, MAX_SIDE, RECIPES, VARIANTS, Lib, family  # noqa: E402
 from ui.settings import SETTINGS  # noqa: E402
 from ui.skill_preview import SkillPreview  # noqa: E402
 
@@ -38,6 +39,17 @@ def test_every_recipe_bakes_pixel_frames_with_glow():
         w, h = lib.get(name)[0][0].get_size()
         assert big.get_size() == (round(w * 2.5), round(h * 2.5))     # ступени 0.25 — пиксель остаётся квадратным
     assert any(g is not None for _, g in lib.get("blast_m"))           # белое ядро взрыва светится
+
+
+def test_huge_effect_scale_is_clamped_and_cache_has_memory_limit():
+    """Ошибка проекции не должна запекать кадр вроде 21908×21908 и съедать гигабайты памяти."""
+    lib = Lib()
+    img = lib.img("bloom_s", 0, 0, 730.25)
+    assert img is not None
+    assert max(img.get_size()) <= MAX_SIDE
+    for scale in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024):
+        lib.img("bloom_s", 0, 0, scale)
+    assert lib.cache_bytes <= CACHE_BYTES
 
 
 def test_family_reads_effects_not_names():
@@ -97,6 +109,24 @@ def test_battle_with_fire_and_ice_draws_and_f9_toggles():
         assert s.glow_layer() is None
     finally:
         SETTINGS["fx_style"] = "pixel"
+
+
+def test_single_target_ice_impact_uses_ground_coordinates():
+    """Удар по одной цели не должен передавать экранные координаты как мировые: иначе эффект улетает за горизонт."""
+    SETTINGS["fx_style"] = "pixel"
+    i = next(i for i, e in enumerate(DATA.encounters) if e["id"] == "forge_2")
+    squad = [{"cls": "cryo", "proto": build_proto(DATA, "cryo", skills=["blizzard"])}]
+    s = BattleScene(DATA, i, autoplay=True, squad=squad)
+    s.paused = False
+    tgt = s.combat.fighters(ENEMY)[0]
+    ground = s.view.feet_pos(tgt)
+    ctx = {"target_unit": tgt, "target_ground": ground, "target": ground, "cells": [ground]}
+    s.view.pix.impact("ice", "ice_hit", ctx, 0, 0, sk=DATA.skills["blizzard"])
+    added = [fx for fx in s.view.pix.fx.items if fx.name in ("bloom_s", "bloom_m")]
+    assert added
+    for fx in added:
+        x, y = fx.point()
+        assert abs(x) < T.SCREEN_W * 2 and abs(y) < T.SCREEN_H * 2
 
 
 def test_particles_fall_land_and_report_tag():

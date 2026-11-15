@@ -84,6 +84,7 @@ class PixelPilot:
         self._born.clear()
         self._wall_hp.clear()
         self._wall_images.clear()
+        self._wall_cache.clear()
         self._wall_key = None
         self.fx.clear()
         self.spells.clear()
@@ -200,14 +201,14 @@ class PixelPilot:
                 xs, ys = r.uniform(0, c.grid.w, n), r.uniform(0, c.grid.h, n)
                 S.ps.spawn(n, (xs, ys, np.full(n, 1.7)),
                            (np.full(n, 2.8), np.full(n, 0.35), np.full(n, -0.7)),
-                           life=1.2, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=0.08,
-                           size=1.0, pal="ice", smoke=None, land=DIE)
+                           life=0.15, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=0.08,
+                           size=1.35, pal="ice", smoke=None, land=DIE)
             n = self._rate(("pix_weather_wind",), 44, dt)
             if n:
                 xs, ys = r.uniform(-1, c.grid.w, n), r.uniform(0, c.grid.h, n)
                 S.ps.spawn(n, (xs, ys, np.full(n, 1.2)),
                            (np.full(n, 4.8), np.full(n, 0.15), np.zeros(n)),
-                           life=0.5, temp=0.8, cool=0.0, drag=0.1, size=1.1,
+                           life=0.12, temp=0.8, cool=0.0, drag=0.1, size=1.3,
                            pal="ice", smoke=None, streak=0.07, land=DIE)
         for v in getattr(c, "vortices", []):
             x, y = v["center"]
@@ -217,8 +218,8 @@ class PixelPilot:
                 rr = r.uniform(0.15, v["radius"] + 0.25, n)
                 S.ps.spawn(n, (x + np.cos(a) * rr, y + np.sin(a) * rr, r.uniform(0.1, 1.2, n)),
                            (np.cos(a + 1.4) * 1.4, np.sin(a + 1.4) * 1.4, r.uniform(0.5, 1.4, n)),
-                           life=0.8, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=1.0,
-                           size=1.0, pal="ice", smoke=None, spread=0.25, land=DIE)
+                           life=0.15, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=1.0,
+                           size=1.3, pal="ice", smoke=None, spread=0.25, land=DIE)
         for u in c.alive():
             if u.proto_id != "cryo" and not (u.obj and u.proto_id == "ice_wall"):
                 continue
@@ -572,8 +573,7 @@ class PixelPilot:
         if "prison" in impact and tgt is not None:
             self.prison(tgt, 1.6)
         if radius == 0 and tgt is not None:
-            fx, fy = self.view.feet_pos(tgt)
-            S.ice_hit_unit((fx, fy, 0.0), (0, 0, 1), tgt, sz, radius)
+            S.ice_hit_unit(S.unit_point(tgt), (0, 0, 1), tgt, sz, radius)
         else:                                    # морозный разрыв, волна инея, шипы и снежный вихрь
             c = P.unproject(*g)
             if c is not None:
@@ -610,15 +610,13 @@ class PixelPilot:
             return
         x, y = c
         if impact == "snow_vortex":
-            S.ice_hit_area((x, y, 0.0), (0, 1), self._area(ctx), max(1, radius), scale=sz)
+            S.big_snowflake(x, y, max(1.2, radius + 0.5))
+            S._frost_wave(x, y, max(1.2, radius + 0.5), 1.0)
         elif impact == "ice_heart":
             S.big_snowflake(x, y, max(2.0, radius + 1.0))
             S._frost_wave(x, y, max(2.0, radius + 1.0), 1.2)
-            S._flurry(x, y, max(1.5, radius), 1.2)
         elif impact == "weather_snow":
             S.big_snowflake(x, y, 2.6)
-            S._frost_wave(x, y, 3.0, 1.3)
-            S._flurry(x, y, 2.4, 1.4)
             V.screen_fx(shake=4, flash=0.06, color=ICE_LIGHT)
         else:                                    # Ледяной век
             big = max(3.5, radius, self.view.combat.grid.w * 0.45)
@@ -1094,6 +1092,8 @@ class PixelPilot:
         key = ("break", cell, axis, side, variant, f, P.view_key())
         hit = self._wall_cache.get(key)
         if hit is None:
+            if len(self._wall_cache) > 256:      # камера может ехать: не копим кадры раскола бесконечно
+                self._wall_cache.clear()
             hit = self._wall_cache[key] = M.wall_break(axis, cell, side, variant, f)
         if hit is None:
             return
