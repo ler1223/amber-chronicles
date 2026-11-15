@@ -13,6 +13,7 @@ from sim import story_meta
 from sim import expedition as X
 from sim import stats
 from ui import theme as T
+from ui import glossary as GL
 from ui import widgets as W
 from ui.battle_view import fit
 from ui.sprites import SpriteBank
@@ -1224,6 +1225,7 @@ class HeroScene(XScene):
     def _draw_skills(self, surf, p):
         run, h, data = self.run, self.hero, self.run.data
         hc = self.xd["config"]["hero"]
+        glossary = GL.build(data)
         box = pygame.Rect(368, 128, 560, 600)
         pygame.draw.rect(surf, T.PANEL, box, border_radius=10)
         T.text(surf, "Навыки", (box.x + 14, box.y + 10), 18, T.TEXT, True)
@@ -1273,8 +1275,17 @@ class HeroScene(XScene):
                      [f"Ранг {rank} из {hc['max_rank']}", "Растёт сам: применяйте навык в бою" +
                       (f" — ещё {pr[1] - pr[0]} до ранга {rank + 1}" if pr else ""),
                       f"Ранг: +{hc['rank_amount'] * 100:.0f}% урона/лечения, −{hc['rank_cooldown'] * 100:.0f}% перезарядки"])
-            for i, line in enumerate(T.wrap(sk.get("desc", ""), 13, r.w - 24)[:2 if rh >= 124 else 1]):
-                T.text(surf, line, (r.x + 12, r.y + 50 + i * 16), 13, T.TEXT)
+            desc = sk.get("desc", "")
+            scale = stats.skill_scale_text(p, sk)
+            if scale:
+                desc += "\n" + scale
+            effects = GL.effect_line(sk, data)
+            if effects:
+                desc += "\n" + effects
+            _hh, links = GL.draw(surf, desc, (r.x + 12, r.y + 50), 13, r.w - 24,
+                                 glossary, max_lines=3 if rh >= 124 else 2)
+            for lr, key in links:
+                self.hit(lr, None, GL.effect_tip(glossary, key))
             if sid in data.branches:
                 cur = h.branches.get(sid)
                 bx = r.x + 12
@@ -2544,11 +2555,17 @@ class PickScene(XScene):
         T.text(surf, f"{run.data.classes[h.cls]['name']} · ур. {h.level} — выберите улучшение"
                + (f" (ещё {h.sp - 1})" if h.sp > 1 else ""), (24 + img.get_width() + 12, 118), 15, T.TEXT)
         cards = run.pick_cards(h)
+        glossary = GL.build(run.data)
         left_w = T.REAL_W - 24 - 640 - 24 - 24
         y = 160
         for i, c in enumerate(cards):
-            r = pygame.Rect(24, y, left_w, 150)
+            r = pygame.Rect(24, y, left_w, 190)
             head, lines = run.card_text(h, c)
+            sid = c.get("skill")
+            if sid in run.data.skills:
+                effect_line = GL.effect_line(run.data.skills[sid], run.data)
+                if effect_line:
+                    lines.append(effect_line)
             accent = {"branch": (255, 150, 90), "rank": GOLD, "learn": SP}.get(c["type"], BLESS)
             kind = {"branch": "Ветка навыка", "rank": "Мастерство", "learn": "Новый навык",
                     "quiver": "Колчан", "motif": "Мотив"}.get(c["type"], "Закалка")
@@ -2558,17 +2575,21 @@ class PickScene(XScene):
             T.text(surf, f"{i + 1}. {kind}", (r.x + 14, r.y + 8), 13, accent, True)
             T.text(surf, fit(head, 18, r.w - 28), (r.x + 14, r.y + 26), 18, T.TEXT, True)
             yy = r.y + 52
+            link_hits = []
             for k, ln in enumerate(lines):
                 col = T.TEXT_DIM if k == 0 or ln.startswith("Сейчас:") else (BLESS if ln.startswith("Станет:") else T.TEXT)
-                for part in T.wrap(ln, 13, r.w - 28)[:2]:
-                    if yy > r.bottom - 18:
-                        break
-                    T.text(surf, part, (r.x + 14, yy), 13, col)
-                    yy += 16
+                hh, links = GL.draw(surf, ln, (r.x + 14, yy), 13, r.w - 28, glossary,
+                                    color=col, max_lines=2)
+                link_hits += links
+                yy += max(16, hh + 2)
+                if yy > r.bottom - 18:
+                    break
             if on:
                 T.text(surf, "выбрано — клик ещё раз: взять", (r.right - 210, r.y + 8), 12, accent, True)
             self.hit(r, ("card", i), [head, "Клик — показать; ещё клик — взять"])
-            y += 160
+            for lr, key in link_hits:
+                self.hit(lr, None, GL.effect_tip(glossary, key))
+            y += 198
         # переключатель и цифры под демонстрацией
         pr = self._prect()
         h_, card = self._card()

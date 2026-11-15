@@ -187,6 +187,35 @@ def skill_base_label(p, sk):
     return f"{pct * 100:.0f}% {STAT_NAMES[of]}"
 
 
+def skill_scale_text(p, sk):
+    """Стандартная строка скейла: проценты от характеристики, а не голые единицы."""
+    parts = []
+    ref = p.get("ref") or {}
+    for eff in _shown(sk.get("effects", [])):
+        of = eff.get("of")
+        if not of or eff.get("amount") is None:
+            continue
+        if eff.get("pct"):
+            pct = float(eff["amount"])
+        elif of == "hp":
+            pct = float(eff["amount"]) / max(1, ref.get("hp", 1))
+        else:
+            pct = float(eff["amount"]) / max(1, ref.get("atk", 1))
+        text = f"{pct * 100:.0f}% {STAT_NAMES.get(of, of)}"
+        if text not in parts:
+            parts.append(text)
+    if parts:
+        return "Скейл: " + " · ".join(parts)
+    base = skill_base_label(p, sk)
+    if base:
+        return "Скейл: " + base
+    vals = skill_values(p, sk)
+    if vals:
+        what, value, _crit = vals[0]
+        return f"Скейл: сила навыков ×{p.get('power', 1.0):.2f} · {what} {value}"
+    return None
+
+
 # ---------- опыт ----------
 
 def xp_to_next(data, level):

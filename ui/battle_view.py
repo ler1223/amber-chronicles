@@ -11,6 +11,7 @@ from sim import kit
 from sim.combat import ENEMY, NEUTRAL, PLAYER
 from sim.grid import PERMANENT, cheb
 from ui import theme as T
+from ui import glossary as GL
 from sim import movement as MV
 from sim import stats as ST
 from ui import icons as IC
@@ -187,6 +188,10 @@ class BattleView:
             self.marks = MarkLayer((P.FLAT_W, P.FLAT_H), self.props)
         self.combat = combat
         self.grid = combat.grid
+        self.glossary = GL.build(self.data)
+        self._skill_tip_keep = None
+        self._skill_tip_box = None
+        self._skill_tip_links = []
         self.banner = None         # крупная надпись над полем: волна, передышка, фаза босса
         self.info_close = None
         self.hero_info_rect = None
@@ -2660,6 +2665,9 @@ class BattleView:
             for sk in skills:
                 for line in T.wrap(f"{sk['name']} — {sk.get('desc', '')}", 13, w - 28):
                     rows.append((line, T.TEXT, 13, False))
+                scale = ST.skill_scale_text(u.proto, sk)
+                if scale:
+                    rows.append((scale, T.TEXT_DIM, 12, False))
         else:
             rows.append(("Нет", T.TEXT_DIM, 13, False))
         if side != "left":
@@ -3223,6 +3231,12 @@ class BattleView:
             y += 22
 
     def _draw_bottom(self, surf, scene):
+        self._skill_tip = None
+        self._tip_mouse = scene.mouse
+        if self._skill_tip_box and not self._skill_tip_box.collidepoint(scene.mouse):
+            self._skill_tip_keep = None
+        if self._skill_tip_keep and self._skill_tip_box and self._skill_tip_box.collidepoint(scene.mouse):
+            self._skill_tip = self._skill_tip_keep
         panel = pygame.Rect(T.GRID_X, BOTTOM_Y, T.GRID_W, T.SCREEN_H - BOTTOM_Y - 16)
         if self.simple:                               # слева от неё — панель отряда
             panel = pygame.Rect(16 + self.SQ_W + 10, BOTTOM_Y, T.SCREEN_W - 42 - self.SQ_W, panel.h)
@@ -3365,6 +3379,7 @@ class BattleView:
                 T.text(surf, f"{cd:.1f}", (r.centerx, r.centery - 4), 22, T.TEXT, True, center=True, shadow=True)
             if r.collidepoint(scene.mouse):            # описание — во всплывающей подсказке
                 self._skill_tip = (r, sk)
+                self._skill_tip_keep = (r, sk)
             st = u.autocast.get(sid)
             if st is not None:
                 strip = pygame.Rect(r.x + 4, r.bottom - 26, r.w - 8, 22)
@@ -3524,15 +3539,31 @@ class BattleView:
         surf.blit(shade, r)
 
     def _draw_skill_tip(self, surf, r, sk):
-        lines = T.wrap(sk["desc"], 14, 300)
+        u = getattr(self, "_tip_unit", None)
+        scale = ST.skill_scale_text(u.proto, sk) if u is not None else None
+        effect_line = GL.effect_line(sk, self.data)
+        text = sk.get("desc", "") + (("\n" + scale) if scale else "") + (("\n" + effect_line) if effect_line else "")
+        lines = [line for part in text.split("\n") for line in T.wrap(part, 14, 300)]
         h = 30 + 18 * len(lines)
         box = pygame.Rect(min(max(r.centerx - 160, 8), T.SCREEN_W - 328), BOTTOM_Y - h - 40, 320, h)
-        u = getattr(self, "_tip_unit", None)
         tint = self.tint(u) if u else {"accent": T.AMBER}
         T.frame(surf, box, 248, accent=tint["accent"], corner=tint["accent"])
         T.text(surf, sk["name"], (box.x + 12, box.y + 7), 15, tint["accent"], True)
-        for j, line in enumerate(lines):
-            T.text(surf, line, (box.x + 12, box.y + 27 + j * 18), 14, T.TEXT)
+        _h, links = GL.draw(surf, text, (box.x + 12, box.y + 27), 14, box.w - 24, self.glossary)
+        self._skill_tip_box = box
+        self._skill_tip_links = links
+        for lr, key in links:
+            if lr.collidepoint(self._tip_mouse) and key in self.glossary:
+                name, desc, col = self.glossary[key]
+                tw = 300
+                th = 32 + 18 * len(T.wrap(desc, 13, tw - 20))
+                tip = pygame.Rect(min(box.right + 8, T.SCREEN_W - tw - 8),
+                                  max(8, box.y - th - 6), tw, th)
+                T.frame(surf, tip, 248, accent=col)
+                T.text(surf, name, (tip.x + 10, tip.y + 7), 15, col, True)
+                for j, ln in enumerate(T.wrap(desc, 13, tw - 20)):
+                    T.text(surf, ln, (tip.x + 10, tip.y + 26 + j * 17), 13, T.TEXT)
+                break
 
     # ---------- очередь действий (Shift) ----------
 

@@ -1370,8 +1370,13 @@ class Expedition:
             keys = "QWER" + "DG"
             ult = story_meta.ult_of(self.data, h.cls, h.skills)
             k = len([s for s in h.skills if s != ult])
-            return f"Новый навык: {sk.get('name', '')}", [f"в слот {('D', 'G')[min(1, k - 3)] if k >= 3 else keys[k]}",
-                                                         sk.get("desc", "")]
+            p_new = self.proto(self.card_hero(h, card), party=False)
+            sk_new = p_new["skill_defs"].get(card["skill"], sk)
+            lines = [f"в слот {('D', 'G')[min(1, k - 3)] if k >= 3 else keys[k]}", sk_new.get("desc", "")]
+            scale = stats.skill_scale_text(p_new, sk_new)
+            if scale:
+                lines.append(scale)
+            return f"Новый навык: {sk.get('name', '')}", lines
         if card["type"] == "branch":
             br = self.data.branches[card["skill"]][card["branch"]]
             tier = br["tiers"][card["tier"] - 1]
@@ -1379,10 +1384,23 @@ class Expedition:
             head = f"{sk.get('name', '')}: {tier['name']}"
             sub = (f"ветка «{br['name']}», ступень {card['tier']}" + ("" if cur else " — другая ветка закроется"))
             full = next((m["set"]["desc"] for m in tier.get("mods", []) if m.get("set", {}).get("desc")), None)
-            now = self.proto(h, party=False)["skill_defs"].get(card["skill"], sk).get("desc", "")
+            p_now = self.proto(h, party=False)
+            p_new = self.proto(self.card_hero(h, card), party=False)
+            sk_now = p_now["skill_defs"].get(card["skill"], sk)
+            sk_new = p_new["skill_defs"].get(card["skill"], sk_now)
+            now = sk_now.get("desc", "")
+            lines = [sub, f"Сейчас: {now}"]
             if full and full != now:
-                return head, [sub, f"Сейчас: {now}", f"Станет: {full}"]
-            return head, [sub, tier.get("desc", "")]
+                lines.append(f"Станет: {full}")
+            else:
+                lines.append(f"Станет: {sk_new.get('desc', now)}")
+            scale_now = stats.skill_scale_text(p_now, sk_now)
+            scale_new = stats.skill_scale_text(p_new, sk_new)
+            if scale_now:
+                lines.append(scale_now)
+            if scale_new and scale_new != scale_now:
+                lines.append("После: " + scale_new)
+            return head, lines
         if card["type"] == "quiver":
             a = self.data.config["arrows"][card["arrow"]]
             n = len(h.quivers) + 1
