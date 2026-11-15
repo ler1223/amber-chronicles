@@ -110,8 +110,10 @@ def test_ice_slide_portal_and_chasm():
             u.cell = (0, 5)
     foe.cell = edge
     src = (edge[0] - (chasm[0] - edge[0]), edge[1])
+    hp = foe.hp
     c.knockback(src, foe, 2)
-    assert not foe.alive                                     # сброшен в пропасть
+    assert foe.alive and foe.hp < hp                         # падение — урон, а не мгновенная смерть
+    assert foe.cell != chasm and max(abs(foe.cell[0] - chasm[0]), abs(foe.cell[1] - chasm[1])) <= 3
     assert c.grid.passable(chasm, flying=True) and not c.grid.passable(chasm)
 
 

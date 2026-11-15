@@ -1480,23 +1480,21 @@ class Combat:
                 u.cell = u.prev_cell = exit_
                 u.move_t = 1.0
 
-    def _fall(self, u):
-        """Сброшен в пропасть: враг гибнет, герой теряет 40% HP и выкарабкивается, объект пропадает."""
-        if u.obj:
-            self.emit("fall", unit=u)
-            u.igniter = None
-            u.alive, u.hp = False, 0
-            self.log(f"{u.name} падает в пропасть", (200, 200, 255))
+    def _fall(self, u, chasm=None):
+        """Сброшен в пропасть: урон от максимального HP и возврат на клетку у края."""
+        if not u.alive or u.boss or u.flying or u.static:
             return
-        if u.boss or u.flying or u.static:
+        self.emit("fall", unit=u, cell=tuple(chasm) if chasm is not None else None)
+        pct = float(self.cfg.get("fall_damage", 0.3))
+        dmg = max(1, int(round(u.max_hp * pct)))
+        self.log(f"{u.name} срывается в пропасть: −{dmg} HP", (255, 200, 150))
+        self.damage(u, dmg, None, kind="fall")
+        if not u.alive or chasm is None:
             return
-        self.emit("fall", unit=u)
-        if u.team == ENEMY or u.summon:
-            self.log(f"{u.name} падает в пропасть", (200, 200, 255))
-            self._kill(u)
-        else:
-            self.log(f"{u.name} срывается и выкарабкивается", (255, 200, 150))
-            self.damage(u, u.max_hp * 0.4, None, kind="reaction")
+        spot = self.free_near(tuple(chasm), 3)
+        if spot is not None:
+            self._place(u, spot, 0.22)
+            self.emit("fall_land", unit=u, cell=spot)
 
     def _free_minion(self, u):
         """Призванный боец отряда (скелет, нежить, иллюзия): ходит и бьёт сам, если игрок не дал приказ."""

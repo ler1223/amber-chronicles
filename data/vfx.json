@@ -101,8 +101,8 @@
 
   "effects": {
     "rockfall_drop": [
-      {"t": 0, "projectile": {"from": "sky", "sky": [0, -420], "prop": "rock", "count": 1, "per_point": true, "speed": 900, "impact": "land_impact", "prop_scale": 3.0}, "at": "cells"},
-      {"t": 0, "props": {"name": ["rock", "pebble"], "count": 2, "spawn": 2, "speed": [0, 24], "gravity": 900, "scale": 2.4, "life": [0.65, 1.0], "bounce": 0.15}, "at": "cells"},
+      {"t": 0, "projectile": {"from": "sky", "sky": [0, -420], "prop": "boulder", "count": 1, "per_point": true, "speed": 900, "impact": "land_impact", "prop_scale": 3.2}, "at": "cells"},
+      {"t": 0, "props": {"name": ["boulder", "rock", "pebble"], "count": 3, "spawn": 2, "speed": [0, 24], "gravity": 900, "scale": 2.4, "life": [0.65, 1.0], "bounce": 0.15}, "at": "cells"},
       {"t": 0, "fx": "dust", "at": "cells", "scale": 0.8},
       {"t": 0, "sfx": "shockwave", "at": "cells", "scale": 0.35}
     ],

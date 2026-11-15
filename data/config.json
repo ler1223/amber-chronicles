@@ -1,6 +1,7 @@
 {
   "tick_rate": 20,
   "hp_mult": 1.5,
+  "fall_damage": 0.3,
   "waves": {"intermission": 6.0, "timeout": 40.0},
   "collision": {"base": 8, "per_cell": 5},
   "enrage": {"after": 120.0, "every": 10.0, "mult": 0.25},

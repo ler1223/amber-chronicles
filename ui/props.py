@@ -130,6 +130,15 @@ ART = {
         "qPPp",
         ".pp.",
     ],
+    "boulder": [
+        "..qPPP..",
+        ".qPPPPp.",
+        "qPPPPPPp",
+        "PPPPPPPP",
+        "PPPPPPpp",
+        ".pPPPPp.",
+        "..pppp..",
+    ],
     "ice_chunk": [
         "..I...",
         ".IIi..",

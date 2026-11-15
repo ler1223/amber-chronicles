@@ -89,7 +89,7 @@ def forced_move(c, u, cells, next_cell, mover=None, kind="knockback", slide=Fals
             if cell is not None and cell.terrain == "chasm" and not c.unit_at(n) and not u.flying:
                 c.emit("knockback" if kind in PUSH_KINDS else "pull", unit=u, src=mover)
                 c._place(u, n if u.obj else dest, 0.15)
-                c._fall(u)
+                c._fall(u, n)
                 return True, False
             blocker, blocked = c.unit_at(n), True
             break

@@ -700,6 +700,9 @@ class BattleView:
         elif t == "fall":
             self.float_text(e["unit"], "Падение!", (200, 200, 255), 17, ttl=1.1)
             V.play("fall_fx", self._ctx(target=e["unit"]))
+        elif t == "fall_land":
+            self.float_text(e["unit"], "Выбрался", (230, 220, 180), 14, ttl=0.9)
+            V.emit("dust", *T.cell_feet(e["cell"]))
         elif t == "portal":
             for p in (e["src"], e["dst"]):
                 gx, gy = T.cell_feet(p)
