@@ -513,7 +513,7 @@
     "summon": true,
     "permanent": true,
     "look": {
-      "body": "beast",
+      "body": "dog",
       "color": [
         150,
         120,

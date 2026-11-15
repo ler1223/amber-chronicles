@@ -223,6 +223,16 @@ def draw_beast(s, L, long=False, big=False):
         wings(s, shade(a, 0.2), 14, 15, 10)
 
 
+def draw_dog(s, L):
+    """Простой охотничий пёс: тело, морда, висячие уши, хвост и кожаный ошейник."""
+    draw_beast(s, L, long=False)
+    c, a = tuple(L["color"]), tuple(L["accent"])
+    pygame.draw.polygon(s, shade(c, -0.25), [(26, 12), (24, 18), (28, 17)])
+    pygame.draw.polygon(s, shade(c, -0.1), [(29, 12), (31, 18), (27, 17)])
+    pygame.draw.line(s, shade(c, -0.3), (5, 18), (1, 11), 3)
+    pygame.draw.line(s, a, (20, 20), (24, 20), 2)
+
+
 def draw_lizard(s, L):
     draw_beast(s, L, long=True)
     pygame.draw.line(s, tuple(L["accent"]), (8, 16), (22, 16))
@@ -398,7 +408,7 @@ def draw_eye(s, L):
 BODIES = {
     "humanoid": draw_humanoid, "robe": draw_robe, "ghoul": draw_ghoul, "skeleton": draw_skeleton, "dryad": draw_dryad,
     "siren": draw_siren, "angel": draw_angel, "ogre": draw_ogre, "rider": draw_rider, "jackal": draw_jackal,
-    "imp": draw_imp, "fairy": draw_fairy, "beast": draw_beast, "lizard": draw_lizard, "griffin": draw_griffin,
+    "imp": draw_imp, "fairy": draw_fairy, "beast": draw_beast, "dog": draw_dog, "lizard": draw_lizard, "griffin": draw_griffin,
     "yeti": draw_yeti, "golem": draw_golem, "construct": draw_construct, "elemental": draw_elemental,
     "spirit": draw_spirit, "blob": draw_blob, "insect": draw_insect, "bird": draw_bird, "wyrm": draw_wyrm,
     "serpent": draw_serpent, "crab": draw_crab, "tentacle": draw_tentacle, "plant": draw_plant, "treant": draw_treant,
