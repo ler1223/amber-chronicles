@@ -113,15 +113,15 @@
       {"t": 0, "screen": {"shake": 10, "hitstop": 0.07, "zoom": 1.05, "zoom_time": 0.25}}
     ],
     "weather_snow": [
-      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 24, "scale": 1.2},
-      {"t": 0, "fx": "frost_mist", "at": "target_ground", "count": 8, "scale": 1.3}
+      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 120, "scale": 1.2},
+      {"t": 0, "fx": "frost_mist", "at": "target_ground", "count": 40, "scale": 1.3}
     ],
     "snow_vortex": [
       {"t": 0, "sfx": "vortex_wind", "at": "target_ground", "scale": 0.9},
-      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 18, "scale": 1.1}
+      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 90, "scale": 1.1}
     ],
     "snow_vortex_tick": [
-      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 12, "scale": 1.0},
+      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 60, "scale": 1.0},
       {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.25}
     ],
     "cryo_cataclysm": [

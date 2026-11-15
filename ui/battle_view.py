@@ -1426,9 +1426,9 @@ class BattleView:
         if weather and not pix:
             wd = self.combat.data.weathers.get(weather.get("id"), {})
             bx, by, bw, bh = self.fx_bounds
-            for _ in range(self._rate(("weather_snow",), 70, dt)):
-                V.emit("snowflakes", self.vfx.prng.uniform(bx, bx + bw), by - 12, count=1, scale=1.15)
-            for _ in range(self._rate(("weather_wind",), 18, dt)):
+            for _ in range(self._rate(("weather_snow",), 350, dt)):
+                V.emit("snowflakes", self.vfx.prng.uniform(bx, bx + bw), by - 12, count=1, scale=1.15, angle=65)
+            for _ in range(self._rate(("weather_wind",), 36, dt)):
                 V.emit("wind_lines", bx - 40, self.vfx.prng.uniform(by + 30, by + bh - 30), count=1, angle=0,
                        scale=1.0)
             if wd.get("id") == "eternal_winter" or weather.get("id") == "eternal_winter":
@@ -1438,9 +1438,9 @@ class BattleView:
         if not pix:
             for v in getattr(self.combat, "vortices", []):
                 vx, vy = T.cell_feet(v["center"])
-                for _ in range(self._rate(("vortex", tuple(v["center"])), 28, dt)):
+                for _ in range(self._rate(("vortex", tuple(v["center"])), 140, dt)):
                     V.emit("snowflakes", vx, vy - 14, count=2, scale=1.1)
-                for _ in range(self._rate(("vortex_wind", tuple(v["center"])), 4, dt)):
+                for _ in range(self._rate(("vortex_wind", tuple(v["center"])), 8, dt)):
                     V.emit("wind_lines", vx - 45, vy - 18, count=1, angle=0, scale=0.8)
 
     def _frame_lights(self):

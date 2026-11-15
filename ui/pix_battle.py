@@ -195,23 +195,23 @@ class PixelPilot:
         S, r = self.spells, self.spells.rng
         weather = getattr(c, "weather", None)
         if weather:
-            n = self._rate(("pix_weather_snow",), 105, dt)
+            n = self._rate(("pix_weather_snow",), 525, dt)
             if n:
                 xs, ys = r.uniform(0, c.grid.w, n), r.uniform(0, c.grid.h, n)
                 S.ps.spawn(n, (xs, ys, np.full(n, 1.7)),
-                           (np.full(n, 0.9), np.full(n, 0.2), np.full(n, -0.7)),
-                           life=1.2, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=0.25,
+                           (np.full(n, 2.8), np.full(n, 0.35), np.full(n, -0.7)),
+                           life=1.2, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=0.08,
                            size=1.0, pal="ice", smoke=None, land=DIE)
-            n = self._rate(("pix_weather_wind",), 22, dt)
+            n = self._rate(("pix_weather_wind",), 44, dt)
             if n:
                 xs, ys = r.uniform(-1, c.grid.w, n), r.uniform(0, c.grid.h, n)
                 S.ps.spawn(n, (xs, ys, np.full(n, 1.2)),
-                           (np.full(n, 2.4), np.full(n, 0.15), np.zeros(n)),
+                           (np.full(n, 4.8), np.full(n, 0.15), np.zeros(n)),
                            life=0.5, temp=0.8, cool=0.0, drag=0.1, size=1.1,
                            pal="ice", smoke=None, streak=0.07, land=DIE)
         for v in getattr(c, "vortices", []):
             x, y = v["center"]
-            n = self._rate(("pix_vortex", tuple(v["center"])), 58, dt)
+            n = self._rate(("pix_vortex", tuple(v["center"])), 290, dt)
             if n:
                 a = r.uniform(0, math.tau, n)
                 rr = r.uniform(0.15, v["radius"] + 0.25, n)
