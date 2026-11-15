@@ -113,6 +113,7 @@
     "briar": {"name": "Терновник", "color": [80, 120, 50], "dps": 3, "dps_pct": 0.02, "damage_type": "physical", "foes_only": true, "move": 1.6},
     "mine": {"name": "Мина", "color": [200, 80, 60], "trigger": {"damage": 30, "tag": "fire", "stun": 1.0}},
     "powder": {"name": "Пороховая дорожка", "color": [72, 60, 46]},
+    "cracks": {"name": "Трещины", "color": [58, 44, 34]},
     "snare": {"name": "Капкан", "color": [190, 180, 150], "hidden": true, "look": "trap",
               "trigger": {"damage": 12, "damage_pct": 1.2, "stun": 2.5, "look": "trap", "expose": 5, "expose_mult": 1.2}},
     "bear_trap": {"name": "Медвежий капкан", "color": [170, 150, 120], "hidden": true, "look": "trap",

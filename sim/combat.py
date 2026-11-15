@@ -1867,7 +1867,7 @@ class Combat:
         if t in ("delay", "rush", "toss", "fuse", "place_object", "watch", "detonate", "song", "trap", "wall",
                  "terrain", "shatter", "corpse", "rewind", "stasis", "spread_fire", "gather", "swap",
                  "levitate", "collapse", "terrain_cast", "reagent", "extra_attack", "regroup", "focus", "tether",
-                 "merge", "life_transfer", "fire_wall", "clear_hazard", "stoke_fire", "meteor_rain"):
+                 "merge", "life_transfer", "fire_wall", "clear_hazard", "stoke_fire", "meteor_rain", "rockfall"):
             self._special(caster, eff, center, tunit)
             return
         if t == "vanish":
@@ -2655,6 +2655,8 @@ class Combat:
             self._stoke_fire(caster, eff, center)
         elif t == "meteor_rain":           # дождь метеоров: несколько отложенных ударов
             self._meteor_rain(caster, eff, center)
+        elif t == "rockfall":              # обвал Землетряса: на свободные клетки падают валуны
+            self._rockfall(caster, eff, center)
         elif t == "place_object":          # бочка подрывника
             mine = [o for o in self.units if o.alive and o.obj and o.owner is caster and o.proto_id == eff["object"]]
             for old in mine[:max(0, len(mine) - eff.get("limit", 3) + 1)]:
@@ -2935,6 +2937,26 @@ class Combat:
         mine.append(center)
         self.traps[caster.id] = mine
         self.emit("trap_set", pos=center, src=caster)
+
+    def _rockfall(self, caster, eff, center):
+        """Обвал: несколько валунов падают на свободные клетки вокруг точки удара."""
+        obj = eff.get("object", "boulder")
+        count = max(1, int(eff.get("count", 2)))
+        limit = max(1, int(eff.get("limit", 2)))
+        mine = [o for o in self.units if o.alive and o.obj and o.owner is caster and o.proto_id == obj]
+        for old in mine[:max(0, len(mine) + count - limit)]:
+            self.break_object(old)
+        cells = [p for p in self.grid.in_radius(tuple(center), eff.get("radius", 2)) if self.is_free(p)]
+        cells.sort(key=lambda p: (cheb(p, center), p))
+        made = []
+        for p in cells[:count]:
+            o = self.spawn_object(obj, p)
+            o.owner = caster
+            made.append(p)
+        if made:
+            self.emit("rockfall", src=caster, center=tuple(center), cells=made)
+        else:
+            self.emit("fizzle", unit=caster, skill=None)
 
     def _wall(self, caster, eff, center):
         dx, dy = sign(center[0] - caster.cell[0]), sign(center[1] - caster.cell[1])

@@ -2286,7 +2286,7 @@
     "target": "cell",
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "line", "length": 3, "amount": 16, "kind": "melee", "push": 2}],
-    "desc": "Линия до 3 клеток: урон 160% атаки и толчок на 2 от тарана каждому врагу."
+    "desc": "Линия до 3 клеток: урон 160% атаки и толчок на 2 от Землетряса каждому врагу."
   },
   "fan_flames": {
     "name": "Раздуть", "ap": 2, "cast": 0.0, "cooldown": 3, "range": 5, "target": "cell", "radius": 2,
@@ -2575,7 +2575,7 @@
     "free_cell": true,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
     "effects": [{"type": "place_object", "object": "boulder", "limit": 2}, {"type": "damage", "amount": 14, "kind": "spell", "radius": 1}],
-    "desc": "Валун падает на свободную клетку (до 2): урон 200% силы навыков врагам рядом. Валун — укрытие и снаряд для Тарана."
+    "desc": "Валун падает на свободную клетку (до 2): урон 200% силы навыков врагам рядом. Валун — укрытие и снаряд для Землетряса."
   },
   "lava_vent": {
     "name": "Жерло", "ap": 4, "cast": 0.0, "cooldown": 8, "range": 5, "target": "cell", "radius": 1,
@@ -3727,7 +3727,7 @@
         "pct": true
       }
     ],
-    "desc": "8 сек каждое столкновение от тарана оглушает на 1 сек, +100% брони."
+    "desc": "8 сек каждое столкновение от Землетряса оглушает на 1 сек, +100% брони."
   },
   "billiard": {
     "name": "Бильярд", "ap": 1, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "ult": true, "ult_cond": {"count": "collision", "need": 3, "desc": "3 столкновения"},
@@ -6294,6 +6294,12 @@
       {
         "type": "stun",
         "duration": 0.8
+      },
+      {
+        "type": "hazard",
+        "hazard": "cracks",
+        "duration": 4,
+        "radius": 1
       }
     ],
     "charged_effects": [
@@ -6353,6 +6359,12 @@
         "pct": true,
         "kind": "melee",
         "push": 2
+      },
+      {
+        "type": "hazard",
+        "hazard": "cracks",
+        "duration": 3,
+        "radius": 1
       }
     ],
     "charged_effects": [
@@ -6583,6 +6595,12 @@
             "affects": "enemies"
           }
         ]
+      },
+      {
+        "type": "hazard",
+        "hazard": "cracks",
+        "duration": 5,
+        "radius": 2
       }
     ],
     "charged_effects": [
@@ -6595,9 +6613,15 @@
         "type": "stun",
         "duration": 0.8,
         "radius": 2
+      },
+      {
+        "type": "hazard",
+        "hazard": "cracks",
+        "duration": 5,
+        "radius": 3
       }
     ],
-    "desc": "Трещины на 5 сек: 45% атаки в секунду и замедление в радиусе 2. Тряска: зона шире, стягивает врагов к центру и оглушает."
+    "desc": "Трещины на 5 сек: 45% атаки в секунду, замедление и видимые разломы на клетках в радиусе 2. Тряска: зона шире, стягивает врагов к центру и оглушает."
   },
   "ram_stone_skin": {
     "name": "Каменная кожа",
@@ -6819,6 +6843,12 @@
             "affects": "enemies"
           }
         ]
+      },
+      {
+        "type": "hazard",
+        "hazard": "cracks",
+        "duration": 5,
+        "radius": 3
       }
     ],
     "charged_effects": [
@@ -6951,6 +6981,12 @@
         "pct": true,
         "kind": "melee",
         "radius": 3
+      },
+      {
+        "type": "hazard",
+        "hazard": "cracks",
+        "duration": 4,
+        "radius": 3
       }
     ],
     "charged_effects": [
@@ -7019,6 +7055,19 @@
         "type": "stun",
         "duration": 0.6,
         "radius": 2
+      },
+      {
+        "type": "hazard",
+        "hazard": "cracks",
+        "duration": 4,
+        "radius": 2
+      },
+      {
+        "type": "rockfall",
+        "object": "boulder",
+        "count": 2,
+        "radius": 2,
+        "limit": 2
       }
     ],
     "charged_effects": [
@@ -7049,6 +7098,6 @@
         ]
       }
     ],
-    "desc": "Обвал в радиусе 2: 130% атаки и сбивает с ног на 0.6 сек. Тряска: оставляет обломки на 4 сек — урон и замедление."
+    "desc": "Обвал в радиусе 2: 130% атаки, оглушение 0.6 сек, 2 валуна и трещины. Тряска: оставляет обломки на 4 сек — урон и замедление."
   }
 }

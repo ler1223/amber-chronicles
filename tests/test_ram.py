@@ -1,4 +1,4 @@
-"""Таран-Землетряс: шкала Тряски и уникальные усиления навыков."""
+"""Землетряс: шкала Тряски, трещины и падающие валуны."""
 from test_characters import setup
 from test_rework1 import events, run
 
@@ -31,3 +31,24 @@ def test_ram_stone_fist_charged_breaks_armor():
     run(c, 0.4)
     assert "armor_shred" in foes[0].buffs
     assert events(c, "charged")
+
+
+def test_ram_cracks_marks_cells_as_fissures():
+    c, h, foes = setup("ram", ["cracks"])
+    h.pp = 0
+    h.cooldowns.clear()
+    c._resolve_skill(h, "cracks", (5, 3))
+    run(c, 0.8)
+    assert c.grid.get((5, 3)).hazard == "cracks"
+    assert c.grid.get((5, 3)).hazard_time > 0
+
+
+def test_ram_collapse_drops_boulders_and_leaves_cracks():
+    c, h, foes = setup("ram", ["ram_collapse"])
+    h.pp = 0
+    h.cooldowns.clear()
+    c._resolve_skill(h, "ram_collapse", (5, 3))
+    run(c, 0.8)
+    assert any(u.alive and u.proto_id == "boulder" and u.owner is h for u in c.units)
+    assert any(cell.hazard == "cracks" for cell in c.grid.cells.values())
+    assert events(c, "rockfall")

@@ -1189,6 +1189,11 @@ class BattleView:
             x, y = e["center"][0] + 0.5, e["center"][1] + 0.5
             self.pix.arch.ring(x, y, e["radius"] + 0.3, self.ZONE_PAL.get(e.get("kind"), "spirit"), n=90, life=0.5,
                                out=e.get("kind") != "gravity", temp=0.7)
+        elif t == "rockfall":
+            cells = e.get("cells") or []
+            ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (170, 145, 115), 1.0)
+            self.vfx.play("rockfall_drop", ctx)
+            self.vfx.screen_fx(shake=2)
         elif t == "quiver":
             q = self.data.config.get("quiver", {}).get(e["arrow"], {})
             self.float_text(e["unit"], q.get("name", e["arrow"]), (255, 220, 150), 15, ttl=1.0)
@@ -1734,9 +1739,11 @@ class BattleView:
                     blink = 150 + int(100 * (0.5 + 0.5 * math.sin(self.clock * 6)))
                     pygame.draw.circle(surf, (blink, 50, 40), (cx, cy - 1), 2)
                     continue
-                alpha = {"fire": 90, "poison": 70, "oil": 85, "briar": 100}.get(cell.hazard, 130)
+                alpha = {"fire": 90, "poison": 70, "oil": 85, "briar": 100, "cracks": 80}.get(cell.hazard, 130)
                 if not (cell.hazard in ("fire", "ice", "poison", "oil", "fog") and self.pix.on):   # поверхности — ui/pixfire.py
                     pygame.draw.rect(self.overlay, (*h["color"], alpha), r)
+                if cell.hazard == "cracks":           # трещины: тёмные ломаные разломы по клетке
+                    self._draw_cracks(surf, r, pos)
                 if cell.hazard == "briar":           # терновник: колючие штрихи
                     for i in range(5):
                         hx = r.x + 12 + (pos[0] * 31 + i * 17) % (r.w - 24)
@@ -1838,6 +1845,23 @@ class BattleView:
         mask = pygame.mask.from_surface(img, 100)
         mask.to_surface(self.depth_surf, setcolor=(v >> 8, v & 255, 0, 255), unsetcolor=None,
                         dest=(int(pos[0]), int(pos[1])))
+
+    def _draw_cracks(self, surf, r, pos):
+        """Трещины на клетке: несколько ломаных лучей с расщелинами и светлой кромкой."""
+        cx, cy = r.center
+        base = (pos[0] * 0.73 + pos[1] * 1.17) % math.tau
+        for i in range(5):
+            a = base + i * 1.256 + 0.35 * math.sin(pos[0] * 2.1 + pos[1] * 1.3 + i)
+            x, y = cx, cy
+            for j in range(3):
+                a += 0.34 * math.sin(pos[0] * 3.1 + pos[1] * 2.7 + i * 2 + j)
+                step = r.w * (0.09 + 0.035 * (i % 3))
+                nx = x + math.cos(a) * step
+                ny = y + math.sin(a) * step * 0.72
+                pygame.draw.line(surf, (22, 16, 12), (x, y), (nx, ny), 4 if j == 0 else 2)
+                if j == 0:
+                    pygame.draw.line(surf, (112, 92, 70), (x + 1, y + 1), (nx + 1, ny + 1), 1)
+                x, y = nx, ny
 
     def gpu_particles(self):
         """Для видеокарты: (частицы, карта глубины фигурок) или None."""
