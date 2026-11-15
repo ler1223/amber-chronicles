@@ -537,6 +537,9 @@ class PixelPilot:
         pts = ctx.get("cells") or [g]
         tgt = ctx.get("target_unit")
         sz = 1.0 + 0.14 * tier
+        if sk and sk.get("name") == "Морозная игла":   # лёгкий точечный удар: не грузит кадр
+            self._frost_needle_hit(g, tgt, sz)
+            return
         if impact in ("weather_snow", "cryo_cataclysm", "ice_heart", "snow_vortex"):
             self._cryo_impact(impact, g, ctx, radius, sz)
             return
@@ -578,6 +581,26 @@ class PixelPilot:
         self._light((g[0], g[1] - 16), ICE_LIGHT, 110 + 50 * radius, 0.9, 0.6)
         V.screen_fx(shake=2 + 2 * radius)
 
+    def _frost_needle_hit(self, g, tgt, sz):
+        """Морозная игла: короткий точный укол, без тяжёлого hitstop и облака частиц."""
+        S, V = self.spells, self.view.vfx
+        if tgt is not None:
+            fx, fy = self.view.feet_pos(tgt)
+            p = (fx, fy, 0.0)
+            sp = (fx, fy)
+        else:
+            c = P.unproject(*g) if g else None
+            if c is None:
+                return
+            p = (c[0], c[1], 0.0)
+            sp = (g[0], g[1])
+        S._flash(p, "ice", n=10, size=1.4)
+        S._shards(p, (0, 0, 1), 8, speed=(2.0, 4.0))
+        S._mist(p, 4, out=0.4)
+        self._at("chip", sp, lift=1.0, delay=0.04)
+        self._light((p[0], p[1] - 16), ICE_LIGHT, 90, 0.8, 0.35)
+        V.screen_fx(shake=1.5, flash=0.02, color=ICE_LIGHT)
+
     def _cryo_impact(self, impact, g, ctx, radius, sz):
         """Выразительные ледяные удары Криоманта: снежинка, морозная волна, шипы и шквал."""
         S = self.spells
@@ -598,10 +621,9 @@ class PixelPilot:
             S._flurry(x, y, 2.4, 1.4)
             V.screen_fx(shake=4, flash=0.06, color=ICE_LIGHT)
         else:                                    # Ледяной век
-            big = max(4.0, radius, self.view.combat.grid.w * 0.55)
+            big = max(3.5, radius, self.view.combat.grid.w * 0.45)
             S.ice_hit_area((x, y, 0.0), (0, 1), self._area(ctx), big, scale=1.8 * sz)
             S.big_snowflake(x, y, big + 0.8)
-            S._flurry(x, y, big + 0.5, 1.6)
             V.screen_fx(shake=12, hitstop=0.08, flash=0.3, flash_color=ICE_LIGHT,
                         zoom=1.05, zoom_time=0.3)
         self._light((g[0], g[1] - 16), ICE_LIGHT, 150 + 70 * radius, 1.3, 0.65)
