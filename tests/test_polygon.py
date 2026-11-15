@@ -67,6 +67,32 @@ def test_polygon_uses_worn_artifacts_without_crashing(tmp_path):
     assert app.profile.run_state is None
 
 
+def test_polygon_saves_and_loads_test_preset(tmp_path):
+    app = new_app(tmp_path)
+    h = app.profile.recruitable()[0]
+    app.scene.room_act(("recruit", h.uid))
+    assert h.uid in app.scene.picked
+    app.scene.room_act(("polygon_save",))
+    assert "1" in app.profile.polygon_presets
+    app.scene.picked.clear()
+    app.scene.room_act(("polygon_load",))
+    assert h.uid in app.scene.picked
+
+
+def test_polygon_can_cycle_enemy_encounters(tmp_path):
+    app = new_app(tmp_path)
+    first = app.scene.encounter_name()
+    app.scene.room_act(("polygon_enemy", 1))
+    assert app.scene.encounter_name() != first
+
+
+def test_polygon_can_cycle_enemy_power(tmp_path):
+    app = new_app(tmp_path)
+    first = app.scene.power_label()
+    app.scene.room_act(("polygon_power",))
+    assert app.scene.power_label() != first
+
+
 def test_polygon_returns_after_battle_and_does_not_save_rewards(tmp_path):
     app = new_app(tmp_path)
     click_action(app, ("polygon_start", "dummy"))
@@ -77,5 +103,7 @@ def test_polygon_returns_after_battle_and_does_not_save_rewards(tmp_path):
         app.scene.draw(SCREEN)
     app.scene.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN, unicode="", mod=0))
     assert type(app.scene).__name__ == "PolygonRoom"
-    assert getattr(app, "polygon_last", {}).get("result") == "victory"
+    last = getattr(app, "polygon_last", {})
+    assert last.get("result") == "victory"
+    assert last.get("totals", {}).get("dealt", 0) >= 0
     assert app.profile.run_state is None

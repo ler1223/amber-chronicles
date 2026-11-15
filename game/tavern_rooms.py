@@ -1534,6 +1534,38 @@ class PolygonRoom(MusterRoom):
     art = "room_muster"
     dim = 150
 
+    def __init__(self, app):
+        super().__init__(app)
+        self.test_kind = "dummy"
+        self.enemy_choice = 0
+        self.preset_slot = 0
+        self.power_mode = 1
+
+    def encounter_indices(self, kind=None):
+        """Все бои главы выбранного типа: можно листать состав врагов, а не брать первый."""
+        kind = kind or self.test_kind
+        want = "normal" if kind in ("dummy", "dummies") else kind
+        rows = [i for i, e in enumerate(self.app.profile.data.encounters)
+                if e.get("chapter", "swamp") == self.chapter and e.get("kind", "normal") == want]
+        if not rows:
+            rows = [i for i, e in enumerate(self.app.profile.data.encounters)
+                    if e.get("kind", "normal") == want]
+        return rows
+
+    def encounter(self, kind=None):
+        rows = self.encounter_indices(kind)
+        return rows[self.enemy_choice % len(rows)] if rows else 0
+
+    def encounter_name(self, kind=None):
+        rows = self.encounter_indices(kind)
+        if not rows:
+            return "—"
+        enc = self.app.profile.data.encounters[rows[self.enemy_choice % len(rows)]]
+        return enc.get("name", enc.get("id", "—"))
+
+    def power_label(self):
+        return ("Сила: ×0.6", "Сила: ×1.0", "Сила: ×1.4")[self.power_mode]
+
     def pick_for_test(self, uid):
         prof = self.app.profile
         s = sel(self.app)
@@ -1556,16 +1588,82 @@ class PolygonRoom(MusterRoom):
         if kind == "polygon_start":
             self.start_test(action[1])
             return
+        if kind == "polygon_enemy":
+            n = len(self.encounter_indices())
+            self.enemy_choice = (self.enemy_choice + int(action[1])) % max(1, n)
+            return
+        if kind == "polygon_slot":
+            self.preset_slot = (self.preset_slot + 1) % 3
+            return
+        if kind == "polygon_power":
+            self.power_mode = (self.power_mode + 1) % 3
+            return
+        if kind == "polygon_save":
+            self.save_preset()
+            return
+        if kind == "polygon_load":
+            self.load_preset()
+            return
         if kind == "recruit" and button != 3:
             self.pick_for_test(action[1])
             return
         super().room_act(action, button)
+
+    def preset_key(self):
+        return str(self.preset_slot + 1)
+
+    def save_preset(self):
+        prof = self.app.profile
+        heroes = [h for h in self.heroes() if h.uid in self.picked]
+        if not heroes:
+            self.say("Сначала выберите героев для сборки")
+            return
+        prof.polygon_presets[self.preset_key()] = {
+            "heroes": [h.uid for h in heroes],
+            "arts": {h.uid: list(h.arts) for h in heroes},
+            "chapter": self.chapter,
+            "tier": self.tier,
+            "kind": self.test_kind,
+            "enemy": self.enemy_choice,
+            "power": self.power_mode,
+        }
+        prof.save()
+        self.say(f"Сборка {self.preset_slot + 1} сохранена")
+
+    def load_preset(self):
+        prof = self.app.profile
+        data = prof.polygon_presets.get(self.preset_key())
+        if not data:
+            self.say(f"Сборка {self.preset_slot + 1} пуста")
+            return
+        s = sel(self.app)
+        if data.get("chapter") in prof.xd.get("chapters", {}):
+            s["chapter"] = data["chapter"]
+        s["tier"] = max(0, min(int(data.get("tier", 0)), prof.tier_open_of(s["chapter"])))
+        s["picked"] = [uid for uid in data.get("heroes", []) if any(h.uid == uid for h in self.heroes())][:4]
+        for uid, arts in (data.get("arts") or {}).items():
+            h = next((x for x in self.heroes() if x.uid == uid), None)
+            if h is None:
+                continue
+            keep = [a for a in arts if a in prof.stash][:prof.art_slots(h)]
+            for other in self.heroes():
+                if other is not h:
+                    other.arts = [a for a in other.arts if a not in keep]
+            h.arts = keep
+        self.test_kind = data.get("kind", "dummy")
+        self.enemy_choice = int(data.get("enemy", 0))
+        self.power_mode = int(data.get("power", 1)) % 3
+        prof.save()
+        self.say(f"Сборка {self.preset_slot + 1} загружена")
 
     def start_test(self, kind):
         prof = self.app.profile
         if prof.run_state:
             self.say("Сначала завершите текущий поход — полигон не трогает сохранение")
             return
+        if kind != self.test_kind:
+            self.test_kind = kind
+            self.enemy_choice = 0
         picked = [h for h in self.heroes() if h.uid in self.picked and prof.ready(h)][:4]
         if not picked:                       # пустой отряд: берём первых готовых, чтобы кнопка не молчала
             picked = [h for h in self.heroes() if prof.ready(h)][:4]
@@ -1583,14 +1681,29 @@ class PolygonRoom(MusterRoom):
         run = Expedition(prof.data, [h.to_dict() for h in picked], seed=0, chapter=self.chapter,
                          tier=self.tier, arts=arts)
         squad = polygon_squad(run, run.heroes)
-        idx = polygon_encounter_index(prof.data, self.chapter, kind)
+        idx = self.encounter(kind)
         scale = polygon_enemy_scale(self.tier, kind)
+        factor = (0.6, 1.0, 1.4)[self.power_mode]
+        for key in ("hp", "damage", "power"):
+            scale[key] = round(float(scale.get(key, 1.0)) * factor, 3)
         from game.battle_scene import BattleScene
         self.app.switch(BattleScene(prof.data, idx, squad=squad, on_finish=self.finish_test,
                                     enemy_scale=scale, difficulty="normal", cheats=True, simple=False))
 
     def finish_test(self, combat, formation):
-        self.app.polygon_last = {"result": combat.result or "—", "time": round(combat.time, 1)}
+        stats = combat.battle_stats()
+        rows = stats.get("rows") or []
+        totals = {k: round(sum(float(r.get(k, 0) or 0) for r in rows), 1)
+                  for k in ("dealt", "dealt_eff", "healed", "taken", "absorbed")}
+        totals["kills"] = sum(int(r.get("kills", 0) or 0) for r in rows)
+        prev = getattr(self.app, "polygon_last", None)
+        self.app.polygon_last = {
+            "result": combat.result or "—",
+            "time": round(combat.time, 1),
+            "totals": totals,
+            "prev": ({"totals": prev.get("totals"), "time": prev.get("time")} if prev else None),
+            "rows": rows,
+        }
         self.app.switch(PolygonRoom(self.app))
 
     def room_key(self, k):
@@ -1611,16 +1724,43 @@ class PolygonRoom(MusterRoom):
         self.draw_summary(surf)
         self.draw_cards(surf)
         y = strip_y() - 66
+        py = y - 58
         names = [h.name for h in self.heroes() if h.uid in self.picked]
         msg = ("Полигон: " + ", ".join(names)) if names else "Выберите до 4 героев — клик по карточке"
         T.text(surf, msg, (24, y - 24), 16, GOLD if names else T.TEXT, True, shadow=True)
         T.text(surf, "Бой не тратит золото, HP и вещи; артефакты и ветки — как в Сборах.",
                (24, y - 4), 12, T.TEXT_DIM)
+        # тестовые сборки: три слота, сохранить/загрузить
+        self.btn(surf, pygame.Rect(24, py, 116, 32), f"Сборка {self.preset_slot + 1}",
+                 ("polygon_slot",), True, tip=["Слот тестовой сборки", "герои, артефакты, глава и враги"])
+        self.btn(surf, pygame.Rect(148, py, 108, 32), "Записать", ("polygon_save",), True,
+                 tip="Запомнить текущих героев и артефакты")
+        self.btn(surf, pygame.Rect(264, py, 108, 32), "Загрузить", ("polygon_load",), True,
+                 tip="Вернуть сохранённую сборку")
+        # состав врагов: листаем бои выбранного типа
+        self.btn(surf, pygame.Rect(392, py, 360, 32), f"Враги: {self.encounter_name()}",
+                 ("polygon_enemy", 1), True, tip=["Клик — следующий состав врагов", "глава и тип боя — как выбрано"])
+        self.btn(surf, pygame.Rect(760, py, 230, 32), self.power_label(), ("polygon_power",), True,
+                 tip=["Сила врагов на полигоне", "не влияет на обычные походы"])
         last = getattr(self.app, "polygon_last", None)
         if last:
             result = "победа" if last.get("result") == "victory" else "поражение"
-            T.text(surf, f"Последний тест: {result} · {last.get('time', 0):g} с",
+            totals = last.get("totals") or {}
+            dealt = float(totals.get("dealt", 0) or 0)
+            healed = float(totals.get("healed", 0) or 0)
+            taken = float(totals.get("taken", 0) or 0)
+            t = max(0.1, float(last.get("time", 0) or 0))
+            T.text(surf, f"Последний тест: {result} · {last.get('time', 0):g} с · DPS {dealt / t:.1f}",
                    (24, y + 18), 12, (150, 220, 170) if result == "победа" else CURSE)
+            T.text(surf, f"Урон {dealt:.0f} · лечение {healed:.0f} · получено {taken:.0f}",
+                   (24, y + 34), 11, T.TEXT_DIM)
+            prev = last.get("prev") or {}
+            if prev:
+                prev_tot = prev.get("totals") or {}
+                dd = dealt - float(prev_tot.get("dealt", 0) or 0)
+                dt = float(last.get("time", 0) or 0) - float(prev.get("time", 0) or 0)
+                T.text(surf, f"Δ к прошлому: урон {dd:+.0f} · время {dt:+.1f} с",
+                       (24, y + 50), 11, (150, 220, 170) if dd >= 0 else CURSE)
         bw, gap = 154, 8
         labels = (("dummy", "Чучела", True), ("normal", "Обычный", False),
                   ("elite", "Элита  E", False), ("boss", "Босс  B", False))

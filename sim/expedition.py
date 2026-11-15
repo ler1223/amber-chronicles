@@ -2618,6 +2618,7 @@ class ExpeditionProfile:
         self.away = []                           # ушедшие ветераны (могут вернуться в таверну)
         self.stash = {}                          # хранилище артефактов таверны: {uid: артефакт}
         self.art_presets = {}                    # сохранённые сборки артефактов: {hero_uid: [artifact_uid]}
+        self.polygon_presets = {}                # полигон: слоты тестовых сборок отряда и артефактов
         self.gems = []                           # огранённые самоцветы: [{"uid", "id", "q", "size", "shape"}]
         self.rough = []                          # необработанные самоцветы: [{"uid", "id", "seed", "size"}]
         self.smith = {}                          # кузня: куски, пакеты, части, инструменты, заказы (sim/smithing.py)
@@ -2816,6 +2817,7 @@ class ExpeditionProfile:
         self.away = list(d.get("away") or [])
         self.stash = dict(d.get("stash") or {})
         self.art_presets = dict(d.get("art_presets") or {})
+        self.polygon_presets = dict(d.get("polygon_presets") or {})
         self.gems = list(d.get("gems") or [])
         self.rough = list(d.get("rough") or [])
         self.smith = dict(d.get("smith") or {})
@@ -2890,6 +2892,7 @@ class ExpeditionProfile:
              "trophies": self.trophies, "buildings": self.buildings, "vows": self.vows, "fallen": self.fallen,
              "solo": self.solo, "econ": 1, "mats": self.mats, "offers": self.offers, "news": self.news,
              "away": self.away, "stash": self.stash, "art_presets": self.art_presets,
+             "polygon_presets": self.polygon_presets,
              "gems": self.gems, "art_n": self.art_n, "tiers10": 1,
              "rough": self.rough, "market": self.market, "smith": self.smith, "cuts": self.cuts,
              "forge": self.forge, "mine": self.mine,
