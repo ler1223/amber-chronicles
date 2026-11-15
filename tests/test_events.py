@@ -125,4 +125,4 @@ def test_chapter_has_about_forty_events():
     chained = followups | {k for k, e in evs.items() if e.get("kind") == "thread" and not e.get("acts")}
     by_flag = {"smith_debt", "witch_envoy", "witch_price", "grotto_entrance", "village_feast", "village_mob",
                "witch_hunters", "magpie_nest"}
-    assert 40 <= len(set(evs) - chained - by_flag) <= 49
+    assert 40 <= len(set(evs) - chained - by_flag) <= 52

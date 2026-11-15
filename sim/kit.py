@@ -22,7 +22,7 @@ TYPES = {"mark", "zone", "vault", "barrage", "shackle", "fletch", "trail", "igni
          "time_theft", "detonate_charges", "song_notes", "inferno", "consume_fire", "bleed_feast", "raise_all",
          "song_tempo", "song_finale", "corpse_pulse", "reagent_area", "cut_tethers", "tether_heal", "tether_all",
          "terrain_wave", "note", "finale", "guardian_zone_strike", "guardian_zone_taunt",
-         "guardian_zone_buff", "guardian_pull_ally", "guardian_oath"}
+         "guardian_zone_buff", "guardian_pull_ally", "guardian_oath", "storm_arc"}
 HELD_LOOKS = ("trap", "net", "root", "freeze")
 
 
@@ -1024,6 +1024,33 @@ def special(c, caster, eff, center, tunit):
             c.apply_effects(caster, [dict(e, radius=0) for e in effs], v.cell, v)
 
 
+    elif t == "storm_arc":                         # молния шамана: цель и разряды от каждого тотема
+        target = tunit or c.unit_at(center)
+        if target is None or not target.alive:
+            c.emit("fizzle", unit=caster, skill=None)
+            return
+        amount = float(eff.get("amount", 1.0))
+        if eff.get("of") == "sp":
+            amount *= c.stat_k(caster, "sp", True)
+        c.damage(target, amount, caster, "storm", "spell")
+        totems = [v for v in c.units if v.alive and v.owner is caster and v.proto_id.startswith("totem")]
+        hit = {target}
+        jumps = max(0, int(eff.get("jumps", 3)))
+        rng = max(1, int(eff.get("range", 3)))
+        mult = float(eff.get("chain_mult", 0.55))
+        extra = 0
+        for tot in totems:
+            if extra >= jumps:
+                break
+            cand = [v for v in c.units if v.alive and not v.obj and caster.is_enemy(v)
+                    and v not in hit and cheb(v.cell, tot.cell) <= rng]
+            if not cand:
+                continue
+            v = min(cand, key=lambda x: cheb(x.cell, tot.cell))
+            c.damage(v, amount * mult, caster, "storm", "spell")
+            c.emit("chain", unit=v, src=tot)
+            hit.add(v)
+            extra += 1
     elif t == "guardian_zone_strike":              # удар по врагам в конусе Стража
         cells = c.guardian_zone_cells(caster)
         hit = 0

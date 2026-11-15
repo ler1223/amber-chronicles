@@ -546,93 +546,97 @@
   "requires": {}
  },
   "shaman": {
-   "skills": [
-    {
-     "id": "storm_totem",
-     "level": 1
-    },
-    {
-     "id": "healing_totem",
-     "level": 2
-    },
-    {
-     "id": "rage_totem",
-     "level": 3
-    },
-    {
-     "id": "chain_lightning",
-     "level": 5
-    },
-    {
-     "id": "totem_pulse",
-     "level": 6
-    },
-    {
-     "id": "stoneskin_totem",
-     "level": 7
-    },
-    {
-     "id": "ball_lightning",
-     "level": 8
-    },
-    {
-     "id": "totem_link",
-     "level": 9
-    },
-    {
-     "id": "spirit_totem",
-     "level": 12
-    },
-    {
-     "id": "storm_front",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "thunder_idol",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "ancestors",
-     "level": 10,
-     "ult": true
-    }
-   ],
-   "doctrines": [
-    {
-     "id": "thunderlord",
-     "level": 4
-    },
-    {
-     "id": "spiritwalker",
-     "level": 4
-    }
-   ],
-   "core": [
+  "skills": [
+   {
+    "id": "storm_totem",
+    "level": 1
+   },
+   {
+    "id": "healing_totem",
+    "level": 2
+   },
+   {
+    "id": "rage_totem",
+    "level": 3
+   },
+   {
+    "id": "chain_lightning",
+    "level": 5
+   },
+   {
+    "id": "totem_pulse",
+    "level": 6
+   },
+   {
+    "id": "stoneskin_totem",
+    "level": 7
+   },
+   {
+    "id": "ball_lightning",
+    "level": 8
+   },
+   {
+    "id": "totem_link",
+    "level": 9
+   },
+   {
+    "id": "ancestors",
+    "level": 10,
+    "ult": true
+   },
+   {
+    "id": "storm_arc",
+    "level": 10
+   },
+   {
+    "id": "storm_front",
+    "level": 10,
+    "ult": true
+   },
+   {
+    "id": "thunder_idol",
+    "level": 10,
+    "ult": true
+   },
+   {
+    "id": "spirit_totem",
+    "level": 12
+   }
+  ],
+  "doctrines": [
+   {
+    "id": "thunderlord",
+    "level": 4
+   },
+   {
+    "id": "spiritwalker",
+    "level": 4
+   }
+  ],
+  "core": [
+   "storm_totem",
+   "healing_totem",
+   "rage_totem",
+   "stoneskin_totem",
+   "spirit_totem"
+  ],
+  "requires": {
+   "totem_pulse": [
     "storm_totem",
     "healing_totem",
     "rage_totem",
     "stoneskin_totem",
     "spirit_totem"
    ],
-   "requires": {
-    "totem_pulse": [
-     "storm_totem",
-     "healing_totem",
-     "rage_totem",
-     "stoneskin_totem",
-     "spirit_totem"
-    ],
-    "totem_link": [
-     "storm_totem",
-     "healing_totem",
-     "rage_totem",
-     "stoneskin_totem",
-     "spirit_totem"
-    ]
-   }
-  },
+   "totem_link": [
+    "storm_totem",
+    "healing_totem",
+    "rage_totem",
+    "stoneskin_totem",
+    "spirit_totem"
+   ]
+  }
+ },
   "bard": {
    "skills": [
     {

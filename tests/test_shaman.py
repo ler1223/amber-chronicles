@@ -10,6 +10,15 @@ from needs import need  # noqa: E402
 from sim import kit  # noqa: E402
 
 
+def test_shaman_has_ten_regular_and_three_ults():
+    from sim import story_meta
+    pool = story_meta.all_skills(DATA, "shaman")
+    ults = story_meta.ults_of(DATA, "shaman")
+    assert len([s for s in pool if s not in ults]) == 10
+    assert len(ults) == 3
+    assert "storm_arc" in pool
+
+
 def mk(skills, level=1):
     need(*skills, cls="shaman")
     if "summon_groups" not in DATA.config:
@@ -59,6 +68,17 @@ def test_ball_lightning_hits_each_enemy_once_along_its_path():
     run(c, 3.0)
     hit = [f for f, x in zip(foes, hp) if f.hp < x]
     assert hit and all("storm" in f.statuses or not f.alive for f in hit)
+
+
+def test_storm_arc_chains_from_totem_to_nearby_enemy():
+    c, h, foes = mk(["storm_arc", "storm_totem"])
+    c.summon(h, {"unit": "totem_storm"}, (1, 2))
+    put(foes[0], (5, 2))
+    put(foes[1], (2, 2))
+    hp = [f.hp for f in foes[:2]]
+    c._resolve_skill(h, "storm_arc", foes[0])
+    run(c, 1.0)
+    assert foes[0].hp < hp[0] and foes[1].hp < hp[1]
 
 
 def test_ultimates():
