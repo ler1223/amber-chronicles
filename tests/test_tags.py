@@ -101,9 +101,15 @@ def test_rule_burning_collision_ignites_target():
     put(ram, (2, 2))
     put(a, (3, 2))
     put(b, (4, 2))
+    for cell in ((3, 2), (4, 2)):
+        c.grid.get(cell).terrain, c.grid.get(cell).hazard = "grass", None
+    for u in (a, b):
+        u.statuses.clear()
     a.statuses["fire"] = 4.0
-    cast(c, ram, "kick", (3, 2))
-    assert "fire" in b.statuses and ("burning_ram", "collision") in c.rules.fired
+    cast(c, ram, "fault_break", (4, 2))
+    run(c, 0.7)
+    assert ("burning_ram", "collision") in c.rules.fired
+    assert any(e["t"] == "status" and e.get("tag") == "fire" and e.get("unit") is b for e in c.events)
 
 
 def test_rule_from_unit_proto():
@@ -143,7 +149,7 @@ def test_everything_but_walls_moves_and_collides():
     put(ram, (2, 2))
     totem = c.summon(sh, {"unit": "totem_heal", "duration": 9}, (3, 2))
     put(totem, (3, 2))
-    cast(c, ram, "kick", (3, 2))
+    c.knockback(ram.cell, totem, 2, ram)
     assert totem.cell != (3, 2)                            # тотем сдвинулся
     wall = c.spawn_object("ice_wall", (6, 2))
     c.knockback((5, 2), wall, 2, ram)

@@ -17,7 +17,7 @@
     "shaman": {"gives": ["tags", "objects", "aoe", "skills"], "needs": [{"any": ["tank"], "text": "кто прикроет тотемы"}]},
     "bard": {"gives": ["buff", "fragile"], "needs": [{"any": ["skills"], "text": "союзники, часто применяющие навыки"}]},
     "alchemist": {"gives": ["objects", "fire", "aoe", "fragile"], "needs": [{"any": ["fire", "push"], "text": "кто взорвёт бочки огнём или пинком"}]},
-    "ram": {"gives": ["push", "tank", "attacker"], "needs": [{"any": ["objects", "walls"], "text": "обо что бить: стены, бочки, валуны"}]},
+    "ram": {"gives": ["control", "tank", "aoe"], "needs": [{"any": ["pull", "push"], "text": "кто соберёт врагов в кучу под обвал"}]},
     "trapper": {"gives": ["control", "fragile"], "needs": [{"any": ["push", "pull", "tank"], "text": "кто пригонит врагов на капканы"}]},
     "cryo": {"gives": ["walls", "objects", "control", "skills", "fragile"], "needs": [{"any": ["push"], "text": "кто бьёт врагов о стены"}]},
     "necro": {"gives": ["skills", "fragile"], "needs": [{"any": ["kills"], "text": "кто убивает — трупы для некроманта"}]},

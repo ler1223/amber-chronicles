@@ -193,16 +193,16 @@ def test_momentum_passive_pushes_further():
     assert f.cell == (6, 2) and events(c, "passive")
 
 
-def test_toss_throws_neighbour_to_cell():
+def test_ram_doctrine_replaces_strike_with_cracks():
     proto = build_proto(DATA, "ram", path="thrower")
-    assert "toss" in proto["skills"]
+    assert "cracks" in proto["skills"] and "quake_strike" not in proto["skills"]
     c = quiet(Combat(DATA, 1, squad=[{"cls": "ram", "proto": proto}] +
                      [{"cls": k, "proto": DATA.classes[k]} for k in ("warrior", "archer", "mage")]))
-    ram, f = hero(c, "ram"), foe(c)
+    ram = hero(c, "ram")
     put(ram, (3, 2))
-    put(f, (4, 2))
-    cast(c, ram, "toss", (2, 0))
-    assert f.cell == (2, 0) and events(c, "toss")
+    cast(c, ram, "cracks", (5, 2))
+    run(c, 0.2)
+    assert c.zones and any(z["kind"] == "quake" for z in c.zones)
 
 
 def test_song_counts_notes_and_finale_scales():

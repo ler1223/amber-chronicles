@@ -794,37 +794,59 @@
   "ram": {
    "skills": [
     {
-     "id": "kick",
+     "id": "quake_strike",
      "level": 1
     },
     {
-     "id": "rush",
+     "id": "fault_break",
      "level": 2
     },
     {
-     "id": "quake",
+     "id": "ram_collapse",
      "level": 3
     },
     {
-     "id": "toss",
+     "id": "earth_push",
      "level": 5
     },
     {
-     "id": "fault_line",
+     "id": "stone_fist",
      "level": 7
     },
     {
-     "id": "pin_wall",
+     "id": "geyser",
      "level": 9
     },
     {
-     "id": "billiard",
+     "id": "tremor",
+     "level": 10
+    },
+    {
+     "id": "cracks",
+     "level": 11
+    },
+    {
+     "id": "ram_stone_skin",
+     "level": 12
+    },
+    {
+     "id": "underground_grasp",
+     "level": 12
+    },
+    {
+     "id": "world_fracture",
      "level": 10,
      "ult": true
     },
     {
-     "id": "wallbreaker",
-     "level": 12
+     "id": "mountain_hold",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "earthquake",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -838,9 +860,9 @@
     }
    ],
    "core": [
-    "kick",
-    "rush",
-    "toss"
+    "quake_strike",
+    "fault_break",
+    "ram_collapse"
    ],
    "requires": {}
   },

@@ -2722,7 +2722,7 @@
     "name": "Окованный рог",
     "base": "axe",
     "class": "ram",
-    "desc": "Столкновения ×2.5.",
+    "desc": "Сейсмический удар: +40% атаки.",
     "stats": [
      {
       "stat": "atk_damage",
@@ -2731,8 +2731,13 @@
     ],
     "mods": [
      {
-      "passive": "mult",
-      "add": 0.5
+      "skill": "quake_strike",
+      "effect": {
+       "type": "damage",
+       "add": {
+        "amount": 0.4
+       }
+      }
      }
     ]
    },
@@ -2740,7 +2745,7 @@
     "name": "Шкура бизона",
     "base": "plate",
     "class": "ram",
-    "desc": "Столкновения лечат на 50% урона.",
+    "desc": "Каменная кожа: +25% брони.",
     "stats": [
      {
       "stat": "hp",
@@ -2749,8 +2754,13 @@
     ],
     "mods": [
      {
-      "passive": "heal",
-      "add": 0.2
+      "skill": "ram_stone_skin",
+      "effect": {
+       "type": "buff",
+       "add": {
+        "value": 0.25
+       }
+      }
      }
     ]
    },
@@ -13061,12 +13071,12 @@
    ]
   },
   "battering": {
-   "name": "Таран",
-   "desc": "Столкновения бьют вдвое сильнее (×2 → ×3)",
+   "name": "Тряска",
+   "desc": "Шкала Тряски шире на 1 деление (5 → 6)",
    "mods": [
     {
-     "passive": "mult",
-     "add": 1.0
+     "stat": "pp_max",
+     "add": 1
     }
    ],
    "classes": [

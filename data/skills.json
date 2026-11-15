@@ -6264,5 +6264,791 @@
     ],
     "desc": "Дым в радиусе 2 на 5 сек: враги слепнут, союзники получают уклонение и скрытность 3 сек.",
     "gauge_gain": 1
+  },
+  "quake_strike": {
+    "name": "Сейсмический удар",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 5,
+    "range": 1,
+    "target": "enemy",
+    "radius": 0,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 1.6,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee"
+      },
+      {
+        "type": "stun",
+        "duration": 0.8
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "zone",
+        "radius": 1,
+        "duration": 4,
+        "every": 1.0,
+        "kind": "quake",
+        "now": true,
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 0.4,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee",
+            "radius": 1
+          },
+          {
+            "type": "buff",
+            "stat": "slow",
+            "value": 1.25,
+            "duration": 1.5,
+            "radius": 1,
+            "affects": "enemies"
+          }
+        ]
+      }
+    ],
+    "desc": "Удар по земле: 160% атаки и оглушение 0.8 сек. Тряска: оставляет трещину на 4 сек — 40% атаки в секунду и замедление."
+  },
+  "fault_break": {
+    "name": "Разлом",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 6,
+    "range": 4,
+    "target": "cell",
+    "radius": 0,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "line",
+        "length": 4,
+        "amount": 1.5,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee",
+        "push": 2
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "stun",
+        "duration": 0.8,
+        "radius": 2
+      },
+      {
+        "type": "zone",
+        "radius": 2,
+        "duration": 3,
+        "every": 1.0,
+        "kind": "quake",
+        "now": true,
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 0.4,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee",
+            "radius": 2
+          },
+          {
+            "type": "buff",
+            "stat": "slow",
+            "value": 1.2,
+            "duration": 1.5,
+            "radius": 2,
+            "affects": "enemies"
+          }
+        ]
+      }
+    ],
+    "desc": "Линия до 4 клеток: 150% атаки и толчок на 2. Тряска: линия шире, оглушает на 0.8 сек и оставляет трещины."
+  },
+  "earth_push": {
+    "name": "Толчок земли",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 5,
+    "range": 0,
+    "target": "self",
+    "radius": 2,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_adjacent",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "push",
+        "cells": 2,
+        "affects": "enemies",
+        "from": "caster",
+        "radius": 2,
+        "amount": 0.6,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee"
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "stun",
+        "duration": 1.0,
+        "radius": 2
+      }
+    ],
+    "desc": "Волна в радиусе 2: 60% атаки и толчок на 2. Тряска: врезавшиеся враги оглушаются на 1 сек."
+  },
+  "stone_fist": {
+    "name": "Каменный кулак",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 6,
+    "range": 1,
+    "target": "enemy",
+    "radius": 0,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 2.2,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee"
+      },
+      {
+        "type": "stun",
+        "duration": 1.0
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "buff",
+        "stat": "armor_shred",
+        "value": 3.0,
+        "duration": 6,
+        "affects": "enemies"
+      },
+      {
+        "type": "stun",
+        "duration": 1.4
+      }
+    ],
+    "desc": "Тяжёлый удар: 220% атаки и оглушение 1 сек. Тряска: ломает броню цели на 6 сек и оглушает сильнее."
+  },
+  "geyser": {
+    "name": "Гейзер",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 7,
+    "range": 5,
+    "target": "cell",
+    "radius": 1,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 1.2,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee",
+        "radius": 1
+      },
+      {
+        "type": "stun",
+        "duration": 0.5,
+        "radius": 1
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "zone",
+        "radius": 1,
+        "duration": 4,
+        "every": 1.0,
+        "kind": "geyser",
+        "now": true,
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 0.5,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee",
+            "radius": 1
+          },
+          {
+            "type": "buff",
+            "stat": "slow",
+            "value": 1.25,
+            "duration": 1.5,
+            "radius": 1,
+            "affects": "enemies"
+          }
+        ]
+      }
+    ],
+    "desc": "Столб земли: 120% атаки в радиусе 1 и подбрасывает на 0.5 сек. Тряска: оставляет каменный фонтан на 4 сек."
+  },
+  "cracks": {
+    "name": "Трещины",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 9,
+    "range": 4,
+    "target": "cell",
+    "radius": 2,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "zone",
+        "radius": 2,
+        "duration": 5,
+        "every": 1.0,
+        "kind": "quake",
+        "now": true,
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 0.45,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee",
+            "radius": 2
+          },
+          {
+            "type": "buff",
+            "stat": "slow",
+            "value": 1.3,
+            "duration": 1.5,
+            "radius": 2,
+            "affects": "enemies"
+          }
+        ]
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "gather",
+        "radius": 3,
+        "cells": 1
+      },
+      {
+        "type": "stun",
+        "duration": 0.8,
+        "radius": 2
+      }
+    ],
+    "desc": "Трещины на 5 сек: 45% атаки в секунду и замедление в радиусе 2. Тряска: зона шире, стягивает врагов к центру и оглушает."
+  },
+  "ram_stone_skin": {
+    "name": "Каменная кожа",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 10,
+    "range": 4,
+    "target": "ally",
+    "ai": "shield_ally",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 70
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 0.75,
+        "duration": 6,
+        "pct": true
+      },
+      {
+        "type": "buff",
+        "stat": "dmg_taken",
+        "value": 0.85,
+        "duration": 6
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "buff",
+        "stat": "thorns",
+        "value": 0.5,
+        "duration": 6
+      },
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 0.4,
+        "duration": 6,
+        "radius": 1,
+        "affects": "allies",
+        "pct": true
+      }
+    ],
+    "desc": "Союзнику: +75% его брони и −15% получаемого урона на 6 сек. Тряска: добавляет шипы и броню соседям."
+  },
+  "tremor": {
+    "name": "Сотрясение",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 7,
+    "range": 0,
+    "target": "self",
+    "radius": 2,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_adjacent",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "push",
+        "cells": 1,
+        "affects": "enemies",
+        "from": "caster",
+        "radius": 2,
+        "amount": 0.5,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee"
+      },
+      {
+        "type": "stun",
+        "duration": 0.5,
+        "radius": 2
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "delay",
+        "time": 1.0,
+        "name": "Второй толчок",
+        "effects": [
+          {
+            "type": "push",
+            "cells": 1,
+            "affects": "enemies",
+            "from": "caster",
+            "radius": 2,
+            "amount": 0.5,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee"
+          },
+          {
+            "type": "stun",
+            "duration": 0.8,
+            "radius": 2
+          }
+        ]
+      }
+    ],
+    "desc": "Сотрясение вокруг: 50% атаки, толчок на 1 и оглушение 0.5 сек. Тряска: второй импульс через 1 сек."
+  },
+  "underground_grasp": {
+    "name": "Подземный захват",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 10,
+    "range": 5,
+    "target": "cell",
+    "radius": 2,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "gather",
+        "radius": 2,
+        "cells": 2
+      },
+      {
+        "type": "stun",
+        "duration": 0.8,
+        "radius": 2
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "stun",
+        "duration": 1.2,
+        "radius": 2
+      },
+      {
+        "type": "damage",
+        "amount": 0.8,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee",
+        "radius": 2
+      }
+    ],
+    "desc": "Стягивает врагов в радиусе 2 к точке и оглушает на 0.8 сек. Тряска: удерживает на 1.2 сек и наносит 80% атаки."
+  },
+  "world_fracture": {
+    "name": "Разлом мира",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 5,
+    "target": "cell",
+    "radius": 3,
+    "ult": true,
+    "quake": true,
+    "ult_cond": {
+      "count": "stun",
+      "need": 4,
+      "desc": "4 оглушения"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 3
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "line",
+        "length": 6,
+        "amount": 1.8,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee",
+        "push": 2
+      },
+      {
+        "type": "zone",
+        "radius": 3,
+        "duration": 5,
+        "every": 1.0,
+        "kind": "quake",
+        "now": true,
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 0.5,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee",
+            "radius": 3
+          },
+          {
+            "type": "buff",
+            "stat": "slow",
+            "value": 1.35,
+            "duration": 1.5,
+            "radius": 3,
+            "affects": "enemies"
+          }
+        ]
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "stun",
+        "duration": 1.5,
+        "radius": 3
+      },
+      {
+        "type": "gather",
+        "radius": 3,
+        "cells": 1
+      }
+    ],
+    "desc": "Условие: 4 оглушения. Линия 180% атаки и зона обрушения на 5 сек. Тряска: массовое оглушение и стягивание."
+  },
+  "mountain_hold": {
+    "name": "Горная твердыня",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "radius": 3,
+    "ult": true,
+    "quake": true,
+    "ult_cond": {
+      "count": "stun",
+      "need": 3,
+      "desc": "3 оглушения"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 0.8,
+        "duration": 6,
+        "radius": 3,
+        "affects": "allies",
+        "pct": true
+      },
+      {
+        "type": "buff",
+        "stat": "dmg_taken",
+        "value": 0.8,
+        "duration": 6,
+        "radius": 3,
+        "affects": "allies"
+      },
+      {
+        "type": "buff",
+        "stat": "slow",
+        "value": 1.3,
+        "duration": 6,
+        "radius": 3,
+        "affects": "enemies"
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "buff",
+        "stat": "thorns",
+        "value": 0.7,
+        "duration": 6,
+        "radius": 3,
+        "affects": "allies"
+      },
+      {
+        "type": "stun",
+        "duration": 1.0,
+        "radius": 3
+      }
+    ],
+    "desc": "Условие: 3 оглушения. Союзникам в радиусе 3: +80% брони и −20% урона, врагам замедление. Тряска: шипы союзникам и оглушение врагов."
+  },
+  "earthquake": {
+    "name": "Землетряс",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "radius": 3,
+    "ult": true,
+    "quake": true,
+    "ult_cond": {
+      "count": "quake",
+      "need": 3,
+      "desc": "3 сотрясения"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_adjacent",
+          "value": 3
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "push",
+        "cells": 1,
+        "affects": "enemies",
+        "from": "caster",
+        "radius": 3,
+        "amount": 0.7,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee"
+      },
+      {
+        "type": "stun",
+        "duration": 0.6,
+        "radius": 3
+      },
+      {
+        "type": "damage",
+        "amount": 0.7,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee",
+        "radius": 3
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "delay",
+        "time": 1.0,
+        "name": "Повторный толчок",
+        "effects": [
+          {
+            "type": "push",
+            "cells": 1,
+            "affects": "enemies",
+            "from": "caster",
+            "radius": 3,
+            "amount": 0.7,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee"
+          },
+          {
+            "type": "stun",
+            "duration": 1.0,
+            "radius": 3
+          },
+          {
+            "type": "damage",
+            "amount": 0.7,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee",
+            "radius": 3
+          }
+        ]
+      }
+    ],
+    "desc": "Условие: 3 сотрясения. Три импульса по области: 70% атаки, толчок и оглушение. Тряска: повторный импульс."
+  },
+  "ram_collapse": {
+    "name": "Обвал",
+    "ap": 4,
+    "cast": 0.0,
+    "cooldown": 7,
+    "range": 5,
+    "target": "cell",
+    "radius": 2,
+    "quake": true,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 1.3,
+        "of": "atk",
+        "pct": true,
+        "kind": "melee",
+        "radius": 2
+      },
+      {
+        "type": "stun",
+        "duration": 0.6,
+        "radius": 2
+      }
+    ],
+    "charged_effects": [
+      {
+        "type": "zone",
+        "radius": 2,
+        "duration": 4,
+        "every": 1.0,
+        "kind": "quake",
+        "now": true,
+        "effects": [
+          {
+            "type": "damage",
+            "amount": 0.45,
+            "of": "atk",
+            "pct": true,
+            "kind": "melee",
+            "radius": 2
+          },
+          {
+            "type": "buff",
+            "stat": "slow",
+            "value": 1.3,
+            "duration": 1.5,
+            "radius": 2,
+            "affects": "enemies"
+          }
+        ]
+      }
+    ],
+    "desc": "Обвал в радиусе 2: 130% атаки и сбивает с ног на 0.6 сек. Тряска: оставляет обломки на 4 сек — урон и замедление."
   }
 }

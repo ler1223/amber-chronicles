@@ -1733,10 +1733,13 @@ class Combat:
         else:
             center, tunit = tuple(target), None
         hit = self.hit_delay(u, sid, sk, center, tunit)
+        charged = bool(u.pp_max > 0 and u.pp >= u.pp_max and sk.get("charged_effects"))
         spent = kit.spend(self, u, sk)
         u.uses[sid] = u.uses.get(sid, 0) + 1
         if not sk.get("ult") and not sk.get("no_gain"):
             self.gain(u, "skill")
+        if u.proto_id == "ram" and sk.get("quake"):
+            self.gain(u, "quake")
         self.emit("skill", unit=u, skill=sid, center=center, target=tunit, auto=auto, hit=hit)
         for a in self.units:             # ноты барда: навык союзника рядом
             if a is not u and a.alive and a.gauge and a.team == u.team and cheb(a.cell, u.cell) <= 3:
@@ -1749,7 +1752,11 @@ class Combat:
         self.log(f"{u.name}: {sk['name']}{suffix}", (230, 230, 160) if u.team == PLAYER else (230, 170, 160))
         if autocast.hits_enemies(sk):
             self._reveal(u)
-        effects = sk["effects"]
+        effects = list(sk["effects"])
+        if charged:                            # Тряска: следующий навык получает своё качественное усиление
+            effects += [dict(e) for e in sk["charged_effects"]]
+            u.pp = 0
+            self.emit("charged", unit=u, skill=sid)
         pm = PS.powder_mult(self, u, sk)
         if pm is not None:                    # заряд с Порохом — ×2, без — ×0.6
             effects = [dict(e, _powder=pm) for e in effects]
@@ -3624,6 +3631,9 @@ class Combat:
             u.stun_total = dur
         u.stun = max(u.stun, dur)
         self.emit("stun", unit=u, duration=dur, look=u.stun_look)
+        if self._actor is not None and self._actor.alive and self._actor.team != u.team \
+                and self._actor.proto_id == "ram":
+            self.gain(self._actor, "stun")
         look = u.stun_look
         self.rules.fire("status", {"control", look, *self.cfg.get("control_tags", {}).get(look, [])}, unit=u)
 
