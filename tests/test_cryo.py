@@ -54,6 +54,17 @@ def test_weather_ticks_cold_and_extends_for_ap():
     assert any(f.marks.get("cold") for f in c.fighters(__import__("sim.teams", fromlist=["ENEMY"]).ENEMY))
 
 
+def test_frost_needle_ricochet_hits_second_target():
+    c, h, foes = setup("cryo", ["frost_needle"], {"frost_needle": ("B", 2)})
+    h.ap = h.ap_max
+    first, second = foes[0], foes[1]
+    hp = second.hp
+    c._resolve_skill(h, "frost_needle", first)
+    run(c, 0.8)
+    assert second.hp < hp
+    assert any(e["t"] == "link" for e in c.events)
+
+
 def test_snow_vortex_moves_and_applies_cold():
     c, h, foes = setup("cryo", ["snow_vortex"])
     h.ap = h.ap_max
