@@ -452,7 +452,7 @@ class BattleView:
         radius = sk.get("radius", 0) if sk else 1
         center = e["center"]
         cells = self._fx_cells(center, radius) if radius else None
-        if u.proto_id == "cryo":                    # лёд у всех способностей Криоманта
+        if u.proto_id == "cryo" and not self.pix.on:   # лёд у всех способностей Криоманта (старый стиль)
             for p in (cells or [center])[:4]:
                 gx, gy = T.cell_feet(p)
                 self.vfx.emit("snowflakes", gx, gy - 18, count=5, scale=0.8)
@@ -723,20 +723,24 @@ class BattleView:
             wd = self.data.weathers.get(e["id"], {})
             col = tuple(wd.get("color", (190, 225, 255)))
             self.banner = [e.get("name", wd.get("name", "Погода")).upper(), "Погода изменилась", 2.0, col]
-            V.play("weather_snow", self._ctx(e.get("src"), None, e.get("center"), None, col, 1.0))
+            if not self.pix.on:
+                V.play("weather_snow", self._ctx(e.get("src"), None, e.get("center"), None, col, 1.0))
         elif t == "weather_extend":
             self.float_text(e["unit"], "Метель продлена", (190, 225, 255), 14, ttl=1.0)
         elif t == "weather_end":
             self.banner = [e.get("name", "Погода").upper(), "Погода стихла", 1.5, (170, 200, 235)]
         elif t == "vortex":
-            V.play("snow_vortex", self._ctx(e.get("src"), None, e.get("center"), [e.get("center")],
-                                             (190, 225, 255), 1.0))
+            if not self.pix.on:
+                V.play("snow_vortex", self._ctx(e.get("src"), None, e.get("center"), [e.get("center")],
+                                                 (190, 225, 255), 1.0))
         elif t == "vortex_tick":
-            V.play("snow_vortex_tick", self._ctx(e.get("src"), None, e.get("center"), [e.get("center")],
-                                                  (210, 235, 255), 1.0))
+            if not self.pix.on:
+                V.play("snow_vortex_tick", self._ctx(e.get("src"), None, e.get("center"), [e.get("center")],
+                                                      (210, 235, 255), 1.0))
         elif t == "cryo_cataclysm":
             self.banner = ["ЛЕДЯНОЙ ВЕК", "Вся карта скована льдом", 2.2, (210, 240, 255)]
-            V.play("cryo_cataclysm", self._ctx(e.get("unit"), None, None, None, (210, 240, 255), 1.0))
+            if not self.pix.on:
+                V.play("cryo_cataclysm", self._ctx(e.get("unit"), None, None, None, (210, 240, 255), 1.0))
             V.screen_fx(shake=10, flash=0.35, flash_color=(220, 245, 255), hitstop=0.08)
         elif t == "portal":
             for p in (e["src"], e["dst"]):
@@ -1409,7 +1413,7 @@ class BattleView:
             elif "oil" in u.statuses:
                 for _ in range(self._rate(("oil", u.id), 3, dt)):
                     V.emit("oil_drips", x, y + 6)
-            if u.proto_id == "cryo" or (u.obj and u.proto_id == "ice_wall"):
+            if not pix and (u.proto_id == "cryo" or (u.obj and u.proto_id == "ice_wall")):
                 for _ in range(self._rate(("cold", u.id), 3 if not u.obj else 1.5, dt)):
                     V.emit("frost_sparkle", x, y - 8)
                 if not u.obj and u.moving:
@@ -1419,24 +1423,25 @@ class BattleView:
                 for _ in range(self._rate(("zz", u.id), 1.5, dt)):
                     V.emit("zzz", x + 10, y - 30)
         weather = getattr(self.combat, "weather", None)
-        if weather:
+        if weather and not pix:
             wd = self.combat.data.weathers.get(weather.get("id"), {})
             bx, by, bw, bh = self.fx_bounds
-            for _ in range(self._rate(("weather_snow",), 55, dt)):
+            for _ in range(self._rate(("weather_snow",), 70, dt)):
                 V.emit("snowflakes", self.vfx.prng.uniform(bx, bx + bw), by - 12, count=1, scale=1.15)
-            for _ in range(self._rate(("weather_wind",), 12, dt)):
+            for _ in range(self._rate(("weather_wind",), 18, dt)):
                 V.emit("wind_lines", bx - 40, self.vfx.prng.uniform(by + 30, by + bh - 30), count=1, angle=0,
                        scale=1.0)
             if wd.get("id") == "eternal_winter" or weather.get("id") == "eternal_winter":
-                for _ in range(self._rate(("weather_mist",), 3, dt)):
+                for _ in range(self._rate(("weather_mist",), 4, dt)):
                     V.emit("frost_mist", self.vfx.prng.uniform(bx, bx + bw),
                            self.vfx.prng.uniform(by + 60, by + bh - 40), count=1)
-        for v in getattr(self.combat, "vortices", []):
-            vx, vy = T.cell_feet(v["center"])
-            for _ in range(self._rate(("vortex", tuple(v["center"])), 14, dt)):
-                V.emit("snowflakes", vx, vy - 14, count=2, scale=1.1)
-            for _ in range(self._rate(("vortex_wind", tuple(v["center"])), 2, dt)):
-                V.emit("wind_lines", vx - 45, vy - 18, count=1, angle=0, scale=0.8)
+        if not pix:
+            for v in getattr(self.combat, "vortices", []):
+                vx, vy = T.cell_feet(v["center"])
+                for _ in range(self._rate(("vortex", tuple(v["center"])), 28, dt)):
+                    V.emit("snowflakes", vx, vy - 14, count=2, scale=1.1)
+                for _ in range(self._rate(("vortex_wind", tuple(v["center"])), 4, dt)):
+                    V.emit("wind_lines", vx - 45, vy - 18, count=1, angle=0, scale=0.8)
 
     def _frame_lights(self):
         """Свет на этот кадр: горящие клетки, лёд, горящие юниты."""

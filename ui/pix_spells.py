@@ -467,22 +467,21 @@ class Spells:
         """Осколок врезался: раскалывается по ходу удара, кристалл растёт из точки контакта, пар оседает."""
         s = scale * (1 + 0.5 * radius)
         q = s ** 1.5
-        self._flash(p, "ice", n=int(30 * q), size=1.6 * s)
-        self._shards(p, dirv, int(40 * q), speed=(1.5, 4.0 * (0.7 + 0.3 * s)))
-        self._shards(p, dirv, int(14 * q), forward=False, speed=(0.8, 2.2))
-        n = int(30 * q)                          # ледяная крошка — быстрые штрихи по ходу удара
+        self._flash(p, "ice", n=int(14 * q), size=1.5 * s)
+        self._shards(p, dirv, int(18 * q), speed=(1.5, 4.0 * (0.7 + 0.3 * s)))
+        self._shards(p, dirv, int(8 * q), forward=False, speed=(0.8, 2.2))
+        n = int(14 * q)                          # ледяная крошка — быстрые штрихи по ходу удара
         v = self._hemi(n, dirv, 0.2)
         sp = self.rng.uniform(6, 12, n)
         self.ps.spawn(n, p, (v[:, 0] * sp, v[:, 1] * sp, v[:, 2] * sp), life=self.rng.uniform(0.1, 0.25, n),
                       temp=0.95, cool=2.0, drag=5.0, grav=3.0, pal="ice", smoke=None, streak=0.04, life_var=0.0)
-        self._mist(p, int(26 * q), out=0.6 * s)
+        self._mist(p, int(12 * q), out=0.6 * s)
         # кристалл растёт из точки контакта на теле, а не висит в воздухе посреди клетки
         self.pilot.fx.add("bloom_m" if s > 1.2 else "bloom_s", screen(p), depth=P.project(p[0], p[1])[1] + 1,
                           scale=0.9 * s)
         sp = screen(p)
         self.pilot._light(sp, ICE_LIGHT, 120 + 80 * s, 1.2 + 0.3 * s, 0.5)
-        self.pilot.view.vfx.screen_fx(shake=2 + 2.5 * s, hitstop=0.02 + 0.015 * s, flash=0.04 * s,
-                                      color=ICE_LIGHT, zoom=1.0 + 0.008 * s, zoom_time=0.15, center=sp)
+        self.pilot.view.vfx.screen_fx(shake=2 + 1.5 * s, flash=0.03 * s, color=ICE_LIGHT)
 
     def ice_hit_ground(self, p, dirv, area=()):
         """Лёд в землю: раскол в точке удара, иней и шипы растут по земле волной от точки удара,

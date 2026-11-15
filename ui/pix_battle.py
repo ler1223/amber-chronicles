@@ -195,14 +195,14 @@ class PixelPilot:
         S, r = self.spells, self.spells.rng
         weather = getattr(c, "weather", None)
         if weather:
-            n = self._rate(("pix_weather_snow",), 55, dt)
+            n = self._rate(("pix_weather_snow",), 105, dt)
             if n:
                 xs, ys = r.uniform(0, c.grid.w, n), r.uniform(0, c.grid.h, n)
                 S.ps.spawn(n, (xs, ys, np.full(n, 1.7)),
                            (np.full(n, 0.9), np.full(n, 0.2), np.full(n, -0.7)),
                            life=1.2, temp=r.uniform(0.7, 1.0, n), cool=0.0, drag=0.25,
                            size=1.0, pal="ice", smoke=None, land=DIE)
-            n = self._rate(("pix_weather_wind",), 12, dt)
+            n = self._rate(("pix_weather_wind",), 22, dt)
             if n:
                 xs, ys = r.uniform(-1, c.grid.w, n), r.uniform(0, c.grid.h, n)
                 S.ps.spawn(n, (xs, ys, np.full(n, 1.2)),
@@ -211,7 +211,7 @@ class PixelPilot:
                            pal="ice", smoke=None, streak=0.07, land=DIE)
         for v in getattr(c, "vortices", []):
             x, y = v["center"]
-            n = self._rate(("pix_vortex", tuple(v["center"])), 26, dt)
+            n = self._rate(("pix_vortex", tuple(v["center"])), 58, dt)
             if n:
                 a = r.uniform(0, math.tau, n)
                 rr = r.uniform(0.15, v["radius"] + 0.25, n)
@@ -222,7 +222,7 @@ class PixelPilot:
         for u in c.alive():
             if u.proto_id != "cryo" and not (u.obj and u.proto_id == "ice_wall"):
                 continue
-            n = self._rate(("pix_cold", u.id), 3 if not u.obj else 1.5, dt)
+            n = self._rate(("pix_cold", u.id), 5 if not u.obj else 2.5, dt)
             if n:
                 S.ps.spawn(n, (u.cell[0] + r.uniform(0.15, 0.85, n), u.cell[1] + r.uniform(0.15, 0.85, n),
                                np.full(n, 0.15)), (0, 0, r.uniform(0.4, 1.0, n)),
@@ -598,7 +598,10 @@ class PixelPilot:
             S._flurry(x, y, 2.4, 1.4)
             V.screen_fx(shake=4, flash=0.06, color=ICE_LIGHT)
         else:                                    # Ледяной век
-            S.ice_hit_area((x, y, 0.0), (0, 1), self._area(ctx), max(2, radius), scale=1.8 * sz)
+            big = max(4.0, radius, self.view.combat.grid.w * 0.55)
+            S.ice_hit_area((x, y, 0.0), (0, 1), self._area(ctx), big, scale=1.8 * sz)
+            S.big_snowflake(x, y, big + 0.8)
+            S._flurry(x, y, big + 0.5, 1.6)
             V.screen_fx(shake=12, hitstop=0.08, flash=0.3, flash_color=ICE_LIGHT,
                         zoom=1.05, zoom_time=0.3)
         self._light((g[0], g[1] - 16), ICE_LIGHT, 150 + 70 * radius, 1.3, 0.65)
