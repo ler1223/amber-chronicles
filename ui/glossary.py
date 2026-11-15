@@ -149,7 +149,7 @@ def _buff_detail(eff):
     if stat == "exposed":
         return f"Уязвимость {_pct(value - 1)}"
     if stat == "armor":
-        return f"+{value:g} брони"
+        return f"+{value * 100:.0f}% брони" if eff.get("pct") else f"+{value:g} брони"
     if stat == "armor_shred":
         return f"−{value:g} брони"
     if stat == "skill_mult":

@@ -2018,6 +2018,8 @@ class Combat:
                 self.emit("shield", unit=v, amount=amount)
             elif t == "buff":
                 val = eff["value"]
+                if eff.get("pct") and eff["stat"] == "armor":
+                    val = round(max(1, caster.armor) * val, 2)   # баф брони — процент от брони носителя навыка
                 if self._flat and eff["stat"] in ("regen", "bleed") and isinstance(val, (int, float)):
                     val = round(val * caster.power, 2)        # реген и кровотечение навыка — от стата героя
                 self.add_buff(v, eff["stat"], val, eff["duration"])

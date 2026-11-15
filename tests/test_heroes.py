@@ -82,6 +82,16 @@ def test_sleep_breaks_on_damage():
     assert f.stun == 0 and not f.asleep
 
 
+def test_armor_buff_scales_from_caster_armor():
+    c = Combat(DATA, 1, squad=squad_of(["warrior", "mage", "priest"]))
+    h = unit(c, "warrior")
+    h.armor = 10
+    h.skill_defs["brace"] = DATA.skills["brace"]
+    c._resolve_skill(h, "brace", h)
+    c.step()
+    assert h.buff("armor", 0) == round(10 * DATA.skills["brace"]["effects"][0]["value"], 2)
+
+
 def test_bear_form_toggles_stats():
     c = Combat(DATA, 1, squad=squad_of(["druid", "warrior", "mage", "priest"]))
     d = unit(c, "druid")

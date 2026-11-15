@@ -660,10 +660,37 @@
     "desc": "Цель получает +35% урона в спину 6 сек. Если помеченная цель умирает — ассасин получает 2 стака скрытности."
   },
   "riposte": {
-    "name": "Парирование", "ap": 2, "cast": 0.0, "cooldown": 7, "range": 0, "target": "self",
-    "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]},
-    "effects": [{"type": "buff", "stat": "armor", "value": 4, "duration": 4}, {"type": "buff", "stat": "thorns", "value": 0.8, "duration": 4}],
-    "desc": "4 сек: +4 брони, отражает 80% ближнего урона — вызванный сам себя ранит."
+    "name": "Парирование",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 7,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_adjacent",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 1.333,
+        "duration": 4,
+        "pct": true
+      },
+      {
+        "type": "buff",
+        "stat": "thorns",
+        "value": 0.8,
+        "duration": 4
+      }
+    ],
+    "desc": "4 сек: +133% брони, отражает 80% ближнего урона — вызванный сам себя ранит."
   },
   "entangle": {
     "name": "Цепкие корни",
@@ -943,10 +970,37 @@
     "desc": "Расширяет конус на 1 и даёт союзникам в зоне щит 200% силы навыков на 6 сек."
   },
   "brace": {
-    "name": "Упор", "ap": 2, "cast": 0.0, "cooldown": 8, "range": 0, "target": "self",
-    "auto": {"on": true, "conds": [{"type": "enemies_adjacent", "value": 1}]},
-    "effects": [{"type": "buff", "stat": "armor", "value": 3, "duration": 5}, {"type": "buff", "stat": "atk_speed", "value": 0.6, "duration": 5}],
-    "desc": "5 сек: +3 брони и атаки на 40% быстрее."
+    "name": "Упор",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 8,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_adjacent",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 0.75,
+        "duration": 5,
+        "pct": true
+      },
+      {
+        "type": "buff",
+        "stat": "atk_speed",
+        "value": 0.6,
+        "duration": 5
+      }
+    ],
+    "desc": "5 сек: +75% брони и атаки на 40% быстрее."
   },
   "jump_strike": {
     "name": "Прыжок драгуна",
@@ -2346,9 +2400,47 @@
     "cooldown": 5,
     "range": 4,
     "target": "ally",
-    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 60}]},
-    "effects": [{"type": "shield", "amount": 40, "duration": 6}, {"type": "buff", "stat": "armor", "value": 3, "duration": 6}, {"type": "zone", "duration": 6, "every": 1.5, "radius": 1, "kind": "cold", "anchor": "target", "effects": [{"type": "mark", "mark": "cold", "stacks": 1, "duration": 5, "radius": 1}]}],
-    "desc": "Союзнику щит 667% силы навыков и +3 брони на 6 сек; врагам рядом с ним раз в 1.5 сек — стак Холода."
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 60
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "shield",
+        "amount": 40,
+        "duration": 6
+      },
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 3.0,
+        "duration": 6,
+        "pct": true
+      },
+      {
+        "type": "zone",
+        "duration": 6,
+        "every": 1.5,
+        "radius": 1,
+        "kind": "cold",
+        "anchor": "target",
+        "effects": [
+          {
+            "type": "mark",
+            "mark": "cold",
+            "stacks": 1,
+            "duration": 5,
+            "radius": 1
+          }
+        ]
+      }
+    ],
+    "desc": "Союзнику щит 667% силы навыков и +300% брони на 6 сек; врагам рядом с ним раз в 1.5 сек — стак Холода."
   },
   "corpse_blast": {
     "name": "Взрыв трупа",
@@ -3001,10 +3093,38 @@
     "desc": "Условие: враг, к которому прижаты ещё 2. Каст 1.2 сек: враги в радиусе 3 падают к центру, в центре — урон 667% силы навыков +30% за каждого соседа. Тратит всю Массу: +15% урона за стак."
   },
   "stone_skin": {
-    "name": "Каменная кожа", "ap": 3, "cast": 0, "cooldown": 10, "range": 5, "target": "ally", "ai": "shield_ally",
-    "auto": {"on": true, "conds": [{"type": "ally_hp_below", "value": 70}]},
-    "effects": [{"type": "buff", "stat": "armor", "value": 6, "duration": 6}, {"type": "buff", "stat": "thorns", "value": 0.4, "duration": 6}],
-    "desc": "Союзнику: +6 брони и шипы на 6 сек — каменная кожа."
+    "name": "Каменная кожа",
+    "ap": 3,
+    "cast": 0,
+    "cooldown": 10,
+    "range": 5,
+    "target": "ally",
+    "ai": "shield_ally",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "ally_hp_below",
+          "value": 70
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 6.0,
+        "duration": 6,
+        "pct": true
+      },
+      {
+        "type": "buff",
+        "stat": "thorns",
+        "value": 0.4,
+        "duration": 6
+      }
+    ],
+    "desc": "Союзнику: +600% брони и шипы на 6 сек — каменная кожа."
   },
   "rupture": {
     "name": "Разрыв",
@@ -3109,9 +3229,10 @@
       {
         "type": "buff",
         "stat": "armor",
-        "value": 3,
+        "value": 1.0,
         "duration": 6,
-        "radius": 2
+        "radius": 2,
+        "pct": true
       },
       {
         "type": "zone",
@@ -3123,15 +3244,16 @@
           {
             "type": "buff",
             "stat": "armor",
-            "value": 1,
+            "value": 0.333,
             "duration": 1.5,
             "radius": 2,
-            "affects": "allies"
+            "affects": "allies",
+            "pct": true
           }
         ]
       }
     ],
-    "desc": "Союзники в радиусе 2: щит 311% силы навыков и +3 брони на 6 сек. Строй держится: союзники в зоне получают ещё +1 брони, пока стоят рядом."
+    "desc": "Союзники в радиусе 2: щит 311% силы навыков и +100% брони на 6 сек. Строй держится: союзники в зоне получают ещё +33% брони, пока стоят рядом."
   },
   "grand_plan": {
     "name": "Генеральный план", "ap": 2, "cast": 0.8, "cooldown": 30, "range": 0, "target": "self", "radius": 4, "ult": true, "ult_cond": {"count": "order", "need": 3, "desc": "3 приказа"},
@@ -3390,8 +3512,9 @@
       {
         "type": "buff",
         "stat": "armor",
-        "value": 4,
-        "duration": 8
+        "value": 4.0,
+        "duration": 8,
+        "pct": true
       },
       {
         "type": "buff",
@@ -3423,10 +3546,37 @@
     "desc": "Условие: 2 смены облика. 8 сек — сила всех обликов: броня, скорость, урон, постепенное лечение и стойкость союзникам рядом."
   },
   "sentinel": {
-    "name": "Стойка часового", "ap": 2, "cast": 0, "cooldown": 10, "range": 0, "target": "self",
-    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [{"type": "buff", "stat": "zoc_free", "value": 1, "duration": 6}, {"type": "buff", "stat": "armor", "value": 3, "duration": 6}],
-    "desc": "6 сек удар копьём по входящим в зону — без траты шкалы, +3 брони."
+    "name": "Стойка часового",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 10,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "zoc_free",
+        "value": 1,
+        "duration": 6
+      },
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 0.75,
+        "duration": 6,
+        "pct": true
+      }
+    ],
+    "desc": "6 сек удар копьём по входящим в зону — без траты шкалы, +75% брони."
   },
   "long_spear": {
     "name": "Длинное древко", "ap": 2, "cast": 0, "cooldown": 12, "range": 0, "target": "self",
@@ -3447,10 +3597,49 @@
     "desc": "Враги в зоне копья (рядом): урон 160% атаки и оглушение 1 сек."
   },
   "bastion": {
-    "name": "Неприступная стена", "ap": 2, "cast": 0, "cooldown": 24, "range": 0, "target": "self", "ult": true, "ult_cond": {"count": "zoc_hit", "need": 3, "desc": "3 удара копьём зоны"},
-    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
-    "effects": [{"type": "buff", "stat": "zoc_free", "value": 3, "duration": 6}, {"type": "buff", "stat": "zoc_range", "value": 1, "duration": 6}, {"type": "buff", "stat": "armor", "value": 5, "duration": 6}],
-    "desc": "Условие: 3 удара копьём зоны. 6 сек: зона копья радиуса 2, любое движение в ней — удар без шкалы и оглушение 1 сек, +5 брони."
+    "name": "Неприступная стена",
+    "ap": 2,
+    "cast": 0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "ult": true,
+    "ult_cond": {
+      "count": "zoc_hit",
+      "need": 3,
+      "desc": "3 удара копьём зоны"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 3
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "zoc_free",
+        "value": 3,
+        "duration": 6
+      },
+      {
+        "type": "buff",
+        "stat": "zoc_range",
+        "value": 1,
+        "duration": 6
+      },
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 1.25,
+        "duration": 6,
+        "pct": true
+      }
+    ],
+    "desc": "Условие: 3 удара копьём зоны. 6 сек: зона копья радиуса 2, любое движение в ней — удар без шкалы и оглушение 1 сек, +125% брони."
   },
   "totem_pulse": {
     "name": "Пульс духов", "ap": 3, "cast": 0, "cooldown": 6, "range": 0, "target": "self", "needs_totem": true,
@@ -3508,10 +3697,37 @@
     "desc": "урон 160% атаки и толчок на 3: врезался — оглушение 1.5 сек."
   },
   "wallbreaker": {
-    "name": "Стенобой", "ap": 3, "cast": 0, "cooldown": 14, "range": 0, "target": "self",
-    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [{"type": "buff", "stat": "collide_stun", "value": 1.0, "duration": 8}, {"type": "buff", "stat": "armor", "value": 3, "duration": 8}],
-    "desc": "8 сек каждое столкновение от тарана оглушает на 1 сек, +3 брони."
+    "name": "Стенобой",
+    "ap": 3,
+    "cast": 0,
+    "cooldown": 14,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "collide_stun",
+        "value": 1.0,
+        "duration": 8
+      },
+      {
+        "type": "buff",
+        "stat": "armor",
+        "value": 1.0,
+        "duration": 8,
+        "pct": true
+      }
+    ],
+    "desc": "8 сек каждое столкновение от тарана оглушает на 1 сек, +100% брони."
   },
   "billiard": {
     "name": "Бильярд", "ap": 1, "cast": 0, "cooldown": 22, "range": 0, "target": "self", "ult": true, "ult_cond": {"count": "collision", "need": 3, "desc": "3 столкновения"},
@@ -4204,9 +4420,10 @@
       {
         "type": "buff",
         "stat": "armor",
-        "value": 5,
+        "value": 1.667,
         "duration": 6,
-        "at": "caster"
+        "at": "caster",
+        "pct": true
       },
       {
         "type": "buff",
@@ -4216,7 +4433,7 @@
         "at": "caster"
       }
     ],
-    "desc": "Условие: 4 пропущенных удара. Провокация в радиусе 2 на 5 сек; воин получает щит 25% HP, +5 брони и 60% ответного урона на 6 сек."
+    "desc": "Условие: 4 пропущенных удара. Провокация в радиусе 2 на 5 сек; воин получает щит 25% HP, +167% брони и 60% ответного урона на 6 сек."
   },
   "shield_charge": {
     "name": "Щитовой натиск",
@@ -4907,10 +5124,11 @@
       {
         "type": "buff",
         "stat": "armor",
-        "value": 4,
+        "value": 4.0,
         "duration": 5,
         "at": "caster",
-        "if_form": "bear"
+        "if_form": "bear",
+        "pct": true
       },
       {
         "type": "buff",
@@ -4956,10 +5174,11 @@
       {
         "type": "buff",
         "stat": "armor",
-        "value": 2,
+        "value": 2.0,
         "duration": 3,
         "at": "caster",
-        "if_form": "human"
+        "if_form": "human",
+        "pct": true
       },
       {
         "type": "knockback",
@@ -5249,9 +5468,10 @@
       {
         "type": "buff",
         "stat": "armor",
-        "value": 3,
+        "value": 0.75,
         "duration": 5,
-        "at": "caster"
+        "at": "caster",
+        "pct": true
       },
       {
         "type": "buff",
@@ -5261,7 +5481,7 @@
         "at": "caster"
       }
     ],
-    "desc": "5 сек: доля перехвата в конусе 50%, +3 брони, но Страж двигается на 15% медленнее."
+    "desc": "5 сек: доля перехвата в конусе 50%, +75% брони, но Страж двигается на 15% медленнее."
   },
   "guardian_rotate": {
     "name": "Разворот строя",
@@ -5295,13 +5515,14 @@
           {
             "type": "buff",
             "stat": "armor",
-            "value": 2,
-            "duration": 6
+            "value": 0.5,
+            "duration": 6,
+            "pct": true
           }
         ]
       }
     ],
-    "desc": "6 сек: конус шире и длиннее, союзники в нём получают +2 брони."
+    "desc": "6 сек: конус шире и длиннее, союзники в нём получают +50% брони."
   },
   "guardian_spear_guard": {
     "name": "Копейный заслон",
@@ -5782,8 +6003,9 @@
       {
         "type": "buff",
         "stat": "armor",
-        "value": 3,
-        "duration": 6
+        "value": 3.0,
+        "duration": 6,
+        "pct": true
       },
       {
         "type": "buff",
@@ -5792,7 +6014,7 @@
         "duration": 6
       }
     ],
-    "desc": "Союзнику: +3 брони и −15% входящего урона на 6 сек. Без щита."
+    "desc": "Союзнику: +300% брони и −15% входящего урона на 6 сек. Без щита."
   },
   "bard_rhythm": {
     "name": "Ритм",
