@@ -106,6 +106,12 @@
       {"t": 0, "fx": "dust", "at": "cells", "scale": 0.8},
       {"t": 0, "sfx": "shockwave", "at": "cells", "scale": 0.35}
     ],
+    "rift_open": [
+      {"t": 0, "sfx": "cracks_light", "at": "cells", "color": [96, 72, 52], "scale": 1.25},
+      {"t": 0, "fx": "dust_fb", "at": "cells", "count": 8},
+      {"t": 0, "sfx": "shockwave_big", "at": "cells", "scale": 0.5},
+      {"t": 0, "screen": {"shake": 10, "hitstop": 0.07, "zoom": 1.05, "zoom_time": 0.25}}
+    ],
     "slash_hit": [
       {"t": 0, "arc": {"ribbon": "slash", "radius": 34, "from": -80, "to": 70, "time": 0.07, "flip": "random"}, "at": "target"},
       {"t": 0.03, "fx": "hit_sparks", "at": "target", "angle": "dir"},

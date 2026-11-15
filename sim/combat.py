@@ -124,6 +124,7 @@ class Combat:
         self.phases = [dict(ph) for ph in self.enc.get("phases", [])]
         self.rising = []          # [юнит, через сколько встанет]
         self.tides = []           # [время отлива, клетки]
+        self.rifts = []           # временные разломы: снимки клеток для восстановления
         self.arena = []
         order = self.cfg["difficulty_order"]
         scale_ = enemy_scale or {}
@@ -561,6 +562,16 @@ class Combat:
                     if c.base_terrain:
                         c.terrain, c.base_terrain = c.base_terrain, None
                 self.emit("tide_end", cells=item[1])
+        for item in list(self.rifts):
+            if self.time >= item["until"]:
+                self.rifts.remove(item)
+                for p, saved in item["cells"]:
+                    c = self.grid.get(p)
+                    if c is None:
+                        continue
+                    for key, value in saved.items():
+                        setattr(c, key, value)
+                self.emit("rift_close", cells=[p for p, _ in item["cells"]])
         for ai in self.ais:
             ai.update(dt)
         self.autocaster.update(dt)
@@ -1867,7 +1878,8 @@ class Combat:
         if t in ("delay", "rush", "toss", "fuse", "place_object", "watch", "detonate", "song", "trap", "wall",
                  "terrain", "shatter", "corpse", "rewind", "stasis", "spread_fire", "gather", "swap",
                  "levitate", "collapse", "terrain_cast", "reagent", "extra_attack", "regroup", "focus", "tether",
-                 "merge", "life_transfer", "fire_wall", "clear_hazard", "stoke_fire", "meteor_rain", "rockfall"):
+                 "merge", "life_transfer", "fire_wall", "clear_hazard", "stoke_fire", "meteor_rain", "rockfall",
+                 "rift"):
             self._special(caster, eff, center, tunit)
             return
         if t == "vanish":
@@ -2657,6 +2669,8 @@ class Combat:
             self._meteor_rain(caster, eff, center)
         elif t == "rockfall":              # обвал Землетряса: на свободные клетки падают валуны
             self._rockfall(caster, eff, center)
+        elif t == "rift":                  # разлом мира: на время вырывает клетки из поля
+            self._rift(caster, eff, center)
         elif t == "place_object":          # бочка подрывника
             mine = [o for o in self.units if o.alive and o.obj and o.owner is caster and o.proto_id == eff["object"]]
             for old in mine[:max(0, len(mine) - eff.get("limit", 3) + 1)]:
@@ -2939,22 +2953,69 @@ class Combat:
         self.emit("trap_set", pos=center, src=caster)
 
     def _rockfall(self, caster, eff, center):
-        """Обвал: несколько валунов падают на свободные клетки вокруг точки удара."""
+        """Обвал: камни летят с неба и приземляются на свободные клетки вокруг точки удара."""
         obj = eff.get("object", "boulder")
         count = max(1, int(eff.get("count", 2)))
         limit = max(1, int(eff.get("limit", 2)))
-        mine = [o for o in self.units if o.alive and o.obj and o.owner is caster and o.proto_id == obj]
-        for old in mine[:max(0, len(mine) + count - limit)]:
-            self.break_object(old)
         cells = [p for p in self.grid.in_radius(tuple(center), eff.get("radius", 2)) if self.is_free(p)]
         cells.sort(key=lambda p: (cheb(p, center), p))
+        cells = cells[:count]
+        if not cells:
+            self.emit("fizzle", unit=caster, skill=None)
+            return
+        delay = max(0.0, float(eff.get("delay", 0.35)))
+
+        def land():
+            mine = [o for o in self.units if o.alive and o.obj and o.owner is caster and o.proto_id == obj]
+            for old in mine[:max(0, len(mine) + len(cells) - limit)]:
+                self.break_object(old)
+            made = []
+            for p in cells:
+                if not self.is_free(p):
+                    continue
+                o = self.spawn_object(obj, p)
+                o.owner = caster
+                made.append(p)
+            if made:
+                self.emit("rockfall_land", src=caster, center=tuple(center), cells=made)
+
+        self.delayed.append({"left": delay, "total": delay, "fn": land})
+        self.emit("rockfall", src=caster, center=tuple(center), cells=cells, delay=delay)
+
+    def _rift(self, caster, eff, center):
+        """Разлом мира: одна полоса клеток на время становится пропастью."""
+        line = kit.line_cells(caster.cell, tuple(center), eff.get("length", 6))
+        width = max(1, int(eff.get("width", 1)))
+        cells = list(line)
+        if width > 1:                          # при желании — полоса вбок от центральной линии
+            extra = []
+            for p in line:
+                for dx in range(-(width // 2), width // 2 + 1):
+                    q = (p[0], p[1] + dx)
+                    if q not in cells:
+                        extra.append(q)
+            cells += extra
         made = []
-        for p in cells[:count]:
-            o = self.spawn_object(obj, p)
-            o.owner = caster
-            made.append(p)
+        for p in cells:
+            c = self.grid.get(p)
+            if c is None or not c.passable or c.terrain == "chasm" or c.base_terrain:
+                continue
+            v = self.unit_at(p)
+            if v is not None:
+                spot = self.free_near(p, 3)
+                if spot is None:
+                    continue
+                self._place(v, spot, 0.18)
+            saved = {key: getattr(c, key) for key in (
+                "terrain", "passable", "cover", "hazard", "hazard_time", "hazard_team", "hazard_owner",
+                "mine_mult", "charge", "blaze", "portal", "deco")}
+            c.terrain, c.passable, c.cover = "chasm", False, None
+            c.hazard, c.hazard_time, c.hazard_team, c.hazard_owner = None, 0.0, None, None
+            c.mine_mult, c.charge, c.blaze = 1.0, None, False
+            made.append((p, saved))
         if made:
-            self.emit("rockfall", src=caster, center=tuple(center), cells=made)
+            self.rifts.append({"until": self.time + eff.get("duration", 6), "cells": made})
+            self.emit("rift", src=caster, center=tuple(center), cells=[p for p, _ in made])
         else:
             self.emit("fizzle", unit=caster, skill=None)
 

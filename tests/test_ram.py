@@ -43,12 +43,25 @@ def test_ram_cracks_marks_cells_as_fissures():
     assert c.grid.get((5, 3)).hazard_time > 0
 
 
+def test_world_fracture_carves_a_temporary_rift():
+    c, h, foes = setup("ram", ["world_fracture"])
+    h.pp = 0
+    h.cooldowns.clear()
+    c._resolve_skill(h, "world_fracture", (6, 4))
+    run(c, 0.8)
+    rift = events(c, "rift")[-1]["cells"]
+    assert rift
+    assert all(not c.grid.get(p).passable for p in rift)
+    run(c, 6.2)
+    assert all(c.grid.get(p).passable for p in rift)
+
+
 def test_ram_collapse_drops_boulders_and_leaves_cracks():
     c, h, foes = setup("ram", ["ram_collapse"])
     h.pp = 0
     h.cooldowns.clear()
     c._resolve_skill(h, "ram_collapse", (5, 3))
-    run(c, 0.8)
+    run(c, 1.2)
     assert any(u.alive and u.proto_id == "boulder" and u.owner is h for u in c.units)
     assert any(cell.hazard == "cracks" for cell in c.grid.cells.values())
-    assert events(c, "rockfall")
+    assert events(c, "rockfall") and events(c, "rockfall_land")

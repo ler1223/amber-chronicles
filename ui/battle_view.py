@@ -1194,6 +1194,11 @@ class BattleView:
             ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (170, 145, 115), 1.0)
             self.vfx.play("rockfall_drop", ctx)
             self.vfx.screen_fx(shake=2)
+        elif t == "rift":
+            cells = e.get("cells") or []
+            ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (120, 90, 70), 1.0)
+            self.vfx.play("rift_open", ctx)
+            self.vfx.screen_fx(shake=8)
         elif t == "quiver":
             q = self.data.config.get("quiver", {}).get(e["arrow"], {})
             self.float_text(e["unit"], q.get("name", e["arrow"]), (255, 220, 150), 15, ttl=1.0)
