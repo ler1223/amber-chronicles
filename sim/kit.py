@@ -22,7 +22,8 @@ TYPES = {"mark", "zone", "vault", "barrage", "shackle", "fletch", "trail", "igni
          "time_theft", "detonate_charges", "song_notes", "inferno", "consume_fire", "bleed_feast", "raise_all",
          "song_tempo", "song_finale", "corpse_pulse", "reagent_area", "cut_tethers", "tether_heal", "tether_all",
          "terrain_wave", "note", "finale", "guardian_zone_strike", "guardian_zone_taunt",
-         "guardian_zone_buff", "guardian_pull_ally", "guardian_oath", "storm_arc"}
+         "guardian_zone_buff", "guardian_pull_ally", "guardian_oath", "storm_arc",
+         "prey_mark", "prey_feast", "beast_buff"}
 HELD_LOOKS = ("trap", "net", "root", "freeze")
 
 
@@ -58,6 +59,47 @@ def add_mark(c, v, mid, stacks, duration, src):
             del v.marks[mid]
         c.emit("mark_max", unit=v, mark=mid, src=src)
         c.apply_effects(src or v, d["on_max"], v.cell, v)
+
+
+def prey_mark(c, src, v, duration=None):
+    """Метка добычи: тип архетипа и сила берутся у Ловчего-источника."""
+    if src is None or not v.alive or v.obj:
+        return
+    tier = 2 if getattr(src, "mark_tier", 1) >= 2 else 1
+    default = 8.0 if tier == 2 else 6.0
+    duration = max(default, float(duration)) if duration is not None else default
+    add_mark(c, v, "prey", 1, duration, src)
+    m = v.marks.get("prey")
+    if m is not None:
+        m["prey_type"] = getattr(src, "mark_type", None) or "base"
+        m["tier"] = tier
+    c.add_buff(v, "exposed", 1.15, duration)
+
+
+def prey_mult(c, target, attacker, kind, basic):
+    """Множитель урона по метке добычи для выбранного архетипа."""
+    if attacker is None:
+        return 1.0
+    m = target.marks.get("prey")
+    if not m:
+        return 1.0
+    src = m.get("src")
+    typ = m.get("prey_type") or "base"
+    if src is None or typ == "base":
+        return 1.0
+    tier = 2 if m.get("tier", 1) >= 2 else 1
+    d = c.cfg.get("prey_marks", {}).get(typ, {})
+    if typ == "own" and attacker is src:
+        return 1.0 + float(d.get(f"t{tier}", 0.0))
+    if typ == "auto" and basic and attacker.team == src.team:
+        return 1.0 + float(d.get(f"t{tier}", 0.0))
+    if typ == "magic" and kind == "spell" and attacker.team == src.team:
+        return 1.0 + float(d.get(f"t{tier}", 0.0))
+    if typ == "execute":
+        threshold = float(d.get(f"threshold{tier}", 0.35 if tier == 1 else 0.45))
+        if target.hp < target.max_hp * threshold:
+            return 1.0 + float(d.get(f"t{tier}", 0.0))
+    return 1.0
 
 
 def _mark_side(c, v, mid, m):
@@ -682,7 +724,10 @@ LIVE = {
     "song_notes": lambda c, u: u.song["notes"] if u.song else 0,
     "charges": lambda c, u: len(own_charges(c, u)),
     "traps": lambda c, u: sum(1 for cell in c.grid.cells.values()
-                              if cell.hazard in ("snare", "bear_trap") and cell.hazard_owner is u),
+                              if cell.hazard in ("snare", "bear_trap", "net", "wolf_pit")
+                              and cell.hazard_owner is u),
+    "prey": lambda c, u: sum(1 for v in c.units if v.alive and not v.obj and u.is_enemy(v)
+                             and "prey" in v.marks),
     "cold": lambda c, u: sum(1 for v in c.units if v.alive and u.is_enemy(v) and ("cold" in v.marks or
                                                                                    (v.stun > 0 and v.stun_look == "freeze"))),
     "density": lambda c, u: max([density(c, v, u) for v in c.units if v.alive and not v.obj and u.is_enemy(v)] + [0]),
@@ -818,6 +863,36 @@ def special(c, caster, eff, center, tunit):
                     v.marks[eff["mark"]]["mult"] = eff["_powder"]
                 if eff.get("on_expire") and eff["mark"] in v.marks:    # ветка навыка: свой взрыв метки
                     v.marks[eff["mark"]]["on_expire"] = eff["on_expire"]
+    elif t == "prey_mark":
+        for v in c._select(caster, center, eff.get("radius", 0), "enemies", tunit):
+            prey_mark(c, caster, v, eff.get("duration"))
+    elif t == "prey_feast":
+        foes = [v for v in c._select(caster, center, eff.get("radius", 3), "enemies", tunit)
+                if "prey" in v.marks]
+        if not foes:
+            c.emit("fizzle", unit=caster, skill=None)
+            return
+        amount = eff.get("damage", 2.5) * caster.power
+        threshold = eff.get("execute", 0.3)
+        for v in foes:
+            if v.hp < v.max_hp * threshold:
+                c.damage(v, v.hp + v.max_hp * 0.5, caster, None, "execute")
+            else:
+                c.damage(v, amount, caster, None, "melee")
+            consume_mark(c, v, "prey")
+        c.emit("prey_feast", center=center, radius=eff.get("radius", 3), src=caster)
+    elif t == "beast_buff":
+        dog = next((v for v in c.units if v.alive and v.owner is caster and v.proto_id == "hunting_dog"), None)
+        if dog is None:
+            dog = c.summon(caster, {"unit": "hunting_dog", "duration": 0, "timed": False}, caster.cell)
+        if dog is not None:
+            dur = eff.get("duration", 12)
+            c.add_buff(dog, "atk_mult", eff.get("atk_mult", 1.5), dur)
+            c.add_buff(dog, "atk_speed", eff.get("atk_speed", 0.77), dur)
+            dog.beast_until = c.time + dur
+            dog.prey_hunter_until = c.time + dur
+            dog.beast_bleed = eff.get("bleed", 0.35)
+            c.emit("beast", unit=dog, src=caster, duration=dur)
     elif t == "zone":
         z = {"center": center, "radius": eff.get("radius", 1), "left": eff["duration"], "every": eff.get("every", 1.0),
              "t": eff.get("every", 1.0) if eff.get("now") else 0.0, "effects": eff["effects"], "caster": caster,
@@ -873,7 +948,7 @@ def special(c, caster, eff, center, tunit):
         _shadow_dance(c, caster, eff, tunit)
     elif t == "trap_pull":                         # загон: каждый капкан тянет ближайшего врага к себе
         traps = [p for p, cell in c.grid.cells.items()
-                 if cell.hazard in ("snare", "bear_trap") and cell.hazard_team == caster.team]
+                 if cell.hazard in ("snare", "bear_trap", "net", "wolf_pit") and cell.hazard_team == caster.team]
         if not traps:
             c.emit("fizzle", unit=caster, skill=None)
         for p in traps:

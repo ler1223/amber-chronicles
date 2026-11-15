@@ -78,6 +78,12 @@ class Combat:
                 u.ap_max = u.ap = 0
             if self.fx.get("start_shield"):
                 u.shield, u.shield_time = self.fx["start_shield"], 30.0
+        for u in list(self.heroes()):              # спутники героев: у Ловчего — охотничий пёс
+            comp = u.proto.get("companion")
+            if comp:
+                dog = self.summon(u, {"unit": comp["unit"], "duration": 0, "timed": False}, u.cell)
+                if dog is not None:
+                    dog.owner = u
         scale = enemy_scale or {}
         self.chapter = data.biomes.get(self.enc.get("chapter", "swamp"), {})
         self.diff = self.cfg["difficulties"][difficulty]
@@ -1083,9 +1089,8 @@ class Combat:
                     stun = (ch or {}).get("stun") or tr.get("stun")
                     if stun and u.alive:
                         self.apply_stun(u, stun, tr.get("look", "trap"))
-                    if tr.get("expose") and u.alive:
-                        self.add_buff(u, "exposed", tr.get("expose_mult", 1.2), tr["expose"])
                     if owner is not None:
+                        kit.prey_mark(self, owner, u)
                         self.gain(owner, "caught")
                 return
             if h.get("foes_only") and c.hazard_team in (None, u.team):
@@ -1602,6 +1607,9 @@ class Combat:
             self._basic = False
         if dealt and (u.quivers or u.owner is not None or "fletch" in u.buffs):
             kit.basic_rider(self, u, t)
+        if dealt and u.proto_id == "hunting_dog" and getattr(u, "beast_until", 0.0) > self.time:
+            self.apply_dot(t, "bleed", max(1.0, u.atk_damage * getattr(u, "beast_bleed", 0.35)),
+                           4.0, attacker=u)
         if u.lifesteal and dealt and u.alive:
             self.heal(u, int(round(dealt * u.lifesteal)))
         if u.enchants:
@@ -1985,6 +1993,8 @@ class Combat:
                     if eff["hazard"] != "fire" or c.hazard != "oil":
                         c.hazard, c.hazard_time = eff["hazard"], eff["duration"]
                     c.hazard_team = caster.team
+                    if self.cfg["hazards"][eff["hazard"]].get("trigger"):
+                        c.hazard_owner = caster
                     if eff["hazard"] == "mine":
                         c.hazard_owner, c.mine_mult = caster, eff.get("_powder", 1.0)
                         c.charge = None
@@ -2163,6 +2173,8 @@ class Combat:
     def _reveal(self, u):
         """Атака из тени: скрытность снимается, удар получает множитель засады. Возвращает множитель."""
         if "stealth" in u.buffs:
+            if "veil" in u.buffs:          # засада Ловчего: скрытность не снимается атаками
+                return 1.0
             u.ambush = u.buff("stealth", 1.5)
             del u.buffs["stealth"]
             self.emit("reveal", unit=u)
@@ -2495,6 +2507,7 @@ class Combat:
             kit.reactive_blast(self, target, attacker)
         if attacker is not None and (target.marks or attacker.marks):
             amount *= kit.duel_mult(self, target, attacker)
+            amount *= kit.prey_mult(self, target, attacker, kind, self._basic)
             if any(m["src"] is attacker for mid, m in target.marks.items() if mid in ("challenge", "duel")):
                 self.gain(attacker, "duel_hit")
         b = target.tethered_by

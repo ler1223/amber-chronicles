@@ -101,6 +101,11 @@ class Unit:
         self.ac_reserve = {}                           # резерв AP под навыки выше: {навык: AP}
         self.quivers = list(proto.get("quivers") or [])   # лучник: колчаны (до трёх), стрелы чередуются
         self.motifs = list(proto.get("motifs") or [])     # бард: мотивы поддержки вместо автоатаки
+        self.mark_type = proto.get("mark_type")           # ловчий: выбранный архетип метки
+        self.mark_tier = int(proto.get("mark_tier", 1))   # 11 уровень: усиленная метка
+        self.prey_hunter_until = 0.0                     # собака: приоритет помеченных
+        self.beast_until = 0.0                           # собака: усиление «Зверя»
+        self.beast_bleed = 0.0
         if self.proto_id == "bard" and not self.motifs:
             self.motifs = ["march"]                       # старые сохранения и прямые сборки
         self.motif_i = 0

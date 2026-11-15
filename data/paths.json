@@ -247,18 +247,42 @@
   "trapmaster": {
     "class": "trapper",
     "name": "Капканщик",
-    "desc": "«Приманка» → «Медвежий капкан»: меньше, но страшнее.",
-    "replace": {"lure": "bear_trap"},
-    "passive": {"kind": "backstab", "name": "Добивание", "pp": 1, "mult": 1.7, "desc": "Атака по пойманной цели: −1 деление шкалы, урон ×1.7"},
-    "mods": [{"stat": "atk_damage", "add": 2}]
+    "desc": "«Приманка» → «Сеть»: больше ловушек и контроля поля.",
+    "replace": {
+      "lure": "trap_net"
+    },
+    "passive": {
+      "kind": "prey",
+      "name": "Метка добычи",
+      "pp": 0,
+      "desc": "Капканы метят добычу; метка раскрывает цель."
+    },
+    "mods": [
+      {
+        "stat": "armor",
+        "add": 1
+      }
+    ]
   },
   "beater": {
     "class": "trapper",
     "name": "Загонщик",
-    "desc": "«Метка охотника» → «Рог загонщика»: гонит врагов на капканы.",
-    "replace": {"hunter_mark": "hunting_horn"},
-    "passive": {"kind": "dodge", "vs": ["melee"], "name": "Отскок", "pp": 1, "desc": "Ближняя атака по загонщику: −1 деление шкалы, промах"},
-    "mods": [{"stat": "move_time", "mult": 0.9}]
+    "desc": "«Метка охотника» → «Рог загонщика»: гонит врагов в капканы.",
+    "replace": {
+      "hunter_mark": "hunting_horn"
+    },
+    "passive": {
+      "kind": "prey",
+      "name": "Метка добычи",
+      "pp": 0,
+      "desc": "Капканы метят добычу; метка раскрывает цель."
+    },
+    "mods": [
+      {
+        "stat": "hp",
+        "add": 10
+      }
+    ]
   },
   "iceguard": {
     "class": "cryo",

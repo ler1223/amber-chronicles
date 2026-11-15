@@ -881,16 +881,32 @@
      "level": 3
     },
     {
+     "id": "trap_net",
+     "level": 4
+    },
+    {
      "id": "bear_trap",
      "level": 5
+    },
+    {
+     "id": "wolf_pit",
+     "level": 6
     },
     {
      "id": "hunter_mark",
      "level": 7
     },
     {
+     "id": "hunter_ambush",
+     "level": 8
+    },
+    {
      "id": "slug_shot",
      "level": 9
+    },
+    {
+     "id": "caltrops",
+     "level": 12
     },
     {
      "id": "big_hunt",
@@ -898,8 +914,14 @@
      "ult": true
     },
     {
-     "id": "caltrops",
-     "level": 12
+     "id": "hunter_feast",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "hunter_beast",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -914,18 +936,30 @@
    ],
    "core": [
     "snare",
+    "trap_net",
     "bear_trap"
    ],
    "requires": {
     "slug_shot": [
      "snare",
+     "trap_net",
      "bear_trap"
     ],
     "big_hunt": [
      "snare",
+     "trap_net",
+     "bear_trap"
+    ],
+    "hunter_feast": [
+     "hunter_mark"
+    ],
+    "hunter_beast": [
+     "snare",
+     "trap_net",
      "bear_trap"
     ]
-   }
+   },
+   "marks": true
   },
   "cryo": {
    "skills": [

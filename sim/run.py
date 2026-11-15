@@ -35,6 +35,7 @@ class Member:
         self.runes = {}        # skill id -> [rune id]
         self.level = b.get("level", 1)       # сюжет: уровень героя растёт от вылазки к вылазке
         self.xp = b.get("xp", 0)
+        self.mark_type = b.get("mark_type")  # ловчий: архетип метки (в сюжете — по умолчанию базовая)
         self.hp = 0
         self.rpg = copy.deepcopy(b.get("rpg") or stats.new_rpg())   # режим героев: постоянный уровень
 
@@ -137,6 +138,11 @@ class Run:
                 p["melodies"] = story_meta.melodies(self.data, m.cls, m.level)
         if self.stats:
             stats.apply_to_proto(p, stats.derive(self.data, m.cls, m.rpg), self.data, m.cls)
+        if m.cls == "trapper":
+            p["companion"] = {"unit": "hunting_dog"}
+            if getattr(m, "mark_type", None):
+                p["mark_type"] = m.mark_type
+            p["mark_tier"] = 2 if m.level >= self.data.config.get("prey_upgrade_level", 11) else 1
         return p
 
     def max_hp(self, m):

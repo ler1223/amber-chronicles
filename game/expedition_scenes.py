@@ -2529,6 +2529,8 @@ class PickScene(XScene):
                 name = self.run.data.config["arrows"][card["arrow"]]["name"].lower()
             elif card["type"] == "motif":
                 name = self.run.data.config["motifs"][card["motif"]]["name"].lower()
+            elif card["type"] == "mark":
+                name = self.run.data.config["prey_marks"][card["mark"]]["name"].lower()
             when = "станет" if (self.after or card["type"] == "learn") else "сейчас"
             T.text(surf, f"Демонстрация: {name} — {when}", (r.x + 10, r.y + 8), 14, T.TEXT, True, shadow=True)
 
@@ -2566,9 +2568,11 @@ class PickScene(XScene):
                 effect_line = GL.effect_line(run.data.skills[sid], run.data)
                 if effect_line:
                     lines.append(effect_line)
-            accent = {"branch": (255, 150, 90), "rank": GOLD, "learn": SP}.get(c["type"], BLESS)
+            accent = {"branch": (255, 150, 90), "rank": GOLD, "learn": SP,
+                      "quiver": (170, 210, 255), "motif": (255, 170, 220),
+                      "mark": (230, 190, 100)}.get(c["type"], BLESS)
             kind = {"branch": "Ветка навыка", "rank": "Мастерство", "learn": "Новый навык",
-                    "quiver": "Колчан", "motif": "Мотив"}.get(c["type"], "Закалка")
+                    "quiver": "Колчан", "motif": "Мотив", "mark": "Метка"}.get(c["type"], "Закалка")
             on = i == self.sel
             T.frame(surf, r, 240, accent=accent if on else T.mix(accent, (0, 0, 0), 0.5), corner=accent,
                     fill=T.mix(T.PANEL, accent, 0.16 if on else 0.04))

@@ -9,7 +9,16 @@
   "control_tags": {"stun": ["physical"], "root": ["nature", "movement"], "net": ["physical", "movement"], "trap": ["physical", "movement"], "freeze": ["ice"], "shock": ["storm"], "blind": ["light", "mind"], "sleep": ["mind"], "stasis": ["time", "unremovable"], "levitate": ["gravity"]},
   "start_ap": 0.5,
   "control_looks": {"entangle": "root", "e_entangle": "root", "e_drag": "root", "net": "net", "spike_trap": "trap", "hook": "net", "ice_bolt": "freeze", "blizzard": "freeze", "thunderstorm": "shock", "e_thunderstorm": "shock", "chain_lightning": "shock", "leap_back": "blind", "holy_water": "blind", "lullaby": "sleep"},
-  "marks": {"challenge": {"name": "Вызов", "color": [255, 200, 90], "max": 1, "single": true, "taunt": true, "src_deals": 1.3, "src_takes": 0.75}, "duel": {"name": "Поединок", "color": [255, 150, 70], "max": 1, "single": true, "taunt": true, "src_deals": 1.6, "src_takes": 0.5}, "cold": {"name": "Холод", "color": [160, 220, 255], "max": 3, "slow_per": 0.25, "on_max": [{"type": "stun", "duration": 2.0, "look": "freeze"}, {"type": "status", "tag": "ice"}]}, "bomb": {"name": "Липкая бомба", "color": [255, 150, 60], "max": 3, "burst_on_consume": true, "on_expire": [{"type": "damage", "amount": 2.0, "of": "atk", "pct": true, "kind": "spell", "radius": 1, "tag": "fire", "per_stack": 0.5}]}},
+  "marks": {"challenge": {"name": "Вызов", "color": [255, 200, 90], "max": 1, "single": true, "taunt": true, "src_deals": 1.3, "src_takes": 0.75}, "duel": {"name": "Поединок", "color": [255, 150, 70], "max": 1, "single": true, "taunt": true, "src_deals": 1.6, "src_takes": 0.5}, "cold": {"name": "Холод", "color": [160, 220, 255], "max": 3, "slow_per": 0.25, "on_max": [{"type": "stun", "duration": 2.0, "look": "freeze"}, {"type": "status", "tag": "ice"}]}, "bomb": {"name": "Липкая бомба", "color": [255, 150, 60], "max": 3, "burst_on_consume": true, "on_expire": [{"type": "damage", "amount": 2.0, "of": "atk", "pct": true, "kind": "spell", "radius": 1, "tag": "fire", "per_stack": 0.5}]},
+    "prey": {
+      "name": "Метка добычи",
+      "color": [
+        210,
+        190,
+        120
+      ],
+      "max": 1
+    }},
   "arrows": {
     "fire": {"name": "Огненные стрелы", "color": [240, 110, 50], "tag": "fire", "dmg": 0.4, "desc": "+40% силы навыков урона огнём, цель горит"},
     "frost": {"name": "Ледяные стрелы", "color": [140, 200, 255], "dmg": 0.25, "mark": "cold", "stacks": 1, "duration": 5, "desc": "+25% силы навыков урона, стак Холода (3 — вморожен)"},
@@ -116,10 +125,46 @@
     "powder": {"name": "Пороховая дорожка", "color": [72, 60, 46]},
     "cracks": {"name": "Трещины", "color": [58, 44, 34]},
     "snare": {"name": "Капкан", "color": [190, 180, 150], "hidden": true, "look": "trap",
-              "trigger": {"damage": 12, "damage_pct": 1.2, "stun": 2.5, "look": "trap", "expose": 5, "expose_mult": 1.2}},
+              "trigger": {"damage": 12, "damage_pct": 1.2, "stun": 2.5, "look": "trap", "expose": 6, "expose_mult": 1.15}},
     "bear_trap": {"name": "Медвежий капкан", "color": [170, 150, 120], "hidden": true, "look": "trap",
-                  "trigger": {"damage": 30, "damage_pct": 3.0, "stun": 3.5, "look": "trap", "expose": 6, "expose_mult": 1.25}}
-  },
+                  "trigger": {"damage": 30, "damage_pct": 3.0, "stun": 3.5, "look": "trap", "expose": 8, "expose_mult": 1.15}}
+  ,
+    "net": {
+      "name": "Сеть",
+      "color": [
+        180,
+        180,
+        150
+      ],
+      "hidden": true,
+      "look": "trap",
+      "trigger": {
+        "damage": 8,
+        "damage_pct": 0.8,
+        "stun": 1.8,
+        "look": "net",
+        "expose": 6,
+        "expose_mult": 1.15
+      }
+    },
+    "wolf_pit": {
+      "name": "Волчья яма",
+      "color": [
+        120,
+        100,
+        80
+      ],
+      "hidden": true,
+      "look": "trap",
+      "trigger": {
+        "damage": 18,
+        "damage_pct": 2.5,
+        "stun": 2.5,
+        "look": "trap",
+        "expose": 8,
+        "expose_mult": 1.15
+      }
+    }},
   "legend": {
     "T": {"terrain": "grass", "passable": false, "cover": "full", "deco": "tree"},
     "O": {"terrain": "stone", "portal": true},
@@ -221,5 +266,57 @@
     "ice_shard": {"mode": "fly", "speed": 12.0},
     "ignite": {"mode": "fly", "speed": 10.0},
     "sticky_bomb": {"mode": "fly", "speed": 8.0}
-  }}
+  }},
+  "prey_levels": [
+    6
+  ],
+  "prey_upgrade_level": 11,
+  "prey_marks": {
+    "own": {
+      "name": "Метка охотника",
+      "color": [
+        255,
+        190,
+        100
+      ],
+      "desc": "Ловчий наносит помеченной цели +25% урона; на 11 уровне — +40%.",
+      "t1": 0.25,
+      "t2": 0.4
+    },
+    "auto": {
+      "name": "Метка стаи",
+      "color": [
+        190,
+        220,
+        150
+      ],
+      "desc": "Автоатаки союзников наносят помеченной цели +20% урона; на 11 — +35%.",
+      "t1": 0.2,
+      "t2": 0.35
+    },
+    "magic": {
+      "name": "Метка уязвимости",
+      "color": [
+        170,
+        190,
+        255
+      ],
+      "desc": "Магия союзников наносит помеченной цели +20% урона; на 11 — +35%.",
+      "t1": 0.2,
+      "t2": 0.35
+    },
+    "execute": {
+      "name": "Метка добивания",
+      "color": [
+        255,
+        120,
+        100
+      ],
+      "desc": "+30% урона по цели ниже 35% HP; на 11 — +50% ниже 45%.",
+      "t1": 0.3,
+      "t2": 0.5,
+      "threshold1": 0.35,
+      "threshold2": 0.45
+    }
+  }
 }

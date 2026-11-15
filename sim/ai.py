@@ -105,6 +105,10 @@ class TeamAI:
     def pick_target(self, u, foes):
         if u.taunted_by and u.taunted_by.alive:
             return u.taunted_by
+        if u.proto_id == "hunting_dog" and getattr(u, "prey_hunter_until", 0.0) > self.c.time:
+            marked = [f for f in foes if "prey" in f.marks]
+            if marked:
+                return min(marked, key=lambda f: (cheb(u.cell, f.cell), f.hp))
         if u.role in ("ranged", "caster"):
             in_range = [f for f in foes if cheb(u.cell, f.cell) <= self.c.reach(u)]
             if in_range:

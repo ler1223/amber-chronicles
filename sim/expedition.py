@@ -444,6 +444,7 @@ class Hero:
         self.vet = dict(d.get("vet") or {})             # ветеран таверны: {"runs", "wins", "chapters"}
         self.quivers = list(d.get("quivers") or [])     # лучник: выбранные колчаны (1 / 6 / 11 уровень)
         self.motifs = list(d.get("motifs") or [])       # бард: выбранные мотивы поддержки (1 / 6 / 11 уровень)
+        self.mark_type = d.get("mark_type")             # ловчий: выбранный архетип метки (6 уровень)
         self.ac_order = list(d.get("ac_order") or [])   # приоритет автокаста (порядок навыков)
         self.ac_reserve = dict(d.get("ac_reserve") or {})   # резерв AP под навыки выше: {навык: AP}
         self.falls = int(d.get("falls", 0))              # падений в этом походе: третье — гибель
@@ -463,7 +464,7 @@ class Hero:
                 "branches": {k: list(v) for k, v in self.branches.items()}, "gear": self.gear, "hp": self.hp,
                 "wounded": self.wounded, "autocast": self.autocast, "gifts": self.gifts, "perks": self.perks,
                 "uses": self.uses, "pick_offer": self.pick_offer, "solo": self.solo, "vet": self.vet,
-                "quivers": self.quivers, "motifs": self.motifs,
+                "quivers": self.quivers, "motifs": self.motifs, "mark_type": self.mark_type,
                 "ac_order": self.ac_order, "ac_reserve": self.ac_reserve,
                 "falls": self.falls, "chronicle": self.chronicle, "feats": self.feats, "titles": self.titles,
                 "dorm": self.dorm, "task": self.task, "rest": self.rest, "arts": self.arts}
@@ -626,6 +627,7 @@ class Expedition:
         for h in self.heroes:                  # лучник: выбор колчанов, положенных по уровню
             self.fix_quivers(h)
             self.fix_motifs(h)                 # бард: выбор мотивов поддержки
+            self.fix_marks(h)                  # ловчий: выбор архетипа метки на 6 уровне
         self.new_map()
         for _ in range(int(vow_sum(self.xd, self.vows, "curses"))):     # обет рока: поход начинается с проклятиями
             free = [c for c in sorted(self.xd["curses"]) if c not in self.curses]
@@ -691,6 +693,7 @@ class Expedition:
         for h in x.heroes:                     # старое сохранение: лучнику — выбор колчанов
             x.fix_quivers(h)
             x.fix_motifs(h)                    # барду — выбор мотивов
+            x.fix_marks(h)                     # ловчему — выбор метки
         return x
 
     def new_uid(self, prefix="i"):
@@ -1107,6 +1110,11 @@ class Expedition:
         if h.motifs:                               # бард: мотивы вместо автоатаки
             p["motifs"] = list(h.motifs)
             p["motif_boost"] = h.level >= self.data.config["motif_boost_level"]
+        if h.cls == "trapper":                     # ловчий: собака и выбранная метка
+            p["companion"] = {"unit": "hunting_dog"}
+            if h.mark_type:
+                p["mark_type"] = h.mark_type
+            p["mark_tier"] = 2 if h.level >= self.data.config.get("prey_upgrade_level", 11) else 1
         p["start_ap"] = max(0.0, self.data.config.get("start_ap", 0.5) + vow_sum(self.xd, self.vows, "start_ap"))
         if story_meta.notes_of(self.data, h.cls):
             p["melodies"] = story_meta.melodies(self.data, h.cls, h.level)
@@ -1200,6 +1208,22 @@ class Expedition:
         if need > h.sp:
             h.sp = need
 
+    # ---------- метка ловчего ----------
+
+    def has_marks(self, h):
+        return bool(story_meta.cfg(self.data)["classes"].get(h.cls, {}).get("marks"))
+
+    def mark_pending(self, h):
+        """На 6 уровне — один выбор архетипа; на 11 метка просто усиливается."""
+        if not self.has_marks(h) or h.level < 6 or h.mark_type:
+            return 0
+        return 1
+
+    def fix_marks(self, h):
+        need = self.mark_pending(h)
+        if need > h.sp:
+            h.sp = need
+
     # ---------- опыт и рост ----------
 
     def xp_next(self, h):
@@ -1276,6 +1300,11 @@ class Expedition:
         n = hc["pick_cards_big"] if h.level % hc["pick_big_every"] == 0 else hc["pick_cards"]
         n += self.library_cards().get("cards", 0)
         rng = random.Random(f"{self.seed}:{h.uid}:{h.level}:{h.sp}:{len(h.branches)}:{self.flag('reroll')}")
+        if self.mark_pending(h):                   # ловчий: выбор архетипа метки на 6 уровне
+            free = list(self.data.config["prey_marks"])
+            rng.shuffle(free)
+            h.pick_offer = [{"type": "mark", "mark": m} for m in free]
+            return h.pick_offer
         if self.quiver_pending(h):                 # лучник: колчан на выбор — 1 из 2 ещё не взятых
             free = [a for a in self.data.config["arrows"] if a not in h.quivers]
             rng.shuffle(free)
@@ -1359,6 +1388,8 @@ class Expedition:
             hh.quivers.append(card["arrow"])
         elif card["type"] == "motif":
             hh.motifs.append(card["motif"])
+        elif card["type"] == "mark":
+            hh.mark_type = card["mark"]
         else:
             hh.perks.append({"name": "", "mods": [{"stat": card["stat"], "mult": 1.08}]})
         return hh
@@ -1411,6 +1442,10 @@ class Expedition:
             n = len(h.motifs) + 1
             return f"Мотив {n}: {m['name']}", [m["desc"], "Мотивы чередуются: каждая поддержка — следующий",
                                                "Работает вместо автоатаки Барда"]
+        if card["type"] == "mark":
+            m = self.data.config["prey_marks"][card["mark"]]
+            return f"Метка: {m['name']}", [m["desc"], "Выбор архетипа метки Ловчего на 6 уровне",
+                                           "На 11 уровне выбранная метка усиливается"]
         if card["type"] == "rank":
             r = h.rank_of(card["skill"])
             hc = self.cfg["hero"]
@@ -1438,6 +1473,13 @@ class Expedition:
             if not self.motif_pending(h) or c["motif"] in h.motifs:
                 return False
             h.motifs.append(c["motif"])
+            h.sp -= 1
+            h.pick_offer = None
+            return True
+        if c["type"] == "mark":
+            if not self.mark_pending(h) or c["mark"] not in self.data.config["prey_marks"]:
+                return False
+            h.mark_type = c["mark"]
             h.sp -= 1
             h.pick_offer = None
             return True

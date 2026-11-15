@@ -487,5 +487,43 @@
       "head": "none",
       "weapon": "none"
     }
+  },
+  "hunting_dog": {
+    "name": "Охотничий пёс",
+    "label": "П",
+    "color": [
+      150,
+      120,
+      80
+    ],
+    "role": "melee",
+    "hp": 52,
+    "armor": 1,
+    "move_time": 0.5,
+    "attack": {
+      "damage": 7,
+      "range": 1,
+      "cooldown": 1.0
+    },
+    "owner_scale": {
+      "hp": 0.45,
+      "atk": 0.7,
+      "armor": 0.5
+    },
+    "summon": true,
+    "permanent": true,
+    "look": {
+      "body": "beast",
+      "color": [
+        150,
+        120,
+        80
+      ],
+      "accent": [
+        210,
+        180,
+        130
+      ]
+    }
   }
 }
