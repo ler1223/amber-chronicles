@@ -703,6 +703,16 @@ class BattleView:
         elif t == "fall_land":
             self.float_text(e["unit"], "Выбрался", (230, 220, 180), 14, ttl=0.9)
             V.emit("dust", *T.cell_feet(e["cell"]))
+        elif t == "rockfall":
+            cells = e.get("cells") or []
+            ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (170, 145, 115), 1.0)
+            V.play("rockfall_drop", ctx)
+            V.screen_fx(shake=2)
+        elif t == "rift":
+            cells = e.get("cells") or []
+            ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (120, 90, 70), 1.0)
+            V.play("rift_open", ctx)
+            V.screen_fx(shake=8)
         elif t == "portal":
             for p in (e["src"], e["dst"]):
                 gx, gy = T.cell_feet(p)
@@ -1192,16 +1202,6 @@ class BattleView:
             x, y = e["center"][0] + 0.5, e["center"][1] + 0.5
             self.pix.arch.ring(x, y, e["radius"] + 0.3, self.ZONE_PAL.get(e.get("kind"), "spirit"), n=90, life=0.5,
                                out=e.get("kind") != "gravity", temp=0.7)
-        elif t == "rockfall":
-            cells = e.get("cells") or []
-            ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (170, 145, 115), 1.0)
-            self.vfx.play("rockfall_drop", ctx)
-            self.vfx.screen_fx(shake=2)
-        elif t == "rift":
-            cells = e.get("cells") or []
-            ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (120, 90, 70), 1.0)
-            self.vfx.play("rift_open", ctx)
-            self.vfx.screen_fx(shake=8)
         elif t == "quiver":
             q = self.data.config.get("quiver", {}).get(e["arrow"], {})
             self.float_text(e["unit"], q.get("name", e["arrow"]), (255, 220, 150), 15, ttl=1.0)
