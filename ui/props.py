@@ -230,6 +230,11 @@ ART = {
 }
 
 
+# Новые капканы: PNG лежат в assets/sprites/props и заменяют эти заглушки.
+for _trap_name in ("trap_snare", "trap_bear", "trap_net"):
+    ART[_trap_name] = ART["trap_open"]
+
+
 def _from_art(rows):
     h, w = len(rows), max(len(r) for r in rows)
     s = pygame.Surface((w, h), pygame.SRCALPHA)

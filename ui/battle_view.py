@@ -1734,9 +1734,12 @@ class BattleView:
                 h = cfg["hazards"][cell.hazard]
                 if h.get("hidden"):                  # капкан ловчего: виден только своим
                     if cell.hazard_team == PLAYER:
-                        img = self.props.get("trap_open")
+                        trap_img = {"snare": "trap_snare", "bear_trap": "trap_bear",
+                                    "net": "trap_net", "wolf_pit": "trap_bear"}.get(cell.hazard, "trap_open")
+                        img = self.props.get(trap_img)
                         if img is not None:
-                            img = pygame.transform.scale(img, (img.get_width() * 3, img.get_height() * 3))
+                            k = 2 if trap_img != "trap_open" else 3
+                            img = pygame.transform.scale(img, (img.get_width() * k, img.get_height() * k))
                             surf.blit(img, img.get_rect(center=r.center))
                         pygame.draw.circle(surf, (200, 190, 150), r.center, 26, 2)
                     continue
