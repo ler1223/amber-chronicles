@@ -134,6 +134,40 @@ def effect_tip(glossary, key):
     return [(name, col), (desc, T.TEXT)]
 
 
+def _pct(value, sign=True):
+    return f"{value * 100:+.0f}%" if sign else f"{value * 100:.0f}%"
+
+
+def _buff_detail(eff):
+    stat, value = eff.get("stat"), eff.get("value", 1)
+    if stat == "slow":
+        return f"Замедление {(1 - 1 / max(1.01, value)) * 100:.0f}%"
+    if stat == "atk_speed":
+        return f"Ускорение атаки {(1 - value) * 100:.0f}%"
+    if stat == "dmg_taken":
+        return f"Входящий урон {_pct(value - 1)}"
+    if stat == "exposed":
+        return f"Уязвимость {_pct(value - 1)}"
+    if stat == "armor":
+        return f"+{value:g} брони"
+    if stat == "armor_shred":
+        return f"−{value:g} брони"
+    if stat == "skill_mult":
+        return f"Сила навыков {_pct(value - 1)}"
+    if stat == "ap_rate":
+        return f"Скорость AP {_pct(value - 1)}"
+    if stat == "atk_mult":
+        return f"Урон атак {_pct(value - 1)}"
+    if stat == "heal_taken":
+        return f"Получаемое лечение {_pct(value - 1)}"
+    if stat == "regen":
+        return f"Регенерация +{value:g} HP/сек"
+    if stat in ("silence", "stun", "sleep"):
+        return {"silence": "Молчание", "stun": "Оглушение", "sleep": "Сон"}[stat] + \
+               f" {float(eff.get('duration', 0)):g} сек"
+    return _STAT_TERMS.get(stat)
+
+
 def skill_effect_terms(sk, data):
     """Названия эффектов навыка для строки «Эффекты: ...»."""
     out = []
@@ -160,5 +194,24 @@ def skill_effect_terms(sk, data):
 
 
 def effect_line(sk, data):
-    names = skill_effect_terms(sk, data)
-    return ("Эффекты: " + ", ".join(names)) if names else None
+    details = []
+    for eff in sk.get("effects", []):
+        if eff.get("type") == "buff":
+            detail = _buff_detail(eff)
+        elif eff.get("type") in ("stun", "sleep"):
+            detail = {"stun": "Оглушение", "sleep": "Сон"}[eff["type"]] + \
+                     f" {float(eff.get('duration', 0)):g} сек"
+        elif eff.get("type") == "silence":
+            detail = f"Молчание {float(eff.get('duration', 0)):g} сек"
+        elif eff.get("type") == "cleanse":
+            detail = "Очищение"
+        elif eff.get("type") == "mark":
+            mark = (data.config.get("marks") or {}).get(eff.get("mark"), {})
+            detail = mark.get("name")
+        elif eff.get("tag"):
+            detail = data.tags.get(eff["tag"], {}).get("name", eff["tag"])
+        else:
+            detail = None
+        if detail and detail not in details:
+            details.append(detail)
+    return ("Эффекты: " + ", ".join(details)) if details else None

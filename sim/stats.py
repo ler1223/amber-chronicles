@@ -188,7 +188,7 @@ def skill_base_label(p, sk):
 
 
 def skill_scale_text(p, sk):
-    """Стандартная строка скейла: проценты от характеристики, а не голые единицы."""
+    """Стандартная строка базовых процентов: проценты от характеристики, а не голые единицы."""
     parts = []
     ref = p.get("ref") or {}
     for eff in _shown(sk.get("effects", [])):
@@ -205,14 +205,14 @@ def skill_scale_text(p, sk):
         if text not in parts:
             parts.append(text)
     if parts:
-        return "Скейл: " + " · ".join(parts)
+        return "Базовые проценты: " + " · ".join(parts)
     base = skill_base_label(p, sk)
     if base:
-        return "Скейл: " + base
+        return "Базовые проценты: " + base
     vals = skill_values(p, sk)
     if vals:
         what, value, _crit = vals[0]
-        return f"Скейл: сила навыков ×{p.get('power', 1.0):.2f} · {what} {value}"
+        return f"База: сила навыков ×{p.get('power', 1.0):.2f} · {what} {value}"
     return None
 
 

@@ -2586,7 +2586,7 @@ class PickScene(XScene):
                     break
             if on:
                 T.text(surf, "выбрано — клик ещё раз: взять", (r.right - 210, r.y + 8), 12, accent, True)
-            self.hit(r, ("card", i), [head, "Клик — показать; ещё клик — взять"])
+            self.hit(r, ("card", i), None)
             for lr, key in link_hits:
                 self.hit(lr, None, GL.effect_tip(glossary, key))
             y += 198

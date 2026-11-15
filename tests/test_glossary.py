@@ -34,7 +34,7 @@ def test_skill_scale_text_uses_percent_of_stat():
     p = build_proto(DATA, "warrior")
     p["ref"] = {"atk": 10, "hp": 100}
     text = stats.skill_scale_text(p, DATA.skills["power_strike"])
-    assert "Скейл:" in text and "70% атаки" in text
+    assert "Базовые проценты:" in text and "70% атаки" in text
 
 
 def test_skill_scale_text_falls_back_to_power_for_flat_skills():
