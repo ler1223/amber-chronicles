@@ -724,8 +724,16 @@
      "level": 3
     },
     {
+     "id": "fire_barrel",
+     "level": 4
+    },
+    {
      "id": "sticky_bomb",
      "level": 5
+    },
+    {
+     "id": "alch_smoke",
+     "level": 6
     },
     {
      "id": "powder_trail",
@@ -736,15 +744,12 @@
      "level": 9
     },
     {
-     "id": "oil_flask",
-     "level": 11
-    },
-    {
-     "id": "dynamite",
-     "level": 12
-    },
-    {
      "id": "barrel_rain",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "powder_plate",
      "level": 10,
      "ult": true
     },
@@ -754,9 +759,12 @@
      "ult": true
     },
     {
-     "id": "powder_plate",
-     "level": 10,
-     "ult": true
+     "id": "oil_flask",
+     "level": 11
+    },
+    {
+     "id": "dynamite",
+     "level": 12
     }
    ],
    "doctrines": [

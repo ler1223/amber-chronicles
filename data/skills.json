@@ -6197,5 +6197,72 @@
       "need": 4,
       "desc": "4 навыка союзников рядом"
     }
+  },
+  "fire_barrel": {
+    "name": "Огненная бочка",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 6,
+    "range": 4,
+    "target": "cell",
+    "radius": 2,
+    "free_cell": true,
+    "powder": true,
+    "of": "sp",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "place_object",
+        "object": "barrel_fire",
+        "limit": 2,
+        "blast": 2.6,
+        "blast_r": 2,
+        "hp_pct": 0.15,
+        "radius": 2
+      }
+    ],
+    "desc": "Ставит огненную бочку (до 2): взрыв 260% силы навыков в радиусе 2 и горящая земля 5 сек. С Порохом ×2, без — ×0.6."
+  },
+  "alch_smoke": {
+    "name": "Дымовая бомба",
+    "ap": 3,
+    "cast": 0,
+    "cooldown": 10,
+    "range": 4,
+    "target": "cell",
+    "radius": 2,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "hazard",
+        "hazard": "fog",
+        "duration": 5,
+        "radius": 2
+      },
+      {
+        "type": "stealth",
+        "duration": 3,
+        "radius": 2,
+        "mult": 1.5
+      }
+    ],
+    "desc": "Дым в радиусе 2 на 5 сек: враги слепнут, союзники получают уклонение и скрытность 3 сек.",
+    "gauge_gain": 1
   }
 }
