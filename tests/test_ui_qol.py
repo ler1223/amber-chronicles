@@ -75,6 +75,35 @@ def test_chest_search_and_set_collection(tmp_path):
     frame(app)
 
 
+def test_chest_filter_search_and_material_scroll(tmp_path):
+    from tests.test_expedition_ui import new_app, frame
+    from game import tavern_rooms as R
+    import pygame
+
+    app = new_app(tmp_path)
+    p = app.profile
+    sid = next(iter(XD["artifacts"]["sets"]))
+    for i, kind in enumerate(("bracers", "belt", "ring")):
+        art = A.make(XD, f"filter{i}", kind, sid, 1.0)
+        p.stash[art["uid"]] = art
+    R.go(app, "muster")
+    room = app.scene
+    overlay = R.ChestOverlay(room)
+    room.overlay = overlay
+    frame(app)
+    overlay.act(("filter", "all"))
+    assert overlay.filter == "all"
+    overlay.query = "пояс"
+    assert [a["kind"] for a in overlay.arts()] == ["belt"]
+    overlay.tab = "mats"
+    frame(app)
+    assert "chest_mats" in room.scroll_regs
+    area = room.scroll_regs["chest_mats"][0]
+    room.handle(pygame.event.Event(pygame.MOUSEMOTION, pos=area.center))
+    room.handle(pygame.event.Event(pygame.MOUSEWHEEL, x=0, y=-1))
+    assert room.scroll_pos.get("chest_mats", 0) > 0
+
+
 def test_market_filter_and_sell_all_confirmation(tmp_path):
     from tests.test_expedition_ui import new_app, frame
     from game import tavern_rooms as R

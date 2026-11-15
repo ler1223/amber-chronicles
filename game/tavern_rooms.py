@@ -1787,6 +1787,11 @@ class ChestOverlay(Overlay):
         self.query = ""
         self.search_focus = False
 
+    def reset_scroll(self):
+        for key in ("chest_arts", "chest_mats"):
+            self.scene.scroll_pos[key] = 0
+            self.scene.scroll_cur[key] = 0.0
+
     def text_input(self, ev):
         if not self.search_focus or ev.type != pygame.KEYDOWN:
             return False
@@ -1798,10 +1803,12 @@ class ChestOverlay(Overlay):
             return True
         if ev.key == pygame.K_BACKSPACE:
             self.query = self.query[:-1]
+            self.reset_scroll()
             return True
         ch = getattr(ev, "unicode", "")
         if ch and ch.isprintable():
             self.query += ch
+            self.reset_scroll()
         return True
 
     def arts(self):
@@ -1833,12 +1840,16 @@ class ChestOverlay(Overlay):
         if kind == "tab":
             self.tab = action[1]
             self.scroll = 0
+            self.reset_scroll()
         elif kind == "filter":
             self.filter = action[1]
+            self.reset_scroll()
         elif kind == "sort":
             self.sort = action[1]
+            self.reset_scroll()
         elif kind == "search":
             self.search_focus = True
+            self.reset_scroll()
         elif kind == "fav":
             prof.toggle_art_flag(action[1], "favorite")
         elif kind == "junk":
@@ -2029,20 +2040,19 @@ class ChestOverlay(Overlay):
     def draw_mats(self, surf, r, y0):
         prof = self.app.profile
         xd = prof.xd
-        x, y = r.x + 18, y0
-        for k, m in xd.get("materials", {}).items():
-            tr = pygame.Rect(x, y, 280, 96)
-            pygame.draw.rect(surf, (32, 24, 17), tr, border_radius=8)
-            pygame.draw.rect(surf, tuple(m["color"]), tr, 1, border_radius=8)
-            surf.blit(res_icon(xd, k, 64), (tr.x + 14, tr.y + 16))
-            T.text(surf, m["name"], (tr.x + 92, tr.y + 14), 17, tuple(m["color"]), True)
-            T.text(surf, str(prof.mats.get(k, 0)), (tr.x + 92, tr.y + 40), 26, T.TEXT, True)
-            T.text(surf, "редкий" if m.get("rare") else "общий", (tr.right - 14 - T.font(12).size("редкий")[0],
-                                                                  tr.bottom - 22), 12, T.TEXT_DIM)
-            self.scene.hit(tr, None, [m["name"], m.get("desc", "общий материал: бои и поручения")])
-            x += 292
-            if x + 280 > r.right - 18:
-                x, y = r.x + 18, y + 106
+        items = list(xd.get("materials", {}).items())
+        area = pygame.Rect(r.x + 18, y0, r.w - 36, r.bottom - 14 - y0)
+        with self.scene.grid(surf, "chest_mats", area, len(items), 280, 96, gap=10) as cells:
+            for i, tr in cells:
+                k, m = items[i]
+                pygame.draw.rect(surf, (32, 24, 17), tr, border_radius=8)
+                pygame.draw.rect(surf, tuple(m["color"]), tr, 1, border_radius=8)
+                surf.blit(res_icon(xd, k, 64), (tr.x + 14, tr.y + 16))
+                T.text(surf, m["name"], (tr.x + 92, tr.y + 14), 17, tuple(m["color"]), True)
+                T.text(surf, str(prof.mats.get(k, 0)), (tr.x + 92, tr.y + 40), 26, T.TEXT, True)
+                T.text(surf, "редкий" if m.get("rare") else "общий",
+                       (tr.right - 14 - T.font(12).size("редкий")[0], tr.bottom - 22), 12, T.TEXT_DIM)
+                self.scene.hit(tr, None, [m["name"], m.get("desc", "общий материал: бои и поручения")])
 
 
 class SetCollectionOverlay(Overlay):
