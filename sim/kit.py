@@ -23,7 +23,7 @@ TYPES = {"mark", "zone", "vault", "barrage", "shackle", "fletch", "trail", "igni
          "song_tempo", "song_finale", "corpse_pulse", "reagent_area", "cut_tethers", "tether_heal", "tether_all",
          "terrain_wave", "note", "finale", "guardian_zone_strike", "guardian_zone_taunt",
          "guardian_zone_buff", "guardian_pull_ally", "guardian_oath", "storm_arc",
-         "prey_mark", "prey_feast", "beast_buff"}
+         "prey_mark", "prey_feast", "beast_buff", "weather", "snow_vortex", "ice_heart"}
 HELD_LOOKS = ("trap", "net", "root", "freeze")
 
 
@@ -52,10 +52,14 @@ def add_mark(c, v, mid, stacks, duration, src):
     m["t"] = max(m["t"], duration)
     m["total"] = max(m["total"], m["t"])
     m["src"] = src or m["src"]
+    if mid == "cold" and src is not None:
+        c.gain(src, "cold", max(1, stacks))
+        if m["n"] >= d.get("max", 99):
+            c.gain(src, "freeze")
     c.emit("mark", unit=v, mark=mid, n=m["n"], src=src)
     _mark_side(c, v, mid, m)
     if m["n"] >= d.get("max", 99) and d.get("on_max"):
-        if d.get("clear_on_max", True):
+        if d.get("clear_on_max", True) and v.marks.get(mid) is m:
             del v.marks[mid]
         c.emit("mark_max", unit=v, mark=mid, src=src)
         c.apply_effects(src or v, d["on_max"], v.cell, v)
@@ -893,6 +897,38 @@ def special(c, caster, eff, center, tunit):
             dog.prey_hunter_until = c.time + dur
             dog.beast_bleed = eff.get("bleed", 0.35)
             c.emit("beast", unit=dog, src=caster, duration=dur)
+    elif t == "weather":
+        wid = eff["weather"]
+        wd = c.data.weathers.get(wid, {})
+        overrides = {k: eff[k] for k in ("duration", "cold", "damage", "freeze_every", "freeze",
+                                         "extend_every", "extend_time", "ap_extend") if k in eff}
+        c.weather = {"id": wid, "left": float(eff.get("duration", wd.get("duration", 8))),
+                     "tick": 0.0, "elapsed": 0.0, "ap_t": 0.0, "freeze_t": 0.0,
+                     "caster": caster, "overrides": overrides}
+        c.emit("weather", id=wid, name=wd.get("name", wid), duration=c.weather["left"], src=caster)
+    elif t == "snow_vortex":
+        dx = center[0] - caster.cell[0]
+        dy = center[1] - caster.cell[1]
+        d = max(abs(dx), abs(dy)) or 1
+        vdir = (0 if dx == 0 else (1 if dx > 0 else -1),
+                0 if dy == 0 else (1 if dy > 0 else -1))
+        if vdir == (0, 0):
+            vdir = (1, 0)
+        c.vortices.append({"center": tuple(center), "dir": vdir, "radius": eff.get("radius", 1),
+                           "left": eff.get("duration", 6), "tick": 0.0, "move_t": 0.0,
+                           "damage": eff.get("damage", 0.8), "cold": eff.get("cold", 1),
+                           "caster": caster})
+        c.emit("vortex", center=tuple(center), radius=eff.get("radius", 1), src=caster)
+    elif t == "ice_heart":
+        for v in c._select(caster, center, eff.get("radius", 3), "allies", tunit):
+            amount = int(round(eff.get("shield", 2.5) * caster.power))
+            v.shield, v.shield_time, v.shield_src = amount, eff.get("duration", 6), caster
+            c.add_buff(v, "armor", round(max(1, caster.armor) * eff.get("armor", 0.8), 2), eff.get("duration", 6))
+            c.add_buff(v, "dmg_taken", eff.get("dmg_taken", 0.8), eff.get("duration", 6))
+            v.ice_heart_until = c.time + eff.get("duration", 6)
+            v.ice_heart_freeze = eff.get("freeze", 1.0)
+            c.emit("shield", unit=v, amount=amount)
+        c.emit("ice_heart", center=center, radius=eff.get("radius", 3), src=caster)
     elif t == "zone":
         z = {"center": center, "radius": eff.get("radius", 1), "left": eff["duration"], "every": eff.get("every", 1.0),
              "t": eff.get("every", 1.0) if eff.get("now") else 0.0, "effects": eff["effects"], "caster": caster,

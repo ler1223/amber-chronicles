@@ -33,6 +33,7 @@ class GameData:
         self.summons = load("summons.json")
         self.mutators = {k: v for k, v in load("mutators.json").items() if not k.startswith("_")}
         self.objects = load("objects.json")
+        self.weathers = load("weathers.json")
         self.synergy = load("synergy.json")
         self.rules = load("rules.json")
         self.stats_mode = load("stats_mode.json")  # режим героев: атрибуты и уровни (sim/stats.py)           # правила взаимодействий по тегам (sim/rules.py)

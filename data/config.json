@@ -318,5 +318,27 @@
       "threshold1": 0.35,
       "threshold2": 0.45
     }
+  },
+  "cryo_cataclysm": {
+      "1": {
+        "damage": 3.5,
+        "freeze": 1.5,
+        "ice": 3
+      },
+      "6": {
+        "damage": 4.25,
+        "freeze": 1.75,
+        "ice": 4
+      },
+      "11": {
+        "damage": 5.0,
+        "freeze": 2.0,
+        "ice": 5
+      },
+      "15": {
+        "damage": 6.0,
+        "freeze": 2.5,
+        "ice": 6
+      }
   }
 }

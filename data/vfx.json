@@ -112,6 +112,24 @@
       {"t": 0, "sfx": "shockwave_big", "at": "cells", "scale": 0.5},
       {"t": 0, "screen": {"shake": 10, "hitstop": 0.07, "zoom": 1.05, "zoom_time": 0.25}}
     ],
+    "weather_snow": [
+      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 24, "scale": 1.2},
+      {"t": 0, "fx": "frost_mist", "at": "target_ground", "count": 8, "scale": 1.3}
+    ],
+    "snow_vortex": [
+      {"t": 0, "sfx": "vortex_wind", "at": "target_ground", "scale": 0.9},
+      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 18, "scale": 1.1}
+    ],
+    "snow_vortex_tick": [
+      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 12, "scale": 1.0},
+      {"t": 0, "sfx": "shockwave", "at": "target_ground", "scale": 0.25}
+    ],
+    "cryo_cataclysm": [
+      {"t": 0, "fx": "ice_shards", "at": "target_ground", "count": 50, "scale": 1.4},
+      {"t": 0, "fx": "snowflakes", "at": "target_ground", "count": 30, "scale": 1.5},
+      {"t": 0, "sfx": "shockwave_big", "at": "target_ground", "scale": 1.2},
+      {"t": 0, "screen": {"shake": 12, "hitstop": 0.1, "flash": 0.4, "flash_color": [210, 240, 255]}}
+    ],
     "slash_hit": [
       {"t": 0, "arc": {"ribbon": "slash", "radius": 34, "from": -80, "to": 70, "time": 0.07, "flip": "random"}, "at": "target"},
       {"t": 0.03, "fx": "hit_sparks", "at": "target", "angle": "dir"},

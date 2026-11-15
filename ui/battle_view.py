@@ -713,6 +713,25 @@ class BattleView:
             ctx = self._ctx(e.get("src"), None, e.get("center"), cells, (120, 90, 70), 1.0)
             V.play("rift_open", ctx)
             V.screen_fx(shake=8)
+        elif t == "weather":
+            wd = self.data.weathers.get(e["id"], {})
+            col = tuple(wd.get("color", (190, 225, 255)))
+            self.banner = [e.get("name", wd.get("name", "Погода")).upper(), "Погода изменилась", 2.0, col]
+            V.play("weather_snow", self._ctx(e.get("src"), None, e.get("center"), None, col, 1.0))
+        elif t == "weather_extend":
+            self.float_text(e["unit"], "Метель продлена", (190, 225, 255), 14, ttl=1.0)
+        elif t == "weather_end":
+            self.banner = [e.get("name", "Погода").upper(), "Погода стихла", 1.5, (170, 200, 235)]
+        elif t == "vortex":
+            V.play("snow_vortex", self._ctx(e.get("src"), None, e.get("center"), [e.get("center")],
+                                             (190, 225, 255), 1.0))
+        elif t == "vortex_tick":
+            V.play("snow_vortex_tick", self._ctx(e.get("src"), None, e.get("center"), [e.get("center")],
+                                                  (210, 235, 255), 1.0))
+        elif t == "cryo_cataclysm":
+            self.banner = ["ЛЕДЯНОЙ ВЕК", "Вся карта скована льдом", 2.2, (210, 240, 255)]
+            V.play("cryo_cataclysm", self._ctx(e.get("unit"), None, None, None, (210, 240, 255), 1.0))
+            V.screen_fx(shake=10, flash=0.35, flash_color=(220, 245, 255), hitstop=0.08)
         elif t == "portal":
             for p in (e["src"], e["dst"]):
                 gx, gy = T.cell_feet(p)
@@ -1576,6 +1595,16 @@ class BattleView:
                 pygame.draw.rect(self.overlay, (*col, int(18 + 12 * pulse)), r)
                 pygame.draw.rect(self.overlay, (*col, int(110 + 55 * pulse)), r, 1)
 
+    def _draw_weather(self, surf, c):
+        w = getattr(c, "weather", None)
+        if not w:
+            return
+        wd = c.data.weathers.get(w.get("id"), {})
+        name = wd.get("name", w.get("id", "Погода"))
+        col = tuple(wd.get("color", (190, 225, 255)))
+        T.text(surf, f"{name}: {max(0.0, w.get('left', 0.0)):.1f} с", (T.GRID_X + 12, T.GRID_Y + 10),
+               16, col, True, shadow=True)
+
     def _draw_objective_ground(self, c):
         """Круг удержания и клетки, откуда выйдет следующая волна (в передышку и на разведке)."""
         ob = c.objective
@@ -1635,6 +1664,7 @@ class BattleView:
         if not scene.dragging:
             self._draw_hover(surf, scene)
         self._draw_top(surf, scene)
+        self._draw_weather(surf, c)
         self._draw_objective(surf, scene)
         if self.banner:
             text, sub, left, col = self.banner

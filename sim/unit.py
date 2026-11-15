@@ -106,6 +106,8 @@ class Unit:
         self.prey_hunter_until = 0.0                     # собака: приоритет помеченных
         self.beast_until = 0.0                           # собака: усиление «Зверя»
         self.beast_bleed = 0.0
+        self.ice_heart_until = 0.0                       # криомант: атакующие замораживаются
+        self.ice_heart_freeze = 1.0
         if self.proto_id == "bard" and not self.motifs:
             self.motifs = ["march"]                       # старые сохранения и прямые сборки
         self.motif_i = 0

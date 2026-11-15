@@ -131,6 +131,8 @@ class Combat:
         self.rising = []          # [юнит, через сколько встанет]
         self.tides = []           # [время отлива, клетки]
         self.rifts = []           # временные разломы: снимки клеток для восстановления
+        self.weather = None       # глобальная погода Криоманта
+        self.vortices = []        # движущиеся снежные вихри
         self.arena = []
         order = self.cfg["difficulty_order"]
         scale_ = enemy_scale or {}
@@ -578,6 +580,8 @@ class Combat:
                     for key, value in saved.items():
                         setattr(c, key, value)
                 self.emit("rift_close", cells=[p for p, _ in item["cells"]])
+        self._update_weather(dt)
+        self._update_vortices(dt)
         for ai in self.ais:
             ai.update(dt)
         self.autocaster.update(dt)
@@ -981,6 +985,9 @@ class Combat:
 
     def gain(self, u, event, n=1):
         """Шкала героя растёт от события его фишки (gauge.gain в classes.json); заодно копится условие ультимейта."""
+        if u is not None and u.alive and u.proto_id == "cryo" and event in ("cold", "freeze") \
+                and self.time < getattr(u, "_cryo_ignore_gain_until", 0.0):
+            return
         if u is not None and u.alive:
             u.ult_count[event] = u.ult_count.get(event, 0) + n
         g = u.gauge if u is not None and u.alive else None
@@ -990,6 +997,8 @@ class Combat:
         if k and event not in PERIODIC:
             u.pp = min(u.pp_max, u.pp + k * n)
             self.emit("gauge", unit=u, event=event)
+            if u.proto_id == "cryo" and u.pp >= u.pp_max and not getattr(u, "_cryo_busy", False):
+                self._cryo_cataclysm(u)
 
     def _gauge_tick(self, u, dt):
         for event in PERIODIC:
@@ -2556,6 +2565,10 @@ class Combat:
                 covered = True
         amount *= target.buff("dmg_taken", 1.0) * target.buff("exposed", 1.0)
         amount *= PS.in_mult(self, target, attacker, kind)
+        if direct and target.ice_heart_until > self.time and attacker is not None \
+                and attacker.alive and attacker.is_enemy(target) and not self._intercepting:
+            self.apply_stun(attacker, target.ice_heart_freeze, "freeze")
+            self.emit("ice_heart_retaliate", unit=attacker, src=target)
         if tag == "fire" and target.frost_armor and target.shield > 0:
             target.shield = 0                      # огонь раскалывает ледяную броню
             amount *= 1.5
@@ -2992,6 +3005,105 @@ class Combat:
 
         self.delayed.append({"left": delay, "total": delay, "fn": land})
         self.emit("rockfall", src=caster, center=tuple(center), cells=cells, delay=delay)
+
+    def _update_weather(self, dt):
+        """Глобальная погода: тики Холода, урон/заморозка и продление за AP."""
+        w = self.weather
+        if not w:
+            return
+        wd = dict(self.data.weathers.get(w["id"], {}))
+        wd.update(w.get("overrides") or {})
+        w["left"] -= dt
+        w["tick"] += dt
+        w["elapsed"] += dt
+        w["ap_t"] += dt
+        every = max(0.1, float(wd.get("tick", 1.0)))
+        if w["tick"] >= every:
+            w["tick"] -= every
+            caster = w.get("caster")
+            for v in list(self.units):
+                if not v.alive or v.obj or caster is None or not caster.is_enemy(v):
+                    continue
+                cold = int(wd.get("cold", 0))
+                if cold:
+                    kit.add_mark(self, v, "cold", cold, 6, caster)
+                dmg = float(wd.get("damage", 0.0))
+                if dmg:
+                    self.damage(v, dmg * caster.power, caster, "ice", "spell")
+                if wd.get("freeze_every") and v.alive:
+                    w["freeze_t"] = w.get("freeze_t", 0.0) + every
+                    if w["freeze_t"] >= float(wd["freeze_every"]):
+                        w["freeze_t"] = 0.0
+                        self.apply_stun(v, float(wd.get("freeze", 1.0)), "freeze")
+            self.emit("weather_tick", id=w["id"], name=wd.get("name", w["id"]))
+        extend = int(wd.get("ap_extend", 0))
+        if extend and w["ap_t"] >= float(wd.get("extend_every", 5.0)):
+            caster = w.get("caster")
+            if caster is not None and caster.alive and caster.ap >= extend:
+                caster.ap -= extend
+                w["left"] += float(wd.get("extend_time", 5.0))
+                w["ap_t"] = 0.0
+                self.emit("weather_extend", id=w["id"], unit=caster, left=w["left"])
+            else:
+                w["left"] = 0.0
+        if w["left"] <= 0:
+            self.weather = None
+            self.emit("weather_end", id=w["id"], name=wd.get("name", w["id"]))
+
+    def _update_vortices(self, dt):
+        for v in list(self.vortices):
+            v["left"] -= dt
+            v["tick"] += dt
+            v["move_t"] += dt
+            if v["move_t"] >= 0.55:
+                v["move_t"] = 0.0
+                nx, ny = v["center"][0] + v["dir"][0], v["center"][1] + v["dir"][1]
+                nxt = self.grid.get((nx, ny))
+                if nxt is not None and nxt.passable:
+                    v["center"] = (nx, ny)
+                    self.emit("vortex_move", center=v["center"], src=v["caster"])
+                else:
+                    v["dir"] = (-v["dir"][0], -v["dir"][1])
+            if v["tick"] >= 1.0:
+                v["tick"] -= 1.0
+                for u in list(self.units):
+                    if u.alive and not u.obj and v["caster"].is_enemy(u) \
+                            and cheb(u.cell, v["center"]) <= v["radius"]:
+                        self.damage(u, v["damage"] * v["caster"].power, v["caster"], "ice", "spell")
+                        if u.alive:
+                            kit.add_mark(self, u, "cold", v["cold"], 6, v["caster"])
+                self.emit("vortex_tick", center=v["center"], radius=v["radius"], src=v["caster"])
+            if v["left"] <= 0 or not v["caster"].alive:
+                self.vortices.remove(v)
+                self.emit("vortex_end", center=v["center"], src=v["caster"])
+
+    def _cryo_cataclysm(self, u):
+        """Полная шкала Мороза: автоматический «Ледяной век» по всей карте."""
+        if not u.alive or getattr(u, "_cryo_busy", False):
+            return
+        u._cryo_busy = True
+        u._cryo_ignore_gain_until = self.time + 0.2
+        try:
+            table = self.cfg.get("cryo_cataclysm", {})
+            level = int(u.proto.get("level", 1))
+            keys = sorted((int(k) for k in table), reverse=True)
+            row = table.get(str(level)) or table.get(str(next((k for k in keys if k <= level), keys[-1] if keys else 1)), {})
+            if not row:
+                return
+            for v in list(self.units):
+                if not v.alive or v.obj or not u.is_enemy(v):
+                    continue
+                self.damage(v, row.get("damage", 3.5) * u.power, u, "ice", "spell")
+                if v.alive:
+                    self.apply_stun(v, row.get("freeze", 1.5), "freeze")
+                    kit.add_mark(self, v, "cold", 3, 6, u)
+            for cell in self.grid.cells.values():
+                if cell.passable and cell.terrain not in ("water", "lava", "chasm"):
+                    cell.hazard, cell.hazard_time, cell.hazard_team = "ice", row.get("ice", 3), u.team
+            self.emit("cryo_cataclysm", unit=u, level=level, name="Ледяной век")
+            u.pp = 0
+        finally:
+            u._cryo_busy = False
 
     def _rift(self, caster, eff, center):
         """Разлом мира: одна полоса клеток на время становится пропастью."""

@@ -7300,5 +7300,169 @@
       }
     ],
     "desc": "Условие: 2 капкана. Собака на 12 сек получает +50% урона и +30% скорости атаки, атакует помеченных и накладывает кровотечение. Если она мертва — возвращается."
+  },
+  "frost_needle": {
+    "name": "Морозная игла",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 4,
+    "range": 6,
+    "target": "enemy",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 1
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "damage",
+        "amount": 2.2,
+        "of": "sp",
+        "pct": true,
+        "kind": "spell",
+        "tag": "ice"
+      },
+      {
+        "type": "mark",
+        "mark": "cold",
+        "stacks": 2,
+        "duration": 6
+      },
+      {
+        "type": "damage",
+        "amount": 1.1,
+        "of": "sp",
+        "pct": true,
+        "kind": "spell",
+        "tag": "ice",
+        "if_mark": "cold"
+      }
+    ],
+    "desc": "Ледяная игла: 220% силы навыков, 2 стака Холода. По цели с Холодом — ещё 110% силы навыков."
+  },
+  "snow_vortex": {
+    "name": "Снежный вихрь",
+    "ap": 4,
+    "cast": 0.0,
+    "cooldown": 10,
+    "range": 4,
+    "target": "cell",
+    "radius": 1,
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "snow_vortex",
+        "radius": 1,
+        "duration": 6,
+        "speed": 1,
+        "damage": 0.8,
+        "cold": 1
+      }
+    ],
+    "desc": "Снежный вихрь идёт по карте 6 сек: 80% силы навыков и стак Холода врагам в радиусе 1."
+  },
+  "snowstorm": {
+    "name": "Метель",
+    "ap": 3,
+    "cast": 0.0,
+    "cooldown": 12,
+    "range": 0,
+    "target": "self",
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "weather",
+        "weather": "snowstorm"
+      }
+    ],
+    "desc": "Глобальная метель на 8 сек: каждую секунду Холод всем врагам. Каждые 5 сек тратит 1 AP и продлевает на 5 сек."
+  },
+  "eternal_winter": {
+    "name": "Вечная зима",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "ult": true,
+    "ult_cond": {
+      "live": "cold",
+      "need": 2,
+      "desc": "2 врага с Холодом"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 3
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "weather",
+        "weather": "eternal_winter"
+      }
+    ],
+    "desc": "Условие: 2 врага с Холодом. Вечная зима на 14 сек: частый Холод всем врагам и периодическая заморозка."
+  },
+  "ice_heart": {
+    "name": "Ледяное сердце",
+    "ap": 2,
+    "cast": 0.0,
+    "cooldown": 24,
+    "range": 0,
+    "target": "self",
+    "radius": 3,
+    "ult": true,
+    "ult_cond": {
+      "live": "cold",
+      "need": 2,
+      "desc": "2 врага с Холодом"
+    },
+    "auto": {
+      "on": true,
+      "conds": [
+        {
+          "type": "enemies_in_area",
+          "value": 2
+        }
+      ]
+    },
+    "effects": [
+      {
+        "type": "ice_heart",
+        "radius": 3,
+        "duration": 6,
+        "of": "sp",
+        "pct": true,
+        "shield": 2.5,
+        "armor": 0.8,
+        "dmg_taken": 0.8,
+        "freeze": 1.0
+      }
+    ],
+    "desc": "Союзникам в радиусе 3: щит 250% силы навыков, +80% брони и −20% урона на 6 сек. Атакующие замораживаются."
   }
 }

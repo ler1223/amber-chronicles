@@ -962,64 +962,86 @@
    "marks": true
   },
   "cryo": {
-   "skills": [
-    {
-     "id": "ice_wall",
-     "level": 1
-    },
-    {
-     "id": "rink",
-     "level": 2
-    },
-    {
-     "id": "ice_shard",
-     "level": 3
-    },
-    {
-     "id": "shatter",
-     "level": 5
-    },
-    {
-     "id": "ice_pillar",
-     "level": 7
-    },
-    {
-     "id": "frost_guard",
-     "level": 9
-    },
-    {
-     "id": "absolute_zero",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "blizzard",
-     "level": 12
-    }
-   ],
-   "doctrines": [
-    {
-     "id": "iceguard",
-     "level": 4
-    },
-    {
-     "id": "stormfrost",
-     "level": 4
-    }
-   ],
-   "core": [
-    "ice_shard",
-    "ice_wall",
-    "ice_pillar"
-   ],
-   "requires": {
-    "shatter": [
-     "ice_wall",
-     "ice_pillar",
-     "ice_shard"
-    ]
+  "skills": [
+   {
+    "id": "ice_wall",
+    "level": 1
+   },
+   {
+    "id": "rink",
+    "level": 2
+   },
+   {
+    "id": "ice_shard",
+    "level": 3
+   },
+   {
+    "id": "frost_needle",
+    "level": 4
+   },
+   {
+    "id": "shatter",
+    "level": 5
+   },
+   {
+    "id": "snow_vortex",
+    "level": 6
+   },
+   {
+    "id": "ice_pillar",
+    "level": 7
+   },
+   {
+    "id": "snowstorm",
+    "level": 8
+   },
+   {
+    "id": "frost_guard",
+    "level": 9
+   },
+   {
+    "id": "blizzard",
+    "level": 12
+   },
+   {
+    "id": "absolute_zero",
+    "level": 10,
+    "ult": true
+   },
+   {
+    "id": "eternal_winter",
+    "level": 10,
+    "ult": true
+   },
+   {
+    "id": "ice_heart",
+    "level": 10,
+    "ult": true
    }
-  },
+  ],
+  "doctrines": [
+   {
+    "id": "iceguard",
+    "level": 4
+   },
+   {
+    "id": "stormfrost",
+    "level": 4
+   }
+  ],
+  "core": [
+   "ice_shard",
+   "ice_wall",
+   "snowstorm"
+  ],
+  "requires": {
+   "shatter": [
+    "ice_wall",
+    "ice_pillar",
+    "ice_shard"
+   ]
+  }
+ },
   "necro": {
    "skills": [
     {
