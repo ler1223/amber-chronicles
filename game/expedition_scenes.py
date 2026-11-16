@@ -1086,7 +1086,7 @@ class HeroScene(XScene):
             self.act("autocast")
         elif k == pygame.K_l:
             self.act("chronicle")
-        elif pygame.K_1 <= k <= pygame.K_4 and k - pygame.K_1 < len(self.run.heroes):
+        elif pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(self.run.heroes):
             self.idx = k - pygame.K_1
         elif k == pygame.K_TAB:
             self.idx = (self.idx + 1) % len(self.run.heroes)
@@ -1506,7 +1506,7 @@ class AutocastScene(XScene):
     def key(self, k):
         if k in (pygame.K_ESCAPE, pygame.K_a, pygame.K_RETURN):
             self.act("back")
-        elif pygame.K_1 <= k <= pygame.K_4 and k - pygame.K_1 < len(self.run.heroes):
+        elif pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(self.run.heroes):
             self.act(("tab", k - pygame.K_1))
 
     def draw(self, surf):
@@ -1659,7 +1659,7 @@ class EventScene(XScene):
             opts = self.ev["steps"][self.step]["options"]
             if i < len(opts) and self.run.option_ok(opts[i]):
                 self.act(("opt", i))
-        elif self.phase == "pick" and pygame.K_1 <= k <= pygame.K_4 and k - pygame.K_1 < len(self.run.heroes):
+        elif self.phase == "pick" and pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(self.run.heroes):
             self.act(("roller", k - pygame.K_1))
 
     def handle(self, ev):
@@ -1930,7 +1930,7 @@ class AltarScene(XScene):
     def key(self, k):
         if k == pygame.K_ESCAPE:
             self.back()
-        elif k in (pygame.K_1, pygame.K_2):
+        elif pygame.K_1 <= k <= pygame.K_9:
             i = k - pygame.K_1
             if i < len(self.offers):
                 self.act(("take", self.offers[i]))
@@ -2045,12 +2045,12 @@ class RewardScene(XScene):
             self.act("stats")
             return
         if self.gift is not None:
-            if pygame.K_1 <= k <= pygame.K_4 and k - pygame.K_1 < len(self.run.heroes):
+            if pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(self.run.heroes):
                 self._give(k - pygame.K_1)
             elif k == pygame.K_ESCAPE:
                 self.gift = None
             return
-        if pygame.K_1 <= k <= pygame.K_3 and k - pygame.K_1 < len(self.offers):
+        if pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(self.offers):
             self.act(("pick", k - pygame.K_1))
         elif k == pygame.K_ESCAPE:
             self._done()
@@ -2252,7 +2252,7 @@ class GiftDetailScene(XScene):
             self.act("take")
         elif k == pygame.K_ESCAPE:
             self.act("back")
-        elif pygame.K_1 <= k <= pygame.K_4:
+        elif pygame.K_1 <= k <= pygame.K_9:
             self.act(("hero", k - pygame.K_1))
 
     def update(self, dt):
@@ -2546,8 +2546,10 @@ class PickScene(XScene):
         h = self.hero
         if k == pygame.K_TAB:
             self.act("stats")
-        elif h and pygame.K_1 <= k <= pygame.K_4:
-            self.sel, self.after = k - pygame.K_1, True
+        elif h and pygame.K_1 <= k <= pygame.K_9:
+            i = k - pygame.K_1
+            if i < len(self.run.pick_cards(h)):
+                self.sel, self.after = i, True
         elif k in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
             self._take()
         elif k == pygame.K_v:

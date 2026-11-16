@@ -98,7 +98,7 @@ class BattleScene:
         self.selected = squad[0] if squad else None
         self.selected_units = [self.selected] if self.selected else []
         self.box_start = None
-        self.groups = {}             # Ctrl+1–4: сохранённые группы героев (id)
+        self.groups = {}             # Ctrl+1-9: сохранённые группы героев (id)
         self.box_squad = False       # рамка начата на панели отряда
         self.target_queue = False    # навык выбран с Shift — ставим в очередь
         self.box_current = None
@@ -557,7 +557,7 @@ class BattleScene:
             if squad:
                 i = squad.index(self.selected) + 1 if self.selected in squad else 0
                 self._select(squad[i % len(squad)])
-        elif pygame.K_1 <= key <= pygame.K_4:
+        elif pygame.K_1 <= key <= pygame.K_9:
             i = key - pygame.K_1
             if ctrl_held():                          # Ctrl+цифра — запомнить группу
                 units = [u for u in self.selected_units if u.alive] or ([self.selected] if self.selected else [])

@@ -203,3 +203,17 @@ def test_trapper_mark_choice_uses_two_by_two_grid(tmp_path):
     assert rects[0].y == rects[1].y and rects[2].y == rects[3].y and rects[2].y > rects[0].y
     assert rects[1].x > rects[0].x
 
+def test_hero_tabs_accept_more_than_four(tmp_path):
+    from sim import expedition as X
+    from game import expedition_scenes as XS
+    app = new_app(tmp_path)
+    classes = ["warrior", "archer", "mage", "priest", "guardian", "shaman"]
+    heroes = [X.Hero({"uid": f"h{i}", "name": f"Герой {i + 1}", "cls": cls,
+                      "skills": DATA.classes[cls]["skills"][:3]})
+              for i, cls in enumerate(classes)]
+    app.exp = X.Expedition(X.expedition_data(DATA), heroes, seed=1)
+    sc = XS.HeroScene(app, 0, back=lambda: None)
+    app.switch(sc)
+    key(app, pygame.K_6)
+    assert sc.idx == 5
+
