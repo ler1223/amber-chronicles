@@ -495,10 +495,15 @@ class DayEndScene(Scene):
 
 
 class WorkshopApp:
-    def __init__(self, seed=None):
+    def __init__(self, seed=None, fullscreen=True):
         pygame.init()
         pygame.display.set_caption("Грань — ювелирная мастерская")
-        self.screen = pygame.display.set_mode((W, H))
+        self.canvas = pygame.Surface((W, H))
+        self.screen = None
+        self.fullscreen = bool(fullscreen)
+        self.scale = 1.0
+        self.offset = (0, 0)
+        self._set_display()
         self.clock_obj = pygame.time.Clock()
         self.seed = seed
         self.workshop = Workshop.load() if seed is None else Workshop(seed)
@@ -509,6 +514,40 @@ class WorkshopApp:
     @property
     def clock(self):
         return self.clock_t
+
+    def _set_display(self):
+        flags = pygame.FULLSCREEN if self.fullscreen else pygame.RESIZABLE
+        size = (0, 0) if self.fullscreen else (W, H)
+        try:
+            self.screen = pygame.display.set_mode(size, flags)
+        except pygame.error:
+            self.fullscreen = False
+            self.screen = pygame.display.set_mode((W, H), pygame.RESIZABLE)
+        self._update_view()
+
+    def _update_view(self):
+        sw, sh = self.screen.get_size()
+        self.scale = max(0.1, min(sw / W, sh / H))
+        dw, dh = int(W * self.scale), int(H * self.scale)
+        self.offset = ((sw - dw) // 2, (sh - dh) // 2)
+
+    def _to_logical(self, pos):
+        return (int((pos[0] - self.offset[0]) / self.scale),
+                int((pos[1] - self.offset[1]) / self.scale))
+
+    def _map_event(self, ev):
+        if ev.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
+            d = dict(ev.dict)
+            d["pos"] = self._to_logical(ev.pos)
+            return pygame.event.Event(ev.type, d)
+        return ev
+
+    def _present(self):
+        self.screen.fill((0, 0, 0))
+        dw, dh = int(W * self.scale), int(H * self.scale)
+        img = pygame.transform.smoothscale(self.canvas, (dw, dh))
+        self.screen.blit(img, self.offset)
+        pygame.display.flip()
 
     def switch(self, scene):
         self.scene = scene
@@ -523,10 +562,19 @@ class WorkshopApp:
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:
                     self.running = False
-                else:
-                    self.scene.handle(ev)
+                    continue
+                if ev.type == pygame.KEYDOWN and (
+                        ev.key == pygame.K_F11 or
+                        (ev.key == pygame.K_RETURN and ev.mod & pygame.KMOD_ALT)):
+                    self.fullscreen = not self.fullscreen
+                    self._set_display()
+                    continue
+                if ev.type in (pygame.VIDEORESIZE, pygame.WINDOWRESIZED, pygame.WINDOWSIZECHANGED):
+                    self._update_view()
+                    continue
+                self.scene.handle(self._map_event(ev))
             self.scene.update(dt)
-            self.scene.draw(self.screen)
-            pygame.display.flip()
+            self.scene.draw(self.canvas)
+            self._present()
         self.save()
         pygame.quit()
