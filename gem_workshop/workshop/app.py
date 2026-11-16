@@ -131,6 +131,16 @@ class HubScene(Scene):
             elif isinstance(action, tuple) and action[0] == "lot":
                 if w.buy_lot(action[1]):
                     self.app.save()
+            elif isinstance(action, tuple) and action[0] == "inspect_stock":
+                i = action[1]
+                if 0 <= i < len(w.stock):
+                    item = w.stock[i]
+                    self.app.switch(InspectScene(self.app, [item["rough"]], item["price"], "stock", i))
+            elif isinstance(action, tuple) and action[0] == "inspect_lot":
+                i = action[1]
+                if 0 <= i < len(w.lots):
+                    lot = w.lots[i]
+                    self.app.switch(InspectScene(self.app, lot["stones"], lot["price"], "lot", i))
         elif self.tab == "clients":
             if isinstance(action, tuple) and action[0] == "client":
                 self.client = w.clients[action[1]]
@@ -183,6 +193,8 @@ class HubScene(Scene):
             U.text(surf, U.fit(GM.describe(w.xd, rough, rough=True)[1], 12, 210),
                    (r.x + 102, r.y + 50), 12, U.TEXT)
             U.text(surf, f"{item['price']} з.", (r.x + 102, r.y + 70), 16, U.GOLD, True)
+            self.button(surf, pygame.Rect(r.right - 196, r.bottom - 34, 92, 26), "Осмотреть",
+                        ("inspect_stock", i), True, U.BLUE, True)
             self.button(surf, pygame.Rect(r.right - 94, r.bottom - 34, 82, 26), "Купить",
                         ("stock", i), w.money >= item["price"], small=True)
         U.text(surf, "Лоты", (24, 426), 20, U.TEXT, True)
@@ -192,6 +204,8 @@ class HubScene(Scene):
             U.text(surf, lot["label"], (r.x + 14, r.y + 10), 18, U.GOLD, True)
             U.text(surf, "камни из каравана · без полной проверки", (r.x + 14, r.y + 35), 13, U.DIM)
             U.text(surf, f"{lot['price']} з.", (r.x + 14, r.y + 62), 17, U.TEXT, True)
+            self.button(surf, pygame.Rect(r.right - 196, r.bottom - 34, 92, 26), "Осмотреть",
+                        ("inspect_lot", i), True, U.BLUE, True)
             self.button(surf, pygame.Rect(r.right - 94, r.bottom - 34, 82, 26), "Купить",
                         ("lot", i), w.money >= lot["price"], small=True)
         U.text(surf, f"В мастерской: {len(w.inventory)} · на витрине: {len(w.display)}",
@@ -326,6 +340,94 @@ class HubScene(Scene):
             self._draw_clients(surf)
         else:
             self._draw_workshop(surf)
+
+
+class InspectScene(Scene):
+    """Осмотр камня до покупки: вращение мышью, колесо — приближение."""
+
+    def __init__(self, app, stones, price, kind, index):
+        super().__init__(app)
+        self.stones = list(stones)
+        self.i = 0
+        self.price = int(price)
+        self.kind = kind
+        self.index = index
+        self.insp = JV.Inspector()
+
+    @property
+    def stone(self):
+        return self.stones[self.i]
+
+    def view_rect(self):
+        return pygame.Rect(24, 104, 750, 560)
+
+    def act(self, action):
+        w = self.app.workshop
+        if action == "back":
+            self.app.switch(HubScene(self.app, tab="supply"))
+        elif action == "buy":
+            ok = w.buy_stock(self.index) if self.kind == "stock" else w.buy_lot(self.index)
+            if ok:
+                self.app.save()
+                self.app.switch(HubScene(self.app, tab="supply"))
+        elif isinstance(action, tuple) and action[0] == "step":
+            self.i = (self.i + action[1]) % max(1, len(self.stones))
+            self.insp = JV.Inspector()
+
+    def handle(self, ev):
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+            self.act("back")
+            return
+        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
+            return
+        if self.insp.pointer(ev, self.view_rect()):
+            return
+        super().handle(ev)
+
+    def update(self, dt):
+        self.insp.update(dt)
+
+    def draw(self, surf):
+        self.hits = []
+        w = self.app.workshop
+        surf.fill(U.BG)
+        U.text(surf, "ОСМОТР" if self.kind == "stock" else "ОСМОТР ЛОТА", (24, 18), 28, U.GOLD, True)
+        if self.kind == "lot":
+            U.text(surf, f"{len(self.stones)} камня · камень {self.i + 1} из {len(self.stones)}",
+                   (300, 26), 15, U.DIM)
+        else:
+            U.text(surf, f"{w.gem_name(self.stone['id'])} · {self.stone['size']:.2f} ct",
+                   (220, 26), 15, U.DIM)
+        faces = JV.rough_faces(self.stone)
+        self.insp.draw(surf, self.view_rect(), faces, rough_color(w, self.stone), self.app.clock,
+                       mm=JV.mm_per_unit(self.stone, faces, w.xd),
+                       incl=JV.rough_incl(self.stone), cfield=JV.gem_cfield(self.stone, faces))
+        r = pygame.Rect(800, 104, 456, 560)
+        U.panel(surf, r, U.PANEL, U.EDGE)
+        U.text(surf, w.gem_name(self.stone["id"]), (r.x + 18, r.y + 16), 23, U.GOLD, True)
+        U.text(surf, f"{self.stone['size']:.2f} карат · {GM.color_word(w.xd, self.stone['col'])}",
+               (r.x + 18, r.y + 50), 15, U.TEXT)
+        y = r.y + 84
+        for ln in GM.describe(w.xd, self.stone, rough=True):
+            for part in U.wrap(ln, 14, r.w - 36):
+                U.text(surf, part, (r.x + 18, y), 14, U.TEXT)
+                y += 20
+        y += 8
+        U.text(surf, f"Оценка сырья: {GM.rough_value(w.xd, self.stone)} з.",
+               (r.x + 18, y), 14, U.DIM)
+        y += 24
+        U.text(surf, f"Цена: {self.price} з.", (r.x + 18, y), 20, U.GOLD, True)
+        U.text(surf, "Зажмите мышь и тяните — вращать камень · колесо — приблизить",
+               (r.x + 18, r.bottom - 74), 12, U.DIM)
+        self.button(surf, pygame.Rect(r.x + 18, r.bottom - 48, 190, 34), "Купить",
+                    "buy", w.money >= self.price, U.GREEN)
+        self.button(surf, pygame.Rect(r.x + 224, r.bottom - 48, 190, 34), "Назад",
+                    "back", True, U.BLUE)
+        if len(self.stones) > 1:
+            self.button(surf, pygame.Rect(24, 682, 100, 34), "‹", ("step", -1), True, U.BLUE)
+            self.button(surf, pygame.Rect(132, 682, 100, 34), "›", ("step", 1), True, U.BLUE)
+            U.text(surf, "Осмотрите каждый камень лота перед покупкой.",
+                   (24, 728), 13, U.DIM)
 
 
 class CutScene(Scene):
