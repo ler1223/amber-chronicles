@@ -29,7 +29,7 @@ RIGHT_X = 924
 BOTTOM_Y = 608
 PANEL_Y = 64
 # варианты призывов без своей картинки — берут спрайт родственника
-SKELETONS = {"skeleton_minion", "risen", "risen_knight"}
+SKELETONS = {"skeleton_minion"}
 SPRITE_ALIAS = {"totem_thunder": "totem_storm", "totem_ward": "totem_heal", "decoy_thorns": "decoy", "banner": "ward_torch",
                 "mummy_risen": "mummy", "risen": "skeleton_minion", "risen_knight": "skeleton_minion"}
 
@@ -285,8 +285,8 @@ class BattleView:
         if u.form:                     # облик друида: свой спрайт (druid_bear.png / bear.png) или заглушка зверя
             return self.sprites.get([f"{u.proto_id}_{u.form}", u.form], u.form, u.color, u.boss, flip, flash)
         names = [u.proto.get("path"), u.proto_id, SPRITE_ALIAS.get(u.proto_id), u.proto.get("sprite_fallback")]
-        if u.proto.get("mirror") and u.owner is not None:     # отражение лучника — его же фигурка
-            names = [u.owner.proto.get("path"), u.owner.proto_id] + names
+        if u.proto.get("mirror") and u.owner is not None:     # отражение лучника: свой призрак, иначе фигурка хозяина
+            names = [u.proto.get("path"), u.proto_id, u.owner.proto.get("path"), u.owner.proto_id] + names
         if u.proto_id in SKELETONS:                  # поднятые скелеты — 4 вида вразнобой
             names.insert(0, f"skeleton_minion_{u.id % 4 + 1}")
         look = u.proto.get("look")

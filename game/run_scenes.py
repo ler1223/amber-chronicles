@@ -5,6 +5,7 @@ import pygame
 
 from sim.run import NODE_NAMES, RARITY_NAMES, SLOT_NAMES
 from ui import theme as T
+from ui import icons as IC
 from ui import widgets as W
 from ui.autocast_editor import AutocastEditor
 
@@ -226,11 +227,15 @@ class MapScene:
             T.text(surf, "нет — их дают элита и торговец", (x, y + 1), 15, T.TEXT_DIM)
         for rid in run.relics:
             name = run.data.relics[rid]["name"]
-            rw = T.font(14, True).size(name)[0] + 20
+            ic = IC.asset_icon(f"relic_{rid}", 20)
+            pad = 30 if ic else 10
+            rw = T.font(14, True).size(name)[0] + pad + 10
             r = pygame.Rect(x, y - 3, rw, 26)
             pygame.draw.rect(surf, (54, 40, 32), r, border_radius=6)
             pygame.draw.rect(surf, RELIC_COLOR, r, 1, border_radius=6)
-            T.text(surf, name, (r.x + 10, r.y + 4), 14, RELIC_COLOR, True)
+            if ic:
+                surf.blit(ic, (r.x + 5, r.y + 3))
+            T.text(surf, name, (r.x + pad, r.y + 4), 14, RELIC_COLOR, True)
             self.relic_rects.append((r, rid))
             x += rw + 8
 
@@ -377,8 +382,11 @@ class SkillsScene:
         y += 22
         for rid in sk.get("runes", []):
             r = data.runes[rid]
-            T.text(surf, f"{r['name']}: {r['desc']}", (rect.x, y), 13, RUNE_COLOR)
-            y += 17
+            ic = IC.asset_icon("rune_" + (rid[2:] if rid.startswith("r_") else rid), 18)
+            if ic:
+                surf.blit(ic, (rect.x, y - 1))
+            T.text(surf, f"{r['name']}: {r['desc']}", (rect.x + (22 if ic else 0), y), 13, RUNE_COLOR)
+            y += 20
 
 
 # ---------- фабрики экранов выбора ----------
