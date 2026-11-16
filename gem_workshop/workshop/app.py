@@ -329,7 +329,11 @@ class HubScene(Scene):
 
 
 class CutScene(Scene):
-    """Полноценный станок из основной игры."""
+    """Полноэкранный станок из основной игры.
+
+    Повторяет поведение MiniGameScene: станок занимает почти весь экран,
+    Esc до начала работы возвращает камень, Esc после начала завершает его.
+    """
 
     def __init__(self, app, rough, client):
         super().__init__(app)
@@ -337,64 +341,107 @@ class CutScene(Scene):
         known = [client["cut"]] if client.get("cut") in w.known_cuts else w.known_cuts
         self.client = client
         self.rough = rough
-        self.cutter = JewelCut(seed=app.seed, rough=rough, known=known, xd=w.xd,
-                               lenses=tuple(w.lenses), disks=tuple(w.disks),
-                               autofocus=w.autofocus)
-        self.rect = pygame.Rect(80, 140, 1120, 520)
-        self.gem = None
-        self.done_t = 0.0
+        self.game = JewelCut(seed=app.seed, rough=rough, known=known, xd=w.xd,
+                             lenses=tuple(w.lenses), disks=tuple(w.disks),
+                             autofocus=w.autofocus)
+        gd = GM.gem_def(w.xd, rough["id"])
+        self.game.color = GM.tint(tuple(gd.get("color", (120, 160, 220))), rough.get("col", 0.5))
+        self.rect = pygame.Rect(16, 62, W - 32, H - 96)
+        self.finished = False
 
-    def act(self, action):
-        if action == "back":
+    def area(self):
+        return self.rect
+
+    def finish(self):
+        if self.finished:
+            return
+        self.finished = True
+        gem = self.app.workshop.finish_gem(self.rough, self.game)
+        self.app.switch(ResultScene(self.app, self.client, gem, None, 0))
+
+    def stop_early(self):
+        g = self.game
+        if g.done:
+            return
+        if hasattr(g, "can_abort") and g.can_abort():
             self.app.workshop.inventory.append(self.rough)
             self.app.switch(HubScene(self.app, tab="workshop"))
+            return
+        if hasattr(g, "stop"):
+            g.stop()
+            return
+
+    def act(self, action):
+        if action == "take":
+            self.finish()
 
     def handle(self, ev):
+        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
+            return
+        g = self.game
+        if hasattr(g, "pointer") and g.pointer(ev, self.rect):
+            if ev.type == pygame.MOUSEMOTION:
+                self.mouse = ev.pos
+            return
         if ev.type == pygame.KEYDOWN:
             if ev.key == pygame.K_ESCAPE:
-                if self.cutter.can_abort():
-                    self.act("back")
+                self.stop_early()
+                return
+            if g.done and ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                self.finish()
                 return
             if ev.key == pygame.K_SPACE:
-                self.cutter.press()
+                g.press()
                 return
-            self.cutter.key(ev.key)
-            return
-        if ev.type == pygame.KEYUP and ev.key == pygame.K_SPACE:
-            self.cutter.release()
-            return
-        if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-            if self.cutter.pointer(ev, self.rect):
+            if hasattr(g, "key") and g.key(ev.key):
                 return
-            self.cutter.click(ev.pos)
+        elif ev.type == pygame.KEYUP and ev.key == pygame.K_SPACE:
+            g.release()
             return
-        if ev.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP):
-            self.cutter.pointer(ev, self.rect)
+        elif ev.type == pygame.MOUSEWHEEL:
+            if hasattr(g, "wheel"):
+                g.wheel(ev.y)
             return
-        if ev.type == pygame.MOUSEWHEEL:
-            self.cutter.wheel(ev.y)
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button in (4, 5):
+            return
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3 and not g.done and hasattr(g, "key"):
+            g.key(pygame.K_RETURN)
+            return
+        elif ev.type == pygame.MOUSEMOTION:
+            g.mouse(ev.pos, self.rect)
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and not g.done and self.rect.collidepoint(ev.pos):
+            if hasattr(g, "click") and g.click(ev.pos):
+                return
+            if getattr(g, "click_press", True):
+                g.press()
+            return
+        elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and not g.done:
+            if getattr(g, "click_press", True):
+                g.release()
 
     def update(self, dt):
-        self.cutter.update(dt)
-        if self.cutter.done and self.gem is None:
-            self.gem = self.app.workshop.finish_gem(self.rough, self.cutter)
-            self.done_t = 0.8
-        if self.gem is not None:
-            self.done_t -= dt
-            if self.done_t <= 0:
-                self.app.switch(ResultScene(self.app, self.client, self.gem, None, 0))
+        self.game.update(dt)
 
     def draw(self, surf):
-        surf.fill(U.BG)
-        w = self.app.workshop
-        U.text(surf, "ОГРАНКА", (24, 18), 28, U.GOLD, True)
-        U.text(surf, f"{w.gem_name(self.rough['id'])} · {self.rough['size']:.2f} ct · {self.client['name']}",
-               (24, 54), 15, U.TEXT)
-        self.cutter.draw(surf, self.rect)
-        U.text(surf, "1–9 — огранка · W/S — угол · A/D — индекс · Пробел — к диску · Enter — грань · F — перевернуть",
-               (80, 682), 12, U.DIM)
-        if self.gem is not None:
-            U.text(surf, "Камень готов", (W // 2, 110), 24, U.GREEN, True, True)
+        self.hits = []
+        surf.fill((14, 12, 10))
+        g = self.game
+        U.text(surf, f"Огранка: {self.app.workshop.gem_name(self.rough['id'])} · "
+                     f"{self.rough['size']:.2f} кар.", (W // 2, 18), 22, U.GOLD, True, True, True)
+        U.text(surf, f"{g.title}: {g.hint}", (W // 2, 42), 13, U.TEXT, False, True)
+        U.panel(surf, self.rect, (25, 21, 18), U.EDGE, 1, 4)
+        g.draw(surf, self.rect)
+        if getattr(g, "phase", "cut") not in ("choose", "plan"):
+            q = g.quality
+            U.text(surf, f"Качество: {q * 100:.0f}%", (W // 2, self.rect.bottom + 8), 16,
+                   U.GOLD if q >= 1.0 else U.TEXT, True, True)
+        if g.done:
+            self.button(surf, pygame.Rect(W // 2 - 140, H - 58, 280, 44), "Готово (Enter)",
+                        "take", True, U.GREEN)
+        else:
+            free = hasattr(g, "can_abort") and g.can_abort()
+            U.text(surf, "Esc — отмена (камень не тронут)" if free else
+                   "Esc — завершить работу", (W // 2, H - 34), 13, U.DIM, False, True)
 
 
 class ResultScene(Scene):
