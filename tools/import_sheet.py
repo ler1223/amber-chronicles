@@ -157,6 +157,19 @@ SETS = {
                     "necro_r_guard", "necro_r_corpse", "necro_r_double",
                     "necro_r_death_blast", "necro_r_death_heal", "necro_r_army",
                     "necro_r_captain", "necro_r_souls"],
+    "missing_summons": ["risen", "risen_knight", "mummy_risen", "spirit_wolf", "spirit_healer",
+                        "illusion", "archer_clone", "decoy_thorns", "banner", "totem_thunder",
+                        "totem_ward", "totem_rage_war", "totem_rage_close", "totem_spirit_might",
+                        "totem_spirit_wise", "totem_stone_rock", "totem_stone_shield",
+                        "totem_heal_burst", "totem_heal_clean"],
+    "missing_objects": ["barrel", "barrel_fire", "dynamite_crate", "ice_wall", "bones",
+                        "captive", "coffin", "crystal", "furnace", "ice_block",
+                        "idol", "mound", "pillar", "ring", "rod", "sapling",
+                        "shell", "tent", "torch"],
+    "icons_relics": ["relic_amber_charm", "relic_whetstone", "relic_war_drum",
+                     "relic_wanderer_cloak", "relic_bog_moss", "relic_miser_purse",
+                     "relic_boiling_pot", "relic_iron_vow", "relic_soul_catcher",
+                     "rune_power", "rune_thrift", "rune_haste", "rune_reach", "rune_breadth"],
     "icons_items": ["item_blade", "item_staff", "item_axe", "item_bow", "item_mail", "item_robe", "item_plate", "item_charm", "item_fang", "item_totem", "item_band", "item_loop", "item_seal", "unique_slime_crown", "unique_toad_staff", "unique_witch_ring", "unique_horror_hide", "unique_drowned_lamp", "unique_mire_fang", "unique_beetle_seal", "unique_reed_cloak", "unique_shaman_drum", "unique_cattail_bolt"],
     "icons_gifts": ["gift_amber_blood", "gift_master_hand", "gift_word_power", "gift_second_wind", "gift_reactor", "gift_wet_hunter", "gift_mire_fury", "gift_living_wall", "gift_ash_heart", "gift_permafrost", "gift_holy_spring", "gift_heron_eye", "gift_reed_shadow", "gift_bog_roots", "gift_witch_gift", "gift_amber_heart", "gift_leech_bond"],
 }
@@ -172,7 +185,7 @@ ENV_SIZE = {"tree": (32, 46), "pine": (28, 48), "deadtree": (28, 40), "column": 
 MATERIALS = ("grass", "ash", "dirt", "snow", "dry", "sand", "moss", "wet", "marble")
 FIT = {"druid_bear"}            # растянуть до холста (облик медведя — крупный зверь)
 MAGENTA = np.array([245, 5, 245])
-ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab", "disc", "book", "necro")
+ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab", "disc", "book", "necro", "relic", "rune")
 OBJ_SIZE = {"obj_board": (128, 120), "obj_chest": (80, 60), "obj_ws_forge": (128, 128), "obj_ws_jewel": (112, 104),
             "obj_ws_leather": (112, 112), "obj_ws_alchemy": (112, 112), "obj_bed": (112, 64),
             "grave_1": (56, 64), "grave_2": (56, 64), "grave_3": (56, 64),
@@ -190,7 +203,13 @@ OBJ_SIZE = {"obj_board": (128, 120), "obj_chest": (80, 60), "obj_ws_forge": (128
             "frg_hammer_flatter": (56, 56), "frg_table": (128, 80), "frg_mold": (96, 56), "frg_pyrometer": (64, 96),
             "frg_magnet": (48, 72),
             "mine_miner_1": (64, 80), "mine_miner_2": (64, 80), "mine_miner_3": (64, 80), "mine_cart": (96, 64),
-            "npc_smith": (104, 160)}     # объекты комнат таверны (лист O)      # иконки: склейка частей, свой холст 32×32
+            "npc_smith": (104, 160),     # объекты комнат таверны (лист O)      # иконки: склейка частей, свой холст 32×32
+            "barrel": (32, 32), "barrel_fire": (32, 32), "dynamite_crate": (32, 32),
+            "ice_wall": (32, 40), "bones": (32, 32), "captive": (32, 32),
+            "coffin": (32, 32), "crystal": (32, 32), "furnace": (32, 32),
+            "ice_block": (32, 32), "idol": (32, 32), "mound": (32, 32),
+            "pillar": (32, 40), "ring": (32, 32), "rod": (32, 40),
+            "sapling": (32, 32), "shell": (32, 32), "tent": (32, 32), "torch": (32, 40)}
 
 
 def canvas(name):
