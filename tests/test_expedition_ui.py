@@ -184,3 +184,22 @@ def test_event_camp_shop_screens(tmp_path):
     for sc in (R.BuildRoom(app), XS.HeroScene(app, 0, back=lambda: None, respec=True), XS.ActScene(app)):
         app.switch(sc)
         frame(app)
+
+def test_trapper_mark_choice_uses_two_by_two_grid(tmp_path):
+    from sim import expedition as X
+    from game import expedition_scenes as XS
+    app = new_app(tmp_path)
+    h = X.Hero({"uid": "marker", "name": "??????", "cls": "trapper",
+                "skills": ["snare", "hunter_mark", "lure"], "level": 6})
+    h.sp = 1
+    app.exp = X.Expedition(X.expedition_data(DATA), [h], seed=1)
+    sc = XS.PickScene(app, then=lambda: None, only=h)
+    app.switch(sc)
+    frame(app)
+    cards = app.exp.pick_cards(h)
+    assert len(cards) == 4 and all(c["type"] == "mark" for c in cards)
+    rects = [r for r, a, _ in sc.hits if isinstance(a, tuple) and a[0] == "card"]
+    assert len(rects) == 4
+    assert rects[0].y == rects[1].y and rects[2].y == rects[3].y and rects[2].y > rects[0].y
+    assert rects[1].x > rects[0].x
+

@@ -1524,8 +1524,8 @@ class Expedition:
                                                "Работает вместо автоатаки Барда"]
         if card["type"] == "mark":
             m = self.data.config["prey_marks"][card["mark"]]
-            return f"Метка: {m['name']}", [m["desc"], "Выбор архетипа метки Ловчего на 6 уровне",
-                                           "На 11 уровне выбранная метка усиливается"]
+            return m["name"], [m["desc"], "Выбор архетипа метки Ловчего на 6 уровне",
+                               "На 11 уровне выбранная метка усиливается"]
         if card["type"] == "rank":
             r = h.rank_of(card["skill"])
             hc = self.cfg["hero"]

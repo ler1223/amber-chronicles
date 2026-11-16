@@ -2546,7 +2546,7 @@ class PickScene(XScene):
         h = self.hero
         if k == pygame.K_TAB:
             self.act("stats")
-        elif h and pygame.K_1 <= k <= pygame.K_2:
+        elif h and pygame.K_1 <= k <= pygame.K_4:
             self.sel, self.after = k - pygame.K_1, True
         elif k in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
             self._take()
@@ -2641,9 +2641,17 @@ class PickScene(XScene):
         cards = run.pick_cards(h)
         glossary = GL.build(run.data)
         left_w = T.REAL_W - 24 - 640 - 24 - 24
+        # Ловчий на 6 уровне выбирает 4 архетипа метки: показываем их сеткой 2×2,
+        # иначе четыре вертикальные карточки уходят за нижний край экрана.
+        grid = len(cards) == 4 and all(c.get("type") == "mark" for c in cards)
+        gap = 14
+        card_w = (left_w - gap) // 2
         y = 160
         for i, c in enumerate(cards):
-            r = pygame.Rect(24, y, left_w, 190)
+            if grid:
+                r = pygame.Rect(24 + (i % 2) * (card_w + gap), 160 + (i // 2) * 198, card_w, 190)
+            else:
+                r = pygame.Rect(24, y, left_w, 190)
             head, lines = run.card_text(h, c)
             sid = c.get("skill")
             if sid in run.data.skills:
@@ -2671,11 +2679,14 @@ class PickScene(XScene):
                 if yy > r.bottom - 18:
                     break
             if on:
-                T.text(surf, "выбрано — клик ещё раз: взять", (r.right - 210, r.y + 8), 12, accent, True)
+                label = "клик: взять" if grid else "выбрано — клик ещё раз: взять"
+                T.text(surf, label, (r.right - (92 if grid else 210), r.y + 8),
+                       11 if grid else 12, accent, True)
             self.hit(r, ("card", i), None)
             for lr, key in link_hits:
                 self.hit(lr, None, GL.effect_tip(glossary, key))
-            y += 198
+            if not grid:
+                y += 198
         # переключатель и цифры под демонстрацией
         pr = self._prect()
         h_, card = self._card()
