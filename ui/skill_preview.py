@@ -153,7 +153,7 @@ class SkillPreview:
             for p in (MAIN, SIDE, BACK, (7, 3)):
                 cell = c.grid.get(p)
                 cell.hazard, cell.hazard_time, cell.hazard_team = "fog", 8.0, c.heroes()[0].team
-        if "corpse" in types:
+        if "corpse" in types or sk.get("needs_corpse") or (sk.get("ult_cond") or {}).get("live") == "corpses":
             for p in ((6, 4), (5, 4), (7, 2)):
                 c.corpses.append({"cell": p, "left": 14.0, "name": "манекен"})
         if "reagent" in types:

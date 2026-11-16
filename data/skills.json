@@ -3803,11 +3803,57 @@
     "effects": [{"type": "corpse_pulse", "radius": 6, "blast": 1, "amount": 12, "tag": "poison"}],
     "desc": "Каждый труп в радиусе 6 гниёт: врагам рядом с ним урон 171% силы навыков + Яд (трупы остаются)."
   },
+  "soul_lance": {
+    "name": "Клинок душ", "ap": 2, "cast": 0, "cooldown": 3, "range": 6, "target": "enemy", "gauge_cost": 2,
+    "auto": {"on": true, "conds": []},
+    "effects": [{"type": "damage", "amount": 2.4, "of": "sp", "pct": true, "kind": "spell", "tag": "poison",
+                 "per_gauge": 0.15, "execute": {"below": 0.35, "mult": 1.5}}],
+    "desc": "Тратит 2 Души: 240% силы навыков +15% за душу, добивает врагов ниже 35% HP."
+  },
+  "bone_grip": {
+    "name": "Костяная хватка", "ap": 3, "cast": 0, "cooldown": 5, "range": 4, "target": "cell", "radius": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "damage", "amount": 1.5, "of": "sp", "pct": true, "kind": "spell", "tag": "poison", "radius": 1},
+                 {"type": "stun", "duration": 1.5, "look": "root", "radius": 1},
+                 {"type": "status", "tag": "poison", "radius": 1}],
+    "desc": "Радиус 1: 150% силы навыков, корни 1.5 сек и Яд."
+  },
+  "grave_tide": {
+    "name": "Могильный прилив", "ap": 4, "cast": 0, "cooldown": 8, "range": 0, "target": "self", "radius": 3,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "zone", "duration": 5, "every": 1.0, "radius": 3, "kind": "plague", "now": true,
+                 "effects": [{"type": "damage", "amount": 0.8, "of": "sp", "pct": true, "kind": "spell",
+                               "tag": "poison", "radius": 3},
+                              {"type": "buff", "stat": "slow", "value": 1.3, "duration": 1.5, "radius": 3,
+                               "affects": "enemies"}]},
+                 {"type": "hazard", "hazard": "poison", "duration": 6, "radius": 3}],
+    "desc": "Волна гнили радиусом 3: 5 сек, 80% силы навыков в секунду, замедление и Яд на клетках."
+  },
   "last_call": {
-    "name": "Последний призыв", "ap": 2, "cast": 1.0, "cooldown": 24, "range": 0, "target": "self", "ult": true, "ult_cond": {"live": "corpses", "need": 3, "desc": "3 трупа на поле"},
+    "name": "Последний призыв", "ap": 2, "cast": 1.0, "cooldown": 24, "range": 0, "target": "self", "ult": true, "ult_cond": {"live": "corpses", "need": 3, "desc": "3 трупа на поле"}, "needs_corpse": true,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "raise_all", "unit": "skeleton_minion", "duration": 12, "limit": 6}],
     "desc": "Условие: 3 трупа на поле. Каст 1 сек: все трупы на поле (до 6) встают скелетами на 12 сек."
+  },
+  "soul_harvest": {
+    "name": "Жатва душ", "ap": 2, "cast": 0, "cooldown": 24, "range": 0, "target": "self", "radius": 4, "ult": true,
+    "ult_cond": {"live": "corpses", "need": 3, "desc": "3 трупа на поле"},
+    "needs_corpse": true,
+    "gauge_spend": "all", "gauge_min": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 3}]},
+    "effects": [{"type": "damage", "amount": 2.0, "of": "sp", "pct": true, "kind": "spell", "tag": "poison",
+                 "radius": 4, "per_gauge": 0.3},
+                 {"type": "status", "tag": "poison", "radius": 4},
+                 {"type": "heal", "amount": 12, "at": "caster"}],
+    "desc": "Условие: 3 трупа. Тратит все Души: 200% силы навыков +30% за душу всем врагам в радиусе 4, Яд; лечит 12."
+  },
+  "bone_colossus": {
+    "name": "Костяной колосс", "ap": 2, "cast": 1.0, "cooldown": 30, "range": 4, "target": "cell", "radius": 1,
+    "needs_corpse": true, "ult": true,
+    "ult_cond": {"live": "corpses", "need": 2, "desc": "2 трупа на поле"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "corpse", "do": "raise", "unit": "bone_colossus", "limit": 1, "duration": 20}],
+    "desc": "Условие: 2 трупа. Каст 1 сек: труп встаёт костяным колоссом на 20 сек."
   },
   "time_theft": {
     "name": "Кража времени", "ap": 0, "cast": 0, "cooldown": 6, "range": 5, "target": "enemy", "gauge_gain": 2,

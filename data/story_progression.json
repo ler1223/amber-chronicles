@@ -1057,16 +1057,32 @@
      "level": 3
     },
     {
+     "id": "soul_lance",
+     "level": 4
+    },
+    {
      "id": "corpse_cloud",
      "level": 5
+    },
+    {
+     "id": "bone_grip",
+     "level": 6
     },
     {
      "id": "bone_wall",
      "level": 7
     },
     {
+     "id": "rot",
+     "level": 8
+    },
+    {
      "id": "blood_bones",
      "level": 9
+    },
+    {
+     "id": "grave_tide",
+     "level": 12
     },
     {
      "id": "last_call",
@@ -1074,8 +1090,14 @@
      "ult": true
     },
     {
-     "id": "rot",
-     "level": 12
+     "id": "soul_harvest",
+     "level": 10,
+     "ult": true
+    },
+    {
+     "id": "bone_colossus",
+     "level": 10,
+     "ult": true
     }
    ],
    "doctrines": [
@@ -1090,9 +1112,35 @@
    ],
    "core": [
     "corpse_blast",
-    "raise_dead"
+    "raise_dead",
+    "devour"
    ],
-   "requires": {}
+   "requires": {
+    "soul_lance": [
+     "corpse_blast"
+    ],
+    "bone_grip": [
+     "raise_dead"
+    ],
+    "rot": [
+     "corpse_blast",
+     "corpse_cloud"
+    ],
+    "grave_tide": [
+     "corpse_cloud",
+     "rot"
+    ],
+    "last_call": [
+     "raise_dead"
+    ],
+    "soul_harvest": [
+     "corpse_blast"
+    ],
+    "bone_colossus": [
+     "raise_dead",
+     "bone_wall"
+    ]
+   }
   },
   "chrono": {
    "skills": [

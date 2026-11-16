@@ -202,6 +202,19 @@
     "look": {"body": "skeleton", "color": [190, 186, 170], "accent": [140, 230, 120], "head": "helm", "weapon": "sword"},
     "permanent": true
   },
+  "bone_colossus": {
+    "owner_scale": {"hp": 0.8, "atk": 1.4, "armor": 0.8},
+    "name": "Костяной колосс",
+    "label": "Кл",
+    "color": [200, 195, 180],
+    "role": "melee",
+    "hp": 220,
+    "armor": 4,
+    "move_time": 0.8,
+    "attack": {"damage": 18, "range": 1, "cooldown": 1.6},
+    "summon": true,
+    "look": {"body": "golem", "color": [200, 195, 180], "accent": [120, 110, 100], "head": "none", "weapon": "none"}
+  },
   "banner": {
     "name": "Знамя",
     "label": "З",
