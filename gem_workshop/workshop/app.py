@@ -1,4 +1,10 @@
-"""Прототип «Грань»: бесконечная мастерская, заказы и огранка камней."""
+"""Прототип «Грань»: полноэкранная мастерская с вкладками.
+
+Три вкладки:
+  Клиенты   — выбрать заказ и перейти к работе.
+  Закупка   — купить отдельный камень или лот.
+  Мастерская — выбрать камень, огранить его или продать готовый.
+"""
 from __future__ import annotations
 
 import math
@@ -14,6 +20,8 @@ from . import ui as U
 from .model import Workshop
 
 W, H = 1280, 800
+TAB_Y = 78
+CONTENT_Y = 142
 
 
 def gem_color(w, gem):
@@ -29,6 +37,11 @@ def rough_color(w, rough):
 def status_ru(status):
     return {"ok": "Принято", "discount": "Со скидкой", "wrong": "Не тот камень",
             "reject": "Отказ", "refused": "Отказ", "skipped": "Пропущен"}.get(status, status)
+
+
+def sprite(name, w, h=None):
+    img = JV.spr(name, w, h or w)
+    return img
 
 
 class Scene:
@@ -64,230 +77,255 @@ class Scene:
         self.hit(r, action if enabled else None)
 
 
-class MarketScene(Scene):
-    """Утро: заказы дня, поставщик и лоты."""
+class HubScene(Scene):
+    """Главный экран с тремя вкладками."""
 
-    def __init__(self, app):
+    def __init__(self, app, tab="supply", client=None):
         super().__init__(app)
-        self.stock_rects = []
-        self.lot_rects = []
-
-    def draw(self, surf):
-        self.hits = []
-        w = self.app.workshop
-        surf.fill(U.BG)
-        U.text(surf, "ГРАНЬ", (24, 18), 30, U.GOLD, True)
-        U.text(surf, f"День {w.day}", (176, 26), 18, U.TEXT, True)
-        U.text(surf, f"Золото: {w.money}", (W - 300, 20), 20, U.GOLD, True)
-        U.text(surf, f"Репутация: {w.reputation}", (W - 300, 46), 15, U.GREEN)
-        if w.debt:
-            U.text(surf, f"Долг: {w.debt}", (W - 300, 66), 15, U.RED)
-        U.text(surf, "Сегодняшние клиенты", (24, 66), 18, U.TEXT, True)
-        for i, c in enumerate(w.clients):
-            r = pygame.Rect(24 + i * 410, 92, 390, 76)
-            U.panel(surf, r, U.PANEL, U.EDGE)
-            U.text(surf, c["name"], (r.x + 12, r.y + 8), 16, U.GOLD, True)
-            U.text(surf, U.fit(c["desc"], 13, r.w - 24), (r.x + 12, r.y + 31), 13, U.TEXT)
-            U.text(surf, f"Бюджет до {c['budget']}", (r.x + 12, r.y + 52), 12, U.DIM)
-        U.text(surf, "Поставщик", (24, 184), 18, U.TEXT, True)
-        for i, item in enumerate(w.stock):
-            col = i % 3
-            row = i // 3
-            r = pygame.Rect(24 + col * 410, 210 + row * 112, 390, 102)
-            U.panel(surf, r)
-            rough = item["rough"]
-            JV.draw_rough(surf, rough, rough_color(w, rough), (r.x + 48, r.y + 52), 58,
-                          t=self.app.clock * 0.4, xd=w.xd)
-            U.text(surf, w.gem_name(rough["id"]), (r.x + 92, r.y + 8), 16, U.TEXT, True)
-            U.text(surf, f"{rough['size']:.2f} ct · {GM.color_word(w.xd, rough['col'])}",
-                   (r.x + 92, r.y + 30), 13, U.DIM)
-            U.text(surf, U.fit(GM.describe(w.xd, rough, rough=True)[1], 12, 180),
-                   (r.x + 92, r.y + 48), 12, U.TEXT)
-            U.text(surf, f"{item['price']} з.", (r.x + 92, r.y + 68), 15, U.GOLD, True)
-            self.button(surf, pygame.Rect(r.right - 92, r.bottom - 32, 80, 24), "Купить",
-                        ("stock", i), w.money >= item["price"], small=True)
-        U.text(surf, "Лоты", (24, 438), 18, U.TEXT, True)
-        U.text(surf, "дешевле, но состав менее предсказуем", (100, 442), 13, U.DIM)
-        for i, lot in enumerate(w.lots):
-            r = pygame.Rect(24 + i * 410, 466, 390, 92)
-            U.panel(surf, r, U.PANEL, (110, 80, 50))
-            U.text(surf, lot["label"], (r.x + 12, r.y + 8), 17, U.GOLD, True)
-            U.text(surf, "камни из каравана · без полной проверки", (r.x + 12, r.y + 32), 13, U.DIM)
-            U.text(surf, f"{lot['price']} з.", (r.x + 12, r.y + 57), 16, U.TEXT, True)
-            self.button(surf, pygame.Rect(r.right - 92, r.bottom - 32, 80, 24), "Купить",
-                        ("lot", i), w.money >= lot["price"], small=True)
-        U.text(surf, f"В мастерской: {len(w.inventory)} камней · на витрине: {len(w.display)}",
-               (24, 610), 14, U.DIM)
-        self.button(surf, pygame.Rect(W - 250, 700, 226, 46), "Открыть мастерскую",
-                    "start", True, U.GREEN)
-        self.button(surf, pygame.Rect(24, 700, 160, 46), "Сохранить", "save", True, U.BLUE)
-
-    def act(self, action):
-        w = self.app.workshop
-        if action == "save":
-            self.app.save()
-        elif action == "start":
-            self.app.switch(ShopScene(self.app))
-        elif isinstance(action, tuple) and action[0] == "stock":
-            if w.buy_stock(action[1]):
-                self.app.save()
-        elif isinstance(action, tuple) and action[0] == "lot":
-            if w.buy_lot(action[1]):
-                self.app.save()
-
-
-class ShopScene(Scene):
-    """День: клиенты, инвентарь и витрина."""
-
-    def __init__(self, app):
-        super().__init__(app)
-        self.ci = 0
+        self.tab = tab
+        self.client = client
         self.selected = None          # ("rough", rough) / ("gem", gem)
         self._fix_client()
 
     def _fix_client(self):
         w = self.app.workshop
         rem = w.remaining_clients()
-        if not rem:
-            self.ci = -1
+        if self.client is not None and self.client in rem:
             return
-        if not (0 <= self.ci < len(w.clients)) or w.clients[self.ci]["served"]:
-            self.ci = w.clients.index(rem[0])
+        self.client = rem[0] if rem else None
 
-    @property
-    def client(self):
+    def _header(self, surf):
         w = self.app.workshop
-        if 0 <= self.ci < len(w.clients):
-            return w.clients[self.ci]
-        return None
+        U.text(surf, "ГРАНЬ", (24, 18), 30, U.GOLD, True)
+        U.text(surf, f"День {w.day}", (178, 26), 18, U.TEXT, True)
+        U.text(surf, f"Золото: {w.money}", (W - 310, 20), 20, U.GOLD, True)
+        U.text(surf, f"Репутация: {w.reputation}", (W - 310, 46), 15, U.GREEN)
+        if w.debt:
+            U.text(surf, f"Долг: {w.debt}", (W - 310, 66), 15, U.RED)
+        tabs = (("clients", "Клиенты", "npc_jeweler"),
+                ("supply", "Закупка", "facet_lap"),
+                ("workshop", "Мастерская", "facet_loupe"))
+        x = 24
+        for key, label, icon in tabs:
+            r = pygame.Rect(x, TAB_Y, 184, 42)
+            active = self.tab == key
+            U.panel(surf, r, U.PANEL_HI if active else U.PANEL, U.GOLD if active else U.EDGE, 2, 8)
+            ic = sprite(icon, 30)
+            if ic:
+                surf.blit(ic, (r.x + 8, r.y + 6))
+            U.text(surf, label, (r.x + 44, r.y + 10), 17, U.TEXT if active else U.DIM, True)
+            self.hit(r, ("tab", key))
+            x += 196
 
     def act(self, action):
         w = self.app.workshop
-        if action == "back":
-            self.app.switch(MarketScene(self.app))
-        elif action == "skip":
-            c = self.client
-            if c:
-                w.skip_client(c)
-                self.app.save()
-                self._after_client()
-        elif isinstance(action, tuple) and action[0] == "client":
-            self.ci = action[1]
+        if isinstance(action, tuple) and action[0] == "tab":
+            self.tab = action[1]
             self.selected = None
-        elif isinstance(action, tuple) and action[0] == "pick_rough":
-            self.selected = ("rough", action[1])
-        elif isinstance(action, tuple) and action[0] == "pick_gem":
-            self.selected = ("gem", action[1])
-        elif action == "cut":
-            if self.selected and self.selected[0] == "rough" and self.client:
+            self._fix_client()
+            return
+        if self.tab == "supply":
+            if isinstance(action, tuple) and action[0] == "stock":
+                if w.buy_stock(action[1]):
+                    self.app.save()
+            elif isinstance(action, tuple) and action[0] == "lot":
+                if w.buy_lot(action[1]):
+                    self.app.save()
+        elif self.tab == "clients":
+            if isinstance(action, tuple) and action[0] == "client":
+                self.client = w.clients[action[1]]
+                self.selected = None
+            elif action == "to_workshop":
+                if self.client:
+                    self.tab = "workshop"
+                    self.selected = None
+            elif action == "skip":
+                if self.client:
+                    w.skip_client(self.client)
+                    self.app.save()
+                    self._fix_client()
+            elif action == "day":
+                self.app.switch(DayEndScene(self.app))
+        elif self.tab == "workshop":
+            if isinstance(action, tuple) and action[0] == "pick_rough":
+                self.selected = ("rough", action[1])
+            elif isinstance(action, tuple) and action[0] == "pick_gem":
+                self.selected = ("gem", action[1])
+            elif action == "back_clients":
+                self.tab = "clients"
+                self._fix_client()
+            elif action == "cut" and self.selected and self.selected[0] == "rough" and self.client:
                 rough = self.selected[1]
                 w.inventory.remove(rough)
                 self.app.switch(CutScene(self.app, rough, self.client))
-        elif action == "sell":
-            if self.selected and self.selected[0] == "gem" and self.client:
+            elif action == "sell" and self.selected and self.selected[0] == "gem" and self.client:
                 gem = self.selected[1]
                 status, offer = w.evaluate(self.client, gem)
                 self.app.switch(ResultScene(self.app, self.client, gem, status, offer))
-        elif action == "day":
-            self._after_client()
 
-    def _after_client(self):
-        self._fix_client()
-        if self.client is None:
-            self.app.switch(DayEndScene(self.app))
-        else:
-            self.selected = None
+    # ---------- закупка ----------
 
-    def draw(self, surf):
-        self.hits = []
+    def _draw_supply(self, surf):
         w = self.app.workshop
-        surf.fill(U.BG)
-        U.text(surf, "МАСТЕРСКАЯ", (24, 18), 28, U.GOLD, True)
-        U.text(surf, f"День {w.day} · золото {w.money} · репутация {w.reputation}",
-               (24, 54), 15, U.TEXT)
-        if w.debt:
-            U.text(surf, f"Долг поставщику: {w.debt}", (24, 74), 14, U.RED)
-        U.text(surf, "Клиенты", (24, 96), 17, U.TEXT, True)
+        U.text(surf, "Закупка", (24, CONTENT_Y), 24, U.TEXT, True)
+        U.text(surf, "Поставщик: отдельные камни · лоты: дешевле, но менее предсказуемы",
+               (180, CONTENT_Y + 5), 14, U.DIM)
+        for i, item in enumerate(w.stock):
+            col, row = i % 3, i // 3
+            r = pygame.Rect(24 + col * 410, 186 + row * 116, 390, 106)
+            U.panel(surf, r)
+            rough = item["rough"]
+            JV.draw_rough(surf, rough, rough_color(w, rough), (r.x + 54, r.y + 54), 70,
+                          t=self.app.clock * 0.4, xd=w.xd)
+            U.text(surf, w.gem_name(rough["id"]), (r.x + 102, r.y + 8), 17, U.TEXT, True)
+            U.text(surf, f"{rough['size']:.2f} ct · {GM.color_word(w.xd, rough['col'])}",
+                   (r.x + 102, r.y + 31), 13, U.DIM)
+            U.text(surf, U.fit(GM.describe(w.xd, rough, rough=True)[1], 12, 210),
+                   (r.x + 102, r.y + 50), 12, U.TEXT)
+            U.text(surf, f"{item['price']} з.", (r.x + 102, r.y + 70), 16, U.GOLD, True)
+            self.button(surf, pygame.Rect(r.right - 94, r.bottom - 34, 82, 26), "Купить",
+                        ("stock", i), w.money >= item["price"], small=True)
+        U.text(surf, "Лоты", (24, 426), 20, U.TEXT, True)
+        for i, lot in enumerate(w.lots):
+            r = pygame.Rect(24 + i * 410, 458, 390, 98)
+            U.panel(surf, r, U.PANEL, (110, 80, 50))
+            U.text(surf, lot["label"], (r.x + 14, r.y + 10), 18, U.GOLD, True)
+            U.text(surf, "камни из каравана · без полной проверки", (r.x + 14, r.y + 35), 13, U.DIM)
+            U.text(surf, f"{lot['price']} з.", (r.x + 14, r.y + 62), 17, U.TEXT, True)
+            self.button(surf, pygame.Rect(r.right - 94, r.bottom - 34, 82, 26), "Купить",
+                        ("lot", i), w.money >= lot["price"], small=True)
+        U.text(surf, f"В мастерской: {len(w.inventory)} · на витрине: {len(w.display)}",
+               (24, 592), 14, U.DIM)
+        self.button(surf, pygame.Rect(W - 250, 700, 226, 44), "К клиентам",
+                    ("tab", "clients"), True, U.GREEN)
+
+    # ---------- клиенты ----------
+
+    def _draw_clients(self, surf):
+        w = self.app.workshop
+        rem = w.remaining_clients()
+        U.text(surf, "Клиенты", (24, CONTENT_Y), 24, U.TEXT, True)
+        U.text(surf, "Выберите заказ, затем перейдите в мастерскую", (196, CONTENT_Y + 5), 14, U.DIM)
+        if not rem:
+            U.text(surf, "Все клиенты на сегодня обслужены.", (24, 220), 20, U.DIM)
+            self.button(surf, pygame.Rect(24, 280, 240, 44), "Завершить день", "day", True, U.GREEN)
+            return
         for i, c in enumerate(w.clients):
-            r = pygame.Rect(24 + i * 300, 122, 280, 76)
-            sel = i == self.ci
+            r = pygame.Rect(24, 184 + i * 94, 330, 82)
+            sel = c is self.client
             U.panel(surf, r, U.PANEL_HI if sel else U.PANEL, U.GOLD if sel else U.EDGE)
-            U.text(surf, c["name"], (r.x + 10, r.y + 8), 15, U.GOLD if sel else U.TEXT, True)
-            U.text(surf, status_ru(c["status"]) if c["served"] else U.fit(c["desc"], 12, r.w - 20),
-                   (r.x + 10, r.y + 30), 12, U.DIM if c["served"] else U.TEXT)
+            U.text(surf, c["name"], (r.x + 12, r.y + 9), 16, U.GOLD if sel else U.TEXT, True)
+            U.text(surf, U.fit(c["desc"], 12, r.w - 24), (r.x + 12, r.y + 33), 12,
+                   U.DIM if c["served"] else U.TEXT)
+            U.text(surf, "Обслужен" if c["served"] else f"до {c['budget']} з.",
+                   (r.x + 12, r.y + 56), 12, U.DIM)
             self.hit(r, ("client", i))
 
         c = self.client
         if c is None:
-            U.text(surf, "Все клиенты обслужены.", (24, 220), 20, U.DIM)
-        else:
-            r = pygame.Rect(24, 220, 600, 150)
-            U.panel(surf, r, U.PANEL, U.EDGE)
-            U.text(surf, c["name"], (r.x + 12, r.y + 10), 20, U.GOLD, True)
-            U.text(surf, c["desc"], (r.x + 12, r.y + 40), 14, U.TEXT)
-            U.text(surf, f"Бюджет: до {c['budget']} · ", (r.x + 12, r.y + 65), 13, U.DIM)
-            U.text(surf, "Заказ" if c["kind"] == "custom" else "Покупатель витрины",
-                   (r.x + 12, r.y + 88), 13, U.BLUE)
-
-        U.text(surf, "Камни в мастерской", (24, 390), 16, U.TEXT, True)
-        for i, rough in enumerate(w.inventory[:8]):
-            r = pygame.Rect(24 + (i % 4) * 148, 416 + (i // 4) * 104, 138, 94)
-            sel = self.selected == ("rough", rough)
-            U.panel(surf, r, U.PANEL_HI if sel else U.PANEL, U.GOLD if sel else U.EDGE)
-            JV.draw_rough(surf, rough, rough_color(w, rough), (r.centerx, r.y + 38), 38,
-                          t=self.app.clock * 0.35, xd=w.xd)
-            U.text(surf, U.fit(w.gem_name(rough["id"]), 12, 126), (r.x + 6, r.y + 64), 12, U.TEXT)
-            U.text(surf, f"{rough['size']:.2f} ct", (r.x + 6, r.y + 80), 11, U.DIM)
-            self.hit(r, ("pick_rough", rough))
-        U.text(surf, "Витрина", (24, 626), 16, U.TEXT, True)
-        for i, gem in enumerate(w.display[:5]):
-            r = pygame.Rect(24 + i * 148, 652, 138, 94)
-            sel = self.selected == ("gem", gem)
-            U.panel(surf, r, U.PANEL_HI if sel else U.PANEL, U.GOLD if sel else U.EDGE)
-            JV.draw_gem(surf, gem, gem_color(w, gem), (r.centerx, r.y + 38), 38,
-                        t=self.app.clock * 0.4, xd=w.xd)
-            U.text(surf, U.fit(w.gem_name(gem["id"]), 12, 126), (r.x + 6, r.y + 64), 12, U.TEXT)
-            U.text(surf, f"{gem['size']:.2f} ct · {gem['value']} з.", (r.x + 6, r.y + 80), 11, U.DIM)
-            self.hit(r, ("pick_gem", gem))
-
-        # правая панель выбранного
-        r = pygame.Rect(720, 220, 536, 440)
+            return
+        r = pygame.Rect(380, 184, 876, 360)
         U.panel(surf, r, U.PANEL, U.EDGE)
-        if c is not None:
-            U.text(surf, "Заказ", (r.x + 16, r.y + 14), 17, U.GOLD, True)
-            for k, ln in enumerate(U.wrap(c["desc"], 14, r.w - 32)):
-                U.text(surf, ln, (r.x + 16, r.y + 44 + k * 20), 14, U.TEXT)
+        portrait = sprite("npc_jeweler", 130, 170)
+        if portrait:
+            surf.blit(portrait, (r.x + 20, r.y + 28))
+        else:
+            U.panel(surf, pygame.Rect(r.x + 20, r.y + 28, 130, 170), U.PANEL_HI, U.EDGE)
+        U.text(surf, c["name"], (r.x + 174, r.y + 22), 24, U.GOLD, True)
+        U.text(surf, "Индивидуальный заказ" if c["kind"] == "custom" else "Покупатель витрины",
+               (r.x + 174, r.y + 56), 14, U.BLUE)
+        for k, ln in enumerate(U.wrap(c["desc"], 16, r.w - 210)):
+            U.text(surf, ln, (r.x + 174, r.y + 86 + k * 22), 16, U.TEXT)
+        U.text(surf, f"Бюджет клиента: до {c['budget']} з.", (r.x + 174, r.y + 164), 15, U.GOLD)
+        self.button(surf, pygame.Rect(r.x + 174, r.bottom - 64, 260, 44),
+                    "Гранить камень" if c["kind"] == "custom" else "Подобрать камень",
+                    "to_workshop", True, U.GREEN)
+        self.button(surf, pygame.Rect(r.x + 450, r.bottom - 64, 180, 44), "Пропустить",
+                    "skip", True, U.RED, True)
+        U.text(surf, "В мастерской можно выбрать камень и огранить его.", (r.x + 174, r.y + 206), 13, U.DIM)
+
+    # ---------- мастерская ----------
+
+    def _stone_card(self, surf, r, item, kind, selected):
+        w = self.app.workshop
+        U.panel(surf, r, U.PANEL_HI if selected else U.PANEL, U.GOLD if selected else U.EDGE)
+        if kind == "rough":
+            JV.draw_rough(surf, item, rough_color(w, item), (r.centerx, r.y + 42), 62,
+                          t=self.app.clock * 0.35, xd=w.xd)
+            name = w.gem_name(item["id"])
+            line = f"{item['size']:.2f} ct"
+        else:
+            JV.draw_gem(surf, item, gem_color(w, item), (r.centerx, r.y + 42), 62,
+                        t=self.app.clock * 0.4, xd=w.xd)
+            name = w.gem_name(item["id"])
+            line = f"{item['size']:.2f} ct · {item['value']} з."
+        U.text(surf, U.fit(name, 12, r.w - 12), (r.x + 6, r.y + 80), 12, U.TEXT)
+        U.text(surf, line, (r.x + 6, r.y + 98), 11, U.DIM)
+        U.text(surf, "камни" if kind == "rough" else "витрина", (r.x + 6, r.y + 114), 10, U.DIM)
+
+    def _draw_workshop(self, surf):
+        w = self.app.workshop
+        U.text(surf, "Мастерская", (24, CONTENT_Y), 24, U.TEXT, True)
+        c = self.client
+        if c:
+            r = pygame.Rect(24, 180, 1232, 72)
+            U.panel(surf, r, U.PANEL, U.EDGE)
+            U.text(surf, f"Заказ: {c['name']}", (r.x + 14, r.y + 8), 16, U.GOLD, True)
+            U.text(surf, U.fit(c["desc"], 14, r.w - 28), (r.x + 14, r.y + 32), 14, U.TEXT)
+        else:
+            U.text(surf, "Нет активного клиента — выберите заказ во вкладке «Клиенты».",
+                   (24, 188), 15, U.DIM)
+
+        U.text(surf, "Сырьё", (24, 266), 17, U.TEXT, True)
+        for i, rough in enumerate(w.inventory[:8]):
+            r = pygame.Rect(24 + (i % 4) * 154, 294 + (i // 4) * 148, 144, 134)
+            sel = self.selected == ("rough", rough)
+            self._stone_card(surf, r, rough, "rough", sel)
+            self.hit(r, ("pick_rough", rough))
+        if not w.inventory:
+            U.text(surf, "Пусто — купите камни во вкладке «Закупка».", (24, 306), 14, U.DIM)
+
+        U.text(surf, "Витрина", (656, 266), 17, U.TEXT, True)
+        for i, gem in enumerate(w.display[:8]):
+            r = pygame.Rect(656 + (i % 4) * 154, 294 + (i // 4) * 148, 144, 134)
+            sel = self.selected == ("gem", gem)
+            self._stone_card(surf, r, gem, "gem", sel)
+            self.hit(r, ("pick_gem", gem))
+        if not w.display:
+            U.text(surf, "Пусто — готовые камни появятся здесь.", (656, 306), 14, U.DIM)
+
+        r = pygame.Rect(24, 590, 1232, 90)
+        U.panel(surf, r, U.PANEL, U.EDGE)
         if self.selected:
             kind, item = self.selected
-            U.text(surf, "Выбрано", (r.x + 16, r.y + 116), 16, U.GOLD, True)
+            U.text(surf, "Выбрано:", (r.x + 14, r.y + 12), 14, U.DIM)
             if kind == "rough":
-                rough = item
-                JV.draw_rough(surf, rough, rough_color(w, rough), (r.x + 100, r.y + 220), 120,
-                              t=self.app.clock * 0.4, xd=w.xd)
-                U.text(surf, w.gem_name(rough["id"]), (r.x + 180, r.y + 150), 20, U.TEXT, True)
-                U.text(surf, f"{rough['size']:.2f} ct · {GM.color_word(w.xd, rough['col'])}",
-                       (r.x + 180, r.y + 180), 14, U.DIM)
-                for k, ln in enumerate(GM.describe(w.xd, rough, rough=True)):
-                    U.text(surf, U.fit(ln, 13, r.w - 210), (r.x + 180, r.y + 206 + k * 18), 13, U.TEXT)
-                self.button(surf, pygame.Rect(r.x + 300, r.bottom - 66, 210, 42), "Гранить",
-                            "cut", True, U.GREEN)
+                U.text(surf, f"{w.gem_name(item['id'])} · {item['size']:.2f} ct",
+                       (r.x + 84, r.y + 10), 17, U.TEXT, True)
+                if c:
+                    self.button(surf, pygame.Rect(r.right - 230, r.y + 24, 200, 42), "Гранить",
+                                "cut", True, U.GREEN)
             else:
-                gem = item
-                JV.draw_gem(surf, gem, gem_color(w, gem), (r.x + 100, r.y + 220), 120,
-                            t=self.app.clock * 0.4, xd=w.xd)
-                U.text(surf, w.gem_name(gem["id"]), (r.x + 180, r.y + 150), 20, U.TEXT, True)
-                U.text(surf, f"{gem['size']:.2f} ct · качество {gem['q']:.2f}",
-                       (r.x + 180, r.y + 180), 14, U.DIM)
-                U.text(surf, f"Огранка: {w.cut_name(gem['cut'])}", (r.x + 180, r.y + 202), 14, U.TEXT)
-                U.text(surf, f"Оценка: {gem['value']} з.", (r.x + 180, r.y + 224), 15, U.GOLD, True)
-                self.button(surf, pygame.Rect(r.x + 300, r.bottom - 66, 210, 42), "Предложить",
-                            "sell", True, U.GREEN)
-        self.button(surf, pygame.Rect(24, 740, 160, 38), "В поставку", "back", True, U.BLUE)
-        if c is None:
-            self.button(surf, pygame.Rect(198, 740, 190, 38), "Завершить день", "day", True, U.GREEN)
+                U.text(surf, f"{w.gem_name(item['id'])} · {item['size']:.2f} ct · "
+                             f"качество {item['q']:.2f}",
+                       (r.x + 84, r.y + 10), 17, U.TEXT, True)
+                if c and c["kind"] == "walkin":
+                    self.button(surf, pygame.Rect(r.right - 230, r.y + 24, 200, 42), "Продать",
+                                "sell", True, U.GREEN)
         else:
-            self.button(surf, pygame.Rect(198, 740, 190, 38), "Пропустить клиента", "skip",
-                        True, U.RED, True)
+            U.text(surf, "Выберите камень или готовый камень на витрине.", (r.x + 14, r.y + 32), 15, U.DIM)
+        self.button(surf, pygame.Rect(24, 710, 200, 38), "К клиентам", "back_clients", True, U.BLUE)
+
+    def draw(self, surf):
+        self.hits = []
+        surf.fill(U.BG)
+        self._header(surf)
+        if self.tab == "supply":
+            self._draw_supply(surf)
+        elif self.tab == "clients":
+            self._draw_clients(surf)
+        else:
+            self._draw_workshop(surf)
 
 
 class CutScene(Scene):
@@ -309,7 +347,7 @@ class CutScene(Scene):
     def act(self, action):
         if action == "back":
             self.app.workshop.inventory.append(self.rough)
-            self.app.switch(ShopScene(self.app))
+            self.app.switch(HubScene(self.app, tab="workshop"))
 
     def handle(self, ev):
         if ev.type == pygame.KEYDOWN:
@@ -373,7 +411,7 @@ class ResultScene(Scene):
         if self.app.workshop.all_clients_done():
             self.app.switch(DayEndScene(self.app))
         else:
-            self.app.switch(ShopScene(self.app))
+            self.app.switch(HubScene(self.app, tab="clients"))
 
     def act(self, action):
         w = self.app.workshop
@@ -383,17 +421,8 @@ class ResultScene(Scene):
                 self._next_scene()
         elif action == "haggle":
             self.offer = w.haggle(self.client, self.offer)
-            self.status = "ok" if self.status == "ok" else self.status
         elif action == "refuse":
             w.refuse(self.client, self.gem)
-            self.app.save()
-            self._next_scene()
-        elif action == "keep":
-            if self.gem not in w.display:
-                w.add_display(self.gem)
-            self.client["served"] = True
-            self.client["status"] = "refused"
-            w.reputation = max(-20, w.reputation - 1)
             self.app.save()
             self._next_scene()
 
@@ -440,12 +469,10 @@ class DayEndScene(Scene):
 
     def act(self, action):
         w = self.app.workshop
-        if action == "save":
-            self.app.save()
-        elif action == "next":
+        if action == "next":
             w.new_day()
             self.app.save()
-            self.app.switch(MarketScene(self.app))
+            self.app.switch(HubScene(self.app, tab="supply"))
         elif isinstance(action, tuple) and action[0] == "upgrade":
             if w.buy_upgrade(action[1]):
                 self.app.save()
@@ -479,19 +506,6 @@ class DayEndScene(Scene):
                         ("upgrade", o["key"]), w.money >= o["price"], small=True)
         self.button(surf, pygame.Rect(W - 280, 720, 256, 44), "Следующий день",
                     "next", True, U.GREEN)
-        self.button(surf, pygame.Rect(24, 720, 160, 44), "Сохранить", "save", True, U.BLUE)
-
-    def act(self, action):
-        w = self.app.workshop
-        if action == "save":
-            self.app.save()
-        elif action == "next":
-            w.new_day()
-            self.app.save()
-            self.app.switch(MarketScene(self.app))
-        elif isinstance(action, tuple) and action[0] == "upgrade":
-            if w.buy_upgrade(action[1]):
-                self.app.save()
 
 
 class WorkshopApp:
@@ -507,7 +521,7 @@ class WorkshopApp:
         self.clock_obj = pygame.time.Clock()
         self.seed = seed
         self.workshop = Workshop.load() if seed is None else Workshop(seed)
-        self.scene = MarketScene(self)
+        self.scene = HubScene(self, tab="supply")
         self.running = True
         self.clock_t = 0.0
 
