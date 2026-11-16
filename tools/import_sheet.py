@@ -144,6 +144,19 @@ SETS = {
     "necro_time": ["corpse_1", "corpse_2", "corpse_3", "corpse_4",
                    "skeleton_minion_1", "skeleton_minion_2", "skeleton_minion_3", "skeleton_minion_4",
                    "fx_hourglass"],
+    "necro_army": ["skeleton_warrior", "skeleton_archer", "skeleton_mage",
+                   "skeleton_guard", "skeleton_bomber", "skeleton_assassin",
+                   "skeleton_captain", "bone_colossus", "death_knight"],
+    "icons_necro": ["necro_w_shield", "necro_w_cleave", "necro_w_last_stand",
+                    "necro_a_aim", "necro_a_pierce", "necro_a_rain",
+                    "necro_m_slow", "necro_m_blast", "necro_m_souls",
+                    "necro_g_shield", "necro_g_taunt", "necro_g_aura",
+                    "necro_b_big", "necro_b_shards", "necro_b_storm",
+                    "necro_s_shadow", "necro_s_backstab", "necro_s_execute",
+                    "necro_c_speed", "necro_c_armor", "necro_c_banner",
+                    "necro_r_guard", "necro_r_corpse", "necro_r_double",
+                    "necro_r_death_blast", "necro_r_death_heal", "necro_r_army",
+                    "necro_r_captain", "necro_r_souls"],
     "icons_items": ["item_blade", "item_staff", "item_axe", "item_bow", "item_mail", "item_robe", "item_plate", "item_charm", "item_fang", "item_totem", "item_band", "item_loop", "item_seal", "unique_slime_crown", "unique_toad_staff", "unique_witch_ring", "unique_horror_hide", "unique_drowned_lamp", "unique_mire_fang", "unique_beetle_seal", "unique_reed_cloak", "unique_shaman_drum", "unique_cattail_bolt"],
     "icons_gifts": ["gift_amber_blood", "gift_master_hand", "gift_word_power", "gift_second_wind", "gift_reactor", "gift_wet_hunter", "gift_mire_fury", "gift_living_wall", "gift_ash_heart", "gift_permafrost", "gift_holy_spring", "gift_heron_eye", "gift_reed_shadow", "gift_bog_roots", "gift_witch_gift", "gift_amber_heart", "gift_leech_bond"],
 }
@@ -153,12 +166,13 @@ BOSS = {"ice_witch", "forge_lord", "lich", "frost_giant", "storm_khan", "pharaoh
         "archon", "mire_king", "toad_queen", "bell_ringer", "old_tooth", "leech_mother", "kvaks",
         "overseer_groh", "crucible_titan", "volcano_heart", "smith_ghost", "ash_wyrm"}
 CANVAS = {**{n: 40 for n in ELITE}, **{n: 48 for n in BOSS}}   # элита ×2 = 80, боссы = 96
+CANVAS["bone_colossus"] = 40                                    # тяжёлый призыв Некроманта
 ENV_SIZE = {"tree": (32, 46), "pine": (28, 48), "deadtree": (28, 40), "column": (20, 46), "block": (36, 34),
             "log": (34, 18), "bush": (24, 16), "rock": (24, 18), "tombstone": (16, 20), "mushroom": (22, 26)}
 MATERIALS = ("grass", "ash", "dirt", "snow", "dry", "sand", "moss", "wet", "marble")
 FIT = {"druid_bear"}            # растянуть до холста (облик медведя — крупный зверь)
 MAGENTA = np.array([245, 5, 245])
-ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab", "disc", "book")
+ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab", "disc", "book", "necro")
 OBJ_SIZE = {"obj_board": (128, 120), "obj_chest": (80, 60), "obj_ws_forge": (128, 128), "obj_ws_jewel": (112, 104),
             "obj_ws_leather": (112, 112), "obj_ws_alchemy": (112, 112), "obj_bed": (112, 64),
             "grave_1": (56, 64), "grave_2": (56, 64), "grave_3": (56, 64),

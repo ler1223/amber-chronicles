@@ -56,6 +56,21 @@ def _asset_icon(kind, size):
     return img
 
 
+def asset_icon(name, size=32):
+    """Готовая PNG-иконка из assets/icons (например, иконки Алтаря душ)."""
+    key = ("asset", name, size)
+    img = _cache.get(key)
+    if img is None:
+        path = _ICON_DIR / f"{name}.png"
+        if not path.exists():
+            return None
+        img = pygame.image.load(str(path)).convert_alpha()
+        if img.get_size() != (size, size):
+            img = pygame.transform.scale(img, (size, size))
+        _cache[key] = img
+    return img
+
+
 def _star(s, c, x, y, r):
     pts = []
     for i in range(10):

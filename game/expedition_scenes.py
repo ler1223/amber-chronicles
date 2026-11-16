@@ -14,6 +14,7 @@ from sim import expedition as X
 from sim import stats
 from ui import theme as T
 from ui import glossary as GL
+from ui import icons as IC
 from ui import widgets as W
 from ui.battle_view import fit
 from ui.sprites import SpriteBank
@@ -1939,13 +1940,17 @@ class AltarScene(XScene):
         rarity = {"common": (150, 150, 150), "rare": (110, 170, 255), "epic": (210, 140, 255)}
         col = rarity.get(up.get("rarity"), T.AMBER)
         T.frame(surf, r, 245 if hot else 215, accent=col)
-        T.text(surf, up["name"], (r.x + 14, r.y + 12), 20, col, True)
+        icon = IC.asset_icon(f"necro_{up['id']}", 48)
+        if icon:
+            surf.blit(icon, (r.x + 14, r.y + 10))
+        tx = r.x + 74 if icon else r.x + 14
+        T.text(surf, up["name"], (tx, r.y + 12), 20, col, True)
         T.text(surf, {"common": "обычное", "rare": "редкое", "epic": "эпическое"}.get(up.get("rarity"), ""),
                (r.right - 90, r.y + 16), 13, T.TEXT_DIM)
         unit = up.get("unit")
         if unit:
             proto = self.run.data.summons.get(unit, {})
-            T.text(surf, f"Скелет: {proto.get('name', unit)}", (r.x + 14, r.y + 42), 13, T.TEXT_DIM)
+            T.text(surf, f"Скелет: {proto.get('name', unit)}", (tx, r.y + 42), 13, T.TEXT_DIM)
         T.text(surf, up.get("desc", ""), (r.x + 14, r.y + 68), 14, T.TEXT)
         self.hit(r, ("take", up["id"]), [up.get("desc", ""), "Клик — принять улучшение"])
 
