@@ -156,6 +156,8 @@ class SkillPreview:
         if "corpse" in types or sk.get("needs_corpse") or (sk.get("ult_cond") or {}).get("live") == "corpses":
             for p in ((6, 4), (5, 4), (7, 2)):
                 c.corpses.append({"cell": p, "left": 14.0, "name": "манекен"})
+            if sk.get("corpse_cost"):
+                c.corpses.append({"cell": MAIN, "left": 14.0, "name": "манекен"})
         if "reagent" in types:
             for tag in ("water", "oil", "poison"):
                 main.statuses[tag] = 4.0
@@ -210,7 +212,7 @@ class SkillPreview:
             return (5, 3)
         if sk.get("free_cell") or "teleport" in types:
             return (5, 4)
-        if "corpse" in types:
+        if "corpse" in types or sk.get("corpse_cost"):
             return (6, 4)
         if "rush" in types:
             return MAIN

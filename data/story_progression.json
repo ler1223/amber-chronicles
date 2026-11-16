@@ -1044,102 +1044,35 @@
  },
   "necro": {
    "skills": [
-    {
-     "id": "corpse_blast",
-     "level": 1
-    },
-    {
-     "id": "raise_dead",
-     "level": 2
-    },
-    {
-     "id": "devour",
-     "level": 3
-    },
-    {
-     "id": "soul_lance",
-     "level": 4
-    },
-    {
-     "id": "corpse_cloud",
-     "level": 5
-    },
-    {
-     "id": "bone_grip",
-     "level": 6
-    },
-    {
-     "id": "bone_wall",
-     "level": 7
-    },
-    {
-     "id": "rot",
-     "level": 8
-    },
-    {
-     "id": "blood_bones",
-     "level": 9
-    },
-    {
-     "id": "grave_tide",
-     "level": 12
-    },
-    {
-     "id": "last_call",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "soul_harvest",
-     "level": 10,
-     "ult": true
-    },
-    {
-     "id": "bone_colossus",
-     "level": 10,
-     "ult": true
-    }
+    {"id": "corpse_blast", "level": 1},
+    {"id": "summon_warrior", "level": 2},
+    {"id": "blood_bones", "level": 3},
+    {"id": "summon_archer", "level": 4},
+    {"id": "devour", "level": 5},
+    {"id": "summon_mage", "level": 6},
+    {"id": "summon_guard", "level": 7},
+    {"id": "summon_bomber", "level": 8},
+    {"id": "summon_assassin", "level": 9},
+    {"id": "summon_captain", "level": 12},
+    {"id": "last_call", "level": 10, "ult": true},
+    {"id": "bone_colossus", "level": 10, "ult": true},
+    {"id": "death_knight", "level": 10, "ult": true}
    ],
    "doctrines": [
-    {
-     "id": "plaguebearer",
-     "level": 4
-    },
-    {
-     "id": "bonelord",
-     "level": 4
-    }
+    {"id": "plaguebearer", "level": 4},
+    {"id": "bonelord", "level": 4}
    ],
-   "core": [
-    "corpse_blast",
-    "raise_dead",
-    "devour"
-   ],
+   "core": ["corpse_blast", "summon_warrior", "blood_bones"],
    "requires": {
-    "soul_lance": [
-     "corpse_blast"
-    ],
-    "bone_grip": [
-     "raise_dead"
-    ],
-    "rot": [
-     "corpse_blast",
-     "corpse_cloud"
-    ],
-    "grave_tide": [
-     "corpse_cloud",
-     "rot"
-    ],
-    "last_call": [
-     "raise_dead"
-    ],
-    "soul_harvest": [
-     "corpse_blast"
-    ],
-    "bone_colossus": [
-     "raise_dead",
-     "bone_wall"
-    ]
+    "summon_archer": ["summon_warrior"],
+    "summon_mage": ["summon_warrior"],
+    "summon_guard": ["summon_warrior"],
+    "summon_bomber": ["corpse_blast"],
+    "summon_assassin": ["summon_archer"],
+    "summon_captain": ["summon_guard", "summon_archer"],
+    "last_call": ["summon_warrior"],
+    "bone_colossus": ["summon_guard"],
+    "death_knight": ["summon_warrior", "summon_guard"]
    }
   },
   "chrono": {

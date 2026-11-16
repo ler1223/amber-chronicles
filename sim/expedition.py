@@ -610,6 +610,9 @@ class Expedition:
             self.torches = self.torch_start()
         self.news = []                         # что случилось на последнем шаге (извержение) — для карты
         self.mats = {}                         # руда и редкие металлы (глава с ковкой)
+        self.souls = 0                         # Души Некроманта: валюта прокачки за забег
+        self.necro_upgrades = []               # взятые улучшения Алтаря (id из data/necro_upgrades.json)
+        self.altar_offer = []                  # текущие два предложения Алтаря
         self.seen_events = []
         self.result = None                   # None | "victory" | "defeat"
         self.counts = {"battle": 0, "elite": 0, "boss": 0, "event": 0}
@@ -647,6 +650,7 @@ class Expedition:
                 "saves": self.saves + 1, "tier": self.tier, "heat": self.heat, "heat_hits": self.heat_hits,
                 "torches": self.torches, "torch_max": self.torch_max,
                 "lava_next": self.lava_next, "mats": self.mats, "solo": self.solo, "endless": self.endless,
+                "souls": self.souls, "necro_upgrades": self.necro_upgrades, "altar_offer": self.altar_offer,
                 "vows": self.vows,
                 "build": self.build, "trophies": self.trophies, "autocast_mode": self.autocast_mode,
                 "dead": self.dead, "arts": self.arts, "loot": self.loot}
@@ -681,6 +685,9 @@ class Expedition:
             x.torch_max = int(x.torch_cfg().get("max", 6))
             x.torches = int(x.torch_cfg().get("start", x.torch_max))
         x.lava_next, x.mats = d.get("lava_next", []), d.get("mats", {})
+        x.souls = int(d.get("souls", 0) or 0)
+        x.necro_upgrades = list(d.get("necro_upgrades") or [])
+        x.altar_offer = list(d.get("altar_offer") or [])
         x.news = []
         x.autocast_mode = d.get("autocast_mode", "default")
         x.dead = list(d.get("dead") or [])
@@ -1003,6 +1010,77 @@ class Expedition:
             out.append(mech)
         return out
 
+    # ---------- Некромант: Души и Алтарь ----------
+
+    def necro_heroes(self):
+        return [h for h in self.heroes if h.cls == "necro"]
+
+    def has_necro(self):
+        return bool(self.necro_heroes())
+
+    def altar_cost(self):
+        costs = list(self.data.necro_upgrades.get("costs") or [3, 5, 7, 9, 12, 15])
+        i = min(len(self.necro_upgrades), len(costs) - 1)
+        return int(costs[max(0, i)])
+
+    def _necro_known_summons(self):
+        """Какие призывы сейчас открыты у Некроманта (для фильтра улучшений скелетов)."""
+        out = set()
+        for h in self.necro_heroes():
+            out |= set(self.battle_skills(h)) | set(h.skills)
+        return out
+
+    def _summon_skill_of(self):
+        """unit призыва → id навыка, которым он вызывается."""
+        out = {}
+        for sid, sk in self.data.skills.items():
+            for e in sk.get("effects", []):
+                if e.get("type") in ("summon", "corpse") and e.get("unit"):
+                    out[e["unit"]] = sid
+        return out
+
+    def roll_altar(self):
+        """Два предложения Алтаря: обычные/редкие/эпические с шансом на ступень выше."""
+        if self.altar_offer:
+            return list(self.altar_offer)
+        upgrades = [u for u in self.data.necro_upgrades.get("upgrades", []) if u["id"] not in self.necro_upgrades]
+        known = self._necro_known_summons()
+        summon_skill = self._summon_skill_of()
+        upgrades = [u for u in upgrades if not u.get("unit") or summon_skill.get(u["unit"]) in known]
+        if not upgrades:
+            self.altar_offer = []
+            return []
+        lvl = max((h.level for h in self.necro_heroes()), default=1)
+        base = 0 if lvl < 6 else 1 if lvl < 11 else 2
+        if self.rng.random() < 0.2:
+            base = min(2, base + 1)
+        names = ("common", "rare", "epic")
+        picks = []
+        for _ in range(2):
+            rarity = names[base]
+            pool = [u for u in upgrades if u.get("rarity") == rarity and u["id"] not in picks]
+            if not pool:
+                pool = [u for u in upgrades if u["id"] not in picks]
+            if not pool:
+                break
+            picks.append(self.rng.choice(pool)["id"])
+        self.altar_offer = picks
+        return list(picks)
+
+    def take_altar(self, uid):
+        if uid not in self.altar_offer or uid in self.necro_upgrades:
+            return False
+        cost = self.altar_cost()
+        if self.souls < cost:
+            return False
+        self.souls -= cost
+        self.necro_upgrades.append(uid)
+        self.altar_offer = []
+        return True
+
+    def altar_upgrade(self, uid):
+        return next((u for u in self.data.necro_upgrades.get("upgrades", []) if u["id"] == uid), None)
+
     @property
     def difficulty(self):
         return self.act_def["difficulty"]
@@ -1120,6 +1198,8 @@ class Expedition:
             p["melodies"] = story_meta.melodies(self.data, h.cls, h.level)
         p["name"] = h.name
         p["class_name"] = self.data.classes[h.cls]["name"]
+        if h.cls == "necro":
+            p["necro_upgrades"] = list(self.necro_upgrades)
         return p
 
     def max_hp(self, h):
@@ -1770,10 +1850,13 @@ class Expedition:
         legacy = [self.bury(h, f"погиб в бою «{self.data.encounters[node['encounter']]['name']}»"
                                if node.get("encounter") is not None else "погиб в бою") for h in dying]
         self.last_stats = combat.battle_stats()
+        souls_gain = int(getattr(combat, "necro_souls", 0) or 0)
+        if souls_gain:
+            self.souls += souls_gain
         if combat.result != "victory":
             self.result = "defeat"
             self.stage = None
-            return {"result": "defeat", "stats": self.last_stats}
+            return {"result": "defeat", "stats": self.last_stats, "souls": souls_gain}
         kind = node["type"] if node["type"] in ("elite", "boss") else "battle"
         self.counts[kind] = self.counts.get(kind, 0) + 1
         trophy = (self.xd.get("chapters", {}).get(self.chapter) or {}).get("trophy")
@@ -1811,8 +1894,11 @@ class Expedition:
         self.after_battle = []
         out = {"result": "victory", "kind": kind, "xp": xp, "gold": gold, "level_ups": ups, "fallen": fallen,
                "extra": extra, "learned": learned, "stats": self.last_stats,
+               "souls": souls_gain,
                "dead": [x["name"] for x in legacy], "legacy_gifts": [g for x in legacy for g in x["gifts"]],
                "titles": self.award_titles()}
+        if souls_gain:
+            out["extra"] = [f"Души +{souls_gain}"] + list(out["extra"])
         if kind in ("elite", "boss"):
             enc = self.data.encounters[node["encounter"]]["name"] if node.get("encounter") is not None else ""
             for h in self.heroes:

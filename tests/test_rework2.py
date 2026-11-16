@@ -89,7 +89,7 @@ def test_shatter_hurts_enemies_near_walls():
     assert f.hp < hp and not any(u.alive for u in c.units if u.obj and u.owner is cr)
 
 
-def test_corpses_blast_raise_devour():
+def test_corpses_blast_and_summon_warrior():
     c = battle(["necro", "warrior", "archer", "mage"])
     nc, f, g = hero(c, "necro"), foe(c), foe(c, 1)
     put(nc, (1, 2))
@@ -99,15 +99,11 @@ def test_corpses_blast_raise_devour():
     put(g, (5, 2))
     hp = g.hp
     cast(c, nc, "corpse_blast", (4, 2))
-    assert g.hp < hp and not c.corpses and nc.pp >= 1
-    c.damage(g, 99999, None, kind="reaction")
-    cast(c, nc, "raise_dead", (5, 2))
-    assert any(u.proto_id == "risen" and u.alive and u.team == nc.team for u in c.units)
-    h = foe(c)
-    put(h, (2, 2))
-    c.damage(h, 99999, None, kind="reaction")
-    cast(c, nc, "devour", nc)
-    assert nc.shield > 0 and not c.corpses
+    assert g.hp < hp and not c.corpses
+    c.corpses.append({"cell": (4, 2), "left": 10, "name": "труп"})
+    cast(c, nc, "summon_warrior", (4, 2))
+    assert any(u.proto_id == "skeleton_warrior" and u.alive and u.owner is nc for u in c.units)
+    assert not c.corpses
 
 
 def test_corpses_rot_away():

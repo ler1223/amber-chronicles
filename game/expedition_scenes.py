@@ -842,6 +842,9 @@ class MapScene(XScene):
     def act(self, action, button=1):
         if action[0] == "hero":
             self.app.switch(HeroScene(self.app, action[1], back=lambda: self.app.switch(MapScene(self.app))))
+        elif action == "altar":
+            save(self.app)
+            self.app.switch(AltarScene(self.app, back=lambda: self.app.switch(MapScene(self.app))))
         elif action == "tavern":
             save(self.app)
             to_tavern(self.app)
@@ -853,6 +856,8 @@ class MapScene(XScene):
     def key(self, k):
         if k == pygame.K_h:
             self.act(("hero", 0))
+        elif k == pygame.K_a and self.run.has_necro():
+            self.act("altar")
         elif k == pygame.K_ESCAPE:
             self.act("tavern")
         elif pygame.K_1 <= k <= pygame.K_9 or pygame.K_KP1 <= k <= pygame.K_KP9:
@@ -874,6 +879,10 @@ class MapScene(XScene):
         self.header(surf, act_name, f"Сложность: {run.data.config['difficulties'][run.difficulty]['name']}"
                     f"  ·  выберите узел: клик или 1–3  ·  F1–F4 / H — лист героя  ·  Esc — в таверну (сохранено)")
         x = self.draw_buffs(surf, 26, 78)
+        if run.has_necro():
+            self.button(surf, pygame.Rect(T.SCREEN_W - 248, 72, 222, 32),
+                        f"Алтарь душ · {run.souls}", "altar", accent=(150, 230, 180),
+                        tip=["Потратить Души на улучшения скелетов", f"Следующее улучшение: {run.altar_cost()}"])
         if run.bag:
             msg = f"В сумке вещей: {len(run.bag)} — наденьте в листе героя"
             T.text(surf, msg, (max(x + 12, 26), 82), 14, GOLD, True)
@@ -1896,6 +1905,74 @@ def event_next(app, eid, nxt, fight, gift):
 
 
 # ---------- награда ----------
+
+class AltarScene(XScene):
+    """Алтарь душ Некроманта: трата Душ на улучшения скелетов и ритуалы."""
+
+    def __init__(self, app, back=None):
+        super().__init__(app)
+        self.back = back or (lambda: app.switch(MapScene(app)))
+        self.offers = self.run.roll_altar()
+
+    def act(self, action, button=1):
+        if isinstance(action, tuple) and action[0] == "take":
+            uid = action[1]
+            if self.run.take_altar(uid):
+                self.offers = self.run.roll_altar()
+                self.say("Улучшение принято")
+            else:
+                self.say("Не хватает Душ")
+        elif action == "close":
+            save(self.app)
+            self.back()
+
+    def key(self, k):
+        if k == pygame.K_ESCAPE:
+            self.back()
+        elif k in (pygame.K_1, pygame.K_2):
+            i = k - pygame.K_1
+            if i < len(self.offers):
+                self.act(("take", self.offers[i]))
+
+    def _card(self, surf, r, up):
+        hot = r.collidepoint(self.mouse)
+        rarity = {"common": (150, 150, 150), "rare": (110, 170, 255), "epic": (210, 140, 255)}
+        col = rarity.get(up.get("rarity"), T.AMBER)
+        T.frame(surf, r, 245 if hot else 215, accent=col)
+        T.text(surf, up["name"], (r.x + 14, r.y + 12), 20, col, True)
+        T.text(surf, {"common": "обычное", "rare": "редкое", "epic": "эпическое"}.get(up.get("rarity"), ""),
+               (r.right - 90, r.y + 16), 13, T.TEXT_DIM)
+        unit = up.get("unit")
+        if unit:
+            proto = self.run.data.summons.get(unit, {})
+            T.text(surf, f"Скелет: {proto.get('name', unit)}", (r.x + 14, r.y + 42), 13, T.TEXT_DIM)
+        T.text(surf, up.get("desc", ""), (r.x + 14, r.y + 68), 14, T.TEXT)
+        self.hit(r, ("take", up["id"]), [up.get("desc", ""), "Клик — принять улучшение"])
+
+    def draw(self, surf):
+        self.hits = []
+        surf.fill(T.BG)
+        self.backdrop(surf, "tavern", "tavern", dim=205)
+        self.header(surf, "Алтарь душ", "Некромант вкладывает Души в скелетов и ритуалы")
+        run = self.run
+        cost = run.altar_cost()
+        T.text(surf, f"Души: {run.souls}", (26, 88), 20, (150, 230, 180), True)
+        T.text(surf, f"Следующее улучшение: {cost}", (26, 114), 15, T.TEXT_DIM)
+        T.text(surf, f"Взято улучшений: {len(run.necro_upgrades)}", (26, 136), 15, T.TEXT_DIM)
+        if not self.offers:
+            T.text(surf, "Все доступные улучшения уже взяты.", (T.SCREEN_W // 2, 260), 20, T.TEXT_DIM, center=True)
+        else:
+            for i, uid in enumerate(self.offers[:2]):
+                up = run.altar_upgrade(uid)
+                if not up:
+                    continue
+                r = pygame.Rect(80 + i * 570, 190, 530, 220)
+                self._card(surf, r, up)
+                T.text(surf, str(i + 1), (r.x + 14, r.bottom - 26), 15, T.TEXT_DIM, True)
+        self.button(surf, pygame.Rect(T.SCREEN_W - 190, 82, 164, 34), "Закрыть (Esc)", "close")
+        self.draw_toast(surf)
+        self.draw_tip(surf)
+
 
 class RewardScene(XScene):
     """Награда на выбор. Дар: сначала карточка дара, потом герой, который его получит (подходящие подсвечены).

@@ -303,16 +303,16 @@
   "plaguebearer": {
     "class": "necro",
     "name": "Чумной",
-    "desc": "«Поднять мертвеца» → «Могильный прилив»: чумная волна вокруг некроманта.",
-    "replace": {"raise_dead": "grave_tide"},
+    "desc": "«Взрыв трупа» → «Костяной маг»: чумная магия по площади.",
+    "replace": {"corpse_blast": "summon_mage"},
     "passive": {"kind": "retaliate", "name": "Миазмы", "pp": 1, "damage": 6, "tag": "poison", "desc": "Ближняя атака по некроманту: −1 деление шкалы, 6 урона + Яд"},
     "mods": [{"stat": "hp", "add": 10}]
   },
   "bonelord": {
     "class": "necro",
     "name": "Костяной лорд",
-    "desc": "«Пожрать» → «Костяная хватка»: держит врагов корнями.",
-    "replace": {"devour": "bone_grip"},
+    "desc": "«Создание трупа» → «Костяной страж»: защита костями.",
+    "replace": {"blood_bones": "summon_guard"},
     "passive": {"kind": "block", "name": "Костяной доспех", "pp": 1, "mult": 0.6, "desc": "Любой удар: −1 деление шкалы, урон ×0.6"},
     "mods": [{"stat": "armor", "add": 1}]
   },

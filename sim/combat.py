@@ -2,6 +2,7 @@
 
 Отрисовки здесь нет: всё, что видит игрок, уходит в self.events и забирается UI.
 """
+import copy
 import random
 
 from . import autocast
@@ -40,6 +41,8 @@ class Combat:
         self.dt = 1.0 / self.cfg["tick_rate"]
         self.time = 0.0
         self.events = []
+        self.necro_souls = 0                 # Души, заработанные за этот бой
+        self.necro_first_corpse = False      # «Дар душ»: первое использование трупа за бой
         self.result = None
         self._skill = None
         self._intercepting = False
@@ -148,6 +151,7 @@ class Combat:
         self.controllers = []                  # нейросети юнитов: tick(combat, dt) каждый шаг
         # отряд игрока применяет навыки по настройкам автокаста; в демо-режиме — все навыки без условий
         self.autocaster = autocast.AutoCaster(self, PLAYER, force=PLAYER in ai_teams)
+        self._necro_start()
 
     def _scale_enemy(self, u, scale):
         """Сила врага: множители угрозы (основа) или уровень региона с титулом (режим героев)."""
@@ -479,6 +483,8 @@ class Combat:
         pos = tuple(target.cell if isinstance(target, Unit) else target)
         if not self.grid.in_bounds(pos):
             return False, "Вне поля"
+        if sk.get("corpse_cost") and not any(cheb(b["cell"], pos) <= 1 for b in self.corpses):
+            return False, "Нужен труп"
         if sk.get("free_cell") and (pos == u.cell or not self.is_free(pos)):
             return False, "Клетка занята"
         return True, ""
@@ -1758,6 +1764,9 @@ class Combat:
             center, tunit = target.cell, target
         else:
             center, tunit = tuple(target), None
+        if sk.get("corpse_cost") and not self._take_corpse(u, center, 1):
+            self.emit("fizzle", unit=u, skill=sid)
+            return
         hit = self.hit_delay(u, sid, sk, center, tunit)
         charged = bool(u.pp_max > 0 and u.pp >= u.pp_max and sk.get("charged_effects"))
         spent = kit.spend(self, u, sk)
@@ -1879,6 +1888,9 @@ class Combat:
     def _apply_eff(self, caster, eff, center, tunit):
         """Один эффект навыка. True — навык сорвался (дальше эффекты не применять)."""
         t = eff["type"]
+        if t == "sacrifice":
+            self._necro_sacrifice(caster, eff, center)
+            return
         if eff.get("at") == "caster":
             if t in kit.TYPES:
                 kit.special(self, caster, eff, caster.cell, caster)
@@ -2213,6 +2225,171 @@ class Combat:
         return [s for s in self.units if s.alive and s.owner is caster and s.proto.get("group") == group
                 and not getattr(s, "extra", False)]
 
+    # ---------- Некромант: Души, улучшения и призывы ----------
+
+    def _necro_upgrade(self, uid):
+        return next((u for u in self.data.necro_upgrades.get("upgrades", []) if u["id"] == uid), None)
+
+    def _necro_upgrades_of(self, u):
+        if u is None or u.proto_id != "necro":
+            return set()
+        return set(u.proto.get("necro_upgrades") or ())
+
+    def _necro_global(self, flag):
+        for u in self.heroes(PLAYER):
+            for uid in self._necro_upgrades_of(u):
+                up = self._necro_upgrade(uid)
+                if up and up.get("global") == flag:
+                    return True
+        return False
+
+    def _necro_is(self, u):
+        while u is not None:
+            if u.proto_id == "necro":
+                return True
+            if not u.summon or u.owner is None:
+                return False
+            u = u.owner
+        return False
+
+    def _necro_present(self):
+        return any(u.alive and u.proto_id == "necro" for u in self.heroes(PLAYER))
+
+    def _necro_soul_kill(self, attacker, target):
+        """Души за убийство: +1 за врага, +1 если добил скелет или сам Некромант."""
+        if target is None or target.team != ENEMY or not self._necro_present():
+            return
+        self.necro_souls += 1
+        if self._necro_is(attacker):
+            self.necro_souls += 1
+
+    def _necro_soul_corpse(self, caster):
+        if not self._necro_is(caster):
+            return
+        self.necro_souls += 1
+        if self._necro_global("first_corpse_souls") and not self.necro_first_corpse:
+            self.necro_first_corpse = True
+            self.necro_souls += 2
+
+    def _necro_start(self):
+        """Ритуалы Алтаря, которые срабатывают в начале боя."""
+        for h in self.heroes(PLAYER):
+            if h.proto_id != "necro":
+                continue
+            ups = self._necro_upgrades_of(h)
+            for uid in ups:
+                up = self._necro_upgrade(uid)
+                if not up:
+                    continue
+                for unit in up.get("start_units", []):
+                    self.summon(h, {"unit": unit, "limit": 1, "_start": True}, h.cell)
+                for _ in range(int(up.get("start_corpses", 0))):
+                    p = next((q for q, _ in self.grid.neighbors(h.cell) if self.is_free(q)), None)
+                    if p is not None:
+                        self.corpses.append({"cell": p, "left": self.cfg.get("corpse_time", 14.0), "name": "кости"})
+
+    def _necro_unit_mods(self, u, mods):
+        if not mods:
+            return
+        if not hasattr(u, "necro_flags"):
+            u.necro_flags = set()
+        if not hasattr(u, "necro_values"):
+            u.necro_values = {}
+        for key, val in mods.items():
+            if key == "hp":
+                u.max_hp = max(1, int(round(u.max_hp * float(val))))
+                u.hp = u.max_hp
+            elif key == "atk_damage":
+                u.atk_damage = max(1, int(round(u.atk_damage * float(val))))
+            elif key == "atk_range":
+                u.atk_range = max(0, int(round(u.atk_range + float(val))))
+            elif key == "armor":
+                u.armor = max(0, int(round(u.armor + float(val))))
+            elif key == "atk_cd":
+                u.atk_cd = max(0.1, float(val))
+            else:
+                u.necro_flags.add(key)
+                u.necro_values[key] = val
+        u.base.update(atk_damage=u.atk_damage, armor=u.armor, atk_range=u.atk_range)
+
+    def _necro_apply_summon(self, caster, u):
+        """Улучшения Алтаря и ветки текущего призыва — на только что созданного скелета."""
+        sk = caster.skill_defs.get(self._skill) if self._skill else None
+        self._necro_unit_mods(u, (sk or {}).get("summon_mods"))
+        if (sk or {}).get("aura"):
+            if u.aura:
+                u.aura = {**u.aura, "effects": list(u.aura.get("effects", [])) + list(sk["aura"].get("effects", []))}
+            else:
+                u.aura = copy.deepcopy(sk["aura"])
+        spawn = list((sk or {}).get("summon_on_spawn") or [])
+        death = list((sk or {}).get("summon_on_death") or [])
+        for uid in self._necro_upgrades_of(caster):
+            up = self._necro_upgrade(uid)
+            if not up or (up.get("unit") and up["unit"] != u.proto_id):
+                continue
+            self._necro_unit_mods(u, up.get("summon_mods"))
+            spawn += list(up.get("on_spawn") or [])
+            death += list(up.get("on_death") or [])
+            if up.get("aura"):
+                if u.aura:
+                    u.aura = {**u.aura, "effects": list(u.aura.get("effects", [])) + list(up["aura"].get("effects", []))}
+                else:
+                    u.aura = copy.deepcopy(up["aura"])
+        if spawn:
+            self.apply_effects(u, spawn, u.cell)
+        if death:
+            old = list((u.on_death or {}).get("effects") or [])
+            u.on_death = {"name": (u.on_death or {}).get("name", "Костяной взрыв"), "effects": old + death}
+        if u.proto_id == "skeleton_captain" and self._necro_global("captain_global") and u.aura:
+            u.aura = {**u.aura, "radius": 99}
+        if "death_radius" in getattr(u, "necro_values", {}) and u.on_death:
+            effects = [dict(e) for e in u.on_death.get("effects", [])]
+            for e in effects:
+                if e.get("type") == "damage":
+                    e["radius"] = e.get("radius", 1) + int(u.necro_values.get("death_radius", 0))
+                    e["amount"] = e.get("amount", 0) + int(u.necro_values.get("death_damage", 0))
+            u.on_death = {**u.on_death, "effects": effects}
+
+    def _necro_attack_effects(self, attacker, target, amount, kind):
+        """Особые эффекты улучшений скелетов после удара."""
+        if attacker is None or not target.alive or not hasattr(attacker, "necro_flags") or getattr(self, "_necro_hit", False):
+            return
+        flags = attacker.necro_flags
+        if not flags:
+            return
+        self._necro_hit = True
+        try:
+            if "slow_on_hit" in flags:
+                self.add_buff(target, "slow", float(attacker.necro_values.get("slow_on_hit", 1.35)), 2.0)
+            if "heal_on_hit" in flags and attacker.owner is not None:
+                self.heal(attacker.owner, int(round(amount * float(attacker.necro_values.get("heal_on_hit", 0.2)))))
+            if "backstab" in flags and self.exposed(target, attacker):
+                bonus = max(1, int(round(amount * (float(attacker.necro_values.get("backstab", 1.5)) - 1))))
+                self.damage(target, bonus, attacker, None, "reaction")
+            if "execute" in flags and target.alive and target.hp <= target.max_hp * float(attacker.necro_values.get("execute", 0.3)):
+                self.damage(target, target.hp + target.max_hp * 0.2, attacker, None, "execute")
+            n = int(getattr(attacker, "necro_hits", 0)) + 1
+            attacker.necro_hits = n
+            if "cleave" in flags and kind in ("melee", "spell"):
+                for v in self.units_in_radius(target.cell, 1):
+                    if v is not target and v.alive and attacker.is_enemy(v):
+                        self.damage(v, max(1, int(round(amount * float(attacker.necro_values.get("cleave", 0.5))))),
+                                    attacker, None, kind)
+            if "pierce" in flags and kind in ("ranged", "spell") and n % int(attacker.necro_values.get("pierce", 3)) == 0:
+                for v in self.units_in_radius(target.cell, 1):
+                    if v is not target and v.alive and attacker.is_enemy(v):
+                        self.damage(v, max(1, amount), attacker, None, kind)
+            if "volley" in flags and kind in ("ranged", "spell") and n % int(attacker.necro_values.get("volley", 6)) == 0:
+                for v in self.units_in_radius(target.cell, 1):
+                    if v.alive and attacker.is_enemy(v):
+                        self.damage(v, max(1, int(round(amount * 0.6))), attacker, None, kind)
+            if "aoe_every" in flags and n % int(attacker.necro_values.get("aoe_every", 3)) == 0:
+                for v in self.units_in_radius(target.cell, 1):
+                    if v is not target and v.alive and attacker.is_enemy(v):
+                        self.damage(v, max(1, int(round(amount * 0.6))), attacker, None, kind)
+        finally:
+            self._necro_hit = False
+
     def summon(self, caster, eff, center):
         """Призыв на клетку (или ближайшую свободную рядом). Сила призыва растёт с силой навыков призывателя."""
         proto = self.data.summons[eff["unit"]]
@@ -2232,6 +2409,9 @@ class Combat:
                 old = self.worst_totem(caster, group)
                 mine.remove(old)
                 self._kill(old, expire=True)
+        if proto.get("necro_minion") and not proto.get("necro_unique"):
+            limit = 6 + (1 if self._necro_global("army_plus") else 0)
+            mine = [s for s in self.units if s.alive and s.owner is caster and s.proto_id == eff["unit"]]
         for old in mine[:max(0, len(mine) - limit + 1)]:
             self._kill(old, expire=True)
         u = self._spawn(caster.team, eff["unit"], proto, cell)
@@ -2269,6 +2449,18 @@ class Combat:
                     v.taunted_by, v.taunt_time = u, eff["taunt"]
                     v.ai_timer = 0.0
                     self.emit("taunt", unit=v, src=u)
+        if proto.get("necro_minion"):
+            self._necro_apply_summon(caster, u)
+            cap = 6 + (1 if self._necro_global("army_plus") else 0)
+            mine = [s for s in self.units if s.alive and s.owner is caster and s.proto.get("necro_minion")]
+            while len(mine) > cap:
+                old = min(mine, key=lambda s: s.id)
+                mine.remove(old)
+                self._kill(old, expire=True)
+            if self._necro_global("first_double") and not getattr(caster, "necro_first_summon", False) \
+                    and not eff.get("_double") and not eff.get("_start"):
+                caster.necro_first_summon = True
+                self.summon(caster, {**eff, "_double": True}, cell)
         self.emit("summon", unit=u, owner=caster)
         return u
 
@@ -2600,6 +2792,7 @@ class Combat:
         self.emit("damage", unit=target, amount=amount, absorbed=absorbed, kind=kind, tag=tag, cover=covered,
                   blocked=blocked)
         PS.after_damage(self, attacker, target, amount + absorbed, kind, tag, self._basic)
+        self._necro_attack_effects(attacker, target, amount + absorbed, kind)
         src = self.credit(attacker)            # статистика боя: призыв и гость считаются за хозяина
         if src is not None and src.team != target.team:
             eff = min(target.max_hp, min(amount, hp_before) + absorbed)
@@ -2628,6 +2821,7 @@ class Combat:
         if target.alive and amount + absorbed > 0:
             self.rules.fire("hit", {kind, tag} - {None}, unit=target, source=attacker)
         if target.hp <= 0:
+            self._necro_soul_kill(attacker, target)
             self._death_burst(target, attacker)
             self.rules.fire("kill", ({kind, tag} - {None}) | C.unit_tags(self, target), unit=target, source=attacker)
             if attacker is not None and attacker.team == PLAYER and attacker.alive and self.fx.get("kill_ap"):
@@ -3227,6 +3421,37 @@ class Combat:
                                  "center": p, "tunit": None, "name": "Метеор", "skill": "meteor"})
         self.emit("meteor_rain", center=tuple(center), count=count, src=caster)
 
+    def _necro_sacrifice(self, caster, eff, center):
+        """Жертва: съесть труп или своего скелета ради лечения и усиления армии."""
+        mine = [u for u in self.units if u.alive and u.owner is caster and u.proto.get("necro_minion")
+                and cheb(u.cell, center) <= 1]
+        corpse = [b for b in self.corpses if cheb(b["cell"], center) <= max(1, int(eff.get("radius", 2)))]
+        if mine:
+            victim = min(mine, key=lambda u: u.hp)
+            self._kill(victim, expire=True)
+        elif corpse:
+            b = min(corpse, key=lambda b: cheb(b["cell"], center))
+            self.corpses.remove(b)
+            self._necro_soul_corpse(caster)
+        else:
+            self.emit("fizzle", unit=caster, skill=None)
+            return
+        self.heal(caster, max(1, int(round(caster.max_hp * float(eff.get("heal", 0.15))))))
+        for u in self.units:
+            if u.alive and u.owner is caster and u.proto.get("necro_minion"):
+                self.add_buff(u, "atk_mult", 1.0 + float(eff.get("buff", 0.2)), float(eff.get("duration", 6)))
+
+    def _take_corpse(self, caster, center, radius=1):
+        """Забрать один труп рядом с точкой (стоимость призыва)."""
+        near = [b for b in self.corpses if cheb(b["cell"], center) <= radius]
+        if not near:
+            return False
+        b = min(near, key=lambda b: cheb(b["cell"], center))
+        self.corpses.remove(b)
+        self._necro_soul_corpse(caster)
+        self.emit("corpse_use", pos=b["cell"], src=caster, do="spend")
+        return True
+
     def _corpse(self, caster, eff, center):
         if eff["do"] == "make":            # создать труп из своей крови
             if self.grid.get(center) is None or not self.grid.get(center).passable:
@@ -3247,6 +3472,7 @@ class Combat:
         for b in near:
             self.corpses.remove(b)
             self.gain(caster, "corpse")
+            self._necro_soul_corpse(caster)
             PS.on_corpse(self, caster)
             self.emit("corpse_use", pos=b["cell"], src=caster, do=eff["do"])
             p = b["cell"]
@@ -3856,6 +4082,14 @@ class Combat:
     def _kill(self, u, expire=False, tag=None):
         u.alive = False
         u.hp = 0
+        if not expire and u.proto.get("necro_minion"):
+            if self._necro_global("death_blast"):
+                self.apply_effects(u, [{"type": "damage", "amount": 12, "kind": "spell", "radius": 1}], u.cell)
+            if self._necro_global("death_heal") and u.owner is not None:
+                self.heal(u.owner, max(1, int(round(u.max_hp * 0.15))))
+                for v in self.units_in_radius(u.cell, 1):
+                    if v.alive and v.team == u.team and v.proto.get("necro_minion"):
+                        self.heal(v, max(1, int(round(u.max_hp * 0.1))))
         if not expire and not u.obj and u.last_hit_by is not None and u.last_hit_by.team != u.team:
             u.last_hit_by.tally["kills"] += 1
             for s, t0 in u.hit_by.items():       # помощь: били его в последние 6 сек, но добил другой

@@ -1056,6 +1056,7 @@ def special(c, caster, eff, center, tunit):
             c.emit("fizzle", unit=caster, skill=None)
         for b in corpses[:eff.get("limit", 6)]:
             c.corpses.remove(b)
+            c._necro_soul_corpse(caster)
             c.emit("corpse_use", pos=b["cell"], src=caster, do="raise")
             c.summon(caster, {"unit": eff.get("unit", "skeleton_minion"), "duration": eff.get("duration", 12),
                               "limit": 99}, b["cell"])

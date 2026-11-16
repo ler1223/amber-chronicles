@@ -2192,8 +2192,8 @@
     "B": {"name": "Ледяной кокон", "tiers": [{"name": "Кокон", "desc": "Ещё стена-глыба рядом с союзником.", "mods": [{"set": {"desc": "Союзнику щит 667% силы навыков, +3 брони; рядом встаёт ледяная глыба."}}, {"add_effect": {"type": "wall", "object": "ice_wall", "length": 1, "life": 8}}]}, {"name": "Быстрый лёд", "desc": "2 AP.", "mods": [{"set": {"desc": "Союзнику щит 667% силы навыков, +3 брони, глыба рядом. 2 AP."}}, {"add": {"ap": -1}}]}]}
   },
   "corpse_blast": {
-    "A": {"name": "Гниль", "tiers": [{"name": "Тухлый взрыв", "desc": "урон 457% силы навыков.", "mods": [{"set": {"desc": "Труп взрывается: урон 457% силы навыков + Яд в радиусе 1."}}, {"effect": {"type": "corpse", "set": {"amount": 32}}}]}, {"name": "Широкий взрыв", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Труп взрывается: урон 457% силы навыков + Яд в радиусе 2.", "radius": 2}}, {"effect": {"type": "corpse", "set": {"radius": 2}}}]}]},
-    "B": {"name": "Цепь трупов", "tiers": [{"name": "Дальний взрыв", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Труп взрывается: урон 343% силы навыков + Яд в радиусе 1.", "range": 7}}]}, {"name": "Лёгкая рука", "desc": "1 AP.", "mods": [{"set": {"desc": "Труп взрывается: урон 343% силы навыков + Яд. 1 AP."}}, {"add": {"ap": -1}}]}]}
+    "A": {"name": "Костяные осколки", "tiers": [{"name": "Тяжёлые осколки", "desc": "урон 457% силы навыков.", "mods": [{"set": {"desc": "Труп взрывается костями: урон 457% силы навыков в радиусе 1."}}, {"effect": {"type": "corpse", "set": {"amount": 32}}}]}, {"name": "Широкий взрыв", "desc": "Радиус 2.", "mods": [{"set": {"desc": "Труп взрывается костями: урон 457% силы навыков в радиусе 2.", "radius": 2}}, {"effect": {"type": "corpse", "set": {"radius": 2}}}]}]},
+    "B": {"name": "Дальний взрыв", "tiers": [{"name": "Дальний взрыв", "desc": "Дальность 7.", "mods": [{"set": {"desc": "Труп взрывается костями: урон 343% силы навыков, дальность 7.", "range": 7}}]}, {"name": "Лёгкая рука", "desc": "1 AP.", "mods": [{"set": {"desc": "Труп взрывается костями: 343% силы навыков. 1 AP."}}, {"add": {"ap": -1}}]}]}
   },
   "raise_dead": {
     "A": {"name": "Армия", "tiers": [
@@ -2204,12 +2204,12 @@
       {"name": "Клятва", "desc": "Рыцарь стоит 25 сек.", "mods": [{"set": {"desc": "Труп встаёт рыцарем на 25 сек (до 1)."}}, {"effect": {"type": "corpse", "set": {"duration": 25}}}]}]}
   },
   "devour": {
-    "A": {"name": "Ненасытность", "tiers": [
-      {"name": "Ненасытность", "desc": "Щит 26 за труп.", "mods": [{"set": {"desc": "Трупы в радиусе 2: щит 26 за каждый."}}, {"effect": {"type": "corpse", "set": {"shield": 26}}}]},
-      {"name": "Длинные руки", "desc": "Радиус 3.", "mods": [{"set": {"desc": "Трупы в радиусе 3: щит 26 за каждый.", "radius": 3}}, {"effect": {"type": "corpse", "set": {"radius": 3}}}]}]},
-    "B": {"name": "Пир", "tiers": [
-      {"name": "Пир", "desc": "И лечение 10 за труп.", "mods": [{"set": {"desc": "Трупы в радиусе 2: щит 18 и +10 HP за каждый."}}, {"add_effect": {"type": "heal", "amount": 20, "at": "caster"}}]},
-      {"name": "Без перезарядки", "desc": "Перезарядка 0.", "mods": [{"set": {"desc": "Трупы в радиусе 2: щит 18 и HP.", "cooldown": 0}}]}]}
+    "A": {"name": "Голод", "tiers": [
+      {"name": "Сытость", "desc": "Лечит 25% HP.", "mods": [{"set": {"desc": "Жертва лечит Некроманта на 25% HP и даёт армии +20% урона."}}, {"effect": {"type": "sacrifice", "set": {"heal": 0.25}}}]},
+      {"name": "Сильный приказ", "desc": "+30% урона армии.", "mods": [{"set": {"desc": "Жертва лечит и даёт +30% урона армии."}}, {"effect": {"type": "sacrifice", "set": {"buff": 0.3}}}]}]},
+    "B": {"name": "Ритуал", "tiers": [
+      {"name": "Радиус 3", "desc": "Жертва в радиусе 3.", "mods": [{"set": {"desc": "Жертва трупа или скелета в радиусе 3."}}, {"set": {"radius": 3}}]},
+      {"name": "Перезарядка 2", "desc": "Перезарядка 2.", "mods": [{"set": {"desc": "Жертва, перезарядка 2."}}, {"add": {"cooldown": -2}}]}]}
   },
   "corpse_cloud": {
     "A": {"name": "Мор", "tiers": [
@@ -3029,11 +3029,11 @@
   },
   "last_call": {
     "A": {"name": "Легион", "tiers": [
-      {"name": "Легион", "desc": "До 10 скелетов, 18 сек.", "mods": [{"set": {"desc": "До 10 скелетов на 18 сек."}}, {"effect": {"type": "raise_all", "set": {"limit": 10, "duration": 18}}}]},
-      {"name": "Без каста", "desc": "Мгновенно.", "mods": [{"set": {"desc": "Мгновенно: до 10 скелетов."}}, {"set": {"cast": 0}}]}]},
-    "B": {"name": "Рыцари", "tiers": [
-      {"name": "Рыцари", "desc": "Встают восставшими рыцарями.", "mods": [{"set": {"desc": "До 4 восставших рыцарей."}}, {"effect": {"type": "raise_all", "set": {"unit": "risen_knight", "limit": 4}}}]},
-      {"name": "Перезарядка 16", "desc": "Перезарядка 16.", "mods": [{"set": {"desc": "Рыцари. Перезарядка 16."}}, {"add": {"cooldown": -8}}]}]}
+      {"name": "До 6 воинов", "desc": "Поднимает до 6 костяных воинов.", "mods": [{"set": {"desc": "Поднимает до 6 костяных воинов из трупов."}}, {"effect": {"type": "raise_all", "set": {"limit": 6}}}]},
+      {"name": "Мгновенно", "desc": "Без каста.", "mods": [{"set": {"desc": "Мгновенно поднимает до 6 костяных воинов."}}, {"set": {"cast": 0}}]}]},
+    "B": {"name": "Стражи", "tiers": [
+      {"name": "Костяные стражи", "desc": "Поднимает стражей.", "mods": [{"set": {"desc": "Поднимает до 2 костяных стражей."}}, {"effect": {"type": "raise_all", "set": {"unit": "skeleton_guard", "limit": 2}}}]},
+      {"name": "Перезарядка 16", "desc": "Перезарядка 16.", "mods": [{"set": {"desc": "Стражи, перезарядка 16."}}, {"add": {"cooldown": -8}}]}]}
   },
   "soul_lance": {
     "A": {"name": "Пожиратель душ", "tiers": [
@@ -3067,13 +3067,77 @@
       {"name": "Радиус 5", "desc": "Радиус 5.", "mods": [{"set": {"desc": "Жатва душ в радиусе 5."}}, {"effect": {"type": "damage", "set": {"radius": 5}}}, {"effect": {"type": "status", "set": {"radius": 5}}}]},
       {"name": "Перезарядка 18", "desc": "Перезарядка 18.", "mods": [{"set": {"desc": "Жатва душ в радиусе 5, перезарядка 18."}}, {"add": {"cooldown": -6}}]}]}
   },
+  "summon_warrior": {
+    "A": {"name": "Ветеран", "tiers": [
+      {"name": "Костяной доспех", "desc": "Воин крепче и получает щит.", "mods": [{"set": {"summon_mods": {"hp": 1.3, "armor": 2}}}, {"set": {"summon_on_spawn": [{"type": "shield", "amount": 14, "duration": 8, "radius": 0}]}}]},
+      {"name": "Рассекающий удар", "desc": "Атака задевает соседних врагов.", "mods": [{"set": {"summon_mods": {"cleave": 0.5}}}]}]},
+    "B": {"name": "Взрыв костей", "tiers": [
+      {"name": "Осколки", "desc": "При призыве бьёт осколками вокруг.", "mods": [{"set": {"summon_on_spawn": [{"type": "damage", "amount": 10, "kind": "spell", "radius": 1}]}}]},
+      {"name": "Широкий взрыв", "desc": "Осколки бьют в радиусе 2.", "mods": [{"set": {"summon_on_spawn": [{"type": "damage", "amount": 14, "kind": "spell", "radius": 2}]}}]}]}
+  },
+  "summon_archer": {
+    "A": {"name": "Снайпер", "tiers": [
+      {"name": "Меткий глаз", "desc": "Дальше стреляет и выбирает раненых.", "mods": [{"set": {"summon_mods": {"atk_range": 1, "priority_wounded": true}}}]},
+      {"name": "Пробивающая стрела", "desc": "Каждая третья стрела пробивает линию.", "mods": [{"set": {"summon_mods": {"pierce": 3}}}]}]},
+    "B": {"name": "Залп", "tiers": [
+      {"name": "Веер стрел", "desc": "При призыве бьёт по области.", "mods": [{"set": {"summon_on_spawn": [{"type": "damage", "amount": 12, "kind": "spell", "radius": 1}]}}]},
+      {"name": "Дождь стрел", "desc": "Залп больше и сильнее.", "mods": [{"set": {"summon_on_spawn": [{"type": "damage", "amount": 18, "kind": "spell", "radius": 2}]}}]}]}
+  },
+  "summon_mage": {
+    "A": {"name": "Костяной метеор", "tiers": [
+      {"name": "Могильный холод", "desc": "Атаки замедляют цель.", "mods": [{"set": {"summon_mods": {"slow_on_hit": 1.35}}}]},
+      {"name": "Костяной взрыв", "desc": "Каждый третий удар бьёт по области.", "mods": [{"set": {"summon_mods": {"aoe_every": 3}}}]}]},
+    "B": {"name": "Волна духов", "tiers": [
+      {"name": "Волна духов", "desc": "При призыве замедляет врагов вокруг.", "mods": [{"set": {"summon_on_spawn": [{"type": "buff", "stat": "slow", "value": 1.4, "duration": 3, "radius": 2, "affects": "enemies"}]}}]},
+      {"name": "Вихрь душ", "desc": "Волна духов сильнее и лечит Некроманта.", "mods": [{"set": {"summon_on_spawn": [{"type": "buff", "stat": "slow", "value": 1.6, "duration": 4, "radius": 2, "affects": "enemies"}, {"type": "heal", "amount": 10, "at": "caster"}]}}]}]}
+  },
+  "summon_guard": {
+    "A": {"name": "Бастион", "tiers": [
+      {"name": "Костяной бастион", "desc": "Страж крепче и провоцирует врагов.", "mods": [{"set": {"summon_mods": {"hp": 1.35, "armor": 2}}}, {"set": {"summon_on_spawn": [{"type": "taunt", "duration": 3, "radius": 2}]}}]},
+      {"name": "Нерушимая кость", "desc": "Аура снижает урон по армии.", "mods": [{"set": {"aura": {"every": 1.0, "radius": 2, "effects": [{"type": "buff", "stat": "dmg_taken", "value": 0.85, "duration": 1.5, "radius": 2, "affects": "allies"}]}}}]}]},
+    "B": {"name": "Костяной щит", "tiers": [
+      {"name": "Щит армии", "desc": "При призыве даёт щит соседним скелетам.", "mods": [{"set": {"summon_on_spawn": [{"type": "shield", "amount": 14, "duration": 8, "radius": 1, "affects": "allies"}]}}]},
+      {"name": "Большой щит", "desc": "Щит больше и дальше.", "mods": [{"set": {"summon_on_spawn": [{"type": "shield", "amount": 22, "duration": 8, "radius": 2, "affects": "allies"}]}}]}]}
+  },
+  "summon_bomber": {
+    "A": {"name": "Бомбардир", "tiers": [
+      {"name": "Большой заряд", "desc": "Взрыв больше и сильнее.", "mods": [{"set": {"summon_mods": {"death_radius": 1, "death_damage": 8}}}]},
+      {"name": "Костяной шторм", "desc": "Взрыв оставляет режущие кости.", "mods": [{"set": {"summon_on_death": [{"type": "damage", "amount": 18, "kind": "spell", "radius": 2}]}}]}]},
+    "B": {"name": "Цепная детонация", "tiers": [
+      {"name": "Осколки", "desc": "Взрыв замедляет врагов.", "mods": [{"set": {"summon_on_death": [{"type": "buff", "stat": "slow", "value": 1.4, "duration": 3, "radius": 2, "affects": "enemies"}]}}]},
+      {"name": "Оглушение", "desc": "Взрыв оглушает врагов.", "mods": [{"set": {"summon_on_death": [{"type": "stun", "duration": 1.0, "radius": 2}]}}]}]}
+  },
+  "summon_assassin": {
+    "A": {"name": "Теневой клинок", "tiers": [
+      {"name": "Удар в спину", "desc": "Сильнее бьёт изолированные цели.", "mods": [{"set": {"summon_mods": {"backstab": 1.5}}}]},
+      {"name": "Костяной клинок", "desc": "Добивает врагов с низким HP.", "mods": [{"set": {"summon_mods": {"execute": 0.3}}}]}]},
+    "B": {"name": "Дым костей", "tiers": [
+      {"name": "Тень", "desc": "Появляется скрытным.", "mods": [{"set": {"summon_on_spawn": [{"type": "stealth", "duration": 4, "mult": 1.5, "radius": 0}]}}]},
+      {"name": "Слепящий дым", "desc": "При появлении слепит врагов рядом.", "mods": [{"set": {"summon_on_spawn": [{"type": "stun", "duration": 1.0, "look": "blind", "radius": 2}]}}]}]}
+  },
+  "summon_captain": {
+    "A": {"name": "Командир", "tiers": [
+      {"name": "Боевой клич", "desc": "Аура ускоряет атаки скелетов.", "mods": [{"set": {"aura": {"every": 1.0, "radius": 3, "effects": [{"type": "buff", "stat": "atk_speed", "value": 0.85, "duration": 1.5, "radius": 3, "affects": "allies"}]}}}]},
+      {"name": "Знамя костей", "desc": "Аура усиливает урон армии.", "mods": [{"set": {"aura": {"every": 1.0, "radius": 4, "effects": [{"type": "buff", "stat": "atk_mult", "value": 1.25, "duration": 1.5, "radius": 4, "affects": "allies"}]}}}]}]},
+    "B": {"name": "Клич", "tiers": [
+      {"name": "Щит армии", "desc": "При призыве даёт щит всем скелетам рядом.", "mods": [{"set": {"summon_on_spawn": [{"type": "shield", "amount": 12, "duration": 6, "radius": 3, "affects": "allies"}]}}]},
+      {"name": "Ускорение", "desc": "При призыве ускоряет армию.", "mods": [{"set": {"summon_on_spawn": [{"type": "buff", "stat": "atk_speed", "value": 0.7, "duration": 4, "radius": 3, "affects": "allies"}]}}]}]}
+  },
+  "death_knight": {
+    "A": {"name": "Чёрный рыцарь", "tiers": [
+      {"name": "Тёмная аура", "desc": "Враги рядом получают больше урона.", "mods": [{"set": {"aura": {"every": 1.0, "radius": 3, "effects": [{"type": "buff", "stat": "dmg_taken", "value": 1.15, "duration": 1.5, "radius": 3, "affects": "enemies"}]}}}]},
+      {"name": "Клинок смерти", "desc": "Рыцарь бьёт по площади.", "mods": [{"set": {"summon_mods": {"cleave": 0.6}}}]}]},
+    "B": {"name": "Проклятие", "tiers": [
+      {"name": "Страх", "desc": "При появлении пугает врагов.", "mods": [{"set": {"summon_on_spawn": [{"type": "stun", "duration": 1.2, "look": "blind", "radius": 2}]}}]},
+      {"name": "Тёмный щит", "desc": "При появлении даёт щит Некроманту.", "mods": [{"set": {"summon_on_spawn": [{"type": "shield", "amount": 24, "duration": 8, "at": "caster"}]}}]}]}
+  },
   "bone_colossus": {
-    "A": {"name": "Долгий колосс", "tiers": [
-      {"name": "25 сек", "desc": "Колосс на 25 сек.", "mods": [{"set": {"desc": "Труп встаёт костяным колоссом на 25 сек."}}, {"effect": {"type": "corpse", "set": {"duration": 25}}}]},
-      {"name": "30 сек", "desc": "Колосс на 30 сек.", "mods": [{"set": {"desc": "Труп встаёт костяным колоссом на 30 сек."}}, {"effect": {"type": "corpse", "set": {"duration": 30}}}]}]},
-    "B": {"name": "Костяной панцирь", "tiers": [
-      {"name": "Щит 30", "desc": "Некроманту щит 30.", "mods": [{"set": {"desc": "Труп встаёт колоссом, некроманту щит 30."}}, {"add_effect": {"type": "shield", "amount": 30, "duration": 8, "at": "caster"}}]},
-      {"name": "Щит 50", "desc": "Некроманту щит 50.", "mods": [{"set": {"desc": "Труп встаёт колоссом, некроманту щит 50."}}, {"add_effect": {"type": "shield", "amount": 50, "duration": 8, "at": "caster"}}]}]}
+    "A": {"name": "Титан", "tiers": [
+      {"name": "Костяной титан", "desc": "Колосс крепче и бьёт по площади.", "mods": [{"set": {"summon_mods": {"hp": 1.3, "cleave": 0.5}}}]},
+      {"name": "Больше костей", "desc": "Колосс живёт дольше.", "mods": [{"effect": {"type": "corpse", "set": {"duration": 30}}}]}]},
+    "B": {"name": "Пробуждение", "tiers": [
+      {"name": "Сотрясение", "desc": "При появлении бьёт и отталкивает врагов.", "mods": [{"set": {"summon_on_spawn": [{"type": "damage", "amount": 18, "kind": "spell", "radius": 2}, {"type": "knockback", "cells": 1, "radius": 2}]}}]},
+      {"name": "Землетрясение", "desc": "Сотрясение сильнее.", "mods": [{"set": {"summon_on_spawn": [{"type": "damage", "amount": 26, "kind": "spell", "radius": 3}, {"type": "knockback", "cells": 2, "radius": 3}]}}]}]}
   },
   "time_theft": {
     "A": {"name": "Грабёж", "tiers": [

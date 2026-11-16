@@ -278,7 +278,7 @@ class AutoCaster:
             burning = any(self.c.grid.get(p).hazard == "fire" for p in self.c.grid.in_radius(u.cell, r)) or \
                 any("fire" in f.statuses for f in foes if cheb(f.cell, u.cell) <= r)
             return u if burning and self._area_ok([f for f in foes if cheb(f.cell, u.cell) <= r], conds, 1) else None
-        if "corpse" in types:                   # некромант: только туда, где есть труп
+        if "corpse" in types or sk.get("corpse_cost"):   # некромант: только туда, где есть труп
             return self._corpse_target(u, sk, foes)
         if "spread_fire" in types:              # раздуть — туда, где горит и рядом враги, но не свои
             r = next(e.get("radius", 2) for e in sk["effects"] if e["type"] == "spread_fire")
@@ -339,7 +339,10 @@ class AutoCaster:
         return best
 
     def _corpse_target(self, u, sk, foes):
-        e = next(e for e in sk["effects"] if e["type"] == "corpse")
+        e = next((e for e in sk["effects"] if e["type"] == "corpse"), None)
+        if e is None:                            # призыв за труп: цель — ближайший труп в радиусе
+            cand = [b["cell"] for b in self.c.corpses if cheb(b["cell"], u.cell) <= sk["range"]]
+            return min(cand, key=lambda p: min(cheb(p, f.cell) for f in foes)) if cand and foes else None
         if e["do"] == "devour":
             near = [b for b in self.c.corpses if cheb(b["cell"], u.cell) <= e.get("radius", 2)]
             return u if near and any(cheb(f.cell, u.cell) <= 4 for f in foes) else None

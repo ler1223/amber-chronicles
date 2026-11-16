@@ -14,7 +14,7 @@ def test_every_class_has_core_passive_in_pool_mode():
     for cls in DATA.classes:
         c, h, foes = setup(cls, [])
         assert PS.kind(h), cls
-        assert "%" in h.passive["desc"] or "×" in h.passive["desc"] or cls in ("tactician", "bard", "chrono"), cls
+        assert "%" in h.passive["desc"] or "×" in h.passive["desc"] or cls in ("tactician", "bard", "chrono", "necro"), cls
 
 
 def test_archer_ramp_on_same_target_and_halves_on_switch():
@@ -181,6 +181,6 @@ def test_brewer_recipe_counts_unique_tags_and_necro_souls():
         c.apply_status(foes[0], tag, h)
     assert h.pp >= 2
     c2, n, f2 = setup("necro", [])
-    need_core("necro", "souls")
+    need_core("necro", "necro_souls")
     c2.damage(f2[0], 10 ** 6, None, None, "reaction")
-    assert n.pp == 1
+    assert n.gauge is None and n.pp == 0               # Души — валюта забега, не боевая шкала

@@ -31,6 +31,7 @@ class GameData:
         self.relics = load("relics.json")
         self.camp = load("camp.json")
         self.summons = load("summons.json")
+        self.necro_upgrades = load("necro_upgrades.json")
         self.mutators = {k: v for k, v in load("mutators.json").items() if not k.startswith("_")}
         self.objects = load("objects.json")
         self.weathers = load("weathers.json")

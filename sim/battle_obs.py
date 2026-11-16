@@ -59,7 +59,7 @@ EFFECT_GROUPS = {
     "music": {"note", "song"},
 }
 TGT_KINDS = ("enemy", "ally", "self", "cell")
-CELL_NEEDS = ("needs_corpse", "needs_totem", "needs_mark", "needs_shadow", "needs_banner", "place", "powder")
+CELL_NEEDS = ("needs_corpse", "corpse_cost", "needs_totem", "needs_mark", "needs_shadow", "needs_banner", "place", "powder")
 
 _SCHEMA = {}
 

@@ -2464,8 +2464,8 @@
     "radius": 1,
     "needs_corpse": true,
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "corpse", "do": "blast", "amount": 24, "radius": 1, "tag": "poison"}],
-    "desc": "Труп у точки взрывается: урон 343% силы навыков + Яд в радиусе 1."
+    "effects": [{"type": "corpse", "do": "blast", "amount": 24, "radius": 1}],
+    "desc": "Труп у точки взрывается костями: урон 343% силы навыков в радиусе 1."
   },
   "raise_dead": {
     "name": "Поднять мертвеца", "ap": 3, "cast": 0.0, "cooldown": 3, "range": 5, "target": "cell", "radius": 1, "needs_corpse": true,
@@ -2474,10 +2474,10 @@
     "desc": "Труп встаёт скелетом на 15 сек (до 2)."
   },
   "devour": {
-    "name": "Пожрать", "ap": 2, "cast": 0.0, "cooldown": 4, "range": 0, "target": "self", "radius": 2, "needs_corpse": true,
+    "name": "Жертва", "ap": 2, "cast": 0.0, "cooldown": 4, "range": 4, "target": "cell", "radius": 2,
     "auto": {"on": true, "conds": []},
-    "effects": [{"type": "corpse", "do": "devour", "radius": 2, "shield": 18}],
-    "desc": "Трупы в радиусе 2 исчезают: некроманту щит 18 за каждый."
+    "effects": [{"type": "sacrifice", "radius": 2, "heal": 0.15, "buff": 0.2, "duration": 6}],
+    "desc": "Жертвует труп или своего скелета: лечит Некроманта на 15% HP и даёт оставшимся скелетам +20% урона на 6 сек."
   },
   "corpse_cloud": {
     "name": "Чумной труп", "ap": 2, "cast": 0.0, "cooldown": 0, "range": 5, "target": "cell", "radius": 1, "needs_corpse": true,
@@ -3771,13 +3771,13 @@
     "desc": "Глыба льда (10 сек) — укрытие; враги рядом с ней раз в 1.5 сек получают стак Холода."
   },
   "blood_bones": {
-    "name": "Кровавые кости",
+    "name": "Создание трупа",
     "ap": 2,
     "cast": 0,
-    "cooldown": 4,
+    "cooldown": 3,
     "range": 4,
     "target": "cell",
-    "hp_cost": 10,
+    "hp_cost": 7,
     "auto": {
       "on": false,
       "conds": []
@@ -3788,8 +3788,8 @@
         "do": "make"
       }
     ],
-    "desc": "Стоит 14% HP: на клетку ложится труп — ресурс для взрыва, подъёма и стены.",
-    "hp_cost_pct": 0.143
+    "desc": "Стоит 10% HP: на клетку ложится труп — топливо для призывов и взрыва.",
+    "hp_cost_pct": 0.1
   },
   "rot": {
     "name": "Гниль",
@@ -3830,10 +3830,11 @@
     "desc": "Волна гнили радиусом 3: 5 сек, 80% силы навыков в секунду, замедление и Яд на клетках."
   },
   "last_call": {
-    "name": "Последний призыв", "ap": 2, "cast": 1.0, "cooldown": 24, "range": 0, "target": "self", "ult": true, "ult_cond": {"live": "corpses", "need": 3, "desc": "3 трупа на поле"}, "needs_corpse": true,
+    "name": "Легион", "ap": 2, "cast": 0.5, "cooldown": 24, "range": 0, "target": "self", "ult": true,
+    "ult_cond": {"live": "corpses", "need": 2, "desc": "2 трупа на поле"}, "needs_corpse": true,
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
-    "effects": [{"type": "raise_all", "unit": "skeleton_minion", "duration": 12, "limit": 6}],
-    "desc": "Условие: 3 трупа на поле. Каст 1 сек: все трупы на поле (до 6) встают скелетами на 12 сек."
+    "effects": [{"type": "raise_all", "unit": "skeleton_warrior", "limit": 4}],
+    "desc": "Условие: 2 трупа. Поднимает до 4 костяных воинов из трупов на поле."
   },
   "soul_harvest": {
     "name": "Жатва душ", "ap": 2, "cast": 0, "cooldown": 24, "range": 0, "target": "self", "radius": 4, "ult": true,
@@ -3854,6 +3855,63 @@
     "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
     "effects": [{"type": "corpse", "do": "raise", "unit": "bone_colossus", "limit": 1, "duration": 20}],
     "desc": "Условие: 2 трупа. Каст 1 сек: труп встаёт костяным колоссом на 20 сек."
+  },
+  "summon_warrior": {
+    "name": "Костяной воин", "ap": 2, "cast": 0, "cooldown": 3, "range": 5, "target": "cell", "radius": 1,
+    "needs_corpse": true, "corpse_cost": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "summon", "unit": "skeleton_warrior", "limit": 1}],
+    "desc": "Поднимает костяного воина из трупа. До 6 скелетов в армии."
+  },
+  "summon_archer": {
+    "name": "Костяной лучник", "ap": 2, "cast": 0, "cooldown": 3, "range": 5, "target": "cell", "radius": 1,
+    "needs_corpse": true, "corpse_cost": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "summon", "unit": "skeleton_archer", "limit": 1}],
+    "desc": "Поднимает костяного лучника из трупа. До 6 скелетов в армии."
+  },
+  "summon_mage": {
+    "name": "Костяной маг", "ap": 3, "cast": 0, "cooldown": 5, "range": 5, "target": "cell", "radius": 1,
+    "needs_corpse": true, "corpse_cost": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "summon", "unit": "skeleton_mage", "limit": 1}],
+    "desc": "Поднимает костяного мага из трупа. До 6 скелетов в армии."
+  },
+  "summon_guard": {
+    "name": "Костяной страж", "ap": 3, "cast": 0, "cooldown": 6, "range": 4, "target": "cell", "radius": 1,
+    "needs_corpse": true, "corpse_cost": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "summon", "unit": "skeleton_guard", "limit": 1}],
+    "desc": "Поднимает костяного стража из трупа. До 6 скелетов в армии."
+  },
+  "summon_bomber": {
+    "name": "Скелет-подрывник", "ap": 2, "cast": 0, "cooldown": 4, "range": 4, "target": "cell", "radius": 1,
+    "needs_corpse": true, "corpse_cost": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "summon", "unit": "skeleton_bomber", "limit": 1}],
+    "desc": "Поднимает скелета-подрывника из трупа. Он взрывается при смерти."
+  },
+  "summon_assassin": {
+    "name": "Скелет-ассасин", "ap": 3, "cast": 0, "cooldown": 5, "range": 5, "target": "cell", "radius": 1,
+    "needs_corpse": true, "corpse_cost": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 1}]},
+    "effects": [{"type": "summon", "unit": "skeleton_assassin", "limit": 1}],
+    "desc": "Поднимает скелета-ассасина из трупа. Быстрый охотник за слабыми целями."
+  },
+  "summon_captain": {
+    "name": "Скелет-капитан", "ap": 4, "cast": 0, "cooldown": 10, "range": 4, "target": "cell", "radius": 1,
+    "needs_corpse": true, "corpse_cost": 1,
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "summon", "unit": "skeleton_captain", "limit": 1}],
+    "desc": "Поднимает уникального капитана: аура усиливает урон скелетов рядом."
+  },
+  "death_knight": {
+    "name": "Рыцарь смерти", "ap": 2, "cast": 0.5, "cooldown": 24, "range": 4, "target": "cell", "radius": 1,
+    "needs_corpse": true, "ult": true,
+    "ult_cond": {"live": "corpses", "need": 2, "desc": "2 трупа на поле"},
+    "auto": {"on": true, "conds": [{"type": "enemies_in_area", "value": 2}]},
+    "effects": [{"type": "corpse", "do": "raise", "unit": "death_knight", "limit": 1, "duration": 20}],
+    "desc": "Условие: 2 трупа. Поднимает уникального рыцаря смерти на 20 сек."
   },
   "time_theft": {
     "name": "Кража времени", "ap": 0, "cast": 0, "cooldown": 6, "range": 5, "target": "enemy", "gauge_gain": 2,
