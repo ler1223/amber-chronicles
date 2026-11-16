@@ -2732,7 +2732,9 @@ class ExpeditionProfile:
         self.mine = {}                           # шахта-тайкун: рабочие, кирки, склад, добыча
         self._mine_save = 0.0
         self.market = {}                         # товар рынка: {"key", "rough": [...], "cut": [...]}
-        self.cuts = []                           # известные огранки (sim/gems.py): «Столовая» — от ювелира, прочие — книги
+        from . import gems as GM
+        self.cuts = list(GM.START_CUTS)           # стартовые три простые огранки; остальные — книги/свитки
+        self.cut_scrolls = []                     # авторские огранки, полученные свитками (не терять при миграции)
         self.jtools = []                         # лупа ювелира: оправа и купленные линзы (sim/gems.py LOUPE)
         self.showcase = {"slots": [], "log": []}  # витрина Ювелирной: 6 мест под камни
         self.art_n = 0
@@ -2745,6 +2747,9 @@ class ExpeditionProfile:
         self.glory = self.xd["tavern"].get("start_treasury", 0)     # новая таверна: стартовая казна на найм
         if path and os.path.exists(path):
             self._load()
+        for cid in GM.START_CUTS:                 # старые сохранения: базовые огранки должны быть всегда
+            if cid not in self.cuts:
+                self.cuts.append(cid)
         self.ensure_garden()
         self.sync_masters()
         if not self.offers:
@@ -2946,6 +2951,7 @@ class ExpeditionProfile:
         if "garden_unlocked" in d:
             self.garden_unlocked = list(d.get("garden_unlocked") or [])
         self.cuts = list(d.get("cuts") or [])
+        self.cut_scrolls = list(d.get("cut_scrolls") or [])
         self.jtools = list(d.get("jtools") or [])
         self.showcase = dict(d.get("showcase") or {"slots": [], "log": []})
         for it in self.showcase.pop("items", []):           # 3D-стол убран: камни с него — обратно в сундук
@@ -2983,6 +2989,11 @@ class ExpeditionProfile:
                 h.vet["solo"] = len(h.skills) > story_meta.slots(self.data) + 1
         self.run_state = d.get("run")
         self._migrate_gems(cuts_known="cuts" in d)
+        from . import gems as GM
+        for cid in GM.START_CUTS:                # базовые огранки нужны до расчёта книг ювелира
+            if cid not in self.cuts:
+                self.cuts.append(cid)
+        self._normalize_cuts()
 
     def save(self, run=None):
         if run is not None:
@@ -3001,6 +3012,7 @@ class ExpeditionProfile:
              "polygon_presets": self.polygon_presets,
              "gems": self.gems, "art_n": self.art_n, "tiers10": 1,
              "rough": self.rough, "market": self.market, "smith": self.smith, "cuts": self.cuts,
+             "cut_scrolls": self.cut_scrolls,
              "forge": self.forge, "mine": self.mine,
              "jtools": self.jtools, "showcase": self.showcase,
              "garden": self.garden, "garden_seeds": self.garden_seeds,
@@ -3519,6 +3531,8 @@ class ExpeditionProfile:
         if cid is None:
             return None
         self.cuts.append(cid)
+        if cid not in self.cut_scrolls:
+            self.cut_scrolls.append(cid)
         return GM.CUT_BY_ID[cid]["name"]
 
     # ---------- шахта ----------
@@ -4677,8 +4691,10 @@ class ExpeditionProfile:
             if m and self.chapter_wins.get(m["chapter"], 0) > 0 and not self.building_level(bid):
                 self.buildings[bid] = 1
                 out.append(m)
-        if self.master_free("ws_jewel") and self.building_level("ws_jewel") and GM.START_CUT not in self.cuts:
-            self.cuts.insert(0, GM.START_CUT)
+        if self.master_free("ws_jewel") and self.building_level("ws_jewel"):
+            for cid in GM.START_CUTS:
+                if cid not in self.cuts:
+                    self.cuts.append(cid)
         return out
 
     def _migrate_gems(self, cuts_known):
@@ -4692,8 +4708,23 @@ class ExpeditionProfile:
             for g in art.get("gems", []):
                 GM.ensure_gem(self.xd, g)
         if not cuts_known and self.building_level("ws_jewel"):
-            self.cuts = [GM.START_CUT] + sorted({g["cut"] for g in self.gems if g.get("cut") in GM.CUT_BY_ID} -
-                                               {GM.START_CUT})
+            base = list(GM.START_CUTS)
+            self.cuts = base + sorted({g["cut"] for g in self.gems if g.get("cut") in GM.CUT_BY_ID} - set(base))
+
+    def _normalize_cuts(self):
+        """Старые сохранения: убрать случайно выданные авторские огранки без свитка и поправить книги ювелира."""
+        from . import gems as GM
+        if self.sandbox:
+            return
+        owned = {g.get("cut") for g in self.gems}
+        self.cuts = [c for c in self.cuts if not GM.is_rare(c) or c in owned or c in self.cut_scrolls]
+        for cid in self.cut_scrolls:
+            if cid in GM.CUT_BY_ID and cid not in self.cuts:
+                self.cuts.append(cid)
+        j = self.market.get("jeweler")
+        if j:
+            count = max(1, int(GM.cfg(self.xd)["jeweler"]["books"][-1]))
+            j["books"] = GM.book_cuts(self.cuts, count)
 
     def build(self, bid):
         cost = self.building_cost(bid)

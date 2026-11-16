@@ -395,7 +395,8 @@ class JewelCut(Game):
         self.diff = max(0, min(3, diff))
         self.color = (110, 170, 240)
         self.phase = "choose"
-        self.cuts = [c for c in CUTS if known is None or c["id"] in known] or [CUTS[0]]
+        self.cuts = [c for c in CUTS if known is None or c["id"] in known] or \
+            [GM.CUT_BY_ID[cid] for cid in GM.START_CUTS]
         self.rough = rough                      # свой камень: разметка, примеси, масса
         self.xd = xd
         self.plan = None

@@ -10,9 +10,10 @@
 "incl", "cut", "shape", "star" (астеризм)}.
 
 Огранки (CUTS): ярусы — (сторона P низ / C верх, граней, угол °, доля радиуса, сдвиг индекса); контур рундиста
-(outline) — круг или выпуклый многоугольник; dome — кабошон (купол после граней). Первая — «Столовая», её учит
-спасённый ювелир; остальные — книги у бродячего ювелира на рынке (tier — сложность, book — цена). Авторские
-(rare) — одиночные огранки мастеров прошлого: редкие свитки (изредка у ювелира, награда похода), камень дороже."""
+(outline) — круг или выпуклый многоугольник; dome — кабошон (купол после граней). Стартовые три простые огранки
+известны сразу; остальные — книги у бродячего ювелира на рынке (tier — сложность, book — цена), книги идут по
+качеству не выше максимальной открытой + 50%. Авторские (rare) — одиночные огранки мастеров прошлого: редкие свитки
+(изредка у ювелира, награда похода), камень дороже."""
 import math
 import random
 
@@ -191,6 +192,10 @@ CUTS = (
 CUT_BY_ID = {c["id"]: c for c in CUTS}
 Q_MIN, Q_MAX = 0.7, 5.0                         # качество огранки: грубая 70% … вершина мастерства 500%
 
+# стартовый набор: три самые простые огранки по пределу качества (без авторских свитков)
+START_CUTS = tuple(c["id"] for c in sorted((c for c in CUTS if not c.get("rare")),
+                                           key=lambda c: (c["cap"], c["tier"]))[:3])
+
 # лупа на станке (продаёт бродячий ювелир): оправа с первой линзой, затем линзы по одной; кратности складываются
 LOUPE = (("loupe", "Лупа ювелира: оправа и линза ×2", 2, 2500),
          ("lens3", "Линза ×3", 3, 4000),
@@ -208,7 +213,7 @@ DISKS = (("lap_coarse", "Грубый диск (зерно 260)", 1.8, 0.78, 150
 DISK_BY_ID = {d[0]: d for d in DISKS}
 GRIT = {"lap_coarse": 1.0, "lap_medium": 0.42, "lap_fine": 0.06, "lap_diamond": 0.12}   # шероховатость грани
 START_DISK = "lap_medium"
-START_CUT = "table"
+START_CUT = START_CUTS[0]
 GIRDLE_N = 32                                   # плоскостей рундиста у фигурного контура
 
 
@@ -230,6 +235,22 @@ def roll_rare_scroll(rng, known):
 def cut_name(cid):
     c = CUT_BY_ID.get(cid)
     return c["name"] if c else "огранка неизвестна"
+
+
+def max_cut_cap(known):
+    """Максимальный предел качества среди открытых огранок (по умолчанию — стартовый набор)."""
+    known = set(known or ())
+    return max((CUT_BY_ID[c]["cap"] for c in known if c in CUT_BY_ID),
+               default=max(CUT_BY_ID[c]["cap"] for c in START_CUTS))
+
+
+def book_cuts(known, count=2):
+    """Книги у ювелира: следующие неизвестные обычные огранки по качеству, не выше максимума +50%."""
+    known = set(known or ())
+    limit = max_cut_cap(known) + 0.50
+    pool = sorted((c for c in CUTS if c["id"] not in known and not c.get("rare") and c["cap"] <= limit),
+                  key=lambda c: c["cap"])
+    return [c["id"] for c in pool[:max(1, int(count))]]
 
 
 def _arc(cx, cy, r, a0, a1, n=12):
@@ -839,15 +860,18 @@ def next_loupe(owned):
 
 
 def roll_jeweler(xd, rng, known, new_rough, owned=()):
-    """Бродячий ювелир: 1–2 книги огранок (не сложнее известной +1), 1–2 отборных камня, часть лупы."""
+    """Бродячий ювелир: книги огранок не случайные — только следующие по качеству, не выше
+    максимальной открытой + 50%; 1–2 отборных камня, часть лупы."""
     j = cfg(xd)["jeweler"]
     if rng.random() >= j["chance"]:
         return None
-    top = max((CUT_BY_ID[c]["tier"] for c in known if c in CUT_BY_ID), default=0)
-    pool = [c["id"] for c in CUTS if c["id"] not in known and c["tier"] <= top + 1 and not c.get("rare")]
-    rng.shuffle(pool)
-    books = sorted(pool[:rng.randint(*j["books"])], key=lambda c: CUT_BY_ID[c]["tier"])
-    rare = [c["id"] for c in CUTS if c.get("rare") and c["id"] not in known and c["tier"] <= top + 1]
+    known = set(known or ())
+    top_cap = max_cut_cap(known)
+    limit = top_cap + 0.50
+    max_books = max(1, int(j["books"][-1]))
+    books = book_cuts(known, max_books)
+    rare = [c["id"] for c in CUTS
+            if c.get("rare") and c["id"] not in known and c["cap"] <= limit]
     if rare and rng.random() < j.get("rare_chance", 0.2):              # авторский свиток — изредка и дорого
         books.append(rng.choice(rare))
     stones = [new_rough(rng) for _ in range(rng.randint(*j["rough"]))]

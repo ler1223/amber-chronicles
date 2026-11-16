@@ -37,11 +37,11 @@ def test_masters_open_workshops_by_chapter(tmp_path):
     p.chapter_wins["swamp"] = 1                       # босс Болота побеждён — кузнец спасён
     got = p.sync_masters()
     assert [m["name"] for m in got] == [XD["buildings"]["ws_forge"]["master"]["name"]]
-    assert p.building_level("ws_forge") == 1 and p.master_free("ws_forge") and not p.cuts
+    assert p.building_level("ws_forge") == 1 and p.master_free("ws_forge") and p.cuts == list(GM.START_CUTS)
     assert p.build("ws_forge") and p.building_level("ws_forge") == 2      # дальше — за золото
-    p.chapter_wins["forge"] = 1                       # Кузни — ювелир: учит «Столовой»
+    p.chapter_wins["forge"] = 1                       # Кузни — ювелир: учит базовым огранкам
     p.sync_masters()
-    assert p.building_level("ws_jewel") == 1 and p.cuts == [GM.START_CUT]
+    assert p.building_level("ws_jewel") == 1 and p.cuts == list(GM.START_CUTS)
     assert not p.master_free("ws_leather")             # глава 3 ещё не вышла
     p.chapter_wins["crypt"] = 1                        # Склеп — кожевник
     p.sync_masters()
@@ -51,7 +51,7 @@ def test_masters_open_workshops_by_chapter(tmp_path):
     assert p.master_free("ws_alchemy") and p.building_level("ws_alchemy") == 1
     p.save()
     again = X.ExpeditionProfile(ED, p.path)
-    assert again.cuts == [GM.START_CUT] and again.building_level("ws_forge") == 2
+    assert again.cuts == list(GM.START_CUTS) and again.building_level("ws_forge") == 2
 
 
 def test_old_buildings_keep_masters(tmp_path):
@@ -239,6 +239,24 @@ def test_every_cut_reachable():
 
 # ---------- книги и рынок ----------
 
+def test_starting_cuts_and_book_stock_are_deterministic(tmp_path):
+    """В начале — три самые простые огранки; книги у ювелира идут по качеству, не выше максимума +50%."""
+    p = prof(tmp_path)
+    assert p.cuts == list(GM.START_CUTS)
+    assert GM.START_CUTS == ("table", "baguette", "single")
+    assert "north_star" not in p.cuts and "mermaid_tear" not in p.cuts
+    cfg = dict(XD, jewelry=dict(GM.cfg(XD), jeweler=dict(GM.cfg(XD)["jeweler"], chance=1.0)))
+    top = max(GM.CUT_BY_ID[c]["cap"] for c in p.cuts)
+    seen = set()
+    for k in range(20):
+        j = GM.roll_jeweler(cfg, random.Random(k), p.cuts, lambda r_: p.new_rough("ruby", r_))
+        assert j["books"] == ["rose", "hexagon"]
+        seen |= set(j["books"])
+        for cid in j["books"]:
+            assert GM.CUT_BY_ID[cid]["cap"] <= top + 0.50
+    assert seen == {"rose", "hexagon"}
+
+
 def test_jeweler_sells_books_by_tier(tmp_path):
     p = prof(tmp_path)
     p.glory = 99999
@@ -282,10 +300,24 @@ def test_old_save_gems_migrate(tmp_path):
         json.dump(d, f, ensure_ascii=False)
     q = X.ExpeditionProfile(ED, p.path)
     assert "col" in q.rough[0] and "incl" in q.rough[0] and q.gems[0]["cl"] == 0.6
-    assert q.cuts == [GM.START_CUT, "oval"]                  # старому ювелиру — огранки его камней
+    assert q.cuts == list(GM.START_CUTS) + ["oval"]                  # старому ювелиру — базовые и огранки его камней
 
 
 # ---------- экраны ----------
+
+def test_old_rare_cuts_without_scroll_are_removed(tmp_path):
+    """Старое сохранение со случайными «Звездой Севера» и «Слезой русалки»: оставить только стартовые три."""
+    p = prof(tmp_path)
+    p.cuts = ["table", "north_star", "mermaid_tear"]
+    p.market["jeweler"] = {"name": "Ювелир", "books": ["trilliant"], "rough": []}
+    p.save()
+    q = X.ExpeditionProfile(ED, p.path)
+    assert q.cuts == list(GM.START_CUTS)
+    assert "north_star" not in q.cuts and "mermaid_tear" not in q.cuts
+    books = q.market["jeweler"]["books"]
+    assert books and all(GM.CUT_BY_ID[c]["cap"] <= max(GM.CUT_BY_ID[x]["cap"] for x in q.cuts) + 0.50
+                         for c in books)
+
 
 def test_jewel_screens_draw(tmp_path):
     from tests.test_expedition_ui import new_app, key, click, frame
@@ -310,7 +342,7 @@ def test_jewel_screens_draw(tmp_path):
     click(app, ("mode", "cut"))
     click(app, ("cut", r["uid"]))
     g = app.scene.game
-    assert [c["id"] for c in g.cuts] == ["table"]            # известна только «Столовая»
+    assert [c["id"] for c in g.cuts] == list(GM.START_CUTS)   # стартовые три простые огранки
     key(app, pygame.K_1)
     frame(app)
     assert g.phase == "plan"
