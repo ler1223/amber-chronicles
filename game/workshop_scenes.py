@@ -136,7 +136,7 @@ class MiniGameScene(XScene):
             self.finish()
 
     def handle(self, ev):
-        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
+        if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 2, 3):
             return
         g = self.game
         if hasattr(g, "pointer") and g.pointer(ev, self.area()):

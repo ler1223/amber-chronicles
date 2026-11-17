@@ -241,6 +241,7 @@ class Plan:
         self.frac = 1.0
         self.drag = None
         self.pdrag = None
+        self.cdrag = None
         self.proj = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
         self.proj_t = self.proj
         verts = {tuple(round(c, 4) for c in p_) for f in game.ideal for p_ in f["pts"]}
@@ -284,6 +285,14 @@ class Plan:
     def reset_proj(self):
         self.proj = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
         self.proj_t = self.proj
+        self.qv = [self.q(v) for v in self.ideal_verts]
+
+    def camera_turn(self, dx, dy):
+        """Вращать камень и проекцию вместе — как свободную камеру вокруг заготовки."""
+        r = JW._mm(JW._rot("y", dx * 0.012), JW._rot("x", -dy * 0.012))
+        self.m = JW._mm(r, self.m)
+        self.proj = JW._mm(r, self.proj)
+        self.proj_t = tuple(tuple(self.proj[j][i] for j in range(3)) for i in range(3))
         self.qv = [self.q(v) for v in self.ideal_verts]
 
     def s_max(self):
@@ -397,7 +406,7 @@ class JewelCut(Game):
     и схема огранки. Сложность — число граней; сложнее — выше предел качества."""
     title = "Огранка"
     HINTS = {"choose": "выберите огранку: клик или клавиша 1–9 · колесо — прокрутка",
-             "plan": "ЛКМ — вращать камень, ПКМ — вращать проекцию, Q/E — крен, WASD — сдвиг, колесо — размер, Enter — на станок",
+             "plan": "ЛКМ — камень, ПКМ — проекция, СКМ — камера, Q/E — крен, WASD — сдвиг, колесо — размер, Enter — на станок",
              "cut": "W/S — угол, A/D — индекс, Пробел — к диску, Enter/ПКМ — грань готова, F — перевернуть"}
 
     @property
@@ -674,6 +683,9 @@ class JewelCut(Game):
         кристалл."""
         if self.phase == "plan" and self.plan is not None:
             pl = self.plan
+            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 2 and rect.collidepoint(ev.pos):
+                pl.cdrag = ev.pos
+                return True
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3 and rect.collidepoint(ev.pos):
                 pl.pdrag = ev.pos
                 return True
@@ -683,6 +695,10 @@ class JewelCut(Game):
                     return True
                 pl.drag = ev.pos
                 return True
+            if ev.type == pygame.MOUSEMOTION and pl.cdrag:
+                pl.camera_turn(ev.pos[0] - pl.cdrag[0], ev.pos[1] - pl.cdrag[1])
+                pl.cdrag = ev.pos
+                return True
             if ev.type == pygame.MOUSEMOTION and pl.pdrag:
                 pl.proj_turn(ev.pos[0] - pl.pdrag[0], ev.pos[1] - pl.pdrag[1])
                 pl.pdrag = ev.pos
@@ -690,6 +706,9 @@ class JewelCut(Game):
             if ev.type == pygame.MOUSEMOTION and pl.drag:
                 pl.turn(ev.pos[0] - pl.drag[0], ev.pos[1] - pl.drag[1])
                 pl.drag = ev.pos
+                return True
+            if ev.type == pygame.MOUSEBUTTONUP and ev.button == 2 and pl.cdrag:
+                pl.cdrag = None
                 return True
             if ev.type == pygame.MOUSEBUTTONUP and ev.button == 3 and pl.pdrag:
                 pl.pdrag = None
