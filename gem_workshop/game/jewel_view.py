@@ -1199,7 +1199,11 @@ def draw_plan(g, surf, rect):
     inside = sum(1 for si, ok in pl.stone_incl(s_) if ok and si["k"] != "silk")
     total = sum(1 for i in pl.incl if i["k"] != "silk")
     lines = [(f"сырьё {g.rough['size']:.2f} кар. → камень ≈ {ct:.2f} кар.", T.TEXT),
-             (f"выход {ct / max(0.01, g.rough['size']) * 100:.0f}% · размер {pl.frac * 100:.0f}%", T.TEXT_DIM)]
+             (f"форма: {GM.form_name(g.rough.get('form'))} · выход {ct / max(0.01, g.rough['size']) * 100:.0f}% · "
+              f"размер {pl.frac * 100:.0f}%", T.TEXT_DIM)]
+    risk = pl.risk()
+    lines.append((f"риск скола: {risk * 100:.0f}%" if risk > 0.01 else "риск скола: низкий",
+                  (240, 130, 110) if risk > 0.25 else (150, 230, 150)))
     if xd:
         lines += [(f"примеси: {inside} из {total} останутся", (255, 140, 120) if inside else (150, 230, 150)),
                   (f"чистота: {GM.grade(xd, cl).lower()}", T.TEXT),

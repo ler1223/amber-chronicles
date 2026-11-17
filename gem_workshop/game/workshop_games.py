@@ -379,6 +379,20 @@ class Plan:
         inside = [si for si, ok in self.stone_incl() if ok]
         return GM.clarity(xd, inside) if xd else 1.0
 
+    def risk(self):
+        """Риск скола/раскола: трещины и каверны у будущей поверхности."""
+        risk = 0.0
+        for inc, inside in self.stone_incl():
+            if not inside or inc.get("k") == "silk":
+                continue
+            if inc.get("k") not in ("feather", "cleavage", "cavity"):
+                continue
+            p_ = inc["p"]
+            near = min((off - G3.dot(n, p_)) for n, off in self.ideal_planes)
+            if near < inc["r"] * 2.2:
+                risk += 0.18 if inc.get("surf") else 0.10
+        return max(0.0, min(1.0, risk))
+
     def cf_rough(self):
         """Кристалл в карте оттенков: мм = mmr·p + окно камня."""
         mmr = self.mm_per_unit()
