@@ -26,7 +26,8 @@ python main.py
 
 - `docs/lapidary_process_and_selection.md` — реальный процесс огранки и выбора сырья.
 - `docs/gem_optics_reference.md` — оптика камней, материалы, явления и инструменты.
-- `docs/implementation_plan.md` — что понято и в каком порядке это делать в игре.
+- `docs/implementation_plan.md` — что понял и в каком порядке это делать в игре.
+- `docs/gem_renderers_review.md` — обзор чужих рендеров камней и идеи для нашего.
 - `docs/vision_gem_lighting.md` — видение света, поверхности и включений.
 
 ## Что уже есть
