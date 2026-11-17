@@ -239,8 +239,9 @@ class HubScene(Scene):
             JV.draw_rough(surf, rough, rough_color(w, rough), (r.x + 54, r.y + 54), 70,
                           t=self.app.clock * 0.4, xd=w.xd)
             U.text(surf, w.gem_name(rough["id"]), (r.x + 102, r.y + 8), 17, U.TEXT, True)
-            U.text(surf, f"{rough['size']:.2f} ct · {GM.color_word(w.xd, rough['col'])}",
-                   (r.x + 102, r.y + 31), 13, U.DIM)
+            U.text(surf, f"{rough['size']:.2f} ct · {GM.color_word(w.xd, rough['col'])} · "
+                         f"{GM.form_name(rough.get('form'))}",
+                   (r.x + 102, r.y + 31), 12, U.DIM)
             U.text(surf, U.fit(GM.describe(w.xd, rough, rough=True)[1], 12, 210),
                    (r.x + 102, r.y + 50), 12, U.TEXT)
             U.text(surf, f"{item['price']} з.", (r.x + 102, r.y + 70), 16, U.GOLD, True)
@@ -315,7 +316,7 @@ class HubScene(Scene):
             JV.draw_rough(surf, item, rough_color(w, item), (r.centerx, r.y + 42), 62,
                           t=self.app.clock * 0.35, xd=w.xd)
             name = w.gem_name(item["id"])
-            line = f"{item['size']:.2f} ct"
+            line = f"{item['size']:.2f} ct · {GM.form_name(item.get('form'))}"
         else:
             JV.draw_gem(surf, item, gem_color(w, item), (r.centerx, r.y + 42), 62,
                         t=self.app.clock * 0.4, xd=w.xd)
@@ -576,8 +577,9 @@ class InspectScene(Scene):
         r = pygame.Rect(800, 104, 456, 560)
         U.panel(surf, r, U.PANEL, U.EDGE)
         U.text(surf, w.gem_name(self.stone["id"]), (r.x + 18, r.y + 16), 23, U.GOLD, True)
-        U.text(surf, f"{self.stone['size']:.2f} карат · {GM.color_word(w.xd, self.stone['col'])}",
-               (r.x + 18, r.y + 50), 15, U.TEXT)
+        form_line = f" · {GM.form_name(self.stone.get('form'))}" if rough else ""
+        U.text(surf, f"{self.stone['size']:.2f} карат · {GM.color_word(w.xd, self.stone['col'])}{form_line}",
+               (r.x + 18, r.y + 50), 14, U.TEXT)
         y = r.y + 84
         desc = GM.describe(w.xd, self.stone, rough=rough)
         if not self.flash_on:

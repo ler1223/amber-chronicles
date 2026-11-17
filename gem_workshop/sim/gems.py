@@ -360,6 +360,47 @@ def support(name, phi):
 
 # ---------- настройки ----------
 
+# Форма сырья влияет на выход, ориентацию и выбор огранки.
+FORM_NAMES = {
+    "octahedron": "октаэдр",
+    "cube": "куб",
+    "prism": "призма",
+    "macle": "макл",
+    "massive": "массивный",
+    "dodecahedron": "додекаэдр",
+}
+FORM_YIELD = {
+    "octahedron": 1.12,
+    "cube": 1.05,
+    "prism": 1.00,
+    "macle": 0.88,
+    "massive": 0.82,
+    "dodecahedron": 0.95,
+}
+ROUGH_FORMS = {
+    "ruby": ("prism", "massive", "macle"),
+    "sapphire": ("prism", "massive", "macle"),
+    "emerald": ("prism", "massive"),
+    "topaz": ("prism", "massive"),
+    "amethyst": ("prism", "massive"),
+    "diamond": ("octahedron", "macle", "cube"),
+    "spinel": ("octahedron", "macle"),
+    "zircon": ("prism", "massive"),
+    "tourmaline": ("prism", "massive"),
+    "peridot": ("prism", "massive"),
+    "garnet": ("dodecahedron", "massive"),
+    "opal": ("massive",),
+}
+
+
+def form_name(form):
+    return FORM_NAMES.get(form, form or "массивный")
+
+
+def form_yield(form):
+    return FORM_YIELD.get(form, 1.0)
+
+
 DEF = {
     "rough_ct": {"median": 2.2, "sigma": 0.55, "min": 0.4, "max": 7.0},
     "yield": 0.2,                     # ожидаемая доля массы после огранки (для цены сырого)
@@ -407,6 +448,11 @@ def roll_rough(xd, gid, rng, uid, size=None, premium=False):
         size = max(rc["min"], min(rc["max"], size))
     col = rng.betavariate(3.2, 2.0) if premium else rng.betavariate(2.2, 2.2)
     r = {"uid": uid, "id": gid, "seed": rng.randrange(1, 10 ** 6), "size": round(size, 2), "col": round(col, 3)}
+    frng = random.Random(r["seed"] * 17 + 5)
+    r["form"] = frng.choice(ROUGH_FORMS.get(gid, ("prism", "massive")))
+    ax = (frng.gauss(0, 1), frng.gauss(0, 1), frng.gauss(0, 1))
+    am = math.sqrt(sum(v * v for v in ax)) or 1.0
+    r["axis"] = tuple(round(v / am, 4) for v in ax)
     r["incl"] = roll_incl(xd, gid, random.Random(r["seed"] * 7 + 1), premium)
     r["cf"] = roll_window(random.Random(r["seed"] * 11 + 3))
     return r
@@ -461,6 +507,12 @@ def ensure_rough(xd, r):
         r["incl"] = roll_incl(xd, r["id"], random.Random(r.get("seed", 1) * 7 + 1))
     if "cf" not in r:
         r["cf"] = roll_window(random.Random(r.get("seed", 1) * 11 + 3))
+    if "form" not in r:
+        frng = random.Random(r.get("seed", 1) * 17 + 5)
+        r["form"] = frng.choice(ROUGH_FORMS.get(r.get("id"), ("prism", "massive")))
+        ax = (frng.gauss(0, 1), frng.gauss(0, 1), frng.gauss(0, 1))
+        am = math.sqrt(sum(v * v for v in ax)) or 1.0
+        r["axis"] = tuple(round(v / am, 4) for v in ax)
     return r
 
 
@@ -746,7 +798,7 @@ def rough_value(xd, r):
     """Цена сырого: доля ожидаемой цены огранённого (выход массы, чистота «как есть», обычная работа)."""
     ensure_rough(xd, r)
     j = cfg(xd)
-    ct = r["size"] * j["yield"]
+    ct = r["size"] * j["yield"] * form_yield(r.get("form"))
     cz = rough_colors(xd, r)
     v = j["rough_k"] * per_ct(xd, r["id"]) * ct ** j["ct_exp"] * k_color(xd, r["col"]) * \
         k_clarity(xd, rough_clarity(xd, r)) * k_hue(cz) * k_zoning(r["id"], cz)
@@ -793,7 +845,7 @@ def describe(xd, g, rough=False):
         ensure_rough(xd, g)
         n = len([i for i in g["incl"] if i["k"] != "silk"])
         silk = any(i["k"] == "silk" for i in g["incl"])
-        out = [f"{g['size']:.2f} кар. · цвет {color_word(xd, g['col'])}",
+        out = [f"{g['size']:.2f} кар. · цвет {color_word(xd, g['col'])} · {form_name(g.get('form'))}",
                f"примесей: {n}" + (" · шёлк (звезда в кабошоне)" if silk else "") +
                f" · «как есть»: {grade(xd, rough_clarity(xd, g)).lower()}"]
         ct_ = colors_text(g["id"], rough_colors(xd, g))

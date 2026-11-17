@@ -198,6 +198,25 @@ def _mv(m, p):
             m[2][0] * p[0] + m[2][1] * p[1] + m[2][2] * p[2])
 
 
+def _align_to_z(v):
+    """Матрица, которая переводит направление v в +Z (ось будущего камня)."""
+    a = G3.norm(v or (0.0, 0.0, 1.0))
+    b = (0.0, 0.0, 1.0)
+    c = max(-1.0, min(1.0, G3.dot(a, b)))
+    if c > 0.99999:
+        return ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
+    if c < -0.99999:
+        return ((1.0, 0.0, 0.0), (0.0, -1.0, 0.0), (0.0, 0.0, -1.0))
+    k = G3.cross(a, b)
+    s = math.sqrt(max(0.0, 1.0 - c * c))
+    # Rodrigues: R = I + K + K²·(1-c)/s²
+    K = ((0.0, -k[2], k[1]), (k[2], 0.0, -k[0]), (-k[1], k[0], 0.0))
+    K2 = tuple(tuple(sum(K[i][q] * K[q][j] for q in range(3)) for j in range(3)) for i in range(3))
+    q = (1.0 - c) / max(1e-9, s * s)
+    return tuple(tuple((1.0 if i == j else 0.0) + K[i][j] + K2[i][j] * q for j in range(3))
+                 for i in range(3))
+
+
 def inside_points(faces, n=200, seed=7):
     """Случайные точки внутри многогранника (отбор из ограничивающего бруска)."""
     planes = [(f["n"], G3.dot(f["n"], f["pts"][0])) for f in faces if f["pts"]]
@@ -251,7 +270,10 @@ class Plan:
         self.ideal_vol = G3.volume(game.ideal)
 
     def upright(self):
-        return JW._rot("x", self.TILT - math.pi / 2)
+        # Ориентация сырья: оптическая/кристаллическая ось ведёт будущий
+        # камень, а не «случайная призма». Игрок всё равно может крутить.
+        align = _align_to_z(self.rough.get("axis") or (0.0, 0.0, 1.0))
+        return JW._mm(JW._rot("x", self.TILT - math.pi / 2), align)
 
     # контур будущего камня: оси камня → вид (на станке корона — в −z: она вверх по экрану, слегка к зрителю)
     def q(self, p_):

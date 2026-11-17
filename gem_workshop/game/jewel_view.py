@@ -1019,27 +1019,68 @@ def draw_inspect(g, surf, rect):
 
 
 def rough_geom(rough):
-    """Необработанный камень — природный кристалл из своего seed: шестигранная призма с вершинами и сколами.
-    Возвращает (грани, радиус призмы R, полудлина L); размер — по каратам."""
+    """Необработанный камень — природный кристалл из своего seed.
+
+    Форма берётся из `rough["form"]`: октаэдр, куб, призма, макл, массивный
+    или додекаэдр. Это не косметика: форма меняет выход, ориентацию и выбор
+    огранки. Возвращает (грани, радиус R, полудлина L).
+    """
     import random
-    key = ("rough", rough["uid"], rough["seed"], rough.get("size"))
+    form = rough.get("form", "prism")
+    key = ("rough", rough["uid"], rough["seed"], rough.get("size"), form)
     if key not in _IDEAL:
         rng = random.Random(rough["seed"])
         R = 62.0 * (rough.get("size", 1.0) / 2.2) ** (1 / 3)
-        L = R * rng.uniform(1.0, 1.45)
-        faces = G3.box(R * 3, -L * 2, L * 2)
-        tw = rng.uniform(0, math.pi / 3)
-        for k in range(6):                                 # грани призмы, слегка неровные
-            a = tw + math.pi / 3 * k
-            faces = G3.clip(faces, (math.cos(a), math.sin(a), 0.0), R * rng.uniform(0.85, 1.05), "rough")
-        for side in (1, -1):                               # вершины кристалла
-            tip = L * rng.uniform(0.8, 1.15)
+
+        if form in ("octahedron", "cube"):
+            L = R * (0.95 if form == "octahedron" else 1.0)
+            faces = G3.box(R * 1.45, -L * 1.45, L * 1.45)
+            if form == "octahedron":
+                for sx in (-1, 1):
+                    for sy in (-1, 1):
+                        for sz in (-1, 1):
+                            n = G3.norm((sx, sy, sz))
+                            faces = G3.clip(faces, n, R * 0.92, "rough")
+            else:
+                for n, h in (((1, 0, 0), R), ((-1, 0, 0), R),
+                             ((0, 1, 0), R), ((0, -1, 0), R),
+                             ((0, 0, 1), L), ((0, 0, -1), L)):
+                    faces = G3.clip(faces, n, h, "rough")
+        elif form == "macle":
+            # Уплощённый двойник: широкая призма с «швом» по центру.
+            L = R * 0.62
+            faces = G3.box(R * 2.6, -L * 2, L * 2)
+            tw = rng.uniform(0, math.pi / 3)
             for k in range(6):
                 a = tw + math.pi / 3 * k
-                th = math.radians(rng.uniform(45, 62))
-                n = (math.sin(th) * math.cos(a), math.sin(th) * math.sin(a), side * math.cos(th))
-                faces = G3.clip(faces, n, G3.dot(n, (0.0, 0.0, side * tip)) * rng.uniform(0.9, 1.0), "rough")
-        for _ in range(rng.randint(2, 5)):                 # сколы
+                faces = G3.clip(faces, (math.cos(a), math.sin(a), 0.0),
+                                R * rng.uniform(0.9, 1.12), "rough")
+            for side in (1, -1):
+                for k in range(6):
+                    a = tw + math.pi / 3 * k
+                    th = math.radians(rng.uniform(62, 78))
+                    n = (math.sin(th) * math.cos(a), math.sin(th) * math.sin(a), side * math.cos(th))
+                    faces = G3.clip(faces, n, L * rng.uniform(0.85, 1.0), "rough")
+        else:
+            # Призма / массивный кристалл: шестигранная призма с вершинами.
+            L = R * rng.uniform(1.0, 1.45)
+            faces = G3.box(R * 3, -L * 2, L * 2)
+            tw = rng.uniform(0, math.pi / 3)
+            for k in range(6):
+                a = tw + math.pi / 3 * k
+                faces = G3.clip(faces, (math.cos(a), math.sin(a), 0.0),
+                                R * rng.uniform(0.85, 1.05), "rough")
+            for side in (1, -1):
+                tip = L * rng.uniform(0.8, 1.15)
+                for k in range(6):
+                    a = tw + math.pi / 3 * k
+                    th = math.radians(rng.uniform(45, 62))
+                    n = (math.sin(th) * math.cos(a), math.sin(th) * math.sin(a), side * math.cos(th))
+                    faces = G3.clip(faces, n, G3.dot(n, (0.0, 0.0, side * tip)) * rng.uniform(0.9, 1.0), "rough")
+
+        # Естественные сколы. У массивного сырья их больше.
+        chips = rng.randint(4, 8) if form == "massive" else rng.randint(2, 5)
+        for _ in range(chips):
             u = G3.norm((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)))
             faces = G3.clip(faces, u, G3.extent(faces, u) * rng.uniform(0.78, 0.92), "rough")
         _IDEAL[key] = (faces, R, L)
