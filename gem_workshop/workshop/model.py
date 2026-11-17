@@ -201,11 +201,7 @@ class Workshop:
                             cut=cut, star=star)
         # Видимая поверхность — часть товара: грязь и царапины снижают цену,
         # даже если внутренняя чистота и огранка хороши.
-        sf = (1.0 - 0.18 * surface.get("dirt", 0.0)
-              - 0.12 * surface.get("damage", 0.0)
-              - 0.08 * (1.0 - surface.get("polish", 0.0))
-              - 0.06 * surface.get("scratches", 0.0))
-        value = max(1.0, value * max(0.55, sf))
+        value = max(1.0, value * SURF.value_factor(surface))
         return {
             "uid": self._next_uid("g"),
             "id": rough["id"],
@@ -243,8 +239,14 @@ class Workshop:
     def clean_stone(self, stone):
         """Снять поверхностную грязь. Внутренние включения это не убирает."""
         rough = "seed" in stone and "q" not in stone
-        stone["surface_clean"] = SURF.for_stone(stone, rough=rough, cleaned=True)
-        return stone["surface_clean"]
+        old = stone.get("surface_clean") or SURF.for_stone(stone, rough=rough, cleaned=False)
+        new = SURF.for_stone(stone, rough=rough, cleaned=True)
+        stone["surface_clean"] = new
+        if stone.get("value"):
+            f0 = SURF.value_factor(old)
+            f1 = SURF.value_factor(new)
+            stone["value"] = max(1, int(round(stone["value"] * f1 / max(0.55, f0))))
+        return new
 
     def add_display(self, gem):
         self.display.append(gem)

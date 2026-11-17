@@ -136,6 +136,17 @@ def diagnosis(surface, rough=False):
     return out
 
 
+def value_factor(surface):
+    """Во сколько раз видимая поверхность меняет цену камня."""
+    if not surface:
+        return 1.0
+    return max(0.55, 1.0
+               - 0.18 * surface.get("dirt", 0.0)
+               - 0.12 * surface.get("damage", 0.0)
+               - 0.08 * (1.0 - surface.get("polish", 0.0))
+               - 0.06 * surface.get("scratches", 0.0))
+
+
 def short_line(surface):
     if not surface:
         return "поверхность: —"
