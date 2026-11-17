@@ -231,47 +231,43 @@ float flash_at(vec3 p) {
     return u_lint * cone * att;
 }
 
-// Свет внутри объёма: приближение луча как конуса. Он нужен для
-// рассеяния на включениях и для «свечения» камня изнутри.
-float flash_entry(vec3 p);
+// Свет внутри объёма — это не прямой конус из воздуха.
+// Фонарик прислонён к камню: луч входит через заднюю грань, преломляется
+// по Снеллиусу и только потом идёт внутри. Поэтому внутренняя структура
+// читается как реальная, с изломом на грани.
 float flash_inside(vec3 p) {
     if (u_lon < 0.5) return 0.0;
-    vec3 rel = p - u_lpos;
-    float along = dot(rel, normalize(u_ldir));
-    if (along <= 0.0) return 0.0;
-    vec3 perp = rel - normalize(u_ldir) * along;
-    float radius = max(1.0, along * u_ltan);
-    float spot = exp(-dot(perp, perp) / max(1.0, radius * radius * 0.75));
-    float att = (u_lref * u_lref) / (along * along + u_lref * u_lref * 0.08);
-    return u_lint * spot * att * 0.55 + flash_entry(p) * 0.75;
-}
+    vec3 L = u_lpos;
+    vec3 dir = normalize(u_ldir);
 
-// Свет, который реально входит в камень через грань. В отличие от
-// «конуса в вакууме», здесь учитывается точка входа, нормаль грани,
-// френелевское пропускание и оптическая толщина до точки рассеяния.
-float flash_entry(vec3 p) {
-    if (u_lon < 0.5) return 0.0;
-    vec3 toL = u_lpos - p;
-    float dist = length(toL);
-    if (dist < 1e-3) return 0.0;
-    vec3 dir = toL / dist;
+    // Точка входа: первая грань, в которую попадает луч фонарика.
     float tmin = 1e9;
     int j = -1;
     for (int i = 0; i < u_n; i++) {
         float dn = dot(dir, u_pl[i].xyz);
-        if (dn > 1e-6) {
-            float t = (u_pl[i].w - dot(p, u_pl[i].xyz)) / dn;
+        if (dn < -1e-6) {
+            float t = (u_pl[i].w - dot(L, u_pl[i].xyz)) / dn;
             if (t > 1e-4 && t < tmin) { tmin = t; j = i; }
         }
     }
     if (j < 0) return 0.0;
-    vec3 q = p + dir * tmin;
+
+    vec3 q = L + dir * tmin;
     vec3 Nq = u_pl[j].xyz;
-    float cosi = clamp(abs(dot(dir, Nq)), 0.0, 1.0);
-    float T = 1.0 - fresnel(cosi, 1.0, u_ior.y);
-    float beam = flash_at(q);
-    float path = exp(-max(0.0, tmin) * u_absorb.y * 0.55);
-    return beam * T * path;
+    float cosi = clamp(-dot(dir, Nq), 0.0, 1.0);
+    float ior = max(1.01, u_ior.y);
+    vec3 dIn = refract(dir, Nq, 1.0 / ior);
+    if (dot(dIn, dIn) < 0.5) return 0.0;
+
+    vec3 rel = p - q;
+    float along = dot(rel, dIn);
+    if (along <= 0.0) return 0.0;
+    vec3 perp = rel - dIn * along;
+    float radius = max(1.5, along * u_ltan + 2.0);
+    float spot = exp(-dot(perp, perp) / max(1.0, radius * radius * 0.70));
+    float T = 1.0 - fresnel(cosi, 1.0, ior);
+    float att = (u_lref * u_lref) / (tmin * tmin + u_lref * u_lref * 0.08);
+    return u_lint * T * spot * att * exp(-along * u_absorb.y * 0.35);
 }
 
 vec3 flash_color(float v) {

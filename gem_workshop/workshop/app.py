@@ -487,15 +487,16 @@ class InspectScene(Scene):
         wx = (cx - view.centerx) / scale
         wy = (cy - view.centery) / scale
         z = far * 3.6 + 60.0
+        back_z = far * 1.10 + 8.0
         mode = self.flash_mode
         if mode == "back":
-            # Основной режим: свет сзади, сквозь камень. Он должен
-            # показывать внутренние грани и полное внутреннее отражение.
-            pos = (wx * 0.40, wy * 0.40, -z * 1.08)
-            target = (wx * 0.10, wy * 0.10, 0.0)
+            # Фонарик прислонён к задней грани: свет входит в камень
+            # локально, преломляется и идёт внутрь, а не светит издалека.
+            pos = (wx * 0.30, wy * 0.30, -back_z)
+            target = (wx * 0.08, wy * 0.08, 0.0)
             is_rough = "q" not in self.stone
-            cone = 38.0
-            intensity = 8.5 if is_rough else 3.5
+            cone = 32.0
+            intensity = 8.5 if is_rough else 1.5
             env = 1.15 if is_rough else 1.02
         elif mode == "grazing":
             pos = (wx - far * 1.55, wy - far * 0.55, z * 0.55)
@@ -519,7 +520,7 @@ class InspectScene(Scene):
             "intensity": intensity,
             "cone": cone,
             "soft": 0.018,
-            "ref": z,
+            "ref": back_z if mode == "back" else z,
         }, env
 
     def _draw_flashlight(self, surf):
