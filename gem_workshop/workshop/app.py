@@ -491,9 +491,12 @@ class InspectScene(Scene):
         if mode == "back":
             # Основной режим: свет сзади, сквозь камень. Он должен
             # показывать внутренние грани и полное внутреннее отражение.
-            pos = (wx * 0.55, wy * 0.55, -z)
-            target = (wx * 0.18, wy * 0.18, 0.0)
-            cone, intensity, env = 30.0, 3.8, 1.00
+            pos = (wx * 0.40, wy * 0.40, -z * 1.08)
+            target = (wx * 0.10, wy * 0.10, 0.0)
+            is_rough = "q" not in self.stone
+            cone = 38.0
+            intensity = 8.5 if is_rough else 3.5
+            env = 1.15 if is_rough else 1.02
         elif mode == "grazing":
             pos = (wx - far * 1.55, wy - far * 0.55, z * 0.55)
             target = (wx, wy, 0.0)

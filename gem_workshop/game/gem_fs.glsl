@@ -432,7 +432,9 @@ vec3 rough_inside(vec3 p0, vec3 rd, vec3 N, float F0, float filmT, float rough) 
         vec3 d = refract(rd, N, 1.0 / ior);
         if (dot(d, d) < 0.5) continue;
         vec3 p = p0 + d * 1e-4;
-        float thr = (1.0 - F0) * filmT * (0.26 + 0.34 * (1.0 - rough));
+        // Сырьё тоже должно просвечивать: задний фонарик не просто
+        // подсвечивает корку, а проходит через объём.
+        float thr = (1.0 - F0) * filmT * (0.42 + 0.38 * (1.0 - rough));
         float acc = 0.0;
         for (int b = 0; b < 4; b++) {
             float tmin = 1e9;
@@ -467,7 +469,7 @@ vec3 rough_inside(vec3 p0, vec3 rd, vec3 N, float F0, float filmT, float rough) 
                 float Fx = fresnel(ci, ior, 1.0);
                 vec3 out_d = refract(d, Nx, ior);
                 acc += thr * (1.0 - Fx) * env(u_rot * out_d)[ch] * 0.06 * tintAt(p)[ch];
-                acc += thr * (1.0 - Fx) * flash_at(p) * u_lcol[ch] * 0.22 * tintAt(p)[ch];
+                acc += thr * (1.0 - Fx) * flash_at(p) * u_lcol[ch] * 0.55 * tintAt(p)[ch];
                 thr *= Fx;
                 d = reflect(d, Nx);
             }
@@ -596,7 +598,7 @@ vec4 trace(vec2 px) {
         col = mix(col, mix(tint, vec3(0.35, 0.31, 0.25), 0.65), film * 0.30);
         // Внутренний свет: именно он проявляет включения в сырье.
         vec3 inner = rough_inside(p0, rd, N, F0, filmT, rough);
-        col += inner * (0.16 + 0.14 * (1.0 - rough));
+        col += inner * (0.28 + 0.20 * (1.0 - rough));
         col *= mix(0.72, 1.0, edgeK);
         return vec4(col, 1.0);
     }
@@ -671,7 +673,7 @@ vec4 trace(vec2 px) {
                 // преломления, а не просто подсветка фона.
                 float outLit = flash_at(p);
                 acc += thr * (1.0 - Fx) * env(u_rot * out_d)[ch] * 0.72;
-                acc += thr * (1.0 - Fx) * outLit * u_lcol[ch] * 0.90;
+                acc += thr * (1.0 - Fx) * outLit * u_lcol[ch] * 1.10;
                 thr *= Fx;
                 d = reflect(d, Nx);
             }
