@@ -208,7 +208,7 @@ class HubScene(Scene):
                 self.app.switch(ResultScene(self.app, self.client, gem, status, offer))
             elif isinstance(action, tuple) and action[0] == "inspect_rough":
                 rough = action[1]
-                self.app.switch(InspectScene(self.app, [rough], GM.rough_value(w.xd, rough), "rough", -1,
+                self.app.switch(InspectScene(self.app, [rough], w.rough_market_value(rough), "rough", -1,
                                              back=lambda: self.app.switch(HubScene(self.app, tab="workshop"))))
             elif isinstance(action, tuple) and action[0] == "inspect_gem":
                 gem = action[1]
@@ -406,6 +406,7 @@ class InspectScene(Scene):
         self.stones = list(stones)
         self.i = 0
         self.price = int(price)
+        self.base_price = int(price)
         self.kind = kind
         self.index = index
         self.back = back
@@ -441,6 +442,10 @@ class InspectScene(Scene):
             self.cleaned = not self.cleaned
             if self.cleaned and self.kind not in ("stock", "lot"):
                 w.clean_stone(self.stone)
+                if self.kind == "rough":
+                    self.price = int(round(w.rough_market_value(self.stone)))
+                elif "value" in self.stone:
+                    self.price = int(self.stone["value"])
         elif isinstance(action, tuple) and action[0] == "mode":
             self.flash_mode = action[1]
         elif isinstance(action, tuple) and action[0] == "step":
@@ -605,6 +610,13 @@ class InspectScene(Scene):
         y += 6
         U.text(surf, f"{'Цена' if self.can_buy else 'Оценка'}: {self.price} з.",
                (r.x + 18, y), 20, U.GOLD, True)
+        cl = GM.rough_clarity(w.xd, self.stone) if rough else self.stone.get("cl", 1.0)
+        n_inc = len([i for i in (incl or []) if i.get("k") != "silk"])
+        surf_loss = max(0.0, 1.0 - SURF.value_factor(surface))
+        cl_loss = max(0.0, 1.0 - GM.k_clarity(w.xd, cl) / max(1e-6, GM.k_clarity(w.xd, 1.0)))
+        U.text(surf, f"чистота: {GM.grade(w.xd, cl).lower()} · включения: {n_inc} · "
+                     f"грязь −{surf_loss * 100:.0f}% · примеси −{cl_loss * 100:.0f}%",
+               (r.x + 18, y + 26), 11, U.DIM)
         U.text(surf, "Фонарик — основной способ оценки: включите F и ведите лучом.",
                (r.x + 18, r.bottom - 122), 12, U.GREEN if self.flash_on else U.GOLD)
         U.text(surf, "ЛКМ — вращать камень · колесо — приблизить · C — очистить",

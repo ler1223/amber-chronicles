@@ -83,11 +83,21 @@ class Workshop:
         size = size if size is not None else round(self.rng.uniform(0.7, 2.8), 2)
         return GM.roll_rough(self.xd, gid, self.rng, self._next_uid("r"), size)
 
+    def rough_market_value(self, rough):
+        """Цена сырья с поправкой на видимую грязь/корку.
+
+        Грязь не меняет внутреннюю чистоту, но покупатель видит именно её;
+        после очистки камень оценивается выше.
+        """
+        base = GM.rough_value(self.xd, rough)
+        surf = SURF.for_stone(rough, rough=True, cleaned=bool(rough.get("surface_clean")))
+        return max(1.0, base * SURF.value_factor(surf))
+
     def stone_price(self, rough):
-        return max(25, int(GM.rough_value(self.xd, rough) * 0.40 * self.price_k()))
+        return max(25, int(self.rough_market_value(rough) * 0.40 * self.price_k()))
 
     def lot_price(self, stones):
-        return max(40, int(sum(GM.rough_value(self.xd, r) for r in stones) * 0.26 * self.price_k()))
+        return max(40, int(sum(self.rough_market_value(r) for r in stones) * 0.26 * self.price_k()))
 
     # ---------- день ----------
 

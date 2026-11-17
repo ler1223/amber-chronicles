@@ -209,6 +209,8 @@ vec3 studio_light_rgb(vec3 p, vec3 N, vec3 V, float rough, vec3 albedo) {
         vec3 spec = vec3(specular_ggx(N, V, L, rough, F0.r),
                          specular_ggx(N, V, L, rough, F0.g),
                          specular_ggx(N, V, L, rough, F0.b));
+        // У грубой/грязной поверхности нет чистого зеркального блика.
+        spec *= 1.0 - smoothstep(0.15, 0.55, rough);
         vec3 diff = albedo * (NoL / PI) * (vec3(1.0) - F0);
         outC += studio_col(i) * studio_power(i) * att * (diff + spec);
     }
@@ -337,18 +339,18 @@ void inclusions(vec3 p, vec3 d, float tmax, int ch, inout float acc, inout float
         float t1 = min(-b + sq, tmax);
         if (t1 <= t0) continue;
         float chord = t1 - t0;
-        float lit = beam * u_lcol[ch] * 1.4;
+        float lit = beam * u_lcol[ch] * 4.5;
         float surf = u_incsurf[q];
 
         if (kq < 0.5) {
             // Кристаллик: тёмное тело, яркие сколы по краям.
             float edge = 1.0 - chord / (2.0 * r + 1e-5);
-            acc += thr * lit * (0.10 + 0.55 * edge * edge);
+            acc += thr * lit * (0.18 + 2.2 * edge * edge);
             thr *= 0.10;
         } else if (kq < 1.5) {
             // Пузырёк: яркий ободок, прозрачная середина.
             float rim = pow(max(0.0, 1.0 - chord / (2.0 * r + 1e-5)), 3.0);
-            acc += thr * lit * 0.80 * rim;
+            acc += thr * lit * 2.2 * rim;
             thr *= 1.0 - 0.65 * rim;
         } else if (kq < 2.5) {
             // Перо/трещина: тонкая блестящая плоскость.
@@ -358,7 +360,7 @@ void inclusions(vec3 p, vec3 d, float tmax, int ch, inout float acc, inout float
                 float tp = dot(c - p, n) / dn;
                 if (tp > 0.0 && tp < tmax && length(p + d * tp - c) < r) {
                     float shine = pow(abs(dn), 0.5);
-                    acc += thr * lit * (0.12 + 0.5 * shine);
+                    acc += thr * lit * (0.30 + 1.2 * shine);
                     thr *= 0.45;
                 }
             }
@@ -370,8 +372,8 @@ void inclusions(vec3 p, vec3 d, float tmax, int ch, inout float acc, inout float
             float soft = clamp(impact / max(r, 1e-4), 0.0, 1.0);
             float lumpy = 0.55 + 0.45 * dirt_pattern(c * 0.23 + p * 0.08);
             a *= (0.22 + 0.78 * soft) * lumpy;
-            vec3 cloudCol = mix(u_lcol, vec3(1.0), 0.42);
-            acc += thr * beam * cloudCol[ch] * 1.15 * a;
+            vec3 cloudCol = mix(u_lcol, vec3(1.0), 0.72);
+            acc += thr * beam * cloudCol[ch] * 4.0 * a;
             thr *= 1.0 - a * 0.25;
         } else if (kq < 4.5) {
             // Шёлк: ориентированные иглы.
@@ -391,12 +393,12 @@ void inclusions(vec3 p, vec3 d, float tmax, int ch, inout float acc, inout float
                 sc += exp(-e1 * e1 / 0.00025) + exp(-e2 * e2 / 0.00025) * 0.25;
             }
             float a = 1.0 - exp(-chord * 0.010 * dens);
-            acc += thr * lit * a * (0.15 + 0.9 * sc);
+            acc += thr * lit * a * (0.30 + 1.8 * sc);
             thr *= 1.0 - a * 0.6;
         } else if (kq < 5.5) {
             // Каверна: поверхностная полость, забитая грязью.
             float dirt = 0.35 + 0.55 * surf;
-            acc += thr * lit * 0.06 * (1.0 - dirt);
+            acc += thr * lit * 0.14 * (1.0 - dirt);
             thr *= 0.35;
         } else if (kq < 6.5) {
             // Спайность: плоскость, может дать опасный скол.
@@ -405,14 +407,14 @@ void inclusions(vec3 p, vec3 d, float tmax, int ch, inout float acc, inout float
             if (abs(dn) > 1e-4) {
                 float tp = dot(c - p, n) / dn;
                 if (tp > 0.0 && tp < tmax && length(p + d * tp - c) < r) {
-                    acc += thr * lit * 0.20 * pow(abs(dn), 0.4);
+                    acc += thr * lit * 0.80 * pow(abs(dn), 0.4);
                     thr *= 0.55;
                 }
             }
         } else {
             // Внутреннее зерно: тонкие линии.
             float a = 1.0 - exp(-chord * 0.06);
-            acc += thr * lit * a * 0.25;
+            acc += thr * lit * a * 0.70;
             thr *= 1.0 - a * 0.4;
         }
     }
@@ -431,8 +433,7 @@ vec3 rough_inside(vec3 p0, vec3 rd, vec3 N, float F0, float filmT, float rough) 
         if (dot(d, d) < 0.5) continue;
         vec3 p = p0 + d * 1e-4;
         float thr = (1.0 - F0) * filmT * (0.26 + 0.34 * (1.0 - rough));
-        float entryLit = flash_at(p0);
-        float acc = thr * entryLit * u_lcol[ch] * (0.10 + 0.10 * u_damage);
+        float acc = 0.0;
         for (int b = 0; b < 4; b++) {
             float tmin = 1e9;
             int j = -1;
@@ -451,11 +452,11 @@ vec3 rough_inside(vec3 p0, vec3 rd, vec3 N, float F0, float filmT, float rough) 
             thr *= exp(-ab[ch] * tmin);
             if (u_ninc > 0) inclusions(p, d, tmin, ch, acc, thr, beam);
             // мутность нарушенного слоя внутри
-            acc += thr * beam * u_lcol[ch] * (0.02 + 0.10 * u_damage + 0.04 * rough);
+            acc += thr * beam * u_lcol[ch] * (0.02 + 0.10 * u_damage + 0.04 * rough) * tintAt(p)[ch];
             p += d * tmin;
             vec3 Nx = u_pl[j].xyz;
             if (u_kind[j] > 0.5) {
-                acc += thr * beam * u_lcol[ch] * (0.06 + 0.18 * u_grit[j]);
+                acc += thr * beam * u_lcol[ch] * (0.06 + 0.18 * u_grit[j]) * tintAt(p)[ch];
                 break;
             }
             float ci = dot(d, Nx);
@@ -465,7 +466,7 @@ vec3 rough_inside(vec3 p0, vec3 rd, vec3 N, float F0, float filmT, float rough) 
             } else {
                 float Fx = fresnel(ci, ior, 1.0);
                 vec3 out_d = refract(d, Nx, ior);
-                acc += thr * (1.0 - Fx) * env(u_rot * out_d)[ch] * 0.35;
+                acc += thr * (1.0 - Fx) * env(u_rot * out_d)[ch] * 0.06 * tintAt(p)[ch];
                 thr *= Fx;
                 d = reflect(d, Nx);
             }
@@ -510,7 +511,8 @@ vec4 trace(vec2 px) {
     float dirt = clamp(u_dirt * (0.35 + 0.65 * dirt_pattern(p0)), 0.0, 1.0);
     float film = clamp(u_film * (0.45 + 0.55 * dirt_pattern(p0 + vec3(13.0))), 0.0, 1.0);
     float wet = clamp(u_wet, 0.0, 1.0);
-    float filmT = exp(-(film * (1.0 - 0.65 * wet) * 1.8 + dirt * (1.0 - 0.50 * wet) * 0.9));
+    // Грязь — не только цвет: она реально ослабляет свет, идущий внутрь.
+    float filmT = exp(-(film * (1.0 - 0.65 * wet) * 1.8 + dirt * (1.0 - 0.50 * wet) * 1.55));
     float damage = clamp(u_damage, 0.0, 1.0);
     float polish = clamp(u_polish, 0.0, 1.0);
     float scratch = u_scratches * smoothstep(0.72, 0.98, dirt_pattern(p0 * 2.7 + vec3(5.0)));
@@ -551,7 +553,7 @@ vec4 trace(vec2 px) {
     }
 
     vec3 tint = tintAt(p0) * pleoTint(rd);
-    vec3 dirtCol = mix(vec3(0.075, 0.062, 0.050), vec3(0.40, 0.34, 0.26), dirt_pattern(p0 * 1.3));
+    vec3 dirtCol = mix(vec3(0.045, 0.035, 0.026), vec3(0.22, 0.17, 0.12), dirt_pattern(p0 * 1.3));
     vec3 col = vec3(0.0);
 
     // ---- матовая / сырая / шлифованная поверхность ----
@@ -562,30 +564,38 @@ vec4 trace(vec2 px) {
         float NoV = max(dot(N, V), 1e-4);
         float F0 = fresnel(1.0, 1.0, u_ior.y);
         float lit = flash_at(p0);
-        float dirtMask = smoothstep(0.25, 0.78, dirt_pattern(p0 * 1.7));
-        vec3 albedo = mix(tint, dirtCol * 0.62, dirt * 0.92);
+        float dirtMask = 0.38 + 0.62 * dirt_pattern(p0 * 0.9);
+        vec3 albedo = mix(tint, dirtCol * 0.55, dirt) * 0.82;
         // диффузная составляющая грязной поверхности
         vec3 diff = albedo * (lit * u_lcol * NoL / PI) * (1.0 - F0);
         // зеркальная составляющая микрофасетов
         float spec = specular_ggx(N, V, L, rough * (1.0 - 0.25 * wet), F0);
+        spec *= 1.0 - smoothstep(0.15, 0.55, rough);
         vec3 specC = u_lcol * lit * spec * (1.0 + 0.45 * wet);
         // плёнка даёт свой мягкий блик и «сальный» вид
         float filmSpec = pow(max(dot(reflect(-L, N), V), 0.0), 8.0 + 24.0 * (1.0 - rough));
-        specC += dirtCol * u_lcol * lit * filmSpec * film * 0.55;
-        specC += u_lcol * lit * scratch * 0.28;
+        specC += dirtCol * u_lcol * lit * filmSpec * film * 0.55 * (1.0 - rough);
+        // Царапины — тонкие следы, а не белые пятна.
+        specC += mix(dirtCol, u_lcol, 0.25) * lit * scratch * 0.10 * (1.0 - rough);
+        specC *= 1.0 - dirt * 0.55;
         // окружающий свет и три студийных источника вокруг камня
         vec3 amb = albedo * env(u_rot * N) * (0.10 + 0.12 * (1.0 - rough));
-        vec3 studio = studio_light_rgb(p0, N, V, rough, albedo);
+        vec3 studio = studio_light_rgb(p0, N, V, rough, albedo) * (1.0 - dirt * 0.35);
         float inside = flash_inside(p0 + N * 0.5);
-        vec3 sss = tint * u_lcol * inside * (0.10 + 0.30 * damage + 0.25 * film) * filmT;
-        // плёнка/грязь: не «краска», а рассеивающий слой
-        vec3 filmScatter = dirtCol * u_lcol * inside * (0.10 + 0.35 * dirt) * filmT;
+        // Внутреннее свечение — только от объёма, не белые пятна от грязи.
+        vec3 sss = tint * u_lcol * inside * (0.012 + 0.045 * damage) * filmT;
+        // Плёнка в основном поглощает и чуть рассеивает; она не светится.
+        vec3 filmScatter = dirtCol * u_lcol * inside * 0.012 * dirt * filmT;
         col = diff + specC + amb + studio + sss + filmScatter;
-        col *= 1.0 - dirt * 0.45 * dirtMask;
-        col = mix(col, mix(tint, vec3(0.48, 0.44, 0.37), 0.55), film * 0.24);
+        col *= 1.0 - dirt * 0.72 * dirtMask;
+        // Грязь скапливается у кромок и в углублениях.
+        col *= 1.0 - dirt * 0.30 * (1.0 - edgeK);
+        // Тонкий слой глины/пыли: не белые пятна, а тёплый матовый налёт.
+        col = mix(col, dirtCol * (0.42 + 0.30 * dirt_pattern(p0 * 1.4)), dirt * 0.55);
+        col = mix(col, mix(tint, vec3(0.35, 0.31, 0.25), 0.65), film * 0.30);
         // Внутренний свет: именно он проявляет включения в сырье.
         vec3 inner = rough_inside(p0, rd, N, F0, filmT, rough);
-        col += inner * (0.55 + 0.35 * (1.0 - rough));
+        col += inner * (0.16 + 0.14 * (1.0 - rough));
         col *= mix(0.72, 1.0, edgeK);
         return vec4(col, 1.0);
     }
@@ -670,8 +680,8 @@ vec4 trace(vec2 px) {
     }
 
     // мутность: рассеяние на плёнке и нарушенном слое, а не серый туман
-    float haze = clamp(dirt * 0.20 + film * 0.12 + damage * 0.08, 0.0, 0.65);
-    vec3 hazeCol = mix(tint, dirtCol, clamp(dirt * 0.7, 0.0, 0.7)) * (0.18 + 0.35 * u_env);
+    float haze = clamp(dirt * 0.16 + film * 0.10 + damage * 0.06, 0.0, 0.55);
+    vec3 hazeCol = mix(tint, dirtCol, clamp(dirt * 0.7, 0.0, 0.7)) * (0.10 + 0.18 * u_env);
     col = mix(col, hazeCol, haze);
     col *= mix(0.65, 1.0, edgeK);
     return vec4(col, 1.0);
