@@ -235,6 +235,8 @@ class Workshop:
             "value": int(value),
             "shape": cutter.shape(),
             "surface": surface,
+            "cf": cutter.cfield(),
+            "cz": cutter.final_colors(),
         }
 
     def evaluate(self, client, gem):

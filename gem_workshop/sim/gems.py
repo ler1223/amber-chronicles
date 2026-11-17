@@ -483,16 +483,46 @@ def roll_incl(xd, gid, rng, premium=False):
         lo, hi = {"crystal": (0.02, 0.08), "bubble": (0.015, 0.05), "feather": (0.05, 0.14),
                   "cloud": (0.04, 0.1), "cavity": (0.025, 0.075), "cleavage": (0.04, 0.12),
                   "graining": (0.02, 0.06)}[k]
-        inc = {"k": k, "p": p_, "r": round(rng.uniform(lo, hi), 3)}
-        if k in ("feather", "cleavage"):
-            v = [rng.gauss(0, 1) for _ in range(3)]
-            m = math.sqrt(sum(x * x for x in v)) or 1.0
-            inc["n"] = [round(x / m, 4) for x in v]
-        if k == "cavity":
-            inc["surf"] = 1.0
-        elif k == "feather" and rng.random() < 0.35:
-            inc["surf"] = 1.0
-        out.append(inc)
+        base_r = rng.uniform(lo, hi)
+
+        # Облака и кристаллики — не один шар, а маленькая ассоциация.
+        # Так включение читается как природное образование, а не примитив.
+        copies = 1
+        if k == "cloud":
+            copies = rng.choice((2, 2, 3, 3, 4))
+        elif k == "crystal":
+            copies = rng.choice((1, 2, 2))
+        elif k == "feather":
+            copies = rng.choice((1, 1, 2))
+
+        for j in range(copies):
+            spread = base_r * (0.75 if k == "cloud" else 0.35)
+            jitter = (rng.uniform(-spread, spread), rng.uniform(-spread, spread),
+                      rng.uniform(-spread, spread)) if j > 0 else (0.0, 0.0, 0.0)
+            inc = {
+                "k": k,
+                "p": [round(p_[0] + jitter[0], 3), round(p_[1] + jitter[1], 3),
+                      round(p_[2] + jitter[2], 3)],
+                "r": round(base_r * (rng.uniform(0.45, 0.8) if j else 1.0), 3),
+            }
+            if k in ("feather", "cleavage"):
+                v = [rng.gauss(0, 1) for _ in range(3)]
+                m = math.sqrt(sum(x * x for x in v)) or 1.0
+                inc["n"] = [round(x / m, 4) for x in v]
+            if k in ("crystal", "cloud", "bubble"):
+                v = [rng.gauss(0, 1) for _ in range(3)]
+                m = math.sqrt(sum(x * x for x in v)) or 1.0
+                inc["axis"] = [round(x / m, 4) for x in v]
+                inc["aspect"] = 1.0 if k == "bubble" else round(rng.uniform(0.55, 1.55), 2)
+            if k == "cavity":
+                inc["surf"] = 1.0
+            elif k == "feather" and rng.random() < 0.35:
+                inc["surf"] = 1.0
+            out.append(inc)
+            if len(out) >= 15:
+                break
+        if len(out) >= 15:
+            break
     if rng.random() < gd.get("silk", 0.0):              # шёлк (иглы рутила): мутит, но даёт звезду в кабошоне
         out.append({"k": "silk", "p": [0.0, 0.0, 0.0], "r": 0.55, "d": round(rng.uniform(0.35, 1.0), 2)})
     return out

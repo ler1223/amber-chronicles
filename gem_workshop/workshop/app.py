@@ -497,7 +497,7 @@ class InspectScene(Scene):
             target = (wx * 0.08, wy * 0.08, 0.0)
             is_rough = "q" not in self.stone
             cone = 32.0
-            intensity = 8.5 if is_rough else 1.5
+            intensity = 4.5 if is_rough else 0.25
             env = 1.15 if is_rough else 1.02
         elif mode == "grazing":
             pos = (wx - far * 1.55, wy - far * 0.55, z * 0.55)

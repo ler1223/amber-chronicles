@@ -24,6 +24,7 @@ uniform float u_time;
 // ---- включения ----
 uniform vec4 u_inc[16];      // центр, радиус
 uniform vec4 u_inck[16];     // тип, нормаль/плотность
+uniform vec4 u_incaxis[16];  // ось эллипсоида, вытянутость
 uniform float u_incsurf[16]; // 1 — включение выходит на поверхность
 uniform int u_ninc;
 
@@ -281,6 +282,20 @@ float fieldT(vec3 p) {
     vec3 q = u_cfA * p + u_cfb;
     float s = 0.0;
     for (int i = 0; i < 4; i++) s += u_wa[i] * sin(dot(u_wk[i].xyz, q) + u_wk[i].w);
+
+    // Внутренняя структура цвета: рост кристалла идёт слоями/зонами.
+    // Это не «текстура на поверхности», а объёмное поле внутри камня.
+    vec3 ax = normalize(u_caxis + vec3(1e-5));
+    float along = dot(p, ax);
+    vec3 perp = p - ax * along;
+    float rad = length(perp);
+    float ang = atan(perp.y, perp.x);
+    float growth = sin(rad * 0.145 + along * 0.035 + 1.2)
+                 + 0.52 * sin(rad * 0.31 - along * 0.075 + 0.4);
+    float sector = 0.28 * sin(ang * 3.0 + rad * 0.055 + 0.9);
+    float core = -0.75 * exp(-length(p) / 24.0);
+    s += growth * 0.58 + sector + core;
+
     float t = 0.5 + 0.5 * s / (u_wa.x + u_wa.y + u_wa.z + u_wa.w) * u_cfg.x;
     t = 0.5 + 0.5 * tanh(u_cfg.y * (t - 0.5) * 2.0) / tanh(u_cfg.y);
     return clamp(t, 0.0, 1.0);
@@ -327,26 +342,36 @@ void inclusions(vec3 p, vec3 d, float tmax, int ch, inout float acc, inout float
         float r = u_inc[q].w;
         float kq = u_inck[q].x;
         vec3 oc = p - c;
-        float b = dot(oc, d);
-        float disc = b * b - (dot(oc, oc) - r * r);
+        // Включение — вытянутый эллипсоид, а не всегда шар.
+        vec3 ax = normalize(u_incaxis[q].xyz + vec3(1e-5));
+        float aspect = max(0.35, u_incaxis[q].w);
+        vec3 tan1 = normalize(cross(ax, abs(ax.x) < 0.9 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0)));
+        vec3 tan2 = cross(ax, tan1);
+        vec3 ocL = vec3(dot(oc, tan1), dot(oc, tan2), dot(oc, ax) / aspect);
+        vec3 dL = vec3(dot(d, tan1), dot(d, tan2), dot(d, ax) / aspect);
+        float b = dot(ocL, dL);
+        float disc = b * b - (dot(ocL, ocL) - r * r);
         if (disc <= 0.0) continue;
         float sq = sqrt(disc);
         float t0 = max(-b - sq, 0.0);
         float t1 = min(-b + sq, tmax);
         if (t1 <= t0) continue;
-        float chord = t1 - t0;
-        float lit = beam * u_lcol[ch] * 4.5;
+        float chord = (t1 - t0) * length(dL);
+        float lit = beam * u_lcol[ch] * 3.0;
         float surf = u_incsurf[q];
 
         if (kq < 0.5) {
-            // Кристаллик: тёмное тело, яркие сколы по краям.
+            // Кристаллик: не бильярдный шар, а угловатое тело с блеском
+            // по сколам. Угловая модуляция читается как мини-огранка.
             float edge = 1.0 - chord / (2.0 * r + 1e-5);
-            acc += thr * lit * (0.18 + 2.2 * edge * edge);
+            float ang = atan(oc.y, oc.x);
+            float facet = 0.62 + 0.38 * abs(sin(ang * 3.0 + oc.z * 0.19 + 0.4));
+            acc += thr * lit * (0.18 + 1.8 * edge * edge) * facet;
             thr *= 0.10;
         } else if (kq < 1.5) {
             // Пузырёк: яркий ободок, прозрачная середина.
             float rim = pow(max(0.0, 1.0 - chord / (2.0 * r + 1e-5)), 3.0);
-            acc += thr * lit * 2.2 * rim;
+            acc += thr * lit * 1.4 * rim;
             thr *= 1.0 - 0.65 * rim;
         } else if (kq < 2.5) {
             // Перо/трещина: тонкая блестящая плоскость.
@@ -368,9 +393,9 @@ void inclusions(vec3 p, vec3 d, float tmax, int ch, inout float acc, inout float
             float soft = clamp(impact / max(r, 1e-4), 0.0, 1.0);
             float lumpy = 0.55 + 0.45 * dirt_pattern(c * 0.23 + p * 0.08);
             a *= (0.22 + 0.78 * soft) * lumpy;
-            vec3 cloudCol = mix(u_lcol, vec3(1.0), 0.72);
-            acc += thr * beam * cloudCol[ch] * 4.0 * a;
-            thr *= 1.0 - a * 0.25;
+            vec3 cloudCol = mix(u_lcol, vec3(1.0), 0.35);
+            acc += thr * beam * cloudCol[ch] * 1.35 * a;
+            thr *= 1.0 - a * 0.50;
         } else if (kq < 4.5) {
             // Шёлк: ориентированные иглы.
             float dens = u_inck[q].y;

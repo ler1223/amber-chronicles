@@ -464,6 +464,7 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
 
     inc = np.zeros((16, 4), np.float32)
     ink = np.zeros((16, 4), np.float32)
+    incaxis = np.zeros((16, 4), np.float32)
     incsurf = np.zeros(16, np.float32)
     kinds = {"crystal": 0.0, "bubble": 1.0, "feather": 2.0, "cloud": 3.0, "silk": 4.0,
              "cavity": 5.0, "cleavage": 6.0, "graining": 7.0}
@@ -474,10 +475,13 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
         if i["k"] == "silk":                       # шёлк: в .y — густота игл
             n = (i.get("d", 0.6), 0.0, 0.0)
         ink[m] = (kinds.get(i["k"], 0.0), n[0], n[1], n[2])
+        iax = i.get("axis") or (0.0, 0.0, 1.0)
+        incaxis[m] = (iax[0], iax[1], iax[2], float(i.get("aspect", 1.0)))
         incsurf[m] = float(i.get("surf", 0.0))
         m += 1
     _set(prog, "u_inc", data=inc.tobytes())
     _set(prog, "u_inck", data=ink.tobytes())
+    _set(prog, "u_incaxis", data=incaxis.tobytes())
     _set(prog, "u_incsurf", data=incsurf.tobytes())
     _set(prog, "u_ninc", m)
     _set(prog, "u_star", float(star or 0.0))
