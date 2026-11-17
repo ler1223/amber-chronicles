@@ -134,20 +134,29 @@ class Workshop:
                 cut = self.rng.choice(self.known_cuts)
                 min_ct = round(max(0.35, min(2.6, self.rng.uniform(0.5, 2.1))), 2)
                 min_q = round(self.rng.uniform(0.78, 1.10), 2)
-                est = GM.estimate(self.xd, gid, min_ct, 0.5, min_q, 0.9, cut=cut)
+                min_col = round(self.rng.uniform(0.32, 0.68), 2)
+                min_cl = round(self.rng.uniform(0.40, 0.82), 2)
+                est = GM.estimate(self.xd, gid, min_ct, min_col, min_cl, min_q, cut=cut)
                 budget = max(90, int(est * self.rng.uniform(1.15, 1.65)))
                 desc = (f"Нужен {self.gem_name(gid).lower()}, огранка "
                         f"«{self.cut_name(cut)}», от {min_ct:.2f} ct, "
-                        f"качество не ниже {min_q:.2f}")
+                        f"цвет не ниже {GM.color_word(self.xd, min_col)}, "
+                        f"чистота не ниже {GM.grade(self.xd, min_cl).lower()}, "
+                        f"качество от {min_q:.2f}")
             else:
                 gid = None
                 cut = None
                 min_ct = round(self.rng.uniform(0.4, 1.8), 2)
                 min_q = round(self.rng.uniform(0.70, 1.02), 2)
-                est = GM.estimate(self.xd, self.rng.choice(self.gem_ids), min_ct, 0.5, min_q, 0.9)
+                min_col = round(self.rng.uniform(0.25, 0.60), 2)
+                min_cl = round(self.rng.uniform(0.35, 0.75), 2)
+                est = GM.estimate(self.xd, self.rng.choice(self.gem_ids), min_ct,
+                                  min_col, min_cl, min_q)
                 budget = max(80, int(est * self.rng.uniform(1.1, 1.5)))
                 desc = (f"Ищет готовый камень от {min_ct:.2f} ct, "
-                        f"качество не ниже {min_q:.2f}")
+                        f"цвет не ниже {GM.color_word(self.xd, min_col)}, "
+                        f"чистота не ниже {GM.grade(self.xd, min_cl).lower()}, "
+                        f"качество от {min_q:.2f}")
             out.append({
                 "id": f"c{self.day}_{i}",
                 "name": name,
@@ -156,6 +165,8 @@ class Workshop:
                 "cut": cut,
                 "min_ct": min_ct,
                 "min_q": min_q,
+                "min_col": min_col,
+                "min_cl": min_cl,
                 "budget": budget,
                 "desc": desc,
                 "served": False,
@@ -233,10 +244,15 @@ class Workshop:
                 return "wrong", 0
         size_ok = gem.get("size", 0) >= client["min_ct"]
         q_ok = gem.get("q", 0) >= client["min_q"]
-        if gem.get("size", 0) < client["min_ct"] * 0.8 or gem.get("q", 0) < client["min_q"] * 0.9:
+        color_ok = gem.get("col", 1.0) >= client.get("min_col", 0.0) * 0.92
+        clarity_ok = gem.get("cl", 1.0) >= client.get("min_cl", 0.0) * 0.92
+        if (gem.get("size", 0) < client["min_ct"] * 0.8
+                or gem.get("q", 0) < client["min_q"] * 0.9
+                or gem.get("col", 1.0) < client.get("min_col", 0.0) * 0.75
+                or gem.get("cl", 1.0) < client.get("min_cl", 0.0) * 0.75):
             return "reject", 0
         offer = min(client["budget"], int(gem.get("value", 0)))
-        if not (size_ok and q_ok):
+        if not (size_ok and q_ok and color_ok and clarity_ok):
             return "discount", max(1, int(offer * 0.7))
         return "ok", max(1, offer)
 

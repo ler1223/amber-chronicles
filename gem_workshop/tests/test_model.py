@@ -46,6 +46,15 @@ def test_wrong_gem_is_rejected():
     assert status == "wrong" and offer == 0
 
 
+def test_client_rejects_bad_color_or_clarity():
+    w = Workshop(seed=4)
+    c = next(c for c in w.clients if c["kind"] == "custom")
+    gem = {"id": c["gem_id"], "cut": c["cut"], "size": c["min_ct"] + 0.1,
+           "q": c["min_q"] + 0.05, "col": 0.0, "cl": 0.0, "value": 100}
+    status, offer = w.evaluate(c, gem)
+    assert status == "reject" and offer == 0
+
+
 def test_save_and_load(tmp_path):
     w = Workshop(seed=5)
     w.buy_stock(0)
