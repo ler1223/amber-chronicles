@@ -864,6 +864,24 @@ def _mm(a, b):
 
 
 _GLOWS = {}
+_LAMPS = {}
+
+
+def _lamp_glow(radius, color):
+    """Мягкое пятно студийного источника: три лампы вокруг камня."""
+    key = (radius, tuple(color))
+    if key not in _LAMPS:
+        d = radius * 2
+        s = pygame.Surface((d, d))
+        s.fill((0, 0, 0))
+        for k in range(18, 0, -1):
+            t = k / 18.0
+            a = int(40 * (1.0 - t) ** 2)
+            c = (color[0] * a // 255, color[1] * a // 255, color[2] * a // 255)
+            pygame.draw.circle(s, c, (radius, radius), max(1, int(radius * t)))
+        pygame.draw.circle(s, color, (radius, radius), max(2, radius // 14))
+        _LAMPS[key] = s
+    return _LAMPS[key]
 
 
 def _glow(size):
@@ -938,6 +956,19 @@ class Inspector:
         pygame.draw.rect(surf, (12, 10, 10), rect, border_radius=10)
         glow = _glow(rect.size)                          # тёмный бархат и мягкое пятно света под камнем
         surf.blit(glow, rect, special_flags=pygame.BLEND_RGB_ADD)
+        # Три видимых студийных источника: ключевой, заполняющий и контровой.
+        # Это те же три света, что считаются в шейдере.
+        lamps = (
+            (0.12, 0.43, (255, 205, 145), 0.16),
+            (0.88, 0.50, (150, 195, 255), 0.14),
+            (0.50, 0.12, (215, 225, 255), 0.11),
+        )
+        for fx, fy, col, rr in lamps:
+            rad = max(18, int(min(rect.w, rect.h) * rr))
+            lamp = _lamp_glow(rad, col)
+            x = int(rect.x + rect.w * fx)
+            y = int(rect.y + rect.h * fy)
+            surf.blit(lamp, (x - rad, y - rad), special_flags=pygame.BLEND_RGB_ADD)
         pygame.draw.rect(surf, (90, 70, 46), rect, 2, border_radius=10)
         far = max((G3.dot(p, p) for f in faces for p in f["pts"]), default=1.0) ** 0.5
         if mm:                                           # поле зрения ≈ 12 мм (колесо — до 2 мм)

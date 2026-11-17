@@ -168,6 +168,54 @@ float specular_ggx(vec3 N, vec3 V, vec3 L, float rough, float F0) {
 }
 
 // ============================================================
+//  Три студийных источника вокруг камня.
+//  Они не «подсветка фона», а физические точки в мире: ключевой,
+//  заполняющий и контровой. Поэтому камень не проваливается в чёрное
+//  пятно, даже когда фонарик выключен.
+// ============================================================
+vec3 studio_pos(int i) {
+    if (i == 0) return vec3(-260.0, -170.0, 330.0);   // ключевой, слева-снизу
+    if (i == 1) return vec3( 300.0, -120.0, 260.0);   // заполняющий, справа
+    return vec3(  20.0,  280.0, -230.0);               // контровой, сверху-сзади
+}
+
+vec3 studio_col(int i) {
+    if (i == 0) return vec3(1.00, 0.82, 0.62);         // тёплый
+    if (i == 1) return vec3(0.62, 0.78, 1.00);         // холодный
+    return vec3(0.88, 0.92, 1.00);                     // нейтральный
+}
+
+float studio_power(int i) {
+    if (i == 0) return 2.4;
+    if (i == 1) return 1.55;
+    return 1.8;
+}
+
+vec3 studio_light_rgb(vec3 p, vec3 N, vec3 V, float rough, vec3 albedo) {
+    vec3 outC = vec3(0.0);
+    for (int i = 0; i < 3; i++) {
+        // Мировые координаты → оси камня.
+        vec3 lp = transpose(u_rot) * studio_pos(i);
+        vec3 Lv = lp - p;
+        float dist = length(Lv);
+        if (dist < 1e-3) continue;
+        vec3 L = Lv / dist;
+        float NoL = max(dot(N, L), 0.0);
+        if (NoL <= 0.0) continue;
+        float att = (420.0 * 420.0) / (dist * dist + 420.0 * 420.0 * 0.10);
+        vec3 F0 = vec3(fresnel(1.0, 1.0, u_ior.r),
+                       fresnel(1.0, 1.0, u_ior.g),
+                       fresnel(1.0, 1.0, u_ior.b));
+        vec3 spec = vec3(specular_ggx(N, V, L, rough, F0.r),
+                         specular_ggx(N, V, L, rough, F0.g),
+                         specular_ggx(N, V, L, rough, F0.b));
+        vec3 diff = albedo * (NoL / PI) * (vec3(1.0) - F0);
+        outC += studio_col(i) * studio_power(i) * att * (diff + spec);
+    }
+    return outC;
+}
+
+// ============================================================
 //  Фонарик
 // ============================================================
 float flash_at(vec3 p) {
@@ -525,13 +573,14 @@ vec4 trace(vec2 px) {
         float filmSpec = pow(max(dot(reflect(-L, N), V), 0.0), 8.0 + 24.0 * (1.0 - rough));
         specC += dirtCol * u_lcol * lit * filmSpec * film * 0.55;
         specC += u_lcol * lit * scratch * 0.28;
-        // окружающий свет и лёгкая подсветка изнутри
+        // окружающий свет и три студийных источника вокруг камня
         vec3 amb = albedo * env(u_rot * N) * (0.10 + 0.12 * (1.0 - rough));
+        vec3 studio = studio_light_rgb(p0, N, V, rough, albedo);
         float inside = flash_inside(p0 + N * 0.5);
         vec3 sss = tint * u_lcol * inside * (0.10 + 0.30 * damage + 0.25 * film) * filmT;
         // плёнка/грязь: не «краска», а рассеивающий слой
         vec3 filmScatter = dirtCol * u_lcol * inside * (0.10 + 0.35 * dirt) * filmT;
-        col = diff + specC + amb + sss + filmScatter;
+        col = diff + specC + amb + studio + sss + filmScatter;
         col *= 1.0 - dirt * 0.45 * dirtMask;
         col = mix(col, mix(tint, vec3(0.48, 0.44, 0.37), 0.55), film * 0.24);
         // Внутренний свет: именно он проявляет включения в сырье.
@@ -550,6 +599,10 @@ vec4 trace(vec2 px) {
         vec3 L = normalize(u_lpos - p0);
         float spec = specular_ggx(N, -rd, L, max(rough, 0.03 + 0.08 * (1.0 - polish)), fresnel(1.0, 1.0, ior));
         float acc = F * env(u_rot * reflect(rd, N))[ch] + spec * lit * u_lcol[ch] * (1.0 + 0.35 * wet);
+        // три студийных источника: камень не должен быть чёрным пятном
+        vec3 studio = studio_light_rgb(p0, N, -rd, max(rough, 0.03 + 0.08 * (1.0 - polish)),
+                                       dirtCol * dirt * 0.35);
+        acc += studio[ch];
         // грязь на полированной грани: слабый диффузный слой
         acc += dirtCol[ch] * lit * dirt * 0.12;
         acc += u_lcol[ch] * lit * scratch * 0.16;
