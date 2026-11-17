@@ -414,8 +414,7 @@ class InspectScene(Scene):
         self.insp = JV.Inspector()
         self.flash_on = False
         self.flash_xy = (0.5, 0.5)
-        self.flash_mode = "direct"      # direct | grazing | dark
-        self.cleaned = False
+        self.flash_mode = "back"        # back | front | grazing
 
     @property
     def stone(self):
@@ -438,21 +437,12 @@ class InspectScene(Scene):
                 self.app.switch(HubScene(self.app, tab="supply"))
         elif action == "flash":
             self.flash_on = not self.flash_on
-        elif action == "clean":
-            self.cleaned = not self.cleaned
-            if self.cleaned and self.kind not in ("stock", "lot"):
-                w.clean_stone(self.stone)
-                if self.kind == "rough":
-                    self.price = int(round(w.rough_market_value(self.stone)))
-                elif "value" in self.stone:
-                    self.price = int(self.stone["value"])
         elif isinstance(action, tuple) and action[0] == "mode":
             self.flash_mode = action[1]
         elif isinstance(action, tuple) and action[0] == "step":
             self.i = (self.i + action[1]) % max(1, len(self.stones))
             self.insp = JV.Inspector()
             self.flash_xy = (0.5, 0.5)
-            self.cleaned = False
 
     def handle(self, ev):
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
@@ -462,11 +452,8 @@ class InspectScene(Scene):
             self.flash_on = not self.flash_on
             return
         if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_1, pygame.K_2, pygame.K_3):
-            self.flash_mode = {pygame.K_1: "direct", pygame.K_2: "grazing", pygame.K_3: "dark"}[ev.key]
+            self.flash_mode = {pygame.K_1: "back", pygame.K_2: "front", pygame.K_3: "grazing"}[ev.key]
             self.flash_on = True
-            return
-        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_c:
-            self.act("clean")
             return
         if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
             return
@@ -482,7 +469,7 @@ class InspectScene(Scene):
         self.insp.update(dt)
 
     def _surface_for(self, rough):
-        return SURF.for_stone(self.stone, rough=rough, cleaned=self.cleaned)
+        return SURF.for_stone(self.stone, rough=rough, cleaned=True)
 
     def _light_for(self, faces, mm):
         """Фонарик в мировых координатах, затем перевод в оси камня.
@@ -501,18 +488,20 @@ class InspectScene(Scene):
         wy = (cy - view.centery) / scale
         z = far * 3.6 + 60.0
         mode = self.flash_mode
-        if mode == "grazing":
+        if mode == "back":
+            # Основной режим: свет сзади, сквозь камень. Он должен
+            # показывать внутренние грани и полное внутреннее отражение.
+            pos = (wx * 0.55, wy * 0.55, -z)
+            target = (wx * 0.18, wy * 0.18, 0.0)
+            cone, intensity, env = 30.0, 3.8, 1.00
+        elif mode == "grazing":
             pos = (wx - far * 1.55, wy - far * 0.55, z * 0.55)
             target = (wx, wy, 0.0)
-            cone, intensity, env = 12.0, 2.8, 0.66
-        elif mode == "dark":
-            pos = (wx, wy + far * 1.45, -z * 0.72)
-            target = (wx, wy, 0.0)
-            cone, intensity, env = 22.0, 3.2, 0.50
+            cone, intensity, env = 14.0, 3.4, 0.82
         else:
             pos = (wx, wy, z)
             target = (wx, wy, 0.0)
-            cone, intensity, env = 8.0, 2.4, 0.74
+            cone, intensity, env = 10.0, 3.0, 0.90
         dx, dy, dz = target[0] - pos[0], target[1] - pos[1], target[2] - pos[2]
         ln = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
         direction = (dx / ln, dy / ln, dz / ln)
@@ -537,7 +526,7 @@ class InspectScene(Scene):
         cy = int(r.y + self.flash_xy[1] * r.h)
         pygame.draw.circle(surf, (235, 205, 145), (cx, cy), 12, 1)
         pygame.draw.circle(surf, (120, 95, 60), (cx, cy), 3, 1)
-        mode = {"direct": "прямой", "grazing": "боковой", "dark": "тёмный"}.get(self.flash_mode, self.flash_mode)
+        mode = {"back": "сзади", "front": "прямой", "grazing": "боковой"}.get(self.flash_mode, self.flash_mode)
         U.text(surf, mode, (cx + 16, cy - 7), 11, U.DIM)
 
     def draw(self, surf):
@@ -612,26 +601,22 @@ class InspectScene(Scene):
                (r.x + 18, y), 20, U.GOLD, True)
         cl = GM.rough_clarity(w.xd, self.stone) if rough else self.stone.get("cl", 1.0)
         n_inc = len([i for i in (incl or []) if i.get("k") != "silk"])
-        surf_loss = max(0.0, 1.0 - SURF.value_factor(surface))
         cl_loss = max(0.0, 1.0 - GM.k_clarity(w.xd, cl) / max(1e-6, GM.k_clarity(w.xd, 1.0)))
         U.text(surf, f"чистота: {GM.grade(w.xd, cl).lower()} · включения: {n_inc} · "
-                     f"грязь −{surf_loss * 100:.0f}% · примеси −{cl_loss * 100:.0f}%",
+                     f"примеси −{cl_loss * 100:.0f}%",
                (r.x + 18, y + 26), 11, U.DIM)
-        U.text(surf, "Фонарик — основной способ оценки: включите F и ведите лучом.",
+        U.text(surf, "Фонарик сзади — просвет и внутреннее преломление. F — включить.",
                (r.x + 18, r.bottom - 122), 12, U.GREEN if self.flash_on else U.GOLD)
-        U.text(surf, "ЛКМ — вращать камень · колесо — приблизить · C — очистить",
+        U.text(surf, "ЛКМ — вращать камень · колесо — приблизить",
                (r.x + 18, r.bottom - 106), 12, U.DIM)
-        # Режимы света: прямой, скользящий, тёмнопольный.
-        modes = (("direct", "1 Прямой"), ("grazing", "2 Боковой"), ("dark", "3 Тёмный"))
+        # Режимы света: сзади (основной), прямой, боковой.
+        modes = (("back", "1 Сзади"), ("front", "2 Прямой"), ("grazing", "3 Боковой"))
         for k, (key, label) in enumerate(modes):
             self.button(surf, pygame.Rect(r.x + 18 + k * 146, r.bottom - 154, 140, 26), label,
                         ("mode", key), True,
                         U.GOLD if self.flash_mode == key else U.BLUE, True)
         self.button(surf, pygame.Rect(r.x + 18, r.bottom - 76, 190, 30), "Фонарик (F)",
                     "flash", True, U.GOLD if self.flash_on else U.BLUE, True)
-        self.button(surf, pygame.Rect(r.x + 224, r.bottom - 76, 190, 30),
-                    "Вернуть грязь" if self.cleaned else "Очистить (C)",
-                    "clean", True, U.GREEN if self.cleaned else U.BLUE, True)
         if self.can_buy:
             self.button(surf, pygame.Rect(r.x + 18, r.bottom - 38, 190, 26), "Купить",
                         "buy", w.money >= self.price, U.GREEN, True)

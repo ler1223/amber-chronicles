@@ -451,8 +451,9 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
     # --- слоистая поверхность ---
     surface = surface or {}
     _set(prog, "u_rough", float(surface.get("roughness", 0.08)))
-    _set(prog, "u_dirt", float(surface.get("dirt", 0.08)))
-    _set(prog, "u_film", float(surface.get("film", 0.05)))
+    # Грязь полностью убрана из игры: камень всегда чистый.
+    _set(prog, "u_dirt", 0.0)
+    _set(prog, "u_film", 0.0)
     _set(prog, "u_damage", float(surface.get("damage", 0.03)))
     _set(prog, "u_polish", float(surface.get("polish", 0.9)))
     _set(prog, "u_wet", float(surface.get("wet", 0.0)))

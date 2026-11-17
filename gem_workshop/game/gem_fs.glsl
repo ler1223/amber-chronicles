@@ -467,6 +467,7 @@ vec3 rough_inside(vec3 p0, vec3 rd, vec3 N, float F0, float filmT, float rough) 
                 float Fx = fresnel(ci, ior, 1.0);
                 vec3 out_d = refract(d, Nx, ior);
                 acc += thr * (1.0 - Fx) * env(u_rot * out_d)[ch] * 0.06 * tintAt(p)[ch];
+                acc += thr * (1.0 - Fx) * flash_at(p) * u_lcol[ch] * 0.22 * tintAt(p)[ch];
                 thr *= Fx;
                 d = reflect(d, Nx);
             }
@@ -665,10 +666,12 @@ vec4 trace(vec2 px) {
             } else {
                 float Fx = fresnel(ci, ior, 1.0);
                 vec3 out_d = refract(d, Nx, ior);
-                acc += thr * (1.0 - Fx) * env(u_rot * out_d)[ch];
-                // на выходе фонарик тоже может дать блик
+                // Задний фонарик: свет, прошедший через камень и вышедший
+                // через дальнюю грань. Это и есть структура внутреннего
+                // преломления, а не просто подсветка фона.
                 float outLit = flash_at(p);
-                acc += thr * (1.0 - Fx) * outLit * u_lcol[ch] * dirt * 0.04;
+                acc += thr * (1.0 - Fx) * env(u_rot * out_d)[ch] * 0.72;
+                acc += thr * (1.0 - Fx) * outLit * u_lcol[ch] * 0.90;
                 thr *= Fx;
                 d = reflect(d, Nx);
             }

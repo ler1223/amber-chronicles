@@ -29,22 +29,16 @@ def rough_state(stone, cleaned=False):
     b = _seed01(stone, 2)
     c = _seed01(stone, 3)
     s = {
-        "stage": "rough",
+        "stage": "clean_rough",
         "roughness": _clamp(0.72 + 0.22 * a),
-        "dirt": _clamp(0.55 + 0.35 * b),
-        "film": _clamp(0.32 + 0.34 * c),
-        "damage": _clamp(0.18 + 0.24 * a),
-        "polish": _clamp(0.04 + 0.10 * b),
+        "dirt": 0.0,
+        "film": 0.0,
+        "damage": _clamp(0.08 + 0.14 * a),
+        "polish": _clamp(0.04 + 0.08 * b),
         "wet": 0.0,
-        "scratches": _clamp(0.30 + 0.30 * c),
-        "cleaned": False,
+        "scratches": _clamp(0.12 + 0.16 * c),
+        "cleaned": True,
     }
-    if cleaned:
-        s["dirt"] *= 0.12
-        s["film"] *= 0.18
-        s["wet"] = 0.0
-        s["cleaned"] = True
-        s["stage"] = "cleaned_rough"
     return s
 
 
@@ -56,24 +50,21 @@ def cut_state(stone, cleaned=False):
     if isinstance(stored, dict):
         s = dict(stored)
         s.setdefault("stage", "polished")
+        s["dirt"] = 0.0
+        s["film"] = 0.0
+        s["cleaned"] = True
     else:
         s = {
             "stage": "polished" if q > 0.36 else "prepolished",
             "roughness": _clamp(0.10 - 0.07 * q + 0.04),
-            "dirt": _clamp(0.08 + 0.06 * (1.0 - q)),
-            "film": _clamp(0.04 + 0.04 * (1.0 - q)),
+            "dirt": 0.0,
+            "film": 0.0,
             "damage": _clamp(0.02 + 0.10 * (1.0 - q)),
             "polish": _clamp(0.45 + 0.55 * q),
             "wet": 0.0,
             "scratches": _clamp(0.10 + 0.35 * (1.0 - q)),
-            "cleaned": False,
+            "cleaned": True,
         }
-    if cleaned:
-        s["dirt"] *= 0.10
-        s["film"] *= 0.20
-        s["wet"] = 0.0
-        s["cleaned"] = True
-        s["stage"] = "cleaned"
     return s
 
 
@@ -104,13 +95,13 @@ def from_cutter(cutter):
     return {
         "stage": "polished" if q > 0.36 else "prepolished",
         "roughness": _clamp(0.06 + 0.16 * (1.0 - q) + 0.08 * grit),
-        "dirt": _clamp(0.10 + 0.08 * (1.0 - q) + 0.06 * (1.0 - avg_finish)),
-        "film": _clamp(0.04 + 0.05 * (1.0 - q)),
+        "dirt": 0.0,
+        "film": 0.0,
         "damage": _clamp(0.03 + 0.16 * (1.0 - q) + 0.07 * grit),
         "polish": _clamp(0.35 + 0.65 * q),
         "wet": 0.0,
         "scratches": _clamp(0.08 + 0.35 * (1.0 - q) + 0.15 * grit),
-        "cleaned": False,
+        "cleaned": True,
     }
 
 
@@ -118,11 +109,9 @@ def diagnosis(surface, rough=False):
     """Короткий человеческий диагноз, а не таблица характеристик."""
     if not surface:
         return ["Поверхность не определена."]
+    if rough:
+        return ["Сырьё: природная поверхность, без грязи."]
     out = []
-    if surface.get("dirt", 0) > 0.30:
-        out.append("Плёнка грязи/масла: поверхностная мутность, можно снять чисткой.")
-    if surface.get("film", 0) > 0.20:
-        out.append("Тонкая плёнка рассеивает свет; часть блеска потеряна.")
     if surface.get("damage", 0) > 0.18:
         out.append("Под поверхностью нарушенный слой — нужна более глубокая шлифовка.")
     if surface.get("roughness", 0) > 0.30:
@@ -130,9 +119,7 @@ def diagnosis(surface, rough=False):
     if surface.get("scratches", 0) > 0.35:
         out.append("Заметны следы абразива/царапины; полировка неполная.")
     if not out:
-        out.append("Поверхность ровная; мутность, если есть, идёт из объёма.")
-    if rough:
-        out.append("Сырьё: корка и глина могут скрывать включения у поверхности.")
+        out.append("Поверхность чистая; мутность, если есть, идёт из объёма.")
     return out
 
 
@@ -141,7 +128,6 @@ def value_factor(surface):
     if not surface:
         return 1.0
     return max(0.55, 1.0
-               - 0.18 * surface.get("dirt", 0.0)
                - 0.12 * surface.get("damage", 0.0)
                - 0.08 * (1.0 - surface.get("polish", 0.0))
                - 0.06 * surface.get("scratches", 0.0))
@@ -152,10 +138,9 @@ def short_line(surface):
         return "поверхность: —"
     stage = surface.get("stage", "?")
     names = {
-        "rough": "сырьё", "cleaned_rough": "сырьё, очищено",
+        "rough": "сырьё", "clean_rough": "сырьё, чистое",
         "prepolished": "предполировка", "polished": "полировка",
-        "cleaned": "полировка, очищено",
+        "cleaned": "полировка",
     }
     return (f"поверхность: {names.get(stage, stage)} · "
-            f"грязь {surface.get('dirt', 0) * 100:.0f}% · "
             f"полировка {surface.get('polish', 0) * 100:.0f}%")
