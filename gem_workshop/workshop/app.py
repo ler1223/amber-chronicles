@@ -16,6 +16,7 @@ import pygame
 from game.workshop_games import JewelCut
 from game import jewel_view as JV
 from sim import gems as GM
+from ui import illustrations as IL
 from . import ui as U
 from . import optics as OPT
 from .model import Workshop
@@ -95,7 +96,7 @@ class Scene:
 class HubScene(Scene):
     """Главный экран с тремя вкладками."""
 
-    def __init__(self, app, tab="supply", client=None):
+    def __init__(self, app, tab="hub", client=None):
         super().__init__(app)
         self.tab = tab
         self.client = client
@@ -111,26 +112,59 @@ class HubScene(Scene):
 
     def _header(self, surf):
         w = self.app.workshop
-        U.text(surf, "ГРАНЬ", (24, 18), 30, U.GOLD, True)
-        U.text(surf, f"День {w.day}", (178, 26), 18, U.TEXT, True)
+        if self.tab == "hub":
+            U.text(surf, "ГРАНЬ", (24, 18), 30, U.GOLD, True)
+            U.text(surf, f"День {w.day}", (178, 26), 18, U.TEXT, True)
+        else:
+            self.button(surf, pygame.Rect(24, 18, 92, 34), "Назад", ("tab", "hub"), True, U.BLUE, True)
+            title = {"clients": "Клиенты", "supply": "Закупка", "workshop": "Мастерская"}.get(self.tab, "")
+            U.text(surf, title, (132, 20), 28, U.GOLD, True)
         U.text(surf, f"Золото: {w.money}", (W - 310, 20), 20, U.GOLD, True)
         U.text(surf, f"Репутация: {w.reputation}", (W - 310, 46), 15, U.GREEN)
         if w.debt:
             U.text(surf, f"Долг: {w.debt}", (W - 310, 66), 15, U.RED)
+
+    def _dock(self, surf):
         tabs = (("clients", "Клиенты", "npc_jeweler"),
-                ("supply", "Закупка", "facet_lap"),
+                ("supply", "Закупка", "barrel_big"),
                 ("workshop", "Мастерская", "facet_loupe"))
         x = 24
         for key, label, icon in tabs:
-            r = pygame.Rect(x, TAB_Y, 184, 42)
+            r = pygame.Rect(x, 724, 200, 54)
             active = self.tab == key
-            U.panel(surf, r, U.PANEL_HI if active else U.PANEL, U.GOLD if active else U.EDGE, 2, 8)
-            ic = sprite(icon, 30)
+            U.panel(surf, r, U.PANEL_HI if active else U.PANEL, U.GOLD if active else U.EDGE, 2, 9)
+            ic = sprite(icon, 34)
             if ic:
-                surf.blit(ic, (r.x + 8, r.y + 6))
-            U.text(surf, label, (r.x + 44, r.y + 10), 17, U.TEXT if active else U.DIM, True)
+                surf.blit(ic, (r.x + 10, r.y + 10))
+            U.text(surf, label, (r.x + 54, r.y + 16), 17, U.TEXT if active else U.DIM, True)
             self.hit(r, ("tab", key))
-            x += 196
+            x += 212
+
+    def _draw_hub(self, surf):
+        w = self.app.workshop
+        bg = IL.get("ws_bench_jewel", "tavern", (W, H), hd=True)
+        surf.blit(bg, (0, 0))
+        shade = pygame.Surface((W, H), pygame.SRCALPHA)
+        shade.fill((8, 6, 4, 165))
+        surf.blit(shade, (0, 0))
+        U.text(surf, "Мастерская «Грань»", (24, 68), 22, U.TEXT, True)
+        U.text(surf, "Выберите, чем заняться сегодня", (24, 98), 14, U.DIM)
+        stations = (
+            ("clients", "Клиенты", "npc_jeweler", "Заказы, витрина и торг", len(w.remaining_clients())),
+            ("supply", "Закупка", "barrel_big", "Поставщик и лоты", len(w.stock)),
+            ("workshop", "Мастерская", "facet_loupe", "Сырьё, огранка и витрина", len(w.inventory)),
+        )
+        for i, (key, label, icon, desc, count) in enumerate(stations):
+            r = pygame.Rect(60 + i * 400, 250, 360, 330)
+            hot = r.collidepoint(self.mouse)
+            U.panel(surf, r, U.PANEL_HI if hot else U.PANEL, U.GOLD if hot else U.EDGE, 2, 12)
+            img = sprite(icon, 130, 150 if key == "clients" else 130)
+            if img:
+                surf.blit(img, (r.centerx - img.get_width() // 2, r.y + 24))
+            U.text(surf, label, (r.centerx, r.y + 190), 25, U.GOLD, True, True)
+            U.text(surf, desc, (r.centerx, r.y + 226), 14, U.TEXT, False, True)
+            U.text(surf, f"{count}", (r.centerx, r.y + 262), 28, U.GREEN, True, True)
+            self.hit(r, ("tab", key))
 
     def act(self, action):
         w = self.app.workshop
@@ -189,18 +223,29 @@ class HubScene(Scene):
                 self.app.switch(ResultScene(self.app, self.client, gem, status, offer))
             elif isinstance(action, tuple) and action[0] == "inspect_rough":
                 rough = action[1]
-                self.app.switch(InspectScene(self.app, [rough], GM.rough_value(w.xd, rough), "rough", -1))
+                self.app.switch(InspectScene(self.app, [rough], GM.rough_value(w.xd, rough), "rough", -1,
+                                             back=lambda: self.app.switch(HubScene(self.app, tab="workshop"))))
             elif isinstance(action, tuple) and action[0] == "inspect_gem":
                 gem = action[1]
-                self.app.switch(InspectScene(self.app, [gem], gem.get("value", 0), "gem", -1))
+                self.app.switch(InspectScene(self.app, [gem], gem.get("value", 0), "gem", -1,
+                                             back=lambda: self.app.switch(HubScene(self.app, tab="workshop"))))
+
+    def key(self, k):
+        if k == pygame.K_ESCAPE and self.tab != "hub":
+            self.tab = "hub"
+            self.selected = None
+        elif k in (pygame.K_1, pygame.K_2, pygame.K_3):
+            self.tab = ("clients", "supply", "workshop")[k - pygame.K_1]
+            self.selected = None
+            self._fix_client()
 
     # ---------- закупка ----------
 
     def _draw_supply(self, surf):
         w = self.app.workshop
-        U.text(surf, "Закупка", (24, CONTENT_Y), 24, U.TEXT, True)
-        U.text(surf, "Поставщик: отдельные камни · лоты: дешевле, но менее предсказуемы",
-               (180, CONTENT_Y + 5), 14, U.DIM)
+        U.text(surf, "Поставщик и лоты", (24, CONTENT_Y), 20, U.TEXT, True)
+        U.text(surf, "Отдельные камни · лоты дешевле, но менее предсказуемы",
+               (24, CONTENT_Y + 26), 13, U.DIM)
         for i, item in enumerate(w.stock):
             col, row = i % 3, i // 3
             r = pygame.Rect(24 + col * 410, 186 + row * 116, 390, 106)
@@ -231,16 +276,13 @@ class HubScene(Scene):
                         ("lot", i), w.money >= lot["price"], small=True)
         U.text(surf, f"В мастерской: {len(w.inventory)} · на витрине: {len(w.display)}",
                (24, 592), 14, U.DIM)
-        self.button(surf, pygame.Rect(W - 250, 700, 226, 44), "К клиентам",
-                    ("tab", "clients"), True, U.GREEN)
 
     # ---------- клиенты ----------
 
     def _draw_clients(self, surf):
         w = self.app.workshop
         rem = w.remaining_clients()
-        U.text(surf, "Клиенты", (24, CONTENT_Y), 24, U.TEXT, True)
-        U.text(surf, "Выберите заказ, затем перейдите в мастерскую", (196, CONTENT_Y + 5), 14, U.DIM)
+        U.text(surf, "Выберите заказ, затем перейдите в мастерскую", (24, CONTENT_Y), 14, U.DIM)
         if not rem:
             U.text(surf, "Все клиенты на сегодня обслужены.", (24, 220), 20, U.DIM)
             self.button(surf, pygame.Rect(24, 280, 240, 44), "Завершить день", "day", True, U.GREEN)
@@ -300,7 +342,6 @@ class HubScene(Scene):
 
     def _draw_workshop(self, surf):
         w = self.app.workshop
-        U.text(surf, "Мастерская", (24, CONTENT_Y), 24, U.TEXT, True)
         c = self.client
         if c:
             r = pygame.Rect(24, 180, 1232, 72)
@@ -353,18 +394,23 @@ class HubScene(Scene):
                                 "sell", True, U.GREEN)
         else:
             U.text(surf, "Выберите камень или готовый камень на витрине.", (r.x + 14, r.y + 32), 15, U.DIM)
-        self.button(surf, pygame.Rect(24, 710, 200, 38), "К клиентам", "back_clients", True, U.BLUE)
 
     def draw(self, surf):
         self.hits = []
         surf.fill(U.BG)
-        self._header(surf)
-        if self.tab == "supply":
-            self._draw_supply(surf)
-        elif self.tab == "clients":
-            self._draw_clients(surf)
+        if self.tab == "hub":
+            self._draw_hub(surf)
         else:
-            self._draw_workshop(surf)
+            surf.fill(U.BG)
+            self._header(surf)
+            if self.tab == "supply":
+                self._draw_supply(surf)
+            elif self.tab == "clients":
+                self._draw_clients(surf)
+            else:
+                self._draw_workshop(surf)
+        self._header(surf) if self.tab == "hub" else None
+        self._dock(surf)
 
 
 class InspectScene(Scene):
@@ -700,7 +746,7 @@ class DayEndScene(Scene):
         if action == "next":
             w.new_day()
             self.app.save()
-            self.app.switch(HubScene(self.app, tab="supply"))
+            self.app.switch(HubScene(self.app, tab="hub"))
         elif isinstance(action, tuple) and action[0] == "upgrade":
             if w.buy_upgrade(action[1]):
                 self.app.save()
@@ -749,9 +795,10 @@ class WorkshopApp:
         self.clock_obj = pygame.time.Clock()
         self.seed = seed
         self.workshop = Workshop.load() if seed is None else Workshop(seed)
-        self.scene = HubScene(self, tab="supply")
+        self.scene = HubScene(self, tab="hub")
         self.running = True
         self.clock_t = 0.0
+        self.fade = 0.0
 
     @property
     def clock(self):
@@ -793,6 +840,7 @@ class WorkshopApp:
 
     def switch(self, scene):
         self.scene = scene
+        self.fade = 0.8
 
     def save(self):
         self.workshop.save()
@@ -817,6 +865,11 @@ class WorkshopApp:
                 self.scene.handle(self._map_event(ev))
             self.scene.update(dt)
             self.scene.draw(self.canvas)
+            if self.fade > 0:
+                self.fade = max(0.0, self.fade - dt * 4.0)
+                veil = pygame.Surface((W, H), pygame.SRCALPHA)
+                veil.fill((0, 0, 0, int(210 * self.fade)))
+                self.canvas.blit(veil, (0, 0))
             self._present()
         self.save()
         pygame.quit()
