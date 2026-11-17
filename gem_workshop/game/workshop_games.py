@@ -442,8 +442,8 @@ class JewelCut(Game):
     и схема огранки. Сложность — число граней; сложнее — выше предел качества."""
     title = "Огранка"
     HINTS = {"choose": "выберите огранку: клик или клавиша 1–9 · колесо — прокрутка",
-             "plan": "ЛКМ — камень, ПКМ — проекция, СКМ — камера, Q/E — крен, WASD — сдвиг, колесо — размер, Enter — на станок",
-             "cut": "W/S — угол, A/D — индекс, Пробел — к диску, Enter/ПКМ — грань готова, F — перевернуть"}
+             "plan": "ЛКМ — камень, ПКМ — проекция, СКМ — камера, Q/E — крен, WASD — сдвиг, колесо — размер, Enter — на станок, J — диагностика",
+             "cut": "W/S — угол, A/D — индекс, Пробел — к диску, Enter/ПКМ — грань готова, F — перевернуть, J — диагностика"}
 
     @property
     def hint(self):
@@ -521,6 +521,7 @@ class JewelCut(Game):
         self._mass_t = 0.0
         self.inspect = None                     # осмотр снятого камня (Tab): свободное вращение
         self.inspect_btn = None
+        self.diag = False                       # J — диагностические ортогональные виды
 
     # --- выбор огранки ---
     def choose(self, i):
@@ -797,6 +798,9 @@ class JewelCut(Game):
                 self.theta = max(0.0, min(80.0, self.theta + dy * (0.25 if self._fine() else 1.0)))
 
     def key(self, k):
+        if k == pygame.K_j and self.inspect is None and self.phase in ("plan", "cut"):
+            self.diag = not self.diag
+            return True
         if self.phase == "choose":                  # 1–9 — по видимым карточкам (сетка прокручивается)
             i = getattr(self, "choose_top", 0) * getattr(self, "choose_cols", 1) + k - pygame.K_1
             if pygame.K_1 <= k <= pygame.K_9 and i < len(self.cuts):
@@ -1163,6 +1167,8 @@ class JewelCut(Game):
         surf.set_clip(rect)
         if self.phase == "choose":
             self.draw_choose(surf, rect)
+        elif self.diag and self.inspect is None and self.phase in ("plan", "cut"):
+            JW.draw_diag_sheet(self, surf, rect)
         elif self.phase == "plan":
             JW.draw_plan(self, surf, rect)
         elif self.inspect is not None:

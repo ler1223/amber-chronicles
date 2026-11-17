@@ -1121,6 +1121,41 @@ def draw_rough(surf, rough, color, center, size, t=0.0, tilt=1.25, xd=None):
 
 # ---------- разметка сырого камня ----------
 
+def draw_diag_sheet(g, surf, rect):
+    """Диагностика огранки: четыре ортогональных вида, без рефракции.
+
+    Это режим огранщика, а не витрины: видно грани, встречи, рундист и
+    frosted-следы. Идея взята из GCSViewer.
+    """
+    faces = g.plan.faces if getattr(g, "phase", "") == "plan" and g.plan else getattr(g, "stone", None)
+    if not faces:
+        return
+    color = getattr(g, "color", (120, 180, 220))
+    far = max((math.sqrt(G3.dot(p_, p_)) for f in faces for p_ in f["pts"]), default=1.0)
+    cells = (
+        ("Сверху · стол", lambda p_: (p_[0], p_[1], p_[2])),
+        ("Снизу · павильон", lambda p_: (p_[0], -p_[1], -p_[2])),
+        ("Сбоку · рундист", lambda p_: (p_[2], p_[0], p_[1])),
+        ("3/4 · форма", lambda p_: (p_[0] * 0.86 - p_[2] * 0.50, p_[1],
+                                     p_[0] * 0.50 + p_[2] * 0.86)),
+    )
+    cw, ch = rect.w // 2, rect.h // 2
+    for i, (label, to_world) in enumerate(cells):
+        x = rect.x + (i % 2) * cw
+        y = rect.y + (i // 2) * ch
+        cell = pygame.Rect(x + 6, y + 6, cw - 12, ch - 12)
+        pygame.draw.rect(surf, (12, 10, 10), cell, border_radius=8)
+        pygame.draw.rect(surf, (90, 70, 46), cell, 1, border_radius=8)
+        T.text(surf, label, (cell.x + 10, cell.y + 8), 12, (230, 210, 170), True)
+        clip = surf.get_clip()
+        surf.set_clip(cell)
+        scale = min(cell.w, cell.h) / (2 * far * 1.12)
+        G3.render(surf, faces, to_world, cell.center, scale, color, getattr(g, "t", 0.0),
+                  sparkle=False)
+        surf.set_clip(clip)
+    T.text(surf, "J — вернуться к рабочему виду", (rect.x + 14, rect.bottom - 24), 12, T.TEXT_DIM)
+
+
 def draw_plan(g, surf, rect):
     """Разметка: кристалл полупрозрачен, внутри — контур будущего камня (янтарный каркас), примеси — красные
     (останутся в камне) и серые (уйдут в отход). Справа — масса, чистота, цвет, примерная цена."""

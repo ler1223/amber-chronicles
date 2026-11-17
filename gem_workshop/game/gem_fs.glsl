@@ -457,7 +457,7 @@ vec3 rough_inside(vec3 p0, vec3 rd, vec3 N, float F0, float filmT, float rough) 
         // подсвечивает корку, а проходит через объём.
         float thr = (1.0 - F0) * filmT * (0.42 + 0.38 * (1.0 - rough));
         float acc = 0.0;
-        for (int b = 0; b < 4; b++) {
+        for (int b = 0; b < 6; b++) {
             float tmin = 1e9;
             int j = -1;
             for (int i = 0; i < u_n; i++) {
@@ -649,7 +649,7 @@ vec4 trace(vec2 px) {
         acc += thr * entryLit * u_lcol[ch] * (0.05 + 0.10 * damage + 0.04 * dirt);
         float scattered = 0.0;
 
-        for (int b = 0; b < 7; b++) {
+        for (int b = 0; b < 12; b++) {
             float tmin = 1e9;
             int j = -1;
             for (int i = 0; i < u_n; i++) {
