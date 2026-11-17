@@ -187,6 +187,12 @@ class HubScene(Scene):
                 gem = self.selected[1]
                 status, offer = w.evaluate(self.client, gem)
                 self.app.switch(ResultScene(self.app, self.client, gem, status, offer))
+            elif isinstance(action, tuple) and action[0] == "inspect_rough":
+                rough = action[1]
+                self.app.switch(InspectScene(self.app, [rough], GM.rough_value(w.xd, rough), "rough", -1))
+            elif isinstance(action, tuple) and action[0] == "inspect_gem":
+                gem = action[1]
+                self.app.switch(InspectScene(self.app, [gem], gem.get("value", 0), "gem", -1))
 
     # ---------- закупка ----------
 
@@ -331,6 +337,8 @@ class HubScene(Scene):
             if kind == "rough":
                 U.text(surf, f"{w.gem_name(item['id'])} · {item['size']:.2f} ct",
                        (r.x + 84, r.y + 10), 17, U.TEXT, True)
+                self.button(surf, pygame.Rect(r.right - 444, r.y + 24, 200, 42), "Осмотр",
+                            ("inspect_rough", item), True, U.BLUE)
                 if c:
                     self.button(surf, pygame.Rect(r.right - 230, r.y + 24, 200, 42), "Гранить",
                                 "cut", True, U.GREEN)
@@ -338,6 +346,8 @@ class HubScene(Scene):
                 U.text(surf, f"{w.gem_name(item['id'])} · {item['size']:.2f} ct · "
                              f"качество {item['q']:.2f}",
                        (r.x + 84, r.y + 10), 17, U.TEXT, True)
+                self.button(surf, pygame.Rect(r.right - 444, r.y + 24, 200, 42), "Осмотр",
+                            ("inspect_gem", item), True, U.BLUE)
                 if c and c["kind"] == "walkin":
                     self.button(surf, pygame.Rect(r.right - 230, r.y + 24, 200, 42), "Продать",
                                 "sell", True, U.GREEN)
@@ -360,13 +370,15 @@ class HubScene(Scene):
 class InspectScene(Scene):
     """Осмотр камня до покупки: вращение мышью, колесо — приближение."""
 
-    def __init__(self, app, stones, price, kind, index):
+    def __init__(self, app, stones, price, kind, index, back=None):
         super().__init__(app)
         self.stones = list(stones)
         self.i = 0
         self.price = int(price)
         self.kind = kind
         self.index = index
+        self.back = back
+        self.can_buy = kind in ("stock", "lot")
         self.insp = JV.Inspector()
         self.flash_on = False
         self.flash_xy = (0.5, 0.5)
@@ -381,8 +393,11 @@ class InspectScene(Scene):
     def act(self, action):
         w = self.app.workshop
         if action == "back":
-            self.app.switch(HubScene(self.app, tab="supply"))
-        elif action == "buy":
+            if self.back:
+                self.back()
+            else:
+                self.app.switch(HubScene(self.app, tab="supply"))
+        elif action == "buy" and self.can_buy:
             ok = w.buy_stock(self.index) if self.kind == "stock" else w.buy_lot(self.index)
             if ok:
                 self.app.save()
@@ -427,20 +442,25 @@ class InspectScene(Scene):
         self.hits = []
         w = self.app.workshop
         surf.fill(U.BG)
-        U.text(surf, "ОСМОТР" if self.kind == "stock" else "ОСМОТР ЛОТА", (24, 18), 28, U.GOLD, True)
+        rough = "q" not in self.stone
+        title = "ОСМОТР" if rough and self.kind != "lot" else ("ОСМОТР ЛОТА" if self.kind == "lot" else "ОСМОТР КАМНЯ")
+        U.text(surf, title, (24, 18), 28, U.GOLD, True)
         if self.kind == "lot":
             U.text(surf, f"{len(self.stones)} камня · камень {self.i + 1} из {len(self.stones)}",
-                   (300, 26), 15, U.DIM)
+                   (340, 26), 15, U.DIM)
         else:
             U.text(surf, f"{w.gem_name(self.stone['id'])} · {self.stone['size']:.2f} ct",
-                   (220, 26), 15, U.DIM)
-        faces = JV.rough_faces(self.stone)
+                   (340, 26), 15, U.DIM)
+        faces = JV.stone_faces(self.stone)
         profile = OPT.profile(self.stone["id"])
         flash = (self.flash_xy[0], self.flash_xy[1], 1.0 if self.flash_on else 0.0)
-        color = rough_color(w, self.stone)
+        color = rough_color(w, self.stone) if rough else gem_color(w, self.stone)
+        incl = JV.rough_incl(self.stone) if rough else self.stone.get("incl")
+        cfield = JV.gem_cfield(self.stone, faces) if rough else JV.gem_cfield(self.stone)
         self.insp.draw(surf, self.view_rect(), faces, color, self.app.clock,
-                       mm=JV.mm_per_unit(self.stone, faces, w.xd),
-                       incl=JV.rough_incl(self.stone), cfield=JV.gem_cfield(self.stone, faces),
+                       mm=JV.mm_per_unit(self.stone, faces, w.xd), incl=incl, cfield=cfield,
+                       star=0.0 if rough else self.stone.get("star", 0.0),
+                       axis=self.stone.get("axis"),
                        ior=profile["ior"], absorb=OPT.absorption(self.stone["id"], color),
                        transparency=profile["transparency"], flash=flash)
         if self.flash_on:
@@ -451,7 +471,7 @@ class InspectScene(Scene):
         U.text(surf, f"{self.stone['size']:.2f} карат · {GM.color_word(w.xd, self.stone['col'])}",
                (r.x + 18, r.y + 50), 15, U.TEXT)
         y = r.y + 84
-        for ln in GM.describe(w.xd, self.stone, rough=True):
+        for ln in GM.describe(w.xd, self.stone, rough=rough):
             for part in U.wrap(ln, 14, r.w - 36):
                 U.text(surf, part, (r.x + 18, y), 14, U.TEXT)
                 y += 20
@@ -463,15 +483,20 @@ class InspectScene(Scene):
                 U.text(surf, part, (r.x + 18, y), 13, U.DIM)
                 y += 18
         y += 8
-        U.text(surf, f"Цена: {self.price} з.", (r.x + 18, y), 20, U.GOLD, True)
+        U.text(surf, f"{'Цена' if self.can_buy else 'Оценка'}: {self.price} з.",
+               (r.x + 18, y), 20, U.GOLD, True)
         U.text(surf, "ЛКМ — вращать камень · колесо — приблизить · F — фонарик",
                (r.x + 18, r.bottom - 96), 12, U.DIM)
         self.button(surf, pygame.Rect(r.x + 18, r.bottom - 70, 190, 30), "Фонарик (F)",
                     "flash", True, U.GOLD if self.flash_on else U.BLUE, True)
-        self.button(surf, pygame.Rect(r.x + 18, r.bottom - 34, 190, 26), "Купить",
-                    "buy", w.money >= self.price, U.GREEN, True)
-        self.button(surf, pygame.Rect(r.x + 224, r.bottom - 34, 190, 26), "Назад",
-                    "back", True, U.BLUE, True)
+        if self.can_buy:
+            self.button(surf, pygame.Rect(r.x + 18, r.bottom - 34, 190, 26), "Купить",
+                        "buy", w.money >= self.price, U.GREEN, True)
+            self.button(surf, pygame.Rect(r.x + 224, r.bottom - 34, 190, 26), "Назад",
+                        "back", True, U.BLUE, True)
+        else:
+            self.button(surf, pygame.Rect(r.x + 18, r.bottom - 34, 190, 26), "Назад",
+                        "back", True, U.BLUE, True)
         if len(self.stones) > 1:
             self.button(surf, pygame.Rect(24, 682, 100, 34), "‹", ("step", -1), True, U.BLUE)
             self.button(surf, pygame.Rect(132, 682, 100, 34), "›", ("step", 1), True, U.BLUE)
@@ -623,6 +648,9 @@ class ResultScene(Scene):
             w.refuse(self.client, self.gem)
             self.app.save()
             self._next_scene()
+        elif action == "inspect":
+            self.app.switch(InspectScene(self.app, [self.gem], self.gem.get("value", 0), "gem", -1,
+                                         back=lambda: self.app.switch(self)))
 
     def draw(self, surf):
         self.hits = []
@@ -642,6 +670,8 @@ class ResultScene(Scene):
         r2 = pygame.Rect(520, 100, 736, 420)
         U.panel(surf, r2, U.PANEL, U.EDGE)
         U.text(surf, "Клиент", (r2.x + 18, r2.y + 16), 18, U.GOLD, True)
+        self.button(surf, pygame.Rect(r2.right - 150, r2.y + 12, 132, 28), "Осмотр",
+                    "inspect", True, U.BLUE, True)
         U.text(surf, self.client["desc"], (r2.x + 18, r2.y + 48), 15, U.TEXT)
         U.text(surf, f"Вердикт: {status_ru(self.status)}", (r2.x + 18, r2.y + 96), 20,
                U.GREEN if self.status in ("ok", "discount") else U.RED, True)

@@ -10,9 +10,8 @@ import json
 import os
 import random
 
-from sim.data import GameData
-from sim.expedition import expedition_data
 from sim import gems as GM
+from .data import load as load_workshop_data
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAVE_DIR = os.path.join(PROJECT_DIR, "save")
@@ -31,9 +30,8 @@ class Workshop:
     """Состояние бесконечного забега: дни, деньги, репутация, камни и клиенты."""
 
     def __init__(self, seed=None):
-        self.data = GameData()
-        self.ed = expedition_data(self.data)
-        self.xd = self.ed.expedition
+        self.data = load_workshop_data()
+        self.xd = self.data.expedition
         self.seed = seed
         self.rng = random.Random(seed)
         self.uid = 0
