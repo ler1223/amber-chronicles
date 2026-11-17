@@ -43,8 +43,10 @@ def spr(name, w=None, h=None):
     return _SPR[key]
 
 
-def stone(surf, faces, to_world, center, scale, color, t, incl=None, star=0.0, axis=None, cfield=None):
-    if not GG.draw(surf, faces, to_world, center, scale, color, t, incl=incl, star=star, axis=axis, cfield=cfield):
+def stone(surf, faces, to_world, center, scale, color, t, incl=None, star=0.0, axis=None, cfield=None,
+          ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
+    if not GG.draw(surf, faces, to_world, center, scale, color, t, incl=incl, star=star, axis=axis, cfield=cfield,
+                   ior=ior, absorb=absorb, transparency=transparency, flash=flash):
         G3.render(surf, faces, to_world, center, scale, color, t)
         for i in incl or []:                          # без видеокарты — примеси точками
             if i["k"] == "silk":
@@ -911,7 +913,8 @@ class Inspector:
         if not self.drag and self.idle > 2.5:          # отпустили — сам медленно поворачивается
             self.m = _mm(_rot("y", dt * 0.4), self.m)
 
-    def draw(self, surf, rect, faces, color, t, mm=None, incl=None, star=0.0, axis=None, cfield=None):
+    def draw(self, surf, rect, faces, color, t, mm=None, incl=None, star=0.0, axis=None, cfield=None,
+             ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
         """mm — миллиметров на единицу формы: камень в настоящем размере (поле зрения ≈ 24 мм) и линейка."""
         pygame.draw.rect(surf, (12, 10, 10), rect, border_radius=10)
         glow = _glow(rect.size)                          # тёмный бархат и мягкое пятно света под камнем
@@ -926,7 +929,7 @@ class Inspector:
         clip = surf.get_clip()
         surf.set_clip(rect)
         stone(surf, faces, self.to_world, rect.center, scale, color, t, incl=incl, star=star, axis=axis,
-              cfield=cfield)
+              cfield=cfield, ior=ior, absorb=absorb, transparency=transparency, flash=flash)
         if mm:                                          # линейка: 5 мм
             L = int(5 * px_mm)
             x0, y0 = rect.x + 24, rect.bottom - 26
@@ -1121,8 +1124,9 @@ def draw_plan(g, surf, rect):
         lines.append((f"цена при работе 100% ≈ {est}", (255, 210, 120)))
     for i, (txt, col) in enumerate(lines):
         T.text(surf, txt, (x, y + 62 + i * 22), 14, col)
-    tips = ("мышь — крутить кристалл (и цветовые зоны)", "колесо — размер камня", "WASD — сдвиг · R — сброс",
-            "красные примеси останутся,", "серые — уйдут в отход", "Backspace — другая огранка")
+    tips = ("ЛКМ — крутить камень · ПКМ — крутить проекцию", "Q/E — крен камня · колесо — размер",
+            "WASD — сдвиг · R — сброс", "красные примеси останутся,", "серые — уйдут в отход",
+            "Backspace — другая огранка")
     for i, txt in enumerate(tips):
         T.text(surf, txt, (x, panel.bottom - 186 + i * 19), 12, T.TEXT_DIM)
     ib = pygame.Rect(panel.x + 16, panel.bottom - 56, panel.w - 32, 40)

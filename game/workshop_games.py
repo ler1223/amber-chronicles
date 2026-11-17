@@ -240,7 +240,11 @@ class Plan:
         self.o = [0.0, 0.0, 0.0]
         self.frac = 1.0
         self.drag = None
+        self.pdrag = None
+        self.proj = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
+        self.proj_t = self.proj
         verts = {tuple(round(c, 4) for c in p_) for f in game.ideal for p_ in f["pts"]}
+        self.ideal_verts = list(verts)
         self.qv = [self.q(v) for v in verts]
         self.ideal_planes = [(f["n"], G3.dot(f["n"], f["pts"][0])) for f in game.ideal if f["pts"]]
         self.ideal_vol = G3.volume(game.ideal)
@@ -253,9 +257,11 @@ class Plan:
         x, y, z = p_
         v1, v2 = z, -y
         c, s_ = math.cos(self.TILT), math.sin(self.TILT)
-        return (x, v1 * c - v2 * s_, v1 * s_ + v2 * c)
+        v = (x, v1 * c - v2 * s_, v1 * s_ + v2 * c)
+        return _mv(self.proj, v)
 
     def qt(self, v):
+        v = _mv(self.proj_t, v)
         c, s_ = math.cos(self.TILT), math.sin(self.TILT)
         v1 = v[1] * c + v[2] * s_
         v2 = -v[1] * s_ + v[2] * c
@@ -263,6 +269,22 @@ class Plan:
 
     def turn(self, dx, dy):
         self.m = JW._mm(JW._rot("y", dx * 0.012), JW._mm(JW._rot("x", -dy * 0.012), self.m))
+
+    def roll(self, d):
+        """Крен кристалла вокруг оси взгляда: полный контроль ориентации."""
+        self.m = JW._mm(JW._rot("z", d * 0.08), self.m)
+
+    def proj_turn(self, dx, dy):
+        """Поворот самой проекции/контура будущего камня, независимо от кристалла."""
+        self.proj = JW._mm(JW._rot("z", dx * 0.012),
+                           JW._mm(JW._rot("x", -dy * 0.012), self.proj))
+        self.proj_t = tuple(tuple(self.proj[j][i] for j in range(3)) for i in range(3))
+        self.qv = [self.q(v) for v in self.ideal_verts]
+
+    def reset_proj(self):
+        self.proj = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
+        self.proj_t = self.proj
+        self.qv = [self.q(v) for v in self.ideal_verts]
 
     def s_max(self):
         best = 1e9
@@ -375,7 +397,7 @@ class JewelCut(Game):
     и схема огранки. Сложность — число граней; сложнее — выше предел качества."""
     title = "Огранка"
     HINTS = {"choose": "выберите огранку: клик или клавиша 1–9 · колесо — прокрутка",
-             "plan": "разметка: мышь — крутить кристалл, колесо — размер камня, WASD — сдвиг, Enter — на станок",
+             "plan": "ЛКМ — вращать камень, ПКМ — вращать проекцию, Q/E — крен, WASD — сдвиг, колесо — размер, Enter — на станок",
              "cut": "W/S — угол, A/D — индекс, Пробел — к диску, Enter/ПКМ — грань готова, F — перевернуть"}
 
     @property
@@ -652,15 +674,25 @@ class JewelCut(Game):
         кристалл."""
         if self.phase == "plan" and self.plan is not None:
             pl = self.plan
+            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3 and rect.collidepoint(ev.pos):
+                pl.pdrag = ev.pos
+                return True
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and rect.collidepoint(ev.pos):
                 if getattr(self, "plan_btn", None) and self.plan_btn.collidepoint(ev.pos):
                     self.start_cut()
                     return True
                 pl.drag = ev.pos
                 return True
+            if ev.type == pygame.MOUSEMOTION and pl.pdrag:
+                pl.proj_turn(ev.pos[0] - pl.pdrag[0], ev.pos[1] - pl.pdrag[1])
+                pl.pdrag = ev.pos
+                return True
             if ev.type == pygame.MOUSEMOTION and pl.drag:
                 pl.turn(ev.pos[0] - pl.drag[0], ev.pos[1] - pl.drag[1])
                 pl.drag = ev.pos
+                return True
+            if ev.type == pygame.MOUSEBUTTONUP and ev.button == 3 and pl.pdrag:
+                pl.pdrag = None
                 return True
             if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and pl.drag:
                 pl.drag = None
@@ -725,12 +757,19 @@ class JewelCut(Game):
             if k in mv:
                 self.plan.move(*mv[k])
                 return True
+            if k == pygame.K_q:
+                self.plan.roll(-1)
+                return True
+            if k == pygame.K_e:
+                self.plan.roll(1)
+                return True
             if k in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 self.start_cut()
                 return True
             if k == pygame.K_r:
                 self.plan.m = self.plan.upright()
                 self.plan.o = [0.0, 0.0, 0.0]
+                self.plan.reset_proj()
                 return True
             if k == pygame.K_BACKSPACE:
                 self.back_to_choose()

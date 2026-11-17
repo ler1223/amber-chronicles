@@ -50,7 +50,9 @@ uniform vec4 u_wa;           // амплитуды волн
 uniform vec2 u_cfg;          // усиление, резкость зон
 uniform vec4 u_pal[6];       // палитра: цвет (0–1, с насыщенностью камня), t
 uniform int u_npal;
-uniform float u_dark;        // густота поглощения
+uniform float u_dark;
+uniform vec3 u_flash;        // xy — положение фонарика (0..1), z — сила
+uniform float u_trans;       // прозрачность камня        // густота поглощения
 
 vec3 env(vec3 d) {
     // студия огранщика: свод (светлее сверху), софтбоксы вокруг зрителя, кольцо ламп, окно, тёплый отсвет снизу;
@@ -243,6 +245,8 @@ vec4 trace(vec2 px) {
     float gfade = grit_fade(gr);
     if (gr > 0.01 && gfade > 0.01) N = rough_normal(N, p0, gr * gfade);   // рельеф от диска (под лупой)
     float haze = (k < 0.5) ? gr * (1.0 - gfade) : 0.0;                    // издали — мутность
+    vec2 fq = (px / u_size - u_flash.xy) * vec2(u_size.x / max(1.0, u_size.y), 1.0);
+    float flash = u_flash.z * exp(-dot(fq, fq) * 16.0);
     vec3 col = vec3(0.0);
     vec3 Nw = u_rot * N;
     if (k > 0.5) {
@@ -263,6 +267,7 @@ vec4 trace(vec2 px) {
         float cosi = -dot(rd, N);
         float F = fresnel(cosi, 1.0, ior);
         float acc = F * env(u_rot * reflect(rd, N))[ch];
+        acc += flash * 0.20 * (0.30 + 0.70 * tintAt(p0)[ch]);
         vec3 d = refract(rd, N, 1.0 / ior);
         vec3 p = p0 + d * 1e-4;
         float thr = 1.0 - F;
@@ -281,6 +286,7 @@ vec4 trace(vec2 px) {
             if (u_cfon > 0)                          // оттенок меняется по пути луча: три пробы
                 ab = (absorbAt(p + d * tmin * 0.17) + absorbAt(p + d * tmin * 0.5) + absorbAt(p + d * tmin * 0.83)) / 3.0;
             thr *= exp(-ab[ch] * tmin);
+            acc += thr * flash * 0.26 * (0.35 + 0.65 * tintAt(p)[ch]);
             p += d * tmin;
             vec3 Nx = u_pl[j].xyz;
             if (u_grit[j] > 0.01) Nx = rough_normal(Nx, p, u_grit[j] * grit_fade(u_grit[j]));   // выход сквозь грань
@@ -323,7 +329,11 @@ void main() {
     c *= 1.35;
     c = c / (1.0 + c * 0.45);                 // мягкое тональное сжатие ярких бликов
     c = pow(c, vec3(1.0 / 1.15));
-    f = vec4(c * s.a, s.a);                    // предумноженная альфа
+    vec2 fq = (v_uv - u_flash.xy) * vec2(u_size.x / max(1.0, u_size.y), 1.0);
+    float beam = u_flash.z * exp(-dot(fq, fq) * 16.0);
+    c += vec3(0.55, 0.42, 0.25) * beam * 0.35;
+    float alpha = clamp(mix(0.58, 1.0, u_trans), 0.0, 1.0);
+    f = vec4(c * s.a * alpha, s.a * alpha);    // предумноженная альфа
 }
 """
 
@@ -371,7 +381,8 @@ def _set(prog, name, value=None, data=None):
         pass
 
 
-def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=None, dome=None, cfield=None):
+def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=None, dome=None, cfield=None,
+                   ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
     """Камень в униформы шейдера (плоскости граней, вид грани, царапины, цвет и поглощение, примеси, звезда,
     купол, карта оттенков). → число граней."""
     pl = np.zeros((MAXP, 4), np.float32)
@@ -388,14 +399,16 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
         darkness *= 3.5
     col = np.array(color[:3], np.float32) / 255.0
     tint = np.clip(col * 1.1, 0.05, 1.0)
-    absorb = (1.0 - col) ** 1.4 * 0.016 * darkness + 0.0004   # на единицу пути (радиус камня ≈ 100)
+    absorb_default = (1.0 - col) ** 1.4 * 0.016 * darkness + 0.0004   # на единицу пути (радиус камня ≈ 100)
     _set(prog, "u_pl", data=pl.tobytes())
     _set(prog, "u_kind", data=kd.tobytes())
     _set(prog, "u_grit", data=gr.tobytes())
     _set(prog, "u_n", k)
-    _set(prog, "u_absorb", tuple(float(x) for x in absorb))
+    _set(prog, "u_absorb", tuple(float(x) for x in (absorb or absorb_default)))
     _set(prog, "u_tint", tuple(float(x) for x in tint))
-    _set(prog, "u_ior", (2.38, 2.42, 2.47))
+    _set(prog, "u_ior", tuple(float(x) for x in (ior or (2.38, 2.42, 2.47))))
+    _set(prog, "u_trans", float(transparency))
+    _set(prog, "u_flash", tuple(float(x) for x in flash))
     inc = np.zeros((16, 4), np.float32)
     ink = np.zeros((16, 4), np.float32)
     kinds = {"crystal": 0.0, "bubble": 1.0, "feather": 2.0, "cloud": 3.0, "silk": 4.0}
@@ -419,7 +432,7 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
 
 
 def render(faces, to_world, size, scale, color, t=0.0, darkness=1.0, incl=None, star=0.0, axis=None, dome=None,
-           offset=(0.0, 0.0), cfield=None):
+           offset=(0.0, 0.0), cfield=None, ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
     """Камень в поверхность size×size (предумноженная альфа: блит с BLEND_PREMULTIPLIED). None — нет GPU.
     incl — примеси [{"k", "p", "r", "n"}] в осях камня; star — сила звезды, axis — ось кристалла."""
     ctx = _ctx()
@@ -433,7 +446,8 @@ def render(faces, to_world, size, scale, color, t=0.0, darkness=1.0, incl=None, 
         tex = ctx.texture((w, h), 4)
         fbos[(w, h)] = ctx.framebuffer(color_attachments=[tex])
     fbo = fbos[(w, h)]
-    k = stone_uniforms(prog, faces, color, darkness, incl, star, axis, dome, cfield)
+    k = stone_uniforms(prog, faces, color, darkness, incl, star, axis, dome, cfield,
+                       ior=ior, absorb=absorb, transparency=transparency, flash=flash)
     prog["u_rot"].write(matrix(to_world).T.copy().tobytes())     # GLSL — по столбцам
     prog["u_size"].value = (float(w), float(h))
     prog["u_scale"].value = float(scale)
@@ -488,11 +502,13 @@ def blit(surf, img, center):
               special_flags=pygame.BLEND_PREMULTIPLIED)
 
 
-def draw(surf, faces, to_world, center, scale, color, t=0.0, extent=None, incl=None, star=0.0, axis=None, cfield=None):
+def draw(surf, faces, to_world, center, scale, color, t=0.0, extent=None, incl=None, star=0.0, axis=None, cfield=None,
+         ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
     """Трассировка в квадрат вокруг center (сторона — по размеру камня); False — нет GPU (рисуйте запасной путь)."""
     r = extent or max(math.sqrt(sum(c * c for c in p)) for f in faces for p in f["pts"])
     size = int(2 * r * scale + 8)
-    img = render(faces, to_world, size, scale, color, t, incl=incl, star=star, axis=axis, cfield=cfield)
+    img = render(faces, to_world, size, scale, color, t, incl=incl, star=star, axis=axis, cfield=cfield,
+                 ior=ior, absorb=absorb, transparency=transparency, flash=flash)
     if img is None:
         return False
     blit(surf, img, center)

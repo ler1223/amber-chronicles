@@ -17,11 +17,26 @@ from game.workshop_games import JewelCut
 from game import jewel_view as JV
 from sim import gems as GM
 from . import ui as U
+from . import optics as OPT
 from .model import Workshop
 
 W, H = 1280, 800
 TAB_Y = 78
 CONTENT_Y = 142
+_FLASH = None
+
+
+def flash_sprite():
+    """Мягкое пятно фонарика: маленький градиент, растянутый без жёстких колец."""
+    global _FLASH
+    if _FLASH is None:
+        s = pygame.Surface((96, 96), pygame.SRCALPHA)
+        for i in range(48, 0, -1):
+            t = i / 48.0
+            a = max(1, int(26 * (1.0 - t) ** 2))
+            pygame.draw.circle(s, (a, int(a * 0.82), int(a * 0.52), 255), (48, 48), i)
+        _FLASH = pygame.transform.smoothscale(s, (300, 300))
+    return _FLASH
 
 
 def gem_color(w, gem):
@@ -353,6 +368,8 @@ class InspectScene(Scene):
         self.kind = kind
         self.index = index
         self.insp = JV.Inspector()
+        self.flash_on = False
+        self.flash_xy = (0.5, 0.5)
 
     @property
     def stone(self):
@@ -370,22 +387,41 @@ class InspectScene(Scene):
             if ok:
                 self.app.save()
                 self.app.switch(HubScene(self.app, tab="supply"))
+        elif action == "flash":
+            self.flash_on = not self.flash_on
         elif isinstance(action, tuple) and action[0] == "step":
             self.i = (self.i + action[1]) % max(1, len(self.stones))
             self.insp = JV.Inspector()
+            self.flash_xy = (0.5, 0.5)
 
     def handle(self, ev):
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
             self.act("back")
             return
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_f:
+            self.flash_on = not self.flash_on
+            return
         if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
             return
+        if ev.type == pygame.MOUSEMOTION and self.flash_on:
+            r = self.view_rect()
+            self.flash_xy = (max(0.0, min(1.0, (ev.pos[0] - r.x) / max(1, r.w))),
+                             max(0.0, min(1.0, (ev.pos[1] - r.y) / max(1, r.h))))
         if self.insp.pointer(ev, self.view_rect()):
             return
         super().handle(ev)
 
     def update(self, dt):
         self.insp.update(dt)
+
+    def _draw_flashlight(self, surf):
+        r = self.view_rect()
+        cx = int(r.x + self.flash_xy[0] * r.w)
+        cy = int(r.y + self.flash_xy[1] * r.h)
+        img = flash_sprite()
+        surf.blit(img, (cx - img.get_width() // 2, cy - img.get_height() // 2),
+                  special_flags=pygame.BLEND_RGB_ADD)
+        pygame.draw.circle(surf, (235, 205, 145), (cx, cy), 13, 2)
 
     def draw(self, surf):
         self.hits = []
@@ -399,9 +435,16 @@ class InspectScene(Scene):
             U.text(surf, f"{w.gem_name(self.stone['id'])} · {self.stone['size']:.2f} ct",
                    (220, 26), 15, U.DIM)
         faces = JV.rough_faces(self.stone)
-        self.insp.draw(surf, self.view_rect(), faces, rough_color(w, self.stone), self.app.clock,
+        profile = OPT.profile(self.stone["id"])
+        flash = (self.flash_xy[0], self.flash_xy[1], 1.0 if self.flash_on else 0.0)
+        color = rough_color(w, self.stone)
+        self.insp.draw(surf, self.view_rect(), faces, color, self.app.clock,
                        mm=JV.mm_per_unit(self.stone, faces, w.xd),
-                       incl=JV.rough_incl(self.stone), cfield=JV.gem_cfield(self.stone, faces))
+                       incl=JV.rough_incl(self.stone), cfield=JV.gem_cfield(self.stone, faces),
+                       ior=profile["ior"], absorb=OPT.absorption(self.stone["id"], color),
+                       transparency=profile["transparency"], flash=flash)
+        if self.flash_on:
+            self._draw_flashlight(surf)
         r = pygame.Rect(800, 104, 456, 560)
         U.panel(surf, r, U.PANEL, U.EDGE)
         U.text(surf, w.gem_name(self.stone["id"]), (r.x + 18, r.y + 16), 23, U.GOLD, True)
@@ -412,17 +455,23 @@ class InspectScene(Scene):
             for part in U.wrap(ln, 14, r.w - 36):
                 U.text(surf, part, (r.x + 18, y), 14, U.TEXT)
                 y += 20
+        y += 6
+        U.text(surf, "Оптика", (r.x + 18, y), 14, U.GOLD, True)
+        y += 20
+        for ln in OPT.optics_text(self.stone["id"]):
+            for part in U.wrap(ln, 13, r.w - 36):
+                U.text(surf, part, (r.x + 18, y), 13, U.DIM)
+                y += 18
         y += 8
-        U.text(surf, f"Оценка сырья: {GM.rough_value(w.xd, self.stone)} з.",
-               (r.x + 18, y), 14, U.DIM)
-        y += 24
         U.text(surf, f"Цена: {self.price} з.", (r.x + 18, y), 20, U.GOLD, True)
-        U.text(surf, "Зажмите мышь и тяните — вращать камень · колесо — приблизить",
-               (r.x + 18, r.bottom - 74), 12, U.DIM)
-        self.button(surf, pygame.Rect(r.x + 18, r.bottom - 48, 190, 34), "Купить",
-                    "buy", w.money >= self.price, U.GREEN)
-        self.button(surf, pygame.Rect(r.x + 224, r.bottom - 48, 190, 34), "Назад",
-                    "back", True, U.BLUE)
+        U.text(surf, "ЛКМ — вращать камень · колесо — приблизить · F — фонарик",
+               (r.x + 18, r.bottom - 96), 12, U.DIM)
+        self.button(surf, pygame.Rect(r.x + 18, r.bottom - 70, 190, 30), "Фонарик (F)",
+                    "flash", True, U.GOLD if self.flash_on else U.BLUE, True)
+        self.button(surf, pygame.Rect(r.x + 18, r.bottom - 34, 190, 26), "Купить",
+                    "buy", w.money >= self.price, U.GREEN, True)
+        self.button(surf, pygame.Rect(r.x + 224, r.bottom - 34, 190, 26), "Назад",
+                    "back", True, U.BLUE, True)
         if len(self.stones) > 1:
             self.button(surf, pygame.Rect(24, 682, 100, 34), "‹", ("step", -1), True, U.BLUE)
             self.button(surf, pygame.Rect(132, 682, 100, 34), "›", ("step", 1), True, U.BLUE)
