@@ -373,7 +373,8 @@ DEF = {
     "color_words": [[0.8, "густой"], [0.6, "насыщенный"], [0.4, "ровный"], [0.2, "светлый"], [0.0, "бледный"]],
     "incl_kinds": {"crystal": {"name": "кристаллик", "w": 1.0}, "bubble": {"name": "пузырёк", "w": 0.5},
                    "feather": {"name": "трещина", "w": 1.3}, "cloud": {"name": "облачко", "w": 0.6},
-                   "silk": {"name": "шёлк", "w": 0.25}},
+                   "silk": {"name": "шёлк", "w": 0.25}, "cavity": {"name": "каверна", "w": 1.5},
+                   "cleavage": {"name": "спайность", "w": 1.8}, "graining": {"name": "внутреннее зерно", "w": 0.8}},
     "jeweler": {"chance": 0.55, "books": [1, 2], "rough": [1, 2], "rare_chance": 0.2,
                 "names": ["Ювелир Мирон Скло", "Огранщица Ветта", "Старый Лазарь Гранёный", "Ювелирша Ольва"]},
 }
@@ -427,19 +428,24 @@ def roll_incl(xd, gid, rng, premium=False):
             break
         n += 1
     out = []
-    kinds = ("crystal", "crystal", "bubble", "feather", "cloud")
+    kinds = ("crystal", "crystal", "bubble", "feather", "cloud", "cloud", "cavity", "cleavage", "graining")
     for _ in range(n):
         k = rng.choice(kinds)
         a = rng.uniform(0, math.tau)
         rr = 0.75 * math.sqrt(rng.random())
         p_ = [round(rr * math.cos(a), 3), round(rr * math.sin(a), 3), round(rng.uniform(-0.72, 0.72), 3)]
         lo, hi = {"crystal": (0.02, 0.08), "bubble": (0.015, 0.05), "feather": (0.05, 0.14),
-                  "cloud": (0.04, 0.1)}[k]
+                  "cloud": (0.04, 0.1), "cavity": (0.025, 0.075), "cleavage": (0.04, 0.12),
+                  "graining": (0.02, 0.06)}[k]
         inc = {"k": k, "p": p_, "r": round(rng.uniform(lo, hi), 3)}
-        if k == "feather":
+        if k in ("feather", "cleavage"):
             v = [rng.gauss(0, 1) for _ in range(3)]
             m = math.sqrt(sum(x * x for x in v)) or 1.0
             inc["n"] = [round(x / m, 4) for x in v]
+        if k == "cavity":
+            inc["surf"] = 1.0
+        elif k == "feather" and rng.random() < 0.35:
+            inc["surf"] = 1.0
         out.append(inc)
     if rng.random() < gd.get("silk", 0.0):              # шёлк (иглы рутила): мутит, но даёт звезду в кабошоне
         out.append({"k": "silk", "p": [0.0, 0.0, 0.0], "r": 0.55, "d": round(rng.uniform(0.35, 1.0), 2)})

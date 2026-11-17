@@ -52,6 +52,18 @@ def absorption(gid, color):
     return tuple(min(0.055, (1.0 - c) ** 1.35 * 0.022 / t + 0.0003) for c in rgb)
 
 
+def pleo_value(gid):
+    """Безразмерная сила плеохроизма для шейдера."""
+    p = profile(gid)
+    return {"заметное": 0.62, "слабое": 0.26}.get(p.get("pleochroism"), 0.34)
+
+
+def biref_value(gid):
+    """Ориентировочное двупреломление для визуального разделения лучей."""
+    p = profile(gid)
+    return {"заметное": 0.008, "слабое": 0.003}.get(p.get("birefringence"), 0.004)
+
+
 def transparency_word(gid):
     t = profile(gid)["transparency"]
     if t >= 0.72:

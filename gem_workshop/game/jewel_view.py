@@ -44,9 +44,10 @@ def spr(name, w=None, h=None):
 
 
 def stone(surf, faces, to_world, center, scale, color, t, incl=None, star=0.0, axis=None, cfield=None,
-          ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
+          ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0), light=None, surface=None, env=1.0):
     if not GG.draw(surf, faces, to_world, center, scale, color, t, incl=incl, star=star, axis=axis, cfield=cfield,
-                   ior=ior, absorb=absorb, transparency=transparency, flash=flash):
+                   ior=ior, absorb=absorb, transparency=transparency, flash=flash,
+                   light=light, surface=surface, env=env):
         G3.render(surf, faces, to_world, center, scale, color, t)
         for i in incl or []:                          # без видеокарты — примеси точками
             if i["k"] == "silk":
@@ -192,7 +193,17 @@ def draw_machine(g, surf, rect, k=1.0, ox=None, area=None):
     AA.line(surf, BRASS_D, tip, head, K(9))
     AA.line(surf, BRASS, tip, head, K(5))
     AA.line(surf, (250, 220, 150), tip, head, K(1))
-    stone(surf, g.stone, g.machine_world, C, S, g.color, g.t, incl=g.incl, axis=g.caxis, cfield=g.cfield())
+    q = max(0.0, min(1.0, float(getattr(g, "quality", 0.8)) / 2.5))
+    surf_state = {
+        "roughness": 0.05 + 0.18 * (1.0 - q),
+        "dirt": 0.10 + 0.08 * (1.0 - q),
+        "film": 0.05 + 0.05 * (1.0 - q),
+        "damage": 0.03 + 0.12 * (1.0 - q),
+        "polish": 0.35 + 0.65 * q,
+        "scratches": 0.08 + 0.25 * (1.0 - q),
+    }
+    stone(surf, g.stone, g.machine_world, C, S, g.color, g.t, incl=g.incl, axis=g.caxis,
+          cfield=g.cfield(), surface=surf_state)
     # цель грани — пунктир: след плоскости цели (при верных угле и индексе — вдоль диска)
     tgt = None
     if not g.need_flip() and g.flip_a in (0.0, math.pi):
@@ -885,6 +896,13 @@ class Inspector:
                 m[1][0] * p[0] + m[1][1] * p[1] + m[1][2] * p[2],
                 m[2][0] * p[0] + m[2][1] * p[1] + m[2][2] * p[2])
 
+    def to_stone(self, p):
+        """Мировые координаты → оси камня (матрица поворота ортонормальна)."""
+        m = self.m
+        return (m[0][0] * p[0] + m[1][0] * p[1] + m[2][0] * p[2],
+                m[0][1] * p[0] + m[1][1] * p[1] + m[2][1] * p[2],
+                m[0][2] * p[0] + m[1][2] * p[1] + m[2][2] * p[2])
+
     def turn(self, dx, dy):
         self.m = _mm(_rot("y", dx * 0.012), _mm(_rot("x", -dy * 0.012), self.m))
 
@@ -914,7 +932,8 @@ class Inspector:
             self.m = _mm(_rot("y", dt * 0.4), self.m)
 
     def draw(self, surf, rect, faces, color, t, mm=None, incl=None, star=0.0, axis=None, cfield=None,
-             ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
+             ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0),
+             light=None, surface=None, env=1.0):
         """mm — миллиметров на единицу формы: камень в настоящем размере (поле зрения ≈ 24 мм) и линейка."""
         pygame.draw.rect(surf, (12, 10, 10), rect, border_radius=10)
         glow = _glow(rect.size)                          # тёмный бархат и мягкое пятно света под камнем
@@ -929,7 +948,8 @@ class Inspector:
         clip = surf.get_clip()
         surf.set_clip(rect)
         stone(surf, faces, self.to_world, rect.center, scale, color, t, incl=incl, star=star, axis=axis,
-              cfield=cfield, ior=ior, absorb=absorb, transparency=transparency, flash=flash)
+              cfield=cfield, ior=ior, absorb=absorb, transparency=transparency, flash=flash,
+              light=light, surface=surface, env=env)
         if mm:                                          # линейка: 5 мм
             L = int(5 * px_mm)
             x0, y0 = rect.x + 24, rect.bottom - 26

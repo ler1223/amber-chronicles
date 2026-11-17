@@ -19,27 +19,12 @@ from sim import gems as GM
 from ui import illustrations as IL
 from . import ui as U
 from . import optics as OPT
+from . import surface as SURF
 from .model import Workshop
 
 W, H = 1280, 800
 TAB_Y = 78
 CONTENT_Y = 142
-_FLASH = None
-
-
-def flash_sprite():
-    """Мягкое пятно фонарика: маленький градиент, растянутый без жёстких колец."""
-    global _FLASH
-    if _FLASH is None:
-        s = pygame.Surface((96, 96), pygame.SRCALPHA)
-        for i in range(48, 0, -1):
-            t = i / 48.0
-            a = max(1, int(26 * (1.0 - t) ** 2))
-            pygame.draw.circle(s, (a, int(a * 0.82), int(a * 0.52), 255), (48, 48), i)
-        _FLASH = pygame.transform.smoothscale(s, (300, 300))
-    return _FLASH
-
-
 def gem_color(w, gem):
     gd = GM.gem_def(w.xd, gem["id"])
     return GM.tint(tuple(gd.get("color", (120, 160, 220))), gem.get("col", 0.5))
@@ -428,6 +413,8 @@ class InspectScene(Scene):
         self.insp = JV.Inspector()
         self.flash_on = False
         self.flash_xy = (0.5, 0.5)
+        self.flash_mode = "direct"      # direct | grazing | dark
+        self.cleaned = False
 
     @property
     def stone(self):
@@ -450,10 +437,17 @@ class InspectScene(Scene):
                 self.app.switch(HubScene(self.app, tab="supply"))
         elif action == "flash":
             self.flash_on = not self.flash_on
+        elif action == "clean":
+            self.cleaned = not self.cleaned
+            if self.cleaned and self.kind not in ("stock", "lot"):
+                w.clean_stone(self.stone)
+        elif isinstance(action, tuple) and action[0] == "mode":
+            self.flash_mode = action[1]
         elif isinstance(action, tuple) and action[0] == "step":
             self.i = (self.i + action[1]) % max(1, len(self.stones))
             self.insp = JV.Inspector()
             self.flash_xy = (0.5, 0.5)
+            self.cleaned = False
 
     def handle(self, ev):
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
@@ -461,6 +455,13 @@ class InspectScene(Scene):
             return
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_f:
             self.flash_on = not self.flash_on
+            return
+        if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_1, pygame.K_2, pygame.K_3):
+            self.flash_mode = {pygame.K_1: "direct", pygame.K_2: "grazing", pygame.K_3: "dark"}[ev.key]
+            self.flash_on = True
+            return
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_c:
+            self.act("clean")
             return
         if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP) and ev.button not in (1, 3):
             return
@@ -475,46 +476,64 @@ class InspectScene(Scene):
     def update(self, dt):
         self.insp.update(dt)
 
+    def _surface_for(self, rough):
+        return SURF.for_stone(self.stone, rough=rough, cleaned=self.cleaned)
+
+    def _light_for(self, faces, mm):
+        """Фонарик в мировых координатах, затем перевод в оси камня.
+
+        Положение луча берётся из курсора, а не из экранного пятна: при
+        повороте камня луч остаётся мировым и меняет то, что освещает.
+        """
+        view = self.view_rect()
+        far = max((math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2])
+                   for f in faces for p in f["pts"]), default=100.0)
+        px_mm = min(view.w, view.h) / 12.0 * self.insp.zoom
+        scale = max(1e-4, px_mm * mm)
+        cx = view.x + self.flash_xy[0] * view.w
+        cy = view.y + self.flash_xy[1] * view.h
+        wx = (cx - view.centerx) / scale
+        wy = (cy - view.centery) / scale
+        z = far * 3.6 + 60.0
+        mode = self.flash_mode
+        if mode == "grazing":
+            pos = (wx - far * 1.55, wy - far * 0.55, z * 0.55)
+            target = (wx, wy, 0.0)
+            cone, intensity, env = 12.0, 2.8, 0.66
+        elif mode == "dark":
+            pos = (wx, wy + far * 1.45, -z * 0.72)
+            target = (wx, wy, 0.0)
+            cone, intensity, env = 22.0, 3.2, 0.50
+        else:
+            pos = (wx, wy, z)
+            target = (wx, wy, 0.0)
+            cone, intensity, env = 8.0, 2.4, 0.74
+        dx, dy, dz = target[0] - pos[0], target[1] - pos[1], target[2] - pos[2]
+        ln = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        direction = (dx / ln, dy / ln, dz / ln)
+        # Мир → камень. Направление — без переноса, только поворот.
+        p_obj = self.insp.to_stone(pos)
+        d_obj = self.insp.to_stone(direction)
+        return {
+            "on": bool(self.flash_on),
+            "pos": p_obj,
+            "dir": d_obj,
+            "color": (1.0, 0.86, 0.68),
+            "intensity": intensity,
+            "cone": cone,
+            "soft": 0.018,
+            "ref": z,
+        }, env
+
     def _draw_flashlight(self, surf):
+        """Только прицел луча. Сам свет рисует трассировщик, а не этот спрайт."""
         r = self.view_rect()
         cx = int(r.x + self.flash_xy[0] * r.w)
         cy = int(r.y + self.flash_xy[1] * r.h)
-        img = flash_sprite()
-        surf.blit(img, (cx - img.get_width() // 2, cy - img.get_height() // 2),
-                  special_flags=pygame.BLEND_RGB_ADD)
-        pygame.draw.circle(surf, (235, 205, 145), (cx, cy), 13, 2)
-
-    def _draw_inclusions(self, surf, faces, incl, mm):
-        """Подсветить включения только там, куда попал луч фонарика."""
-        if not incl:
-            return
-        view = self.view_rect()
-        px_mm = min(view.w, view.h) / 12.0 * self.insp.zoom
-        scale = px_mm * mm
-        cx, cy = view.center
-        fx = view.x + self.flash_xy[0] * view.w
-        fy = view.y + self.flash_xy[1] * view.h
-        for inc in incl:
-            p = self.insp.to_world(inc["p"])
-            x, y = cx + p[0] * scale, cy + p[1] * scale
-            if (x - fx) ** 2 + (y - fy) ** 2 > 105 ** 2:
-                continue
-            rr = max(2, int(inc["r"] * scale * 0.9))
-            kind = inc["k"]
-            col = (255, 90, 80) if kind == "feather" else (
-                (230, 220, 170) if kind == "crystal" else
-                (210, 200, 190) if kind == "cloud" else (180, 220, 255))
-            if kind == "feather":
-                pygame.draw.line(surf, col, (x - rr, y - rr), (x + rr, y + rr), 2)
-            elif kind == "cloud":
-                for k in range(4):
-                    a = k * 1.7
-                    pygame.draw.circle(surf, col, (int(x + math.cos(a) * rr * 0.6),
-                                                   int(y + math.sin(a) * rr * 0.6)), max(1, rr // 3))
-            elif kind == "silk":
-                pygame.draw.line(surf, col, (x - rr, y), (x + rr, y), 1)
-            else:
-                pygame.draw.circle(surf, col, (int(x), int(y)), rr, 1)
+        pygame.draw.circle(surf, (235, 205, 145), (cx, cy), 12, 1)
+        pygame.draw.circle(surf, (120, 95, 60), (cx, cy), 3, 1)
+        mode = {"direct": "прямой", "grazing": "боковой", "dark": "тёмный"}.get(self.flash_mode, self.flash_mode)
+        U.text(surf, mode, (cx + 16, cy - 7), 11, U.DIM)
 
     def draw(self, surf):
         self.hits = []
@@ -531,25 +550,30 @@ class InspectScene(Scene):
                    (340, 26), 15, U.DIM)
         faces = JV.stone_faces(self.stone)
         profile = OPT.profile(self.stone["id"])
-        flash = (self.flash_xy[0], self.flash_xy[1], 1.0 if self.flash_on else 0.0)
         color = rough_color(w, self.stone) if rough else gem_color(w, self.stone)
-        incl = (JV.rough_incl(self.stone) if rough else self.stone.get("incl")) if self.flash_on else None
+        # Включения передаются всегда: их видимость теперь решает свет,
+        # а не переключатель «показать/скрыть» в интерфейсе.
+        incl = JV.rough_incl(self.stone) if rough else self.stone.get("incl")
         cfield = JV.gem_cfield(self.stone, faces) if rough else JV.gem_cfield(self.stone)
         absorb = OPT.absorption(self.stone["id"], color)
         transparency = profile["transparency"]
-        if not self.flash_on:
-            # Без просвета камень читается как плотный силуэт: внутренние включения скрыты.
-            absorb = tuple(min(0.09, x * 2.4) for x in absorb)
-            transparency = max(0.16, transparency * 0.32)
+        surface = self._surface_for(rough)
+        surface["pleo"] = OPT.pleo_value(self.stone["id"])
+        # Двупреломление дорого в два прохода; у сырья оно всё равно
+        # маскируется коркой и рассеянием, поэтому включаем его для огранки.
+        surface["biref"] = 0.0 if rough else OPT.biref_value(self.stone["id"])
+        surface["opaxis"] = self.stone.get("axis") or (0.0, 0.0, 1.0)
+        light, env = self._light_for(faces, JV.mm_per_unit(self.stone, faces, w.xd))
         mm = JV.mm_per_unit(self.stone, faces, w.xd)
+        flash = (self.flash_xy[0], self.flash_xy[1], 1.0 if self.flash_on else 0.0)
         self.insp.draw(surf, self.view_rect(), faces, color, self.app.clock,
                        mm=mm, incl=incl, cfield=cfield,
                        star=0.0 if rough else self.stone.get("star", 0.0),
                        axis=self.stone.get("axis"),
                        ior=profile["ior"], absorb=absorb,
-                       transparency=transparency, flash=flash)
+                       transparency=transparency, flash=flash,
+                       light=light, surface=surface, env=env)
         if self.flash_on:
-            self._draw_inclusions(surf, faces, incl, mm)
             self._draw_flashlight(surf)
         r = pygame.Rect(800, 104, 456, 560)
         U.panel(surf, r, U.PANEL, U.EDGE)
@@ -571,22 +595,38 @@ class InspectScene(Scene):
             for part in U.wrap(ln, 13, r.w - 36):
                 U.text(surf, part, (r.x + 18, y), 13, U.DIM)
                 y += 18
-        y += 8
+        y += 6
+        U.text(surf, "Поверхность", (r.x + 18, y), 14, U.GOLD, True)
+        y += 20
+        for ln in SURF.diagnosis(surface, rough):
+            for part in U.wrap(ln, 12, r.w - 36):
+                U.text(surf, part, (r.x + 18, y), 12, U.DIM)
+                y += 16
+        y += 6
         U.text(surf, f"{'Цена' if self.can_buy else 'Оценка'}: {self.price} з.",
                (r.x + 18, y), 20, U.GOLD, True)
         U.text(surf, "Фонарик — основной способ оценки: включите F и ведите лучом.",
-               (r.x + 18, r.bottom - 112), 12, U.GREEN if self.flash_on else U.GOLD)
-        U.text(surf, "ЛКМ — вращать камень · колесо — приблизить",
-               (r.x + 18, r.bottom - 96), 12, U.DIM)
-        self.button(surf, pygame.Rect(r.x + 18, r.bottom - 70, 190, 30), "Фонарик (F)",
+               (r.x + 18, r.bottom - 122), 12, U.GREEN if self.flash_on else U.GOLD)
+        U.text(surf, "ЛКМ — вращать камень · колесо — приблизить · C — очистить",
+               (r.x + 18, r.bottom - 106), 12, U.DIM)
+        # Режимы света: прямой, скользящий, тёмнопольный.
+        modes = (("direct", "1 Прямой"), ("grazing", "2 Боковой"), ("dark", "3 Тёмный"))
+        for k, (key, label) in enumerate(modes):
+            self.button(surf, pygame.Rect(r.x + 18 + k * 146, r.bottom - 154, 140, 26), label,
+                        ("mode", key), True,
+                        U.GOLD if self.flash_mode == key else U.BLUE, True)
+        self.button(surf, pygame.Rect(r.x + 18, r.bottom - 76, 190, 30), "Фонарик (F)",
                     "flash", True, U.GOLD if self.flash_on else U.BLUE, True)
+        self.button(surf, pygame.Rect(r.x + 224, r.bottom - 76, 190, 30),
+                    "Вернуть грязь" if self.cleaned else "Очистить (C)",
+                    "clean", True, U.GREEN if self.cleaned else U.BLUE, True)
         if self.can_buy:
-            self.button(surf, pygame.Rect(r.x + 18, r.bottom - 34, 190, 26), "Купить",
+            self.button(surf, pygame.Rect(r.x + 18, r.bottom - 38, 190, 26), "Купить",
                         "buy", w.money >= self.price, U.GREEN, True)
-            self.button(surf, pygame.Rect(r.x + 224, r.bottom - 34, 190, 26), "Назад",
+            self.button(surf, pygame.Rect(r.x + 224, r.bottom - 38, 190, 26), "Назад",
                         "back", True, U.BLUE, True)
         else:
-            self.button(surf, pygame.Rect(r.x + 18, r.bottom - 34, 190, 26), "Назад",
+            self.button(surf, pygame.Rect(r.x + 18, r.bottom - 38, 190, 26), "Назад",
                         "back", True, U.BLUE, True)
         if len(self.stones) > 1:
             self.button(surf, pygame.Rect(24, 682, 100, 34), "‹", ("step", -1), True, U.BLUE)
@@ -757,7 +797,8 @@ class ResultScene(Scene):
         U.text(surf, f"{self.gem['size']:.2f} ct · качество {self.gem['q']:.2f}",
                (r.x + 20, r.y + 322), 15, U.DIM)
         U.text(surf, f"Огранка: {w.cut_name(self.gem['cut'])}", (r.x + 20, r.y + 346), 14, U.TEXT)
-        U.text(surf, f"Оценка: {self.gem['value']} з.", (r.x + 20, r.y + 370), 16, U.GOLD, True)
+        U.text(surf, SURF.short_line(SURF.for_stone(self.gem)), (r.x + 20, r.y + 370), 13, U.DIM)
+        U.text(surf, f"Оценка: {self.gem['value']} з.", (r.x + 20, r.y + 394), 16, U.GOLD, True)
         r2 = pygame.Rect(520, 100, 736, 420)
         U.panel(surf, r2, U.PANEL, U.EDGE)
         U.text(surf, "Клиент", (r2.x + 18, r2.y + 16), 18, U.GOLD, True)

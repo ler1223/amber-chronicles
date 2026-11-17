@@ -5,6 +5,7 @@
 Матовые грани (сырой камень, свежая шлифовка, рундист) не пропускают свет зеркально — рассеивают его: недоогранённый
 камень выглядит тусклым, огранённый — играет. Нет видеокарты — None (рисует полигональный запасной путь gem3d)."""
 import math
+import os
 
 import numpy as np
 import pygame
@@ -337,6 +338,16 @@ void main() {
 }
 """
 
+# Новый физически ориентированный шейдер лежит отдельным файлом, чтобы его
+# можно было развивать без правки питоновской обвязки. Старый FS оставлен
+# выше как аварийный/исторический вариант.
+_FS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gem_fs.glsl")
+try:
+    with open(_FS_PATH, "r", encoding="utf-8") as _fh:
+        FS = _fh.read()
+except OSError:
+    pass
+
 _STATE = {"ctx": None, "failed": False}
 
 
@@ -382,9 +393,14 @@ def _set(prog, name, value=None, data=None):
 
 
 def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=None, dome=None, cfield=None,
-                   ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
+                   ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0),
+                   light=None, surface=None, env=1.0):
     """Камень в униформы шейдера (плоскости граней, вид грани, царапины, цвет и поглощение, примеси, звезда,
-    купол, карта оттенков). → число граней."""
+    купол, карта оттенков). → число граней.
+
+    light — мировой/объектный фонарик: pos, dir, color, intensity, cone, soft, tan, ref, on.
+    surface — слоистое состояние поверхности: roughness, dirt, film, damage, polish, wet, scratches.
+    """
     pl = np.zeros((MAXP, 4), np.float32)
     kd = np.zeros(MAXP, np.float32)
     gr = np.zeros(MAXP, np.float32)
@@ -409,9 +425,47 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
     _set(prog, "u_ior", tuple(float(x) for x in (ior or (2.38, 2.42, 2.47))))
     _set(prog, "u_trans", float(transparency))
     _set(prog, "u_flash", tuple(float(x) for x in flash))
+
+    # --- физический фонарик ---
+    light = light or {}
+    lpos = light.get("pos", (0.0, 0.0, 1000.0))
+    ldir = light.get("dir", (0.0, 0.0, -1.0))
+    llen = math.sqrt(sum(float(v) * float(v) for v in ldir)) or 1.0
+    ldir = tuple(float(v) / llen for v in ldir)
+    cone = float(light.get("cone", 7.0))
+    lcos = float(light.get("cos", math.cos(math.radians(cone))))
+    ltan = float(light.get("tan", math.tan(math.radians(cone))))
+    _set(prog, "u_lpos", tuple(float(v) for v in lpos))
+    _set(prog, "u_ldir", ldir)
+    _set(prog, "u_lcol", tuple(float(v) for v in light.get("color", (1.0, 0.86, 0.68))))
+    _set(prog, "u_lint", float(light.get("intensity", 1.0)))
+    _set(prog, "u_lcos", lcos)
+    _set(prog, "u_lsoft", float(light.get("soft", 0.015)))
+    _set(prog, "u_ltan", ltan)
+    _set(prog, "u_lref", float(light.get("ref", 400.0)))
+    _set(prog, "u_lon", 1.0 if light.get("on", False) else 0.0)
+    if not light:                       # витрины/превью без фонарика — студийный свет
+        env = max(float(env), 5.0)
+    _set(prog, "u_env", float(env))
+
+    # --- слоистая поверхность ---
+    surface = surface or {}
+    _set(prog, "u_rough", float(surface.get("roughness", 0.08)))
+    _set(prog, "u_dirt", float(surface.get("dirt", 0.08)))
+    _set(prog, "u_film", float(surface.get("film", 0.05)))
+    _set(prog, "u_damage", float(surface.get("damage", 0.03)))
+    _set(prog, "u_polish", float(surface.get("polish", 0.9)))
+    _set(prog, "u_wet", float(surface.get("wet", 0.0)))
+    _set(prog, "u_scratches", float(surface.get("scratches", 0.0)))
+    _set(prog, "u_pleo", float(surface.get("pleo", 0.0)))
+    _set(prog, "u_biref", float(surface.get("biref", 0.0)))
+    _set(prog, "u_opaxis", tuple(float(v) for v in surface.get("opaxis", (0.0, 0.0, 1.0))))
+
     inc = np.zeros((16, 4), np.float32)
     ink = np.zeros((16, 4), np.float32)
-    kinds = {"crystal": 0.0, "bubble": 1.0, "feather": 2.0, "cloud": 3.0, "silk": 4.0}
+    incsurf = np.zeros(16, np.float32)
+    kinds = {"crystal": 0.0, "bubble": 1.0, "feather": 2.0, "cloud": 3.0, "silk": 4.0,
+             "cavity": 5.0, "cleavage": 6.0, "graining": 7.0}
     m = 0
     for i in (incl or [])[:16]:
         inc[m] = (i["p"][0], i["p"][1], i["p"][2], i["r"])
@@ -419,9 +473,11 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
         if i["k"] == "silk":                       # шёлк: в .y — густота игл
             n = (i.get("d", 0.6), 0.0, 0.0)
         ink[m] = (kinds.get(i["k"], 0.0), n[0], n[1], n[2])
+        incsurf[m] = float(i.get("surf", 0.0))
         m += 1
     _set(prog, "u_inc", data=inc.tobytes())
     _set(prog, "u_inck", data=ink.tobytes())
+    _set(prog, "u_incsurf", data=incsurf.tobytes())
     _set(prog, "u_ninc", m)
     _set(prog, "u_star", float(star or 0.0))
     _set(prog, "u_caxis", tuple(float(x) for x in (axis or (0.0, 0.0, 1.0))))
@@ -432,9 +488,33 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
 
 
 def render(faces, to_world, size, scale, color, t=0.0, darkness=1.0, incl=None, star=0.0, axis=None, dome=None,
-           offset=(0.0, 0.0), cfield=None, ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
+           offset=(0.0, 0.0), cfield=None, ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0),
+           light=None, surface=None, env=1.0):
     """Камень в поверхность size×size (предумноженная альфа: блит с BLEND_PREMULTIPLIED). None — нет GPU.
-    incl — примеси [{"k", "p", "r", "n"}] в осях камня; star — сила звезды, axis — ось кристалла."""
+    incl — примеси [{"k", "p", "r", "n"}] в осях камня; star — сила звезды, axis — ось кристалла.
+    light/surface — физический фонарик и слоистое состояние поверхности.
+
+    Двупреломление: два прохода с ior ± biref/2 и смешивание. Это дешевле,
+    чем два поляризационных луча в одном шейдере, но даёт реальное двоение
+    и разделение цвета, а не просто подкрашивание.
+    """
+    biref = float((surface or {}).get("biref", 0.0))
+    if biref > 0.0055:
+        base = tuple(float(x) for x in (ior or (2.38, 2.42, 2.47)))
+        s0 = dict(surface)
+        s0["biref"] = 0.0
+        a = render(faces, to_world, size, scale, color, t, darkness, incl, star, axis, dome,
+                   offset, cfield, tuple(x - biref * 0.5 for x in base), absorb, transparency, flash,
+                   light=light, surface=s0, env=env)
+        b = render(faces, to_world, size, scale, color, t, darkness, incl, star, axis, dome,
+                   offset, cfield, tuple(x + biref * 0.5 for x in base), absorb, transparency, flash,
+                   light=light, surface=s0, env=env)
+        if a is not None and b is not None:
+            out = a.copy()
+            b.set_alpha(128)
+            out.blit(b, (0, 0))
+            return out
+        return a or b
     ctx = _ctx()
     if ctx is None or not faces:
         return None
@@ -447,7 +527,8 @@ def render(faces, to_world, size, scale, color, t=0.0, darkness=1.0, incl=None, 
         fbos[(w, h)] = ctx.framebuffer(color_attachments=[tex])
     fbo = fbos[(w, h)]
     k = stone_uniforms(prog, faces, color, darkness, incl, star, axis, dome, cfield,
-                       ior=ior, absorb=absorb, transparency=transparency, flash=flash)
+                       ior=ior, absorb=absorb, transparency=transparency, flash=flash,
+                       light=light, surface=surface, env=env)
     prog["u_rot"].write(matrix(to_world).T.copy().tobytes())     # GLSL — по столбцам
     prog["u_size"].value = (float(w), float(h))
     prog["u_scale"].value = float(scale)
@@ -503,12 +584,13 @@ def blit(surf, img, center):
 
 
 def draw(surf, faces, to_world, center, scale, color, t=0.0, extent=None, incl=None, star=0.0, axis=None, cfield=None,
-         ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0)):
+         ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0), light=None, surface=None, env=1.0):
     """Трассировка в квадрат вокруг center (сторона — по размеру камня); False — нет GPU (рисуйте запасной путь)."""
     r = extent or max(math.sqrt(sum(c * c for c in p)) for f in faces for p in f["pts"])
     size = int(2 * r * scale + 8)
     img = render(faces, to_world, size, scale, color, t, incl=incl, star=star, axis=axis, cfield=cfield,
-                 ior=ior, absorb=absorb, transparency=transparency, flash=flash)
+                 ior=ior, absorb=absorb, transparency=transparency, flash=flash,
+                 light=light, surface=surface, env=env)
     if img is None:
         return False
     blit(surf, img, center)

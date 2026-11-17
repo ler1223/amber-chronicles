@@ -12,6 +12,7 @@ import random
 
 from sim import gems as GM
 from .data import load as load_workshop_data
+from . import surface as SURF
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAVE_DIR = os.path.join(PROJECT_DIR, "save")
@@ -195,8 +196,16 @@ class Workshop:
         q = cutter.quality
         cut = cutter.cut["id"] if cutter.cut else self.known_cuts[0]
         star = cutter.final_star()
+        surface = SURF.from_cutter(cutter)
         value = GM.estimate(self.xd, rough["id"], ct, rough.get("col", 0.5), cl, q,
                             cut=cut, star=star)
+        # Видимая поверхность — часть товара: грязь и царапины снижают цену,
+        # даже если внутренняя чистота и огранка хороши.
+        sf = (1.0 - 0.18 * surface.get("dirt", 0.0)
+              - 0.12 * surface.get("damage", 0.0)
+              - 0.08 * (1.0 - surface.get("polish", 0.0))
+              - 0.06 * surface.get("scratches", 0.0))
+        value = max(1.0, value * max(0.55, sf))
         return {
             "uid": self._next_uid("g"),
             "id": rough["id"],
@@ -208,6 +217,7 @@ class Workshop:
             "star": star,
             "value": int(value),
             "shape": cutter.shape(),
+            "surface": surface,
         }
 
     def evaluate(self, client, gem):
@@ -229,6 +239,12 @@ class Workshop:
             return offer
         client["haggle_used"] = True
         return min(client["budget"], max(offer + 1, int(offer * 1.15)))
+
+    def clean_stone(self, stone):
+        """Снять поверхностную грязь. Внутренние включения это не убирает."""
+        rough = "seed" in stone and "q" not in stone
+        stone["surface_clean"] = SURF.for_stone(stone, rough=rough, cleaned=True)
+        return stone["surface_clean"]
 
     def add_display(self, gem):
         self.display.append(gem)
