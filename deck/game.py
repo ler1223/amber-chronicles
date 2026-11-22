@@ -186,6 +186,8 @@ class DescentGame:
     def battle_over(self, b):
         b.finish_into_run()
         run = self.run
+        for c in run.deck:                                 # зелёный прогноз — только в бою
+            c.preview = None
         if b.result != "victory":
             self.end_run()
             self.scene = EndScreen(self, False, [f"Пал на этаже {run.depth} в бою «{b.fight['name']}».",

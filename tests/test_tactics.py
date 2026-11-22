@@ -286,6 +286,40 @@ def test_hunter_damage_amplifiers_and_debuffs():
     assert h.ds["ranged_bonus"] >= 1
 
 
+def test_damage_preview_includes_hero_buffs_but_not_target_debuffs():
+    data = M.load()
+    run = M.Run(data=data, seed=35, hero="hunter", variant="range")
+    b = Battle(ED, run, run.fights[0], seed=35)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (3, 2))
+    h.ds["ranged_bonus"] = 3
+    h.ds["strength"] = 2
+    card = M.Card("h_shot", run.defs)
+    assert b.damage_preview(card, "main") == [5 + 3 + 2]
+    foe.ds["vulnerable"] = 2
+    foe.ds["mark"] = 4
+    assert b.damage_preview(card, "main") == [5 + 3 + 2]       # дебаффы цели не учитываются
+    assert b.damage_preview(M.Card("strike", run.defs), "alt") == [2 + 2]
+
+
+def test_damage_preview_includes_momentum_and_tag_items():
+    data = M.load()
+    run = M.Run(data=data, seed=36, hero="merc")
+    b = Battle(ED, run, run.fights[0], seed=36)
+    h = b.hero
+    h.ds["momentum"] = 3
+    run.relics.append({"name": "тест", "tag_bonus": [{"tag": "Удар", "damage": 2}]})
+    card = M.Card("strike", run.defs)
+    assert b.damage_preview(card, "main") == [6 + 3 + 2]
+
+
+def test_damage_preview_marks_damage_numbers_green():
+    txt = M.phrase({"target": "enemy", "do": [{"op": "damage", "n": 6}]}, preview=[11])
+    assert "@{11}" in txt
+
+
 def test_area_and_hunt_tag_items():
     data = M.load()
     rel = data["relics"]["relics"]

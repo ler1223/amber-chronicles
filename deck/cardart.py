@@ -275,7 +275,8 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
         if extra:
             rich(s, extra, pygame.Rect(inner.x, bottom, inner.w, 30), 21, (220, 210, 190), boxes=boxes)
     else:
-        txt = (M.phrase(d["main"], d.get("exhaust"), lit) + (" " + extra if extra else "")).strip()
+        txt = (M.phrase(d["main"], d.get("exhaust"), lit, preview=(card.preview or {}).get("main")) +
+               (" " + extra if extra else "")).strip()
         size = 38
         from .cardface import _MEASURE
         while size > 18 and _fits(rich, _MEASURE, txt, inner, size, sc) > inner.h:
@@ -294,7 +295,7 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
     else:
         col = (190, 255, 190) if alt_ok else (150, 160, 150)
         _lab(strip, lambda z: font(z, True), 15, "ПРОСТО · 0 · МАСТЕР" if card.alt_up is not None else "ПРОСТО · 0", col, topleft=(14, 2), shadow=(0, 0, 0))
-        txt = M.phrase(d["alt"])
+        txt = M.phrase(d["alt"], preview=(card.preview or {}).get("alt"))
         ar = pygame.Rect(12, 18, alt.w - 24, alt.h - 20)
         size = 28
         from .cardface import _MEASURE
@@ -388,7 +389,7 @@ def word_boxes(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Где на лице 512×768 стоят выделенные слова: [(rect, слово, стиль)] — для наведения в режиме чтения."""
     lit = frozenset(lit or ())
     ck = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
-          card.divine["id"] if card.divine else None, repr(card.alt_up))
+          card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     return _content(card, ck, main_ok, alt_ok, hot, heat, lit)[1]
 
 
@@ -400,7 +401,7 @@ def compose(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=
     ox, oy = round(tx * 6) / 6, round(ty * 6) / 6                 # шаг наклона — для кэша
     S = round(width / FW, 3) if width and abs(width - FW) > 2 else 1.0
     key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
-           card.divine["id"] if card.divine else None, repr(card.alt_up), ox, oy, S)
+           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key(), ox, oy, S)
     if key in _faces:
         return _faces[key]
     t = kind(card)

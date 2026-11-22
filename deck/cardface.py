@@ -34,6 +34,7 @@ GOLD = (255, 214, 120)
 LIT = (140, 255, 130)       # выполненное условие
 TAG = (150, 205, 255)       # тег
 NUM = (255, 255, 255)
+DMG = (135, 255, 125)       # реальный урон с баффами — зелёным
 _cache = {}
 _ill = {}
 FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "fonts")
@@ -66,7 +67,10 @@ def _tokens(s):
     for word in s.split():
         style = "t"
         core = word
-        if "{" in word:
+        if word.startswith("@") and "{" in word:            # реальный урон с баффами
+            style = "d"
+            core = word.replace("@", "").replace("{", "").replace("}", "")
+        elif "{" in word:
             style = "n"
             core = word.replace("{", "").replace("}", "")
         elif "~" in word:                                 # выполненное условие
@@ -89,8 +93,8 @@ def rich(surf, s, rect, size, color, dim=False, left=False, boxes=None):
         c = surf
         return rich(c.native, s, c.rect(rect), max(6, round(size * c.S)), color, dim, left) / c.S
     fonts = {"t": font(size), "k": font(size, True), "n": font(size + 4, True), "l": font(size, True),
-             "g": font(size, True)}
-    cols = {"t": color, "k": GOLD, "n": NUM, "l": LIT, "g": TAG}
+             "g": font(size, True), "d": font(size + 4, True)}
+    cols = {"t": color, "k": GOLD, "n": NUM, "l": LIT, "g": TAG, "d": DMG}
     if dim:
         cols = {k: T.mix(v, (40, 34, 28), 0.3) for k, v in cols.items()}       # тусклее, но читается
     lines, cur, w = [], [], 0
@@ -210,7 +214,8 @@ def _alt_strip(card, alt_ok, w):
     pygame.draw.rect(s, T.mix(col, (0, 0, 0), 0.35), body, 2, border_radius=10)
     tag = T.font(14, True).render("ПРОСТО · 0", True, col)
     s.blit(tag, (body.x + 12, body.y + 4))
-    rich(s, phrase(card.d["alt"]), pygame.Rect(body.x + 8, body.y + 18, body.w - 16, body.h - 20), 17,
+    rich(s, phrase(card.d["alt"], preview=(card.preview or {}).get("alt")),
+         pygame.Rect(body.x + 8, body.y + 18, body.w - 16, body.h - 20), 17,
          (215, 235, 215), dim=not alt_ok)
     return s
 
@@ -244,7 +249,7 @@ def _levels(s, card, rect, heat, lit=(), k=1.0, boxes=None):
     ok = heat is None or L["heat"] <= heat
     top = cy + round(pr * 1.25) + round(5 * k)
     tr = pygame.Rect(rect.x, top, rect.w, rect.bottom - top)
-    txt = phrase(L["main"], lit=lit)
+    txt = phrase(L["main"], lit=lit, preview=(card.preview or {}).get("main"))
     size = round(21 * k)
     while size > round(9 * k) and rich(_MEASURE, txt, tr, size, (0, 0, 0)) > tr.h:
         size -= 1
@@ -256,7 +261,7 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     lit — выполненные сейчас условия (подсвечиваются зелёным)."""
     lit = frozenset(lit or ())
     key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
-           card.divine["id"] if card.divine else None, repr(card.alt_up))
+           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     if key in _cache:
         return _cache[key]
     d = card.d
@@ -319,7 +324,8 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
         if extra:
             rich(s, extra, pygame.Rect(tb.x, bottom, tb.w, 16), 11, (220, 210, 190))
     else:
-        txt = phrase(d["main"], d.get("exhaust"), lit) + (" " + extra if extra else "")
+        txt = phrase(d["main"], d.get("exhaust"), lit, preview=(card.preview or {}).get("main")) + \
+              (" " + extra if extra else "")
         size = 19
         while size > 12 and rich(_MEASURE, txt, tb, size, (0, 0, 0)) > tb.h + 6:
             size -= 1
@@ -360,7 +366,7 @@ def face(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=Non
         return cardart.compose(card, main_ok, alt_ok, hot, heat, lit, tilt, width)
     lit = frozenset(lit or ())
     key = ("old", card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
-           card.divine["id"] if card.divine else None, repr(card.alt_up))
+           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     if key not in _cache:
         _cache[key] = pygame.transform.smoothscale(_face_old(card, main_ok, alt_ok, hot, heat, lit), (FW, FH))
     return _cache[key]

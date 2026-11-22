@@ -1472,6 +1472,63 @@ class Battle:
                 ops = [o for o in c["do"] if not area or o["op"] not in ONCE]
                 yield from self.apply(h, ops, tgt, dict(ctx, conds=[]))
 
+    def damage_preview(self, card, mode):
+        """Реальный урон карты по герою без уязвимости/метки/брони цели.
+
+        Учитываются баффы героя (сила, разгон, дальний бонус, фокус), закалка,
+        «следующая карта», бонусы предметов и выполненные условия самой карты.
+        Урон по конкретной цели (дальность, добыча, уязвимость) здесь намеренно
+        не учитывается: это ориентир силы карты, как в руке до выбора цели.
+        """
+        u = card.d.get(mode) or {}
+        if mode not in ("main", "alt"):
+            return []
+        h, ds = self.hero, self.hero.ds
+        ctx = {"ranged": u.get("ranged", False), "tag": u.get("tag"),
+               "card": card if mode == "main" else None, "before": self.played,
+               "temper": 0, "emp": 0}
+        if mode == "main":
+            ctx["temper"] = self.temper.get(card.uid, 0)
+            ctx["emp"] = sum(self.empower.get(tag, 0) for tag in card.tags)
+        emp, mom, focus, dbl = ctx["emp"], (ds["momentum"] if self.mech == "momentum" else 0), \
+            bool(ds["focus"]), bool(self.double_next and mode == "main")
+        out = []
+        for op in u.get("do", []):
+            kind = op.get("op")
+            if kind not in ("damage", "body_slam"):
+                continue
+            n = h.shield if kind == "body_slam" else op.get("n", 0)
+            if kind == "damage" and op.get("per"):
+                n += op["per"].get("k", 1) * self.per_count(op["per"], None, ctx)
+            if kind == "damage" and mode == "main":
+                n += ctx["temper"] + emp
+                emp = 0
+            if mom:
+                n += mom * op.get("mom_k", 1)
+                mom = 0
+            if ctx["ranged"]:
+                n += ds["ranged_bonus"]
+                if focus:
+                    n *= 2
+                    focus = False
+            if kind == "damage" and mode == "main":
+                for c in u.get("if", []):
+                    if c["when"].get("k") == "resonance":
+                        continue
+                    if self.met(c["when"], None, ctx["before"]):
+                        n = (n + c.get("plus", 0)) * c.get("mult", 1)
+                n += self.items.card_bonus(card, "damage")
+                if self.variant == "ash" and "Область" in card.tags:
+                    n += 2
+            n += ds["strength"]
+            if ds["weak"]:
+                n = int(n * 0.75)
+            if kind == "damage" and dbl:
+                n *= 2
+                dbl = False
+            out.append(max(0, int(n)))
+        return out
+
     def hero_bonus(self, tgt, n, op, ctx):
         """Урон удара героя с его механикой: разгон, дистанция, добыча, азарт, сосредоточение."""
         h = self.hero

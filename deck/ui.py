@@ -1465,7 +1465,16 @@ class BattleScreen:
 
     # ---------- отрисовка ----------
 
+    def refresh_damage_previews(self):
+        """Обновить зелёные числа на картах в руке под текущие баффы героя."""
+        for c in getattr(self.game.run, "deck", []):
+            c.preview = None
+        for c in self.b.hand:
+            c.preview = {"main": self.b.damage_preview(c, "main"),
+                         "alt": self.b.damage_preview(c, "alt")}
+
     def draw(self, surf):
+        self.refresh_damage_previews()
         v = self.view
         if v._cpu_tex is None:
             v._cpu_tex = make_textures()

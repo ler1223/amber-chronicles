@@ -84,6 +84,11 @@ def _n(v):
     return "{" + str(v) + "}"
 
 
+def _dmg(v):
+    """Число урона с учётом текущих баффов: на лице карты — зелёным."""
+    return "@{" + str(v) + "}"
+
+
 def _signed(v):
     return ("+" if v > 0 else "−") + str(abs(v))
 
@@ -98,7 +103,7 @@ def _low(s):
     return s
 
 
-def _op_phrase(op):
+def _op_phrase(op, dmg=None):
     t = op["op"]
     n = op.get("n")
     if op.get("per"):                                       # «за каждую…»
@@ -106,10 +111,12 @@ def _op_phrase(op):
         word = {"damage": "урона", "block": "*защиты*", "bleed": "*кровотечения*", "burn": "*горения*",
                 "poison": "*яда*", "mark": "*метки*", "heal": "*лечения*", "counter": "*контратаки*"}.get(t, t)
         verb = {"damage": "Нанести", "block": "Получить", "heal": "Восстановить", "counter": "Получить"}.get(t, "Наложить")
-        head = f"{verb} {_n(n)} {word}" if n else f"{verb} {word}"
+        shown = _dmg(dmg) if t == "damage" and dmg is not None else _n(n)
+        head = f"{verb} {shown} {word}" if n else f"{verb} {word}"
         return f"{head}: {_n('+' + str(per.get('k', 1)))} {per_text(per)}."
     if t == "damage":
-        s = f"Нанести {_n(n)} урона"
+        shown = _dmg(dmg) if dmg is not None else _n(n)
+        s = f"Нанести {shown} урона"
         if op.get("mom_k"):
             s += f" {_n('+' + str(op['mom_k']))}×*разгон*"
         if op.get("far"):
@@ -157,7 +164,8 @@ def _op_phrase(op):
         "counter": lambda: f"*Контратака* {_n(n)}.",
         "burn_card": lambda: f"*Изгнать* {_n(n)} " + ("случайную карту из руки." if n == 1 else "случайные карты из руки."),
         "strength_x2": lambda: "Удвоить *мощь*.",
-        "body_slam": lambda: "Нанести урон, равный вашей *защите*.",
+        "body_slam": lambda: (f"Нанести {_dmg(dmg)} урона, равный вашей *защите*." if dmg is not None
+                               else "Нанести урон, равный вашей *защите*."),
         "collide_x2": lambda: f"*Столкновения* в этот ход {_n('×' + str(n or 2))}.",
         "thorns": lambda: f"*Шипы* {_n(n)} до конца хода.",
         "cleanse": lambda: "Снять *слабость* и *уязвимость*.",
@@ -269,25 +277,33 @@ def _if_phrase(c, lit=False):
     return f"{head}: " + _low(" ".join(bits))
 
 
-def _ops_phrases(do):
-    """Фразы действий; одинаковые подряд — одной фразой «×N»."""
-    out, k = [], 0
+def _ops_phrases(do, preview=None):
+    """Фразы действий; одинаковые подряд — одной фразой «×N».
+    preview — реальные числа урона по порядку для лицевой стороны в бою."""
+    out, k, pi = [], 0, 0
+    preview = list(preview or ())
     while k < len(do):
         r = 1
         while k + r < len(do) and do[k + r] == do[k]:
             r += 1
-        ph = _op_phrase(do[k])
+        hit = do[k]["op"] in ("damage", "body_slam")
+        dmg = preview[pi] if hit and pi < len(preview) else None
+        if hit:
+            pi += 1
+        ph = _op_phrase(do[k], dmg)
         out.append(ph if r == 1 else ph.rstrip(".") + f" {_n('×' + str(r))}.")
         k += r
     return out
 
 
-def phrase(u, exhaust=False, lit=()):
-    """Текст применения с разметкой: {число} — крупно белым, *слово* — золотом, ~слово~ — выполненное условие
-    (зелёным), [Тег] — голубым. lit — какие условия сейчас выполнены: "seal" и ("if", i)."""
+def phrase(u, exhaust=False, lit=(), preview=None):
+    """Текст применения с разметкой: {число} — крупно белым, @{число} — реальный урон зелёным
+    (в бою, с баффами героя), *слово* — золотом, ~слово~ — выполненное условие, [Тег] — голубым.
+    lit — какие условия сейчас выполнены: "seal" и ("if", i)."""
     if u.get("target") == "statue":                       # свиток Жреца: смысл, исполняет бог статуи
         return u.get("say", "")
     do = u.get("do", [])
+    preview = list(preview or ())
     if u.get("power"):                                    # Сила: правило до конца боя
         return (" ".join(_ops_phrases(do)) + " " if do else "") + power_text(u["power"])
     if [o["op"] for o in do] == ["heat"] and do[0].get("n", 0) > 0 and u["target"] == "self" and not u.get("if"):
@@ -310,7 +326,7 @@ def phrase(u, exhaust=False, lit=()):
         parts.append(f"Область радиус {_n(u.get('radius', 1))}, дальность {_n(u.get('range', 5))}:")
     elif t == "cell_any":
         parts.append(f"Клетка в {_n(u.get('range', 4))}:")
-    parts += _ops_phrases(do)
+    parts += _ops_phrases(do, preview)
     for i, c in enumerate(u.get("if", [])):
         parts.append(_if_phrase(c, ("if", i) in lit))
     if u.get("back"):
@@ -803,6 +819,12 @@ class Card:
         self.divine = None               # дар бога (data/deck/gods.json) — поверх прозрения
         self._offer = None               # какие 3 варианта прозрения из 5 предложены (выбираются один раз)
         self.alt_up = None               # Мастерская: улучшенное простое применение (одно на карту)
+        self.preview = None              # бой: {"main": [реальный урон…], "alt": […]}; вне боя — None
+
+    def preview_key(self):
+        """Хэшируемый снимок preview для кэшей лиц карт."""
+        p = self.preview or {}
+        return tuple((mode, tuple(v or ())) for mode, v in sorted(p.items()))
 
     @property
     def d(self):
