@@ -13,7 +13,7 @@ import pygame
 from ui import theme as T
 
 from . import gfx as G
-from .model import card_extras, phrase
+from .model import CARD_RARITY_COLOR, card_extras, phrase
 
 FW, FH = 512, 768                 # лицо в высоком разрешении (пиксельные рамки: 2×2 на пиксель арта)
 OW, OH = 300, 440                 # старое лицо (рисуется кодом, если нет картинок рамок)
@@ -282,6 +282,11 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     s.blit(shade, art)
     pygame.draw.rect(s, (12, 9, 7), art, 3, border_radius=6)
     pygame.draw.rect(s, T.mix(light, (255, 255, 255), 0.25), art.inflate(2, 2), 1, border_radius=7)
+    if card.rarity:
+        col = CARD_RARITY_COLOR.get(card.rarity, (220, 220, 220))
+        for k in range(card.rarity):
+            pygame.draw.circle(s, (18, 12, 8), (art.x + 16 + k * 14, art.bottom - 12), 6)
+            pygame.draw.circle(s, col, (art.x + 16 + k * 14, art.bottom - 12), 4)
     # лента, тип, цена
     _ribbon(s, (28, RIBBON_Y, OW - 56, 40), band, card.name, light)
     tn = " · ".join(card.tags) or TYPE_NAME.get(d["type"], "")       # теги — по ним работают условия

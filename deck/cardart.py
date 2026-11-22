@@ -327,6 +327,13 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
         st = icon("insight", 34)
         if st is not None:
             s.blit(st, (m["window"][0] + m["window"][2] - 40 - k * 30, m["window"][1] + 8))
+    if card.rarity:                                      # редкость: цветные точки на кромке рисунка
+        col = M.CARD_RARITY_COLOR.get(card.rarity, (220, 220, 220))
+        for k in range(card.rarity):
+            pygame.draw.circle(s, (18, 12, 8), (m["window"][0] + 16 + k * 14,
+                                                m["window"][1] + m["window"][3] - 12), 6)
+            pygame.draw.circle(s, col, (m["window"][0] + 16 + k * 14,
+                                        m["window"][1] + m["window"][3] - 12), 4)
     if card.divine:
         pen = icon(f"god_{card.divine['id']}", 64)
         if pen is not None:

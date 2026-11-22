@@ -134,7 +134,10 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "basic",
+   "basic_role": "attack",
+   "rarity": 0
   },
   "defend": {
    "ill": [
@@ -256,7 +259,10 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "basic",
+   "basic_role": "defense",
+   "rarity": 0
   },
   "lunge_rush": {
    "ill": [
@@ -387,7 +393,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 1
   },
   "lunge": {
    "ill": [
@@ -512,7 +520,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 1
   },
   "shield_ram": {
    "ill": [
@@ -669,7 +679,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 2
   },
   "sweep": {
    "ill": [
@@ -895,7 +907,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 2
   },
   "wall_smash": {
    "ill": [
@@ -1032,7 +1046,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 2
   },
   "riposte": {
    "ill": [
@@ -1178,7 +1194,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 2
   },
   "body_slam": {
    "ill": [
@@ -1395,7 +1413,9 @@
    ],
    "tags": [
     "Защита"
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 2
   },
   "blood_sweep": {
    "ill": [
@@ -1617,7 +1637,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 3
   },
   "battle_rage": {
    "ill": [
@@ -1733,7 +1755,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 3
   },
   "charge": {
    "ill": [
@@ -1955,7 +1979,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 3
   },
   "brace": {
    "ill": [
@@ -2174,7 +2200,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 1
   },
   "hook": {
    "ill": [
@@ -2335,7 +2363,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 1
   },
   "war_cry": {
    "ill": [
@@ -2508,7 +2538,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "neutral",
+   "rarity": 2
   },
   "m_ram": {
    "ill": [
@@ -2663,7 +2695,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_inertia": {
    "ill": [
@@ -2773,7 +2807,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_halt": {
    "ill": [
@@ -2916,7 +2952,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_run": {
    "ill": [
@@ -3020,7 +3058,10 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "basic",
+   "basic_role": "movement",
+   "rarity": 0
   },
   "h_shot": {
    "ill": [
@@ -3155,7 +3196,10 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "basic",
+   "basic_role": "attack",
+   "rarity": 0
   },
   "h_dodge": {
    "ill": [
@@ -3288,7 +3332,10 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "basic",
+   "basic_role": "defense",
+   "rarity": 0
   },
   "h_kick": {
    "ill": [
@@ -3453,7 +3500,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_backstep": {
    "ill": [
@@ -3559,7 +3608,10 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "basic",
+   "basic_role": "movement",
+   "rarity": 0
   },
   "h_aimed": {
    "ill": [
@@ -3701,7 +3753,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_volley": {
    "ill": [
@@ -3836,7 +3890,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_poison": {
    "ill": [
@@ -4003,7 +4059,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_pin": {
    "ill": [
@@ -4158,7 +4216,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_long": {
    "ill": [
@@ -4320,7 +4380,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_marking": {
    "ill": [
@@ -4482,7 +4544,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_fill": {
    "ill": [
@@ -4620,7 +4684,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_horn": {
    "ill": [
@@ -4749,7 +4815,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_trap": {
    "ill": [
@@ -4878,7 +4946,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_evade": {
    "ill": [
@@ -5007,7 +5077,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_focus": {
    "ill": [
@@ -5154,7 +5226,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "arrow": {
    "ill": [
@@ -5186,7 +5260,9 @@
     "target": "cell_step",
     "step": 1,
     "do": []
-   }
+   },
+   "category": "token",
+   "rarity": 0
   },
   "p_bolt": {
    "ill": [
@@ -5624,7 +5700,10 @@
      }
     ],
     "vfx": "e_fireball"
-   }
+   },
+   "category": "basic",
+   "basic_role": "attack",
+   "rarity": 0
   },
   "p_ward": {
    "ill": [
@@ -5999,7 +6078,10 @@
      }
     ],
     "vfx": "ash_veil"
-   }
+   },
+   "category": "basic",
+   "basic_role": "defense",
+   "rarity": 0
   },
   "p_stride": {
    "ill": [
@@ -6352,7 +6434,10 @@
     "target": "cell_step",
     "step": 2,
     "do": []
-   }
+   },
+   "category": "basic",
+   "basic_role": "movement",
+   "rarity": 0
   },
   "p_fireball": {
    "ill": [
@@ -6774,7 +6859,9 @@
      }
     ],
     "vfx": "fire_bomb"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "p_flash": {
    "ill": [
@@ -7153,7 +7240,9 @@
      }
     ],
     "vfx": "fan_flames"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "p_wall": {
    "ill": [
@@ -7548,7 +7637,9 @@
      }
     ],
     "vfx": "cinder_field"
-   }
+   },
+   "category": "hero",
+   "rarity": 1
   },
   "p_stoke": {
    "ill": [
@@ -7736,7 +7827,9 @@
      }
     ],
     "vfx": "fan_flames"
-   }
+   },
+   "category": "hero",
+   "rarity": 1
   },
   "p_phoenix": {
    "ill": [
@@ -7904,7 +7997,9 @@
      }
     ],
     "vfx": "phoenix"
-   }
+   },
+   "category": "hero",
+   "rarity": 4
   },
   "p_meteor": {
    "ill": [
@@ -8311,7 +8406,9 @@
      }
     ],
     "vfx": "e_meteor"
-   }
+   },
+   "category": "hero",
+   "rarity": 4
   },
   "p_cool": {
    "ill": [
@@ -8519,7 +8616,9 @@
      }
     ],
     "vfx": "frost_guard"
-   }
+   },
+   "category": "hero",
+   "rarity": 2
   },
   "p_lance": {
    "ill": [
@@ -8940,7 +9039,9 @@
      }
     ],
     "vfx": "fan_flames"
-   }
+   },
+   "category": "hero",
+   "rarity": 1
   },
   "p_ember": {
    "ill": [
@@ -9329,7 +9430,9 @@
      }
     ],
     "vfx": "fan_flames"
-   }
+   },
+   "category": "hero",
+   "rarity": 1
   },
   "m_flurry": {
    "name": "Шквал",
@@ -9520,7 +9623,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_wallbash": {
    "name": "Добить о стену",
@@ -9725,7 +9830,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_last": {
    "name": "Последняя стрела",
@@ -9885,7 +9992,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_trail": {
    "name": "Ложный след",
@@ -10023,7 +10132,9 @@
     },
     "once": "turn",
     "repeat": 1
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "p_blaze": {
    "name": "Пожар",
@@ -10433,7 +10544,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "p_kindle": {
    "name": "Тлеющий уголь",
@@ -10746,7 +10859,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_counter": {
    "name": "Контрудар",
@@ -10871,7 +10986,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_ambush": {
    "name": "Настороже",
@@ -11007,7 +11124,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_trophy": {
    "name": "Трофей",
@@ -11133,7 +11252,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_duel": {
    "name": "Поединок",
@@ -11310,7 +11431,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_shieldbreak": {
    "name": "Пробить щит",
@@ -11494,7 +11617,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_stomp": {
    "name": "Добить лежачего",
@@ -11682,7 +11807,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_temper": {
    "name": "Закалённый клинок",
@@ -11795,7 +11922,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_drill": {
    "name": "Отработанный приём",
@@ -11936,7 +12065,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_rally": {
    "name": "Подготовка",
@@ -12068,7 +12199,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_bloodpact": {
    "name": "Кровавая клятва",
@@ -12257,7 +12390,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_shieldwall": {
    "name": "Стена щитов",
@@ -12452,7 +12587,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "slime_rot": {
    "name": "Тина",
@@ -12476,7 +12613,9 @@
     ]
    },
    "growth": [],
-   "about": "Мусор от врагов: занимает руку. Основное (1 энергия) — отскрести, карта сгорает."
+   "about": "Мусор от врагов: занимает руку. Основное (1 энергия) — отскрести, карта сгорает.",
+   "category": "token",
+   "rarity": 0
   },
   "sc_attack": {
    "ill": [
@@ -12501,7 +12640,10 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "basic",
+   "basic_role": "attack",
+   "rarity": 0
   },
   "sc_defense": {
    "ill": [
@@ -12526,7 +12668,10 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "basic",
+   "basic_role": "defense",
+   "rarity": 0
   },
   "sc_move": {
    "ill": [
@@ -12551,7 +12696,10 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "basic",
+   "basic_role": "movement",
+   "rarity": 0
   },
   "sc_curse": {
    "ill": [
@@ -12576,7 +12724,9 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "sc_gift": {
    "ill": [
@@ -12601,7 +12751,9 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "sc_summon": {
    "ill": [
@@ -12626,7 +12778,9 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "sc_attack_chorus": {
    "ill": [
@@ -12652,7 +12806,9 @@
    "alt": {
     "target": "none"
    },
-   "chorus": true
+   "chorus": true,
+   "category": "hero",
+   "rarity": 4
   },
   "sc_curse_chorus": {
    "ill": [
@@ -12678,7 +12834,9 @@
    "alt": {
     "target": "none"
    },
-   "chorus": true
+   "chorus": true,
+   "category": "hero",
+   "rarity": 4
   },
   "sc_defense_relay": {
    "ill": [
@@ -12709,7 +12867,9 @@
      "m": "attack",
      "who": "other"
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "sc_move_relay": {
    "ill": [
@@ -12740,7 +12900,9 @@
      "m": "curse",
      "who": "other"
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "sc_curse_relay": {
    "ill": [
@@ -12771,7 +12933,9 @@
      "m": "attack",
      "who": "other"
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "sc_gift_relay": {
    "ill": [
@@ -12802,7 +12966,9 @@
      "m": "defense",
      "who": "other"
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "sc_summon_relay": {
    "ill": [
@@ -12833,7 +12999,9 @@
      "m": "summon",
      "who": "other"
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "sc_defense_double": {
    "ill": [
@@ -12859,7 +13027,9 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "hero",
+   "rarity": 1
   },
   "sc_gift_double": {
    "ill": [
@@ -12885,7 +13055,9 @@
    },
    "alt": {
     "target": "none"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "m_hit_back": {
    "ill": [
@@ -13030,7 +13202,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_bastion": {
    "ill": [
@@ -13169,7 +13343,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_leech": {
    "ill": [
@@ -13323,7 +13499,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_shoot_roll": {
    "ill": [
@@ -13480,7 +13658,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_brush": {
    "ill": [
@@ -13611,7 +13791,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_herbs": {
    "ill": [
@@ -13745,7 +13927,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "p_barrier": {
    "ill": [
@@ -14221,7 +14405,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "p_ashstep": {
    "ill": [
@@ -14587,7 +14773,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "p_breath": {
    "ill": [
@@ -14974,7 +15162,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_rend": {
    "ill": [
@@ -15127,7 +15317,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_open": {
    "ill": [
@@ -15277,7 +15469,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_blade_storm": {
    "ill": [
@@ -15448,7 +15642,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "m_duelist": {
    "ill": [
@@ -15588,7 +15784,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_riposte": {
    "ill": [
@@ -15733,7 +15931,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_meet": {
    "ill": [
@@ -15857,7 +16057,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_rising": {
    "ill": [
@@ -16003,7 +16205,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "m_crush": {
    "ill": [
@@ -16154,7 +16358,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_leader_cry": {
    "ill": [
@@ -16315,7 +16521,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_limit": {
    "ill": [
@@ -16443,7 +16651,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_knives": {
    "ill": [
@@ -16573,7 +16783,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_blood_trail": {
    "ill": [
@@ -16706,7 +16918,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "m_frenzy": {
    "ill": [
@@ -16847,7 +17061,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "m_runner": {
    "ill": [
@@ -17008,7 +17224,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_last_word": {
    "ill": [
@@ -17193,7 +17411,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "m_unbreak": {
    "ill": [
@@ -17353,7 +17573,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_butcher": {
    "ill": [
@@ -17503,7 +17725,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "t_knife": {
    "ill": [
@@ -17535,7 +17759,9 @@
     "ranged": true,
     "vfx": "_d_quick_arrow"
    },
-   "alt": null
+   "alt": null,
+   "category": "token",
+   "rarity": 0
   },
   "h_jagged": {
    "ill": [
@@ -17692,7 +17918,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_tendon": {
    "ill": [
@@ -17861,7 +18089,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_pierce": {
    "ill": [
@@ -18029,7 +18259,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_barrage": {
    "ill": [
@@ -18187,7 +18419,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_full_quiver": {
    "ill": [
@@ -18314,7 +18548,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_rain": {
    "ill": [
@@ -18456,7 +18692,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_spikes": {
    "ill": [
@@ -18573,7 +18811,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_pit": {
    "ill": [
@@ -18688,7 +18928,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_net": {
    "ill": [
@@ -18842,7 +19084,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_finish": {
    "ill": [
@@ -19002,7 +19246,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_patience": {
    "ill": [
@@ -19124,7 +19370,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_master_quiver": {
    "ill": [
@@ -19268,7 +19516,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "h_toxic": {
    "ill": [
@@ -19395,7 +19645,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_deadeye": {
    "ill": [
@@ -19574,7 +19826,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "h_knife": {
    "ill": [
@@ -19731,7 +19985,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_ambush2": {
    "ill": [
@@ -19859,7 +20115,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_lure": {
    "ill": [
@@ -19996,7 +20254,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "p_chain": {
    "ill": [
@@ -20452,7 +20712,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "p_grenade": {
    "ill": [
@@ -20911,7 +21173,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "p_oil": {
    "ill": [
@@ -21365,7 +21629,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 3
   },
   "p_sparks": {
    "ill": [
@@ -21784,7 +22050,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "p_eternal": {
    "ill": [
@@ -21954,7 +22222,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 4
   },
   "p_ash_eater": {
    "ill": [
@@ -22149,7 +22419,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 3
   },
   "p_spark_forge": {
    "ill": [
@@ -22486,7 +22758,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 4
   },
   "p_heart": {
    "ill": [
@@ -22783,7 +23057,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "p_sacrifice": {
    "ill": [
@@ -23276,7 +23552,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "p_whip": {
    "ill": [
@@ -23730,7 +24008,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "p_keg": {
    "ill": [
@@ -24179,7 +24459,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "p_fire_rain": {
    "ill": [
@@ -24480,7 +24762,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "p_melt": {
    "ill": [
@@ -24983,7 +25267,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 1
   },
   "p_smoke": {
    "ill": [
@@ -25524,7 +25810,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 3
   },
   "p_sun": {
    "ill": [
@@ -25984,7 +26272,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 4
   },
   "p_geyser": {
    "ill": [
@@ -26497,7 +26787,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "p_flame_armor": {
    "ill": [
@@ -26952,7 +27244,9 @@
      ]
     }
    ],
-   "element": "fire"
+   "element": "fire",
+   "category": "hero",
+   "rarity": 1
   },
   "p_burnout": {
    "ill": [
@@ -27463,7 +27757,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "t_spark": {
    "ill": [
@@ -27493,7 +27789,9 @@
     ],
     "vfx": "_d_quick_arrow"
    },
-   "alt": null
+   "alt": null,
+   "category": "token",
+   "rarity": 0
   },
   "h_scope": {
    "ill": [
@@ -27606,7 +27904,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_snipe": {
    "ill": [
@@ -27800,7 +28100,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_steady": {
    "ill": [
@@ -27932,7 +28234,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_mark_burst": {
    "ill": [
@@ -28092,7 +28396,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "h_mark_web": {
    "ill": [
@@ -28218,7 +28524,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_hunt": {
    "ill": [
@@ -28377,7 +28685,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_echo_shot": {
    "ill": [
@@ -28520,7 +28830,9 @@
      "n": 2
     },
     "once": "turn"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "h_rapid": {
    "ill": [
@@ -28723,7 +29035,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_quiver_echo": {
    "ill": [
@@ -28873,7 +29187,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "h_arrow_well": {
    "ill": [
@@ -29020,7 +29336,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_chain_1": {
    "ill": [
@@ -29179,7 +29497,9 @@
      "n": 2
     },
     "once": "turn"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "h_chain_2": {
    "ill": [
@@ -29338,7 +29658,9 @@
      "n": 3
     },
     "once": "turn"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "h_chain_3": {
    "ill": [
@@ -29497,7 +29819,9 @@
      "n": 4
     },
     "once": "turn"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "h_chain_finish": {
    "ill": [
@@ -29663,7 +29987,9 @@
      "n": 5
     },
     "once": "turn"
-   }
+   },
+   "category": "hero",
+   "rarity": 4
   },
   "h_chain_draw": {
    "ill": [
@@ -29781,7 +30107,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_chain_song": {
    "ill": [
@@ -29918,7 +30246,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_chain_guard": {
    "ill": [
@@ -30059,7 +30389,9 @@
      "n": 2
     },
     "once": "turn"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "h_chain_mark": {
    "ill": [
@@ -30241,7 +30573,9 @@
      "n": 2
     },
     "once": "turn"
-   }
+   },
+   "category": "hero",
+   "rarity": 3
   },
   "h_beat": {
    "ill": [
@@ -30436,7 +30770,9 @@
     "Преследование",
     "Толчок",
     "Метка"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_stalk": {
    "name": "Преследование",
@@ -30609,7 +30945,9 @@
    "tags": [
     "Шаг",
     "Преследование"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_mark_hunt": {
    "ill": [
@@ -30777,7 +31115,9 @@
     "Выстрел",
     "Преследование",
     "Метка"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_area_hunt": {
    "ill": [
@@ -30933,7 +31273,9 @@
     "Выстрел",
     "Область",
     "Метка"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_hunt_final": {
    "ill": [
@@ -31093,7 +31435,9 @@
     "Выстрел",
     "Преследование",
     "Комбо"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "m_bulldoze": {
    "ill": [
@@ -31288,7 +31632,9 @@
     "Удар",
     "Толчок",
     "Шаг"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_ring": {
    "ill": [
@@ -31512,7 +31858,9 @@
     "Удар",
     "Толчок",
     "Область"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "m_grapple": {
    "ill": [
@@ -31691,7 +32039,9 @@
     "Удар",
     "Толчок",
     "Клич"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_break": {
    "ill": [
@@ -31912,7 +32262,9 @@
     "Удар",
     "Толчок",
     "Шаг"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "m_quake": {
    "ill": [
@@ -32061,7 +32413,9 @@
     "Удар",
     "Толчок",
     "Область"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "arrow_blood": {
    "ill": [
@@ -32100,7 +32454,9 @@
    "tags": [
     "Выстрел",
     "Кровь"
-   ]
+   ],
+   "category": "token",
+   "rarity": 0
   },
   "h_bloodlust": {
    "ill": [
@@ -32268,7 +32624,9 @@
    "tags": [
     "Клич",
     "Кровь"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_blood_rite": {
    "ill": [
@@ -32415,7 +32773,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "h_blood_volley": {
    "ill": [
@@ -32638,7 +32998,9 @@
    "tags": [
     "Выстрел",
     "Кровь"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 4
   },
   "h_shadow_quiver": {
    "ill": [
@@ -32775,7 +33137,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_dark_reload": {
    "ill": [
@@ -32940,7 +33304,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 2
   },
   "h_second_wind": {
    "ill": [
@@ -33084,7 +33450,9 @@
    "tags": [
     "Комбо"
    ],
-   "exhaust": true
+   "exhaust": true,
+   "category": "hero",
+   "rarity": 1
   },
   "h_scout": {
    "ill": [
@@ -33204,7 +33572,9 @@
    ],
    "tags": [
     "Комбо"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 1
   },
   "h_smoke_screen": {
    "ill": [
@@ -33355,7 +33725,9 @@
    "tags": [
     "Область",
     "Клич"
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_snare_net": {
    "ill": [
@@ -33507,7 +33879,9 @@
       }
      ]
     }
-   ]
+   ],
+   "category": "hero",
+   "rarity": 3
   },
   "h_patient_shot": {
    "ill": [
@@ -33642,7 +34016,24 @@
     "Выстрел",
     "Сохранение"
    ],
-   "retain": true
+   "retain": true,
+   "category": "hero",
+   "rarity": 1
   }
- }
+ },
+ "neutral": [
+  "battle_rage",
+  "blood_sweep",
+  "body_slam",
+  "brace",
+  "charge",
+  "hook",
+  "lunge",
+  "lunge_rush",
+  "riposte",
+  "shield_ram",
+  "sweep",
+  "wall_smash",
+  "war_cry"
+ ]
 }

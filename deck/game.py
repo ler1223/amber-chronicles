@@ -28,10 +28,15 @@ class DescentGame:
         """Новый забег — с выбора героя."""
         self.scene = HeroSelect(self)
 
-    def start_run(self, hero="merc", variant=None):
-        self.run = M.Run(data=self.data, seed=self.seed, hero=hero, variant=variant)
+    def start_run(self, hero="merc", variant=None, starter=None):
+        self.run = M.Run(data=self.data, seed=self.seed, hero=hero, variant=variant, starter=starter)
         self.node = None
         self.to_map()
+
+    def open_starter(self, hero, variant=None):
+        """Выбор стартовой колоды: 6 базовых + 4 карты первого тира."""
+        from .ui import StarterDeckScreen
+        self.scene = StarterDeckScreen(self, hero, variant)
 
     # ---------- сохранение забега ----------
 

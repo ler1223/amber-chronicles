@@ -642,6 +642,11 @@ OFFER = 3          # сколько вариантов прозрения пре
 INSIGHT_CHANCE = 0.05   # шанс прозрения за основное применение карты
 INSIGHT_PITY = 20       # после стольких неудач — гарантированное прозрение
 
+CARD_RARITY_NAME = {0: "Базовая", 1: "Обычная", 2: "Необычная", 3: "Редкая", 4: "Легендарная"}
+CARD_RARITY_COLOR = {0: (170, 170, 170), 1: (190, 190, 170), 2: (120, 210, 170),
+                     3: (120, 170, 255), 4: (235, 160, 255)}
+CARD_TIER_WEIGHTS = {1: 55, 2: 28, 3: 13, 4: 4}
+
 
 def _bless_use(u, god):
     u = copy.deepcopy(u)
@@ -854,6 +859,18 @@ class Card:
     def cost(self):
         return self.d["cost"]
 
+    @property
+    def rarity(self):
+        return int(self.d.get("rarity", 1))
+
+    @property
+    def rarity_name(self):
+        return CARD_RARITY_NAME.get(self.rarity, CARD_RARITY_NAME[1])
+
+    @property
+    def category(self):
+        return self.d.get("category", "hero")
+
     def text(self, mode):
         return plain(phrase(self.d[mode]))
 
@@ -927,13 +944,47 @@ class Card:
         self._d = None
 
 
+# ---------- стартовая колода ----------
+
+def hero_prefix(hero_id):
+    return {"merc": "m_", "hunter": "h_", "pyro": "p_", "priest": "sc_"}.get(hero_id, "")
+
+
+def basic_starter(data, hero_id):
+    """6 базовых карт: 2 атаки, 2 защиты, 2 перемещения."""
+    h = data["heroes"]["heroes"][hero_id]
+    basic = h.get("basic") or {}
+    out = []
+    for role in ("attack", "defense", "movement"):
+        cid = basic.get(role)
+        if cid:
+            out += [cid, cid]
+    return out
+
+
+def tier1_pool(data, hero_id):
+    """Карты 1 тира, из которых игрок добирает 4 в стартовую колоду."""
+    cards = data["cards"]["cards"]
+    neutral = set(data["cards"].get("neutral", []))
+    pref = hero_prefix(hero_id)
+    out = []
+    for cid, c in cards.items():
+        if c.get("category") == "basic" or c.get("category") == "token":
+            continue
+        if c.get("rarity") != 1:
+            continue
+        if cid in neutral or cid.startswith(pref):
+            out.append(cid)
+    return out
+
+
 # ---------- забег ----------
 
 class Run:
     """Забег прототипа: герой, его HP и колода, номер боя."""
 
-    def __init__(self, data=None, seed=None, hero="merc", variant=None):
-        """hero — герой (data/deck/heroes.json), variant — его пассивка на выбор (Охотница: range/mark/quiver)."""
+    def __init__(self, data=None, seed=None, hero="merc", variant=None, starter=None):
+        """hero — герой, variant — пассивка, starter — своя стартовая колода (10 карт)."""
         self.data = data or load()
         self.rng = random.Random(seed)
         self.defs = dict(self.data["cards"]["cards"])   # свой словарь: Жрецу в него пишутся созданные свитки
@@ -945,8 +996,10 @@ class Run:
         self.max_hp = h["hp"]
         self.hp = h["hp"]
         self.variant = variant or (next(iter(h["passives"])) if h.get("passives") else None)
-        starter = (h.get("starter_by_variant") or {}).get(self.variant) or h["starter"]
-        self.deck = [Card(cid, self.defs) for cid in starter]
+        chosen = list(starter) if starter else None
+        if not chosen:
+            chosen = (h.get("starter_by_variant") or {}).get(self.variant) or h["starter"]
+        self.deck = [Card(cid, self.defs) for cid in chosen]
         self.fight = 0                   # сколько боёв выиграно
         self.result = None
         fl = self.data["enemies"]["floor"]
@@ -1047,13 +1100,35 @@ class Run:
         sh = self.data["enemies"]["shop"]
         return [(c, self.rng.randint(*sh["card_price"])) for c in self.reward_offer(sh["cards"])]
 
+    def rewardable(self, cid):
+        d = self.defs.get(cid)
+        return bool(d) and d.get("category") not in ("basic", "token") and d.get("rarity", 1) > 0
+
+    def weighted_pick(self, pool):
+        pool = [cid for cid in pool if self.rewardable(cid)]
+        if not pool:
+            return None
+        weights = [CARD_TIER_WEIGHTS.get(self.defs[cid].get("rarity", 1), 1) for cid in pool]
+        return self.rng.choices(pool, weights=weights, k=1)[0]
+
     def reward_offer(self, n=3):
-        if self.hero.get("mechanic") == "idols":           # Жрец: свитки создаются под глубину (+ редкий)
-            from .idols import offer_scrolls
-            return [Card(cid, self.defs) for cid in offer_scrolls(self, n)]
         from .items import mod
         count = max(1, n - mod(self, "fewer_rewards"))
-        core = list((self.hero.get("rewards_by_variant") or {}).get(self.variant) or [])
+        neutral = list(self.data["cards"].get("neutral", []))
+        if self.hero.get("mechanic") == "idols":           # Жрец: свитки + нейтральная карта
+            from .idols import offer_scrolls
+            scrolls = [cid for cid in offer_scrolls(self, count) if self.rewardable(cid)]
+            ids = scrolls[:max(1, count - 1)]
+            free = [cid for cid in neutral if self.rewardable(cid)]
+            while len(ids) < count and free:
+                pick = self.weighted_pick(free)
+                if pick is None:
+                    break
+                ids.append(pick)
+                free.remove(pick)
+            return [Card(cid, self.defs) for cid in ids]
+        core = [cid for cid in ((self.hero.get("rewards_by_variant") or {}).get(self.variant) or [])
+                if self.rewardable(cid)]
         if core:                                      # школа: 2 карты направления + 1 свобода
             picks = []
             must = [cid for cid in (self.hero.get("reward_guarantee") or {}).get(self.variant, [])
@@ -1062,18 +1137,30 @@ class Run:
                 picks.append(self.rng.choice(must))
             room = min(2, count)                      # ядро: до двух карт, включая гарантию
             while len(picks) < room:
-                pool = [cid for cid in core if cid not in picks]
-                if not pool:
+                pick = self.weighted_pick([cid for cid in core if cid not in picks])
+                if pick is None:
                     break
-                picks.append(self.rng.choice(pool))
-            rest = [cid for cid in self.hero["rewards"] if cid not in core and cid not in picks]
-            if len(picks) < count and rest:
-                picks += self.rng.sample(rest, min(count - len(picks), len(rest)))
+                picks.append(pick)
+            rest = [cid for cid in self.hero.get("rewards", []) if cid not in core and cid not in picks]
+            rest += [cid for cid in neutral if cid not in picks]
+            while len(picks) < count and rest:
+                pick = self.weighted_pick(rest)
+                if pick is None:
+                    break
+                picks.append(pick)
+                rest.remove(pick)
             self.rng.shuffle(picks)
             return [Card(cid, self.defs) for cid in picks]
-        pool = list(self.hero["rewards"])
-        self.rng.shuffle(pool)
-        return [Card(cid, self.defs) for cid in pool[:count]]
+        pool = [cid for cid in self.hero.get("rewards", []) if self.rewardable(cid)] + \
+               [cid for cid in neutral if self.rewardable(cid)]
+        picks = []
+        while len(picks) < count and pool:
+            pick = self.weighted_pick(pool)
+            if pick is None:
+                break
+            picks.append(pick)
+            pool.remove(pick)
+        return [Card(cid, self.defs) for cid in picks]
 
     def take(self, card):
         self.deck.append(card)

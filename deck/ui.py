@@ -148,6 +148,10 @@ class Inspector:
         c = self.card
         d = c.d
         out = [(name, expl, CF.GOLD) for name, expl in M.keywords(c)]
+        cat = {"basic": "Базовая", "neutral": "Нейтральная", "hero": "Классовая",
+               "token": "Служебная"}.get(c.category, c.category)
+        out.insert(0, ("Редкость", f"{c.rarity_name} · {cat}",
+                       M.CARD_RARITY_COLOR.get(c.rarity, M.CARD_RARITY_COLOR[1])))
         if d["alt"]["target"] != "none":
             out.append(("Простое — бесплатно", M.phrase(d["alt"]) + " Не считается сыгранной картой.",
                         (150, 230, 160)))
@@ -2308,6 +2312,8 @@ class ChoiceScreen:
             hot = r.collidepoint(self.mouse)
             if card is not None:
                 draw_card(surf, r, card, hot=hot)
+                T.text(surf, card.rarity_name, (r.centerx, r.bottom + 35), 12,
+                       M.CARD_RARITY_COLOR.get(card.rarity, T.TEXT_DIM), center=True)
                 if label:
                     T.text(surf, label, (r.centerx, r.bottom + 16), 16, T.SELECT if hot else T.TEXT, True, center=True)
             elif "\n" in label:                              # заголовок и пояснение (дар бога)
@@ -2753,6 +2759,8 @@ class DeckScreen:
             if r.bottom < clip.top or r.top > clip.bottom:
                 continue
             CF.blit_card(surf, r, c)
+            T.text(surf, c.rarity_name, (r.centerx, r.bottom + 2), 10,
+                   M.CARD_RARITY_COLOR.get(c.rarity, T.TEXT_DIM), center=True)
             if r.collidepoint(self.mouse) and clip.collidepoint(self.mouse):
                 hover = (r, c)
         surf.set_clip(None)
@@ -2923,6 +2931,146 @@ class ShopScreen:
             self.reading.draw(surf, self.reading.mouse or self.mouse)
 
 
+class StarterDeckScreen:
+    """Своя стартовая колода: 2 атаки, 2 защиты, 2 перемещения + 4 карты 1 тира."""
+
+    def __init__(self, game, hero, variant=None):
+        self.game = game
+        self.data = game.data
+        self.hero = hero
+        self.variant = variant
+        self.h = self.data["heroes"]["heroes"][hero]
+        self.basic = M.basic_starter(self.data, hero)
+        self.pool = [M.Card(cid, self.data["cards"]["cards"]) for cid in M.tier1_pool(self.data, hero)]
+        self.pool.sort(key=lambda c: (c.name, c.cid))
+        self.selected = []
+        self.mouse = (0, 0)
+        self.scroll = 0
+        self.rects = []
+        self.slot_rects = []
+        self.confirm_rect = pygame.Rect(T.SCREEN_W // 2 + 170, T.SCREEN_H - 62, 280, 48)
+        self.back_rect = pygame.Rect(T.SCREEN_W // 2 - 450, T.SCREEN_H - 62, 220, 48)
+        self.toast = None
+        self.max_scroll = 0
+
+    @property
+    def ready(self):
+        return len(self.selected) == 4
+
+    def finish(self):
+        if not self.ready:
+            return False
+        self.game.start_run(self.hero, self.variant, starter=self.basic + self.selected)
+        return True
+
+    def layout(self):
+        per = 8
+        w, h = 112, 168
+        gap = 10
+        x0 = (T.SCREEN_W - per * (w + gap) + gap) // 2
+        top = 402
+        rows = -(-len(self.pool) // per)
+        view_h = T.SCREEN_H - 80 - top
+        self.max_scroll = max(0, rows * (h + 8) - view_h)
+        self.scroll = max(0, min(self.scroll, self.max_scroll))
+        self.rects = [(pygame.Rect(x0 + (i % per) * (w + gap),
+                                   top + (i // per) * (h + 8) - self.scroll, w, h), c)
+                      for i, c in enumerate(self.pool)]
+
+    def handle(self, ev):
+        if ev.type == pygame.MOUSEMOTION:
+            self.mouse = ev.pos
+        elif ev.type == pygame.MOUSEWHEEL:
+            self.scroll -= ev.y * 100
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_ESCAPE:
+                self.game.new_run()
+            elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self.finish()
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.back_rect.collidepoint(ev.pos):
+                self.game.new_run()
+                return
+            if self.confirm_rect.collidepoint(ev.pos):
+                self.finish()
+                return
+            for r, c in self.slot_rects:
+                if r.collidepoint(ev.pos):
+                    self.selected.remove(c.cid)
+                    return
+            for r, c in self.rects:
+                if r.collidepoint(ev.pos) and 390 < ev.pos[1] < T.SCREEN_H - 72:
+                    if len(self.selected) >= 4:
+                        self.toast = ("Уже выбраны 4 карты — щёлкните по слоту, чтобы заменить", 1.4)
+                    else:
+                        self.selected.append(c.cid)
+                    return
+
+    def draw(self, surf):
+        backdrop(surf, 205)
+        T.text(surf, f"Стартовая колода: {self.h['name']}", (T.SCREEN_W // 2, 26), 28, T.AMBER,
+               True, center=True, shadow=True)
+        T.text(surf, "6 базовых карт уже в колоде · выберите 4 карты первого тира",
+               (T.SCREEN_W // 2, 61), 15, T.TEXT_DIM, center=True)
+
+        # 6 базовых карт: по две копии.
+        basics = []
+        seen = []
+        for cid in self.basic:
+            if cid not in seen:
+                seen.append(cid)
+                basics.append(cid)
+        bw, bh = 92, 138
+        bx = T.SCREEN_W // 2 - (len(basics) * (bw + 18) - 18) // 2
+        for i, cid in enumerate(basics):
+            r = pygame.Rect(bx + i * (bw + 18), 86, bw, bh)
+            CF.blit_card(surf, r, M.Card(cid, self.data["cards"]["cards"]))
+            T.text(surf, "×2", (r.right - 4, r.bottom - 18), 15, T.AMBER, True, center=True)
+            role = self.data["cards"]["cards"][cid].get("basic_role", "")
+            T.text(surf, {"attack": "атака", "defense": "защита", "movement": "перемещение"}.get(role, ""),
+                   (r.centerx, r.bottom + 3), 11, T.TEXT_DIM, center=True)
+        T.text(surf, "Базовые карты (2 атаки · 2 защиты · 2 перемещения)",
+               (T.SCREEN_W // 2, 242), 14, T.TEXT_DIM, center=True)
+
+        # 4 выбранных слота.
+        self.slot_rects = []
+        sw, sh = 92, 138
+        sx = T.SCREEN_W // 2 - (4 * (sw + 18) - 18) // 2
+        for i in range(4):
+            r = pygame.Rect(sx + i * (sw + 18), 264, sw, sh)
+            T.frame(surf, r, 210, accent=T.AMBER if i < len(self.selected) else T.PANEL_EDGE,
+                    fill=(30, 24, 19))
+            if i < len(self.selected):
+                c = M.Card(self.selected[i], self.data["cards"]["cards"])
+                CF.blit_card(surf, r.inflate(-4, -4), c)
+                self.slot_rects.append((r, c))
+            else:
+                T.text(surf, "1 тир", (r.centerx, r.centery - 8), 15, T.TEXT_DIM, center=True)
+                T.text(surf, "выбрать", (r.centerx, r.centery + 14), 12, T.TEXT_DIM, center=True)
+
+        # Пул карт первого тира.
+        self.layout()
+        T.text(surf, "Карты 1 тира — нажмите, чтобы добавить", (44, 376), 15, T.AMBER, True)
+        clip = pygame.Rect(0, 390, T.SCREEN_W, T.SCREEN_H - 462)
+        surf.set_clip(clip)
+        for r, c in self.rects:
+            if r.bottom < clip.top or r.top > clip.bottom:
+                continue
+            CF.blit_card(surf, r, c)
+            n = self.selected.count(c.cid)
+            if n:
+                T.text(surf, f"×{n}", (r.right - 8, r.bottom - 18), 15, T.AMBER, True, center=True)
+        surf.set_clip(None)
+        if self.toast:
+            T.text(surf, self.toast[0], (T.SCREEN_W // 2, T.SCREEN_H - 88), 14, (255, 180, 120),
+                   center=True, shadow=True)
+        T.text(surf, "Клик по слоту — убрать копию · колесо — прокрутка пула",
+               (44, T.SCREEN_H - 36), 12, T.TEXT_DIM)
+        button(surf, self.back_rect, "Назад (Esc)", self.mouse)
+        button(surf, self.confirm_rect, "В подземелье" if self.ready else f"Выберите ещё {4 - len(self.selected)}",
+               self.mouse, on=self.ready, primary=True)
+
+
 class HeroSelect:
     """Выбор героя перед спуском: у каждого своя механика; у Охотницы — ещё и пассивка на выбор."""
 
@@ -2970,7 +3118,7 @@ class HeroSelect:
                 self.pick = self.order[ev.key - pygame.K_1]
 
     def start(self):
-        self.game.start_run(self.pick, self.variant.get(self.pick))
+        self.game.open_starter(self.pick, self.variant.get(self.pick))
 
     def draw(self, surf):
         backdrop(surf, 185)

@@ -44,7 +44,6 @@
     "m_ram",
     "m_inertia",
     "m_halt",
-    "m_run",
     "m_flurry",
     "m_wallbash",
     "m_counter",
@@ -132,6 +131,11 @@
      "m_ring",
      "m_quake"
     ]
+   },
+   "basic": {
+    "attack": "strike",
+    "defense": "defend",
+    "movement": "m_run"
    }
   },
   "hunter": {
@@ -406,6 +410,11 @@
      "h_stalk",
      "h_mark_hunt"
     ]
+   },
+   "basic": {
+    "attack": "h_shot",
+    "defense": "h_dodge",
+    "movement": "h_backstep"
    }
   },
   "pyro": {
@@ -466,8 +475,7 @@
     "p_geyser",
     "p_flame_armor",
     "p_burnout",
-    "p_fireball",
-    "p_stride"
+    "p_fireball"
    ],
    "hand": 6,
    "passives": {
@@ -504,8 +512,7 @@
      "p_smoke",
      "p_barrier",
      "p_lance",
-     "p_chain",
-     "p_stride"
+     "p_chain"
     ]
    },
    "reward_guarantee": {
@@ -514,6 +521,11 @@
      "p_oil",
      "p_fireball"
     ]
+   },
+   "basic": {
+    "attack": "p_bolt",
+    "defense": "p_ward",
+    "movement": "p_stride"
    }
   },
   "priest": {
@@ -571,9 +583,6 @@
     "sc_defense_relay"
    ],
    "rewards": [
-    "sc_attack",
-    "sc_defense",
-    "sc_move",
     "sc_curse",
     "sc_gift",
     "sc_summon",
@@ -586,7 +595,13 @@
     "sc_summon_relay",
     "sc_defense_double",
     "sc_gift_double"
-   ]
+   ],
+   "basic": {
+    "attack": "sc_attack",
+    "defense": "sc_defense",
+    "movement": "sc_move"
+   },
+   "reward_guarantee": {}
   }
  },
  "tokens": [

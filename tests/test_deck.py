@@ -261,11 +261,16 @@ def test_game_flow_map_battle_shop_camp_boss():
     from deck.game import DescentGame
     from deck.ui import BattleScreen, ChoiceScreen, DeckScreen, EndScreen, MapScreen, ShopScreen
     from tests.test_expedition_ui import SCREEN
-    from deck.ui import HeroSelect
+    from deck.ui import HeroSelect, StarterDeckScreen
     g = DescentGame(seed=2, gd=ED)
     assert isinstance(g.scene, HeroSelect)                                     # сначала — выбор героя
     g.draw(SCREEN)
     g.scene.start()
+    assert isinstance(g.scene, StarterDeckScreen) and g.run is None
+    starter = g.scene
+    g.draw(SCREEN)
+    starter.selected = [c.cid for c in starter.pool[:4]]
+    assert starter.finish()
     assert isinstance(g.scene, MapScreen) and g.run.hero_id == "merc"
     g.draw(SCREEN)
     run = g.run

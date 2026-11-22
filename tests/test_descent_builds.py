@@ -24,7 +24,8 @@ def test_hunter_variants_have_distinct_decks_and_core_rewards():
         core = set(run.hero["rewards_by_variant"][variant])
         offers = [c.cid for c in run.reward_offer()]
         assert len(offers) == 3
-        assert all(cid in run.hero["rewards"] for cid in offers)
+        neutral = set(data["cards"].get("neutral", []))
+        assert all(cid in run.hero["rewards"] or cid in neutral for cid in offers)
         assert sum(cid in core for cid in offers) == 2          # 2 карты школы + 1 свободная
     assert decks["range"] != decks["mark"] != decks["quiver"]
     assert "h_mark_burst" in decks["mark"] and "h_rapid" in decks["quiver"]
