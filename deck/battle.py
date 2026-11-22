@@ -1383,16 +1383,16 @@ class Battle:
         self.sync_levels()
 
     def hunt_followup(self, card, tgt):
-        """Травля: после одноцелевой атаки с тегом [Травля] — дополнительный выстрел за стаки."""
-        if tgt is None or not getattr(tgt, "alive", False) or "Травля" not in card.tags:
+        """Преследование: после одноцелевой атаки с тегом [Преследование] — дополнительный выстрел за стаки."""
+        if tgt is None or not getattr(tgt, "alive", False) or "Преследование" not in card.tags:
             return
         n = self.hero.ds.get("hunt", 0)
         if n <= 0 or not self.is_attack(card, "main"):
             return
-        self.say(f"Травля: {card.name} — ещё {n}", (255, 210, 120))
+        self.say(f"Преследование: {card.name} — ещё {n}", (255, 210, 120))
         self.fx("react", unit=tgt, what="shot")
         yield from self.strike(self.hero, tgt, n, kind="shot" if card.d["main"].get("ranged") else "melee",
-                               tag="Травля")
+                               tag="Преследование")
 
     def play_scroll(self, card, target):
         """Свиток через статую: target — IdolCast(статуя, цель). Бесплатно; добил с Мёртвой водой — в руку."""
@@ -1643,7 +1643,7 @@ class Battle:
                 tgt.ds["mark"] += n
             elif k == "hunt" and src is h:
                 src.ds["hunt"] = min(5, src.ds.get("hunt", 0) + n)
-                self.say(f"Травля +{n}", (255, 220, 120))
+                self.say(f"Преследование +{n}", (255, 220, 120))
             elif k == "draw":
                 self.draw(n)
             elif k == "energy":

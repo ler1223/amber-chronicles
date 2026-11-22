@@ -9,7 +9,7 @@
     python tools/descent_tactics.py
 
 Что добавляет:
-- Травля: запас дополнительных выстрелов после одноцелевых атак с тегом [Травля].
+- Преследование: запас дополнительных выстрелов после одноцелевых атак с тегом [Преследование].
 - Область: автоматический тег для area / aoe_adjacent / detonate.
 - Сохранение и Изгнание: теги для Retain/Exhaust.
 - Школу Наёмника «Натиск»: толчки дают Разгон, столкновения бьют сильнее.
@@ -118,10 +118,10 @@ def main():
     cards = data["cards"]
     out = {}
 
-    # ---------- Охотница: Травля, загон и область ----------
+    # ---------- Охотница: Преследование, загон и область ----------
     add_new(cards, "h_beat", "h_shot", "Загон",
             shot(6, D(4), op("push", 1), op("mark", 1)),
-            ["Выстрел", "Травля", "Толчок", "Метка"], dx=0.07, dy=0.02,
+            ["Выстрел", "Преследование", "Толчок", "Метка"], dx=0.07, dy=0.02,
             options=[
                 V("Сильнее", shot(6, D(6), op("push", 1), op("mark", 1))),
                 V("С добором", shot(6, D(4), op("push", 1), op("mark", 1), op("draw", 1)), "Загон и дыхание"),
@@ -134,11 +134,11 @@ def main():
 
     add_new(cards, "h_stalk", "h_trail", "Преследование",
             {"target": "cell_step", "step": 2, "do": [op("block", 3), op("hunt", 2), op("draw", 1)]},
-            ["Шаг", "Травля"], dx=0.04, dy=0.04,
+            ["Шаг", "Преследование"], dx=0.04, dy=0.04,
             options=[
                 V("Дальше", {"target": "cell_step", "step": 3,
                               "do": [op("block", 3), op("hunt", 2), op("draw", 1)]}),
-                V("Больше травли", {"target": "cell_step", "step": 2,
+                V("Больше преследования", {"target": "cell_step", "step": 2,
                                      "do": [op("block", 3), op("hunt", 3), op("draw", 1)]}, "Преследование"),
                 V("С защитой", {"target": "cell_step", "step": 2,
                                  "do": [op("block", 6), op("hunt", 2), op("draw", 1)]}, "Преследование и щит"),
@@ -151,7 +151,7 @@ def main():
 
     add_new(cards, "h_mark_hunt", "h_marking", "Гон по метке",
             shot(6, D(5, per={"what": "mark", "k": 2})),
-            ["Выстрел", "Травля", "Метка"], dx=0.08, dy=0.03,
+            ["Выстрел", "Преследование", "Метка"], dx=0.08, dy=0.03,
             options=[
                 V("Сильнее", shot(6, D(7, per={"what": "mark", "k": 2}))),
                 V("Глубже", shot(7, D(5, per={"what": "mark", "k": 3})), "Гон по метке"),
@@ -182,7 +182,7 @@ def main():
 
     add_new(cards, "h_hunt_final", "h_shot", "Завершение гона",
             shot(6, D(6, per={"what": "hunt", "k": 2})),
-            ["Выстрел", "Травля", "Комбо"], dx=0.11, dy=0.05,
+            ["Выстрел", "Преследование", "Комбо"], dx=0.11, dy=0.05,
             options=[
                 V("Сильнее", shot(6, D(9, per={"what": "hunt", "k": 2}))),
                 V("Глубже", shot(7, D(6, per={"what": "hunt", "k": 3})), "Завершение гона"),
@@ -193,9 +193,9 @@ def main():
             ])
     out.update({k: k for k in ("h_beat", "h_stalk", "h_mark_hunt", "h_area_hunt", "h_hunt_final")})
 
-    # Старый «Охотничий азарт» становится источником травли.
+    # Старый «Охотничий азарт» становится источником преследования.
     hh = cards["h_hunt"]
-    hh["tags"] = list(dict.fromkeys(list(hh.get("tags", [])) + ["Травля"]))
+    hh["tags"] = [t for t in hh.get("tags", []) if t not in ("Травля", "Преследование")] + ["Преследование"]
     pw = hh["main"].setdefault("power", {})
     pw["do"] = list(pw.get("do", [])) + [op("hunt", 1)]
     out["h_hunt"] = "h_hunt"

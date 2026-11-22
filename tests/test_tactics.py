@@ -1,4 +1,4 @@
-"""CZN-волна: Травля, Область, Сохранение/Изгнание и школы Наёмника/Пиромантки."""
+"""CZN-волна: Преследование, Область, Сохранение/Изгнание и школы Наёмника/Пиромантки."""
 import os
 import sys
 
@@ -13,6 +13,11 @@ def put(u, cell):
     u.cell = u.prev_cell = tuple(cell)
 
 
+def test_pursuit_has_vfx_tag_description():
+    from sim.data import GameData
+    assert "Преследование" in GameData().tags
+
+
 def test_czn_tactical_tags_are_derived():
     data = M.load()
     cards = data["cards"]["cards"]
@@ -21,8 +26,8 @@ def test_czn_tactical_tags_are_derived():
     assert "Область" in M.Card("m_ring", cards).tags
     assert "Сохранение" in M.Card("m_duelist", cards).tags
     assert "Изгнание" in M.Card("battle_rage", cards).tags
-    assert "Травля" in M.Card("h_beat", cards).tags
-    assert "Травля" in M.Card("h_hunt", cards).tags
+    assert "Преследование" in M.Card("h_beat", cards).tags
+    assert "Преследование" in M.Card("h_hunt", cards).tags
 
 
 def test_hunt_followup_after_single_target_attack():
@@ -39,7 +44,7 @@ def test_hunt_followup_after_single_target_attack():
     h.ds["hunt"] = 2
     hp = foe.hp
     finish(b.play(b.hand[0], "main", foe))
-    # 6 базовых + 2×2 за травлю + 2 дополнительных выстрела
+    # 6 базовых + 2×2 за преследование + 2 дополнительных выстрела
     assert hp - foe.hp == 6 + 4 + 2
 
 
@@ -137,6 +142,6 @@ def test_all_tactics_cards_can_be_played():
 def test_area_and_hunt_tag_items():
     data = M.load()
     rel = data["relics"]["relics"]
-    assert rel["hunt_horn"]["tag_bonus"][0]["tag"] == "Травля"
+    assert rel["hunt_horn"]["tag_bonus"][0]["tag"] == "Преследование"
     assert rel["area_seal"]["tag_bonus"][0]["tag"] == "Область"
     assert rel["retain_box"]["tag_bonus"][0]["tag"] == "Сохранение"
