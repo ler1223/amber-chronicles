@@ -182,18 +182,18 @@ def adds(cards):
         ])
 
     # ---------- quiver: стрелы, повтор, серия ----------
-    echo = shot(5, D(5), **{"if": [{"when": {"k": "resonance", "tag": "Выстрел", "n": 2}, "repeat": 1}]})
+    echo = shot(5, D(5))
     out["h_echo_shot"] = card(
         "Эхо-стрела", "attack", 1, echo, {"target": "cell_step", "step": 1, "do": []},
-        shot_art["art"], ill_from(cards, "h_barrage", 0.03, -0.01), ["Выстрел", "Повтор", "Комбо"], [
+        shot_art["art"], ill_from(cards, "h_barrage", 0.03, -0.01), ["Выстрел", "Резонанс", "Цепочка"], [
             V("Сильнее", bump(echo)),
             V("С меткой", add_op(echo, op("mark", 2)), "Эхо и метка"),
             V("С добором", add_op(echo, op("draw", 1)), "Эхо и взгляд"),
-            V("Дальше", shot(7, D(5), **{"if": [{"when": {"k": "resonance", "tag": "Выстрел", "n": 2},
-                                             "repeat": 1}]}), "Далёкое эхо"),
+            V("Дальше", shot(7, D(5)), "Далёкое эхо"),
             V("С разбега", {"target": "reach", "reach": 2, "do": [
                 D(4, per={"what": "tag:Выстрел", "k": 1}), op("draw", 1)]}, "Эхо на ходу"),
         ], vfx="aimed_shot")
+    out["h_echo_shot"]["chain"] = {"when": {"k": "resonance", "tag": "Выстрел", "n": 2}, "once": "turn"}
     rapid = shot(5, D(3), op("draw", 1), **{"if": [{"when": {"k": "series", "n": 2}, "repeat": 1}]})
     out["h_rapid"] = card(
         "Быстрый выстрел", "attack", 1, rapid, {"target": "cell_step", "step": 1, "do": []},
@@ -238,8 +238,12 @@ def adds(cards):
 
 
 def normalize_resonance(x, in_echo=False):
-    """Резонанс не имеет своего эффекта: do/plus/mult убираем, оставляем повтор."""
+    """Резонанс не имеет своего эффекта: echo-резонанс становится Цепочкой, if-резонанс — повтором."""
     if isinstance(x, dict):
+        e = x.get("echo") or {}
+        if (e.get("when") or {}).get("k") == "resonance":
+            x["chain"] = {"when": e["when"], "once": "turn"}
+            x.pop("echo", None)
         when = x.get("when") or {}
         if when.get("k") == "resonance":
             for k in ("do", "plus", "mult"):

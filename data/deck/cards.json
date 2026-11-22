@@ -3143,12 +3143,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -3439,12 +3441,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Удар",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -3685,12 +3689,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -3818,12 +3824,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -3983,12 +3991,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -4136,12 +4146,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -4296,12 +4308,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -4456,12 +4470,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -5582,12 +5598,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Огонь",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -6731,12 +6749,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Огонь",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -8266,12 +8286,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Огонь",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -8892,12 +8914,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -9849,12 +9873,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Выстрел",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -9882,14 +9908,6 @@
      }
     ],
     "vfx": "leap_back"
-   },
-   "echo": {
-    "when": {
-     "k": "resonance",
-     "tag": "Выстрел",
-     "n": 2
-    },
-    "vfx": "aimed_shot"
    },
    "alt": {
     "target": "cell_step",
@@ -9996,7 +10014,16 @@
       }
      ]
     }
-   ]
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 2
+    },
+    "once": "turn",
+    "repeat": 1
+   }
   },
   "p_blaze": {
    "name": "Пожар",
@@ -10707,12 +10734,14 @@
       },
       {
        "label": "Отклик",
-       "echo": {
+       "chain": {
         "when": {
          "k": "resonance",
          "tag": "Огонь",
          "n": 2
-        }
+        },
+        "once": "turn",
+        "repeat": 1
        }
       }
      ]
@@ -28367,16 +28396,6 @@
       "n": 5
      }
     ],
-    "if": [
-     {
-      "when": {
-       "k": "resonance",
-       "tag": "Выстрел",
-       "n": 2
-      },
-      "repeat": 1
-     }
-    ],
     "vfx": "aimed_shot"
    },
    "alt": {
@@ -28386,8 +28405,8 @@
    },
    "tags": [
     "Выстрел",
-    "Повтор",
-    "Комбо"
+    "Резонанс",
+    "Цепочка"
    ],
    "growth": [
     {
@@ -28404,16 +28423,6 @@
          {
           "op": "damage",
           "n": 7
-         }
-        ],
-        "if": [
-         {
-          "when": {
-           "k": "resonance",
-           "tag": "Выстрел",
-           "n": 2
-          },
-          "repeat": 1
          }
         ]
        }
@@ -28435,16 +28444,6 @@
           "op": "mark",
           "n": 2
          }
-        ],
-        "if": [
-         {
-          "when": {
-           "k": "resonance",
-           "tag": "Выстрел",
-           "n": 2
-          },
-          "repeat": 1
-         }
         ]
        }
       },
@@ -28465,16 +28464,6 @@
           "op": "draw",
           "n": 1
          }
-        ],
-        "if": [
-         {
-          "when": {
-           "k": "resonance",
-           "tag": "Выстрел",
-           "n": 2
-          },
-          "repeat": 1
-         }
         ]
        }
       },
@@ -28490,16 +28479,6 @@
          {
           "op": "damage",
           "n": 5
-         }
-        ],
-        "if": [
-         {
-          "when": {
-           "k": "resonance",
-           "tag": "Выстрел",
-           "n": 2
-          },
-          "repeat": 1
          }
         ]
        }
@@ -28528,7 +28507,15 @@
       }
      ]
     }
-   ]
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 2
+    },
+    "once": "turn"
+   }
   },
   "h_rapid": {
    "ill": [

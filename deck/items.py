@@ -12,6 +12,8 @@
   aim    — nearest | all | around (вокруг погибшего) | source | self.
   mods   — постоянные правила (у предметов стража — с минусом): energy, hand, foe_strength, play_limit,
            retain_all, start_hp, slime, no_camp_heal, fewer_rewards, overheat_burn, revive.
+  tag_bonus — пассивная прибавка картам с тегом: [{"tag": "Выстрел", "damage": 2}] или
+           {"tags": ["Резонанс", "Цепочка"], "damage": 3}; block — к защите.
 """
 from sim.grid import cheb
 
@@ -77,6 +79,19 @@ class Items:
 
     def mod(self, key):
         return mod(self.run, key)
+
+    def card_bonus(self, card, kind):
+        """Пассивная прибавка к карте по её тегу: tag_bonus у предметов."""
+        if card is None:
+            return 0
+        tags = set(card.tags)
+        total = 0
+        for r in self.list:
+            for b in r.get("tag_bonus", []):
+                need = b.get("tags") or [b.get("tag")]
+                if tags & set(need):
+                    total += int(b.get(kind, 0))
+        return total
 
     def new_turn(self):
         for k in [k for k in self.counts if k[0] == "turn"]:

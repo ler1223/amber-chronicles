@@ -52,7 +52,8 @@ def test_mark_burst_scales_with_marks_and_has_tags():
 
 def test_new_school_tags_are_derived():
     data = M.load()
-    assert "Повтор" in M.Card("h_echo_shot", data["cards"]["cards"]).tags
+    tags = M.Card("h_echo_shot", data["cards"]["cards"]).tags
+    assert "Цепочка" in tags and "Резонанс" in tags
     assert "Комбо" in M.Card("h_rapid", data["cards"]["cards"]).tags
 
 
@@ -77,7 +78,7 @@ def test_all_new_hunter_cards_can_be_played():
         assert card not in b.hand or card in b.powers, cid
 
 
-def test_resonance_replays_card_instead_of_own_effect():
+def test_chain_auto_plays_resonance_card():
     data = M.load()
     run = M.Run(data=data, seed=6, hero="hunter", variant="quiver")
     b = Battle(ED, run, run.fights[0], seed=6)
@@ -91,10 +92,10 @@ def test_resonance_replays_card_instead_of_own_effect():
     b.played = 2
     card = M.Card("h_echo_shot", run.defs)
     b.hand.append(card)
-    b.energy = 9
+    b.energy = 0                                           # Цепочка играет без оплаты
     hp = foe.hp
-    finish(b.play(card, "main", foe))
-    assert hp - foe.hp == 10                              # 5 урона, карта разыграна ещё раз
+    finish(b.echoes())
+    assert hp - foe.hp == 5 and card not in b.hand
 
 
 def test_quiver_rewards_guarantee_arrow_cards():
@@ -104,6 +105,25 @@ def test_quiver_rewards_guarantee_arrow_cards():
     for _ in range(12):
         offers = {c.cid for c in run.reward_offer()}
         assert offers & creators, offers
+
+
+def test_tag_items_passively_buff_cards():
+    data = M.load()
+    rel = data["relics"]["relics"]
+    run = M.Run(data=data, seed=9, hero="hunter", variant="mark")
+    run.relics = [dict(rel["shot_eye"], id="shot_eye")]
+    b = Battle(ED, run, run.fights[0], seed=9)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    foe.hp = foe.max_hp = 99
+    shot = M.Card("h_shot", run.defs)
+    b.hand.append(shot)
+    b.energy = 9
+    hp = foe.hp
+    finish(b.play(shot, "main", foe))
+    assert hp - foe.hp == 7                                # 5 базовых + 2 от предмета [Выстрел]
 
 
 def test_arrow_well_creates_free_shots():

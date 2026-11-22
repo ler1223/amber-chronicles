@@ -106,7 +106,8 @@ class Battle:
         self.played = 0                                   # основных розыгрышей за ход (синергии)
         self.turn_tags = []                               # теги сыгранных основным за ход — по порядку
         self.walked = 0                                   # клеток героем за ход (С разбега)
-        self.echoed = set()                               # Отклик: какие карты уже сработали в этот ход
+        self.echoed = set()                               # Отклик/Цепочка: какие карты уже сработали в этот ход
+        self._free_cast = False                           # Цепочка: карта играется без стоимости
         self.queue = []                                   # события для Отклика: (вид, юнит)
         self.guard = []                                   # карты, ждущие в руке ход врага (отклик на события)
         self.empower = {}                                 # «Следующая карта [Тег]»: бонус урона
@@ -779,6 +780,8 @@ class Battle:
         return "heat" if card.levels else "energy"
 
     def can_afford(self, card):
+        if self._free_cast:
+            return True
         if card.levels:
             return self.hero.ds["heat"] >= card.cost
         return self.energy >= card.cost
@@ -992,6 +995,8 @@ class Battle:
                 if (w["k"] in M.TARGET_CONDS and any(self.met(w, t) for t in ts)) or \
                         (w["k"] not in M.TARGET_CONDS and self.met(w)):
                     out.add(("if", i))
+        if d.get("chain") and self.met(d["chain"]["when"]):
+            out.add("chain")
         e = d.get("echo")
         if e and e.get("when") and (e.get("on") is None) and self.met(e["when"]):
             out.add("echo")
@@ -1003,14 +1008,49 @@ class Battle:
         return frozenset(out)
 
     def echoes(self):
-        """Отклик по условию хода: карты в руке, чьё условие выполнено, срабатывают сами (раз за ход)."""
+        """Отклик/Цепочка по условию хода: карты в руке, чьё условие выполнено, срабатывают сами (раз за ход)."""
+        yield from self.chains()
         for c in list(self.hand):
             e = c.d.get("echo")
             if not e or e.get("on") or c.uid in self.echoed or self.result or not self.met(e["when"]):
                 continue
-            if e.get("when", {}).get("k") == "resonance":
-                continue                         # резонанс не даёт своего эффекта — карта повторяется при розыгрыше
             yield from self.fire_echo(c, None)
+
+    def chains(self):
+        """Цепочка: карта с этим тегом играется сама, когда выполнено её условие."""
+        for c in list(self.hand):
+            ch = c.d.get("chain")
+            if not ch or c.uid in self.echoed or self.result or not self.met(ch["when"]):
+                continue
+            target = self.chain_target(c)
+            if target is None:
+                continue
+            self.echoed.add(c.uid)
+            self.say(f"Цепочка: {c.name}", (170, 255, 170))
+            self.fx("chain", unit=self.hero, uid=c.uid, target=target)
+            old = self._free_cast
+            self._free_cast = True
+            try:
+                yield from self.play(c, "main", target, free=True)
+            finally:
+                self._free_cast = old
+
+    def chain_target(self, c):
+        """Куда сама сыграет карта Цепочки: атака — лучшая цель, шаг — первая доступная клетка."""
+        u = c.d["main"]
+        t = u["target"]
+        old = self._free_cast
+        self._free_cast = True
+        try:
+            if t == "self":
+                return self.hero
+            if t in ("enemy", "area", "reach"):
+                return self.auto_target(c, "main") or (self.targets(c, "main") or [None])[0]
+            if t in ("cell_step", "cell_dash", "cell_any"):
+                return (self.targets(c, "main") or [None])[0]
+            return None
+        finally:
+            self._free_cast = old
 
     def react(self):
         """Отклик на события (убийство, получил удар, враг вплотную): разобрать очередь."""
@@ -1187,8 +1227,9 @@ class Battle:
     def can_play(self, card, mode):
         return bool(self.targets(card, mode))
 
-    def play(self, card, mode, target):
-        """Сыграть карту из руки: mode "main" (энергия, копит прозрение) или "alt" (бесплатно)."""
+    def play(self, card, mode, target, free=False):
+        """Сыграть карту из руки: mode "main" (энергия, копит прозрение) или "alt" (бесплатно).
+        free — Цепочка: полный розыгрыш без оплаты."""
         if card not in self.hand:
             return
         if card.d[mode].get("target") == "statue":            # свиток Жреца: через статую бога
@@ -1204,10 +1245,11 @@ class Battle:
         self.hand.remove(card)
         paid, mom0 = card.cost, self.hero.ds["momentum"]
         if mode == "main":
-            if card.levels:
-                self.hero.ds["heat"] -= card.cost
-            else:
-                self.energy -= card.cost
+            if not free:
+                if card.levels:
+                    self.hero.ds["heat"] -= card.cost
+                else:
+                    self.energy -= card.cost
             card.uses += 1
             before = self.played
             self.played += 1
@@ -1411,6 +1453,7 @@ class Battle:
                             continue                          # резонанс только повторяет карту
                         if (c.get("plus") or c.get("mult")) and self.met(c["when"], tgt, ctx.get("before")):
                             n = (n + c.get("plus", 0)) * c.get("mult", 1)
+                    n += self.items.card_bonus(ctx.get("card"), "damage")   # предметы: карты тега сильнее
                     if self.double_next and ctx.get("card") is not None:     # предмет: двойной урон (итоговый)
                         dbl = 2
                         self.double_next = False
@@ -1418,8 +1461,10 @@ class Battle:
                 yield from self.strike(src, tgt, n, kind="shot" if ctx.get("ranged") else "melee",
                                        el=op.get("el"), anim=not ctx.get("vfx"), tag=ctx.get("tag"), mult=dbl)
             elif k == "body_slam" and tgt is not None:
-                yield from self.strike(src, tgt, self.hero_bonus(tgt, src.shield, op, ctx) if src is h
-                                       else src.shield, anim=not ctx.get("vfx"))
+                n = self.hero_bonus(tgt, src.shield, op, ctx) if src is h else src.shield
+                if src is h:
+                    n += self.items.card_bonus(ctx.get("card"), "damage")
+                yield from self.strike(src, tgt, n, anim=not ctx.get("vfx"))
             elif k == "double_next":
                 self.double_next = True
             elif k == "resource":                                          # энергия / жар / свиток — по герою
@@ -1480,6 +1525,7 @@ class Battle:
                     src.ds["momentum"] = 0
                 if src is h:
                     n += ctx.get("temper", 0)
+                    n += self.items.card_bonus(ctx.get("card"), "block")
                 src.shield += n
                 self.c.emit("shield", unit=src, amount=n)
             elif k in ("push", "pull") and tgt is not None:
