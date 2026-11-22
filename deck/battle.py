@@ -98,7 +98,7 @@ class Battle:
             self.mark_prey()
         self.draw_pile = list(run.deck)
         self.rng.shuffle(self.draw_pile)
-        self.hand, self.discard, self.exhaust = [], [], []
+        self.hand, self.used, self.discard, self.exhaust = [], [], [], []
         self.turn = 0
         self.result = None
         self.log = []
@@ -649,6 +649,8 @@ class Battle:
         h.shield = h.shield // 2 if h.ds.get("fort") else 0          # «Оборона»: половина защиты остаётся
         h.ds["fort"] = 0
         self.collide_k = 1
+        self.discard += self.used                            # остатки Used (отклики врага) — в сброс
+        self.used = []
         self.played = 0
         self.turn_tags, self.walked, self.echoed = [], 0, set()
         self.chain_drawn = 0
@@ -699,14 +701,8 @@ class Battle:
             if not self.draw_pile:
                 if not self.discard:
                     return
-                # Сработавшие Цепочкой карты уже ушли в сброс и не возвращаются в руку до конца хода:
-                # цепочка активирует их как обычный розыгрыш, а не оставляет в игре.
-                keep = [c for c in self.discard if c.uid in self.echoed]
-                fresh = [c for c in self.discard if c.uid not in self.echoed]
-                if not fresh:
-                    return
-                self.discard = keep
-                self.draw_pile = fresh
+                self.draw_pile = self.discard
+                self.discard = []
                 self.rng.shuffle(self.draw_pile)
                 self.queue.append(("shuffle", None))
             if len(self.hand) >= (PRIEST_HAND if self.idols is not None else HAND_MAX):
@@ -1218,7 +1214,7 @@ class Battle:
         self.fx("echo", unit=h, uid=c.uid, target=tgt)
         if c.d.get("react") and c in self.hand:
             self.hand.remove(c)
-            self.discard.append(c)
+            self.used.append(c)                               # отклик — тоже использование карты
         if e.get("vfx"):
             self.vfx(h, e["vfx"], c.name, target=tgt)
             yield IMPACT
@@ -1376,8 +1372,8 @@ class Battle:
         elif card.d.get("token") or (mode == "main" and card.d.get("exhaust")):
             yield from self.exhaust_card(card)
         else:
-            self.discard.append(card)
-        if mode == "main" and not self.result:                # предметы: что сыграно (после сброса — рука видна)
+            self.used.append(card)                            # CZN: до конца хода — в Used, не в Discard
+        if mode == "main" and not self.result:                # предметы: что сыграно (после розыгрыша — рука видна)
             yield from self.items.fire("play", card=card, tgt=tgt, mom=mom0, heat=paid if card.levels else 0)
             yield from self.react()
         self.sync_levels()
@@ -1402,7 +1398,7 @@ class Battle:
             self.hand.append(card)
             self.say(f"Мёртвая вода: «{card.name}» снова в руке", (180, 220, 255))
         else:
-            self.discard.append(card)
+            self.used.append(card)
         yield from self.react()
 
     def walk_cells(self):
@@ -1684,6 +1680,8 @@ class Battle:
         yield from self.items.fire("end")
         if self.result:
             return
+        self.discard += self.used                            # CZN: Used → Discard только в конце хода
+        self.used = []
         kept = [c for c in self.hand if (c.d.get("keep") and self.met(c.d["keep"])) or c.d.get("retain")
                 or self.has_mod("retain") or self.items.mod("retain_all")]    # Задел / Сохранение
         if self.idols is not None:                            # Жрец: несыгранные свитки остаются

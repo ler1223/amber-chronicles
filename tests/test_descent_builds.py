@@ -136,11 +136,11 @@ def test_chain_variant_cascades_from_two_shots():
     assert b.chain_drawn == 2                              # пассивка Цепной реакции
     assert len(b.hand) >= 6                                # большая рука после каскада
     assert h.shield > 0                                   # защитная цепочка сыграла сама
-    assert any(c.cid == "h_chain_mark" for c in b.discard + b.hand)  # мост тоже сработал
+    assert any(c.cid == "h_chain_mark" for c in b.used + b.hand)  # мост тоже сработал
     hand_uids = {c.uid for c in b.hand}
-    discard_uids = {c.uid for c in b.discard}
-    assert shown and all(c.uid not in hand_uids for c in shown)     # разыгранные не остаются в руке
-    assert all(c.uid in discard_uids for c in shown)                # и лежат в сбросе
+    used_uids = {c.uid for c in b.used}
+    assert shown and all(c.uid not in hand_uids for c in shown)    # разыгранные не остаются в руке
+    assert all(c.uid in used_uids for c in shown)                  # до конца хода лежат в Used
     assert foe.hp < 999
 
 

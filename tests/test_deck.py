@@ -741,6 +741,45 @@ def test_chest_offers_items_and_bag_opens():
 
 
 
+def test_czn_used_moves_to_discard_at_turn_end():
+    b, run = battle(seed=6)
+    h, foe = b.hero, b.foes()[0]
+    foe.hp = foe.max_hp = 99
+    put(b, foe, (h.cell[0] + 1, h.cell[1]))
+    played = M.Card("strike", run.defs)
+    b.hand = [played]
+    b.draw_pile, b.discard, b.used = [], [], []
+    b.energy = 9
+    finish(b.play(played, "main", foe))
+    assert played in b.used
+    b.draw_pile, b.discard = [], []
+    b.hero.hp = b.hero.max_hp = 999
+    finish(b.end_turn())
+    assert not b.used
+    assert played in b.discard or played in b.hand
+
+
+def test_czn_used_pile_is_not_shuffled_until_end_turn():
+    b, run = battle(seed=5)
+    h, foe = b.hero, b.foes()[0]
+    foe.hp = foe.max_hp = 99
+    put(b, foe, (h.cell[0] + 1, h.cell[1]))
+    played = M.Card("strike", run.defs)
+    b.hand = [played]
+    b.draw_pile, b.discard, b.used = [], [], []
+    b.energy = 9
+    finish(b.play(played, "main", foe))
+    assert played in b.used and played not in b.discard and played not in b.hand
+
+    b.draw(1)                                                   # Used не подмешивается в Draw
+    assert played not in b.hand and played in b.used
+
+    spare = M.Card("strike", run.defs)
+    b.hand, b.discard, b.draw_pile = [], [spare], []
+    b.draw(1)                                                   # а Discard — подмешивается
+    assert spare in b.hand and played in b.used
+
+
 def test_merc_catalog_reactions_return_empower_temper_and_conditions():
     b, run = hero_battle("merc")
     h = b.hero
@@ -774,7 +813,7 @@ def test_merc_catalog_reactions_return_empower_temper_and_conditions():
     put(b, small, (h.cell[0] + 1, h.cell[1]))
     e = b.energy
     finish(b.play(card(b, "strike"), "main", small))
-    assert not small.alive and trophy in b.discard and b.energy == e - 1 + 1   # убийство — Трофей: +1 энергия
+    assert not small.alive and trophy in b.used and b.energy == e - 1 + 1      # убийство — Трофей: +1 энергия
 
     b, run = hero_battle("merc")                                               # Возврат, Следующая, Закалка
     h = b.hero
@@ -1360,7 +1399,7 @@ def test_priest_statues_scroll_and_walk():
         g.update(1 / 30)
         if sc.job is None:
             break
-    assert foe.hp <= 50 - 6 and card in b.discard                          # молния Перуна
+    assert foe.hp <= 50 - 6 and card in b.used                             # молния Перуна
     cell = next(iter(b.walk_cells()))
     finish(b.hero_walk(cell))
     assert b.hero.cell == cell and b.walk_left < 3

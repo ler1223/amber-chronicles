@@ -1810,6 +1810,12 @@ class BattleScreen:
             for ln, col in lines[-7:]:
                 sk.text(surf, ln, (r.x + 16, yy), 12, col, outline=False)
                 yy += 15
+        else:                                                   # кладбище: сброс + Used текущего хода
+            gy = pygame.Rect(r.x, r.bottom + 8, r.w, 28)
+            sk.panel(surf, gy, 220)
+            sk.text(surf, f"Сброс {len(b.discard)}  ·  за ход +{len(b.used)}",
+                    (gy.centerx, gy.y + 7), 12, (226, 214, 192), center=True,
+                    outline=False)
 
     def hp_bar(self, surf, r, hp, mx, shield=0, col=(206, 52, 44), ticks=False, lost=0, kill=False, t=0.0):
         native, S, pt = SK.ctx(surf)
