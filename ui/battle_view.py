@@ -327,7 +327,8 @@ class BattleView:
         return x, y - self.unit_h(u) * 0.42
 
     def tag_color(self, tag, default=(255, 255, 255)):
-        return tuple(self.data.tags[tag]["color"]) if tag else default
+        info = self.data.tags.get(tag) if tag else None
+        return tuple(info["color"]) if info else default
 
     def _merge_damage(self, u, e, col):
         """Урон по той же цели за полсекунды складывается в одно растущее число (вместо столбика мелких)."""
@@ -571,7 +572,7 @@ class BattleView:
             self.float_text(e["unit"], f"+{e['amount']}", T.HEAL, 16, kind="number")
             V.play("heal_small", self._ctx(target=e["unit"], color=(140, 255, 170)))
         elif t == "status":
-            tag = self.data.tags[e["tag"]]
+            tag = self.data.tags.get(e["tag"], {"name": e["tag"], "color": (255, 170, 90)})
             self.float_text(e["unit"], tag["name"], tuple(tag["color"]), 13, ttl=0.8)
             if not pix:
                 V.play(f"status_{e['tag']}", self._ctx(target=e["unit"], color=tuple(tag["color"])))

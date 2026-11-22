@@ -459,7 +459,7 @@ class Battle:
                     kind={"burn": "dot", "poison": "dot", "bleed": "dot"}.get(
                         kind, "melee" if kind in ("melee", "thorns", "collision") else "ranged" if kind == "shot"
                         else "spell"),
-                    tag={"burn": "fire", "poison": "poison", "bleed": "blood"}.get(kind), cover=False, blocked=None)
+                    tag={"burn": "fire", "poison": "poison", "bleed": "bleed"}.get(kind), cover=False, blocked=None)
         if u.hp <= 0:
             self.die(u)
         elif (u.edef or {}).get("phases"):

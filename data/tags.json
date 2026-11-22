@@ -6,6 +6,7 @@
   "storm": {"name": "Гроза", "short": "Г", "color": [150, 165, 255], "status": "Наэлектризован", "groups": ["harmful", "charged"]},
   "poison": {"name": "Яд", "short": "Я", "color": [130, 210, 80], "status": "Яд: стаки, урон по времени, лечение слабее", "dps": 2, "heal_mult": 0.5, "groups": ["harmful", "dot"],
     "dot": {"stacks": 5, "hit_pct": 0.12, "atk_pct": 0.08, "spell_base": 3.0, "min": 1.5, "duration": 5.0, "damage_type": "poison", "env_dps": 2.0, "env_pct": 0.006, "env_damage_type": "magic", "heal_mult": 0.5, "heal_mult_per_stack": 0.08, "heal_mult_min": 0.2}},
+  "blood": {"name": "Кровь", "short": "К", "color": [200, 30, 40], "status": "Кровотечение", "dps": 4, "groups": ["harmful", "dot", "physical", "bleed"]},
   "bleed": {"name": "Кровотечение", "short": "К", "color": [200, 30, 40], "status": "Кровотечение: стаки; на максимуме взрыв", "dps": 4, "groups": ["harmful", "dot", "physical", "bleed"],
     "dot": {"stacks": 5, "hit_pct": 0.25, "atk_pct": 0.20, "spell_base": 4.0, "min": 1.0, "duration": 4.0, "damage_type": "physical", "env_dps": 4.0, "burst_mult": 2.0}},
   "Преследование": {"name": "Преследование", "short": "П", "color": [255, 170, 90], "status": "Запас дополнительных выстрелов", "groups": ["buff"]},

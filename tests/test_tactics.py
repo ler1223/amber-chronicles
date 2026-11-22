@@ -13,6 +13,13 @@ def put(u, cell):
     u.cell = u.prev_cell = tuple(cell)
 
 
+def test_combat_vfx_tag_palette_has_deck_tags():
+    from sim.data import GameData
+    tags = GameData().tags
+    for tag in ("bleed", "blood", "poison", "Преследование"):
+        assert tag in tags
+
+
 def test_pursuit_has_vfx_tag_description():
     from sim.data import GameData
     assert "Преследование" in GameData().tags
