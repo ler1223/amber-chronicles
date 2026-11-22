@@ -27645,6 +27645,1423 @@
     "vfx": "_d_quick_arrow"
    },
    "alt": null
+  },
+  "h_scope": {
+   "ill": [
+    "ferryman",
+    0.47,
+    0.47,
+    0.5
+   ],
+   "art": "item_bow",
+   "name": "Дальний прицел",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "ranged_bonus",
+      "n": 2
+     }
+    ],
+    "vfx": "focus"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Ещё дальше",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "ranged_bonus",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С щитом",
+       "name": "Прицел под щитом",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "ranged_bonus",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 4
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Прицел и дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "ranged_bonus",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С фокусом",
+       "name": "Точный прицел",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "ranged_bonus",
+          "n": 2
+         },
+         {
+          "op": "focus"
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разбега",
+       "name": "Прицел на ходу",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "ranged_bonus",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_snipe": {
+   "ill": [
+    "cryo_pond",
+    0.48,
+    0.54,
+    0.5
+   ],
+   "art": "item_bow",
+   "name": "Снайперский выстрел",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 8,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 8
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "far",
+       "n": 5
+      },
+      "plus": 6
+     }
+    ],
+    "vfx": "headshot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 8,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 11
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "far",
+           "n": 5
+          },
+          "plus": 6
+         }
+        ]
+       }
+      },
+      {
+       "label": "Ещё издалека",
+       "name": "Выстрел вдаль",
+       "main": {
+        "target": "enemy",
+        "range": 8,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "far",
+           "n": 5
+          },
+          "plus": 6
+         },
+         {
+          "when": {
+           "k": "far",
+           "n": 4
+          },
+          "plus": 8
+         }
+        ]
+       }
+      },
+      {
+       "label": "С кровью",
+       "name": "Снайперский порез",
+       "main": {
+        "target": "enemy",
+        "range": 8,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "bleed",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "far",
+           "n": 5
+          },
+          "plus": 6
+         }
+        ]
+       }
+      },
+      {
+       "label": "По уязвимому",
+       "name": "Выстрел в брешь",
+       "main": {
+        "target": "enemy",
+        "range": 8,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "far",
+           "n": 5
+          },
+          "plus": 6
+         },
+         {
+          "when": {
+           "k": "vulnerable"
+          },
+          "mult": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Снайперская метка",
+       "main": {
+        "target": "enemy",
+        "range": 8,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "mark",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "far",
+           "n": 5
+          },
+          "plus": 6
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_steady": {
+   "ill": [
+    "mirror_pool",
+    0.53,
+    0.51,
+    0.5
+   ],
+   "art": "item_bow",
+   "name": "Твёрдая рука",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "focus"
+     },
+     {
+      "op": "block",
+      "n": 4
+     }
+    ],
+    "vfx": "focus"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Крепче",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "focus"
+         },
+         {
+          "op": "block",
+          "n": 6
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание и выстрел",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "focus"
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С прицелом",
+       "name": "Твёрдый прицел",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "focus"
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "ranged_bonus",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С шагом",
+       "name": "Шаг и прицел",
+       "main": {
+        "target": "cell_step",
+        "step": 1,
+        "do": [
+         {
+          "op": "focus"
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "focus"
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_mark_burst": {
+   "ill": [
+    "magpie_nest",
+    0.52,
+    0.53,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Финальный выстрел",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4,
+      "per": {
+       "what": "mark",
+       "k": 3
+      }
+     }
+    ],
+    "vfx": "headshot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Метка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "mark",
+           "k": 3
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "Глубже метка",
+       "name": "Финальный выстрел",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4,
+          "per": {
+           "what": "mark",
+           "k": 4
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка и выстрел",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4,
+          "per": {
+           "what": "mark",
+           "k": 3
+          }
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "По уязвимому",
+       "name": "Выстрел в брешь",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4,
+          "per": {
+           "what": "mark",
+           "k": 3
+          }
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "vulnerable"
+          },
+          "plus": 5
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Выстрел и взгляд",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4,
+          "per": {
+           "what": "mark",
+           "k": 3
+          }
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_mark_web": {
+   "ill": [
+    "obsidian_mirror",
+    0.52,
+    0.48,
+    0.7
+   ],
+   "art": "gift_prey",
+   "name": "Паутина меток",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "mark",
+      "n": 2
+     }
+    ],
+    "vfx": "hunter_mark"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Метка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "mark",
+          "n": 3
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "Шире",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 2,
+        "do": [
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "С слабостью",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "weak",
+          "n": 2
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "С добором",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_hunt": {
+   "ill": [
+    "ferryman",
+    0.43,
+    0.52,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Охотничий азарт",
+   "cost": 2,
+   "type": "power",
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "play",
+     "tag": "Выстрел",
+     "aim": "nearest",
+     "do": [
+      {
+       "op": "mark",
+       "n": 2
+      }
+     ],
+     "once": true
+    }
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Метка",
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "mark",
+           "n": 3
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "Каждый выстрел",
+       "name": "Неутомимая охота",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "mark",
+           "n": 2
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Азарт и взгляд",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "mark",
+           "n": 2
+          },
+          {
+           "op": "draw",
+           "n": 1
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Азарт и брешь",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "mark",
+           "n": 2
+          },
+          {
+           "op": "vulnerable",
+           "n": 1
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "С мощью",
+       "name": "Азарт и сила",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "mark",
+           "n": 2
+          },
+          {
+           "op": "strength",
+           "n": 1
+          }
+         ],
+         "once": true
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_echo_shot": {
+   "ill": [
+    "mage_gas",
+    0.53,
+    0.49,
+    0.7
+   ],
+   "art": "item_bow",
+   "name": "Эхо-стрела",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "resonance",
+       "tag": "Выстрел",
+       "n": 2
+      },
+      "repeat": 1
+     }
+    ],
+    "vfx": "aimed_shot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Повтор",
+    "Комбо"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "resonance",
+           "tag": "Выстрел",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Эхо и метка",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "resonance",
+           "tag": "Выстрел",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Эхо и взгляд",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "resonance",
+           "tag": "Выстрел",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Далёкое эхо",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "resonance",
+           "tag": "Выстрел",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разбега",
+       "name": "Эхо на ходу",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4,
+          "per": {
+           "what": "tag:Выстрел",
+           "k": 1
+          }
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_rapid": {
+   "ill": [
+    "runaway_apprentice",
+    0.47,
+    0.51,
+    0.5
+   ],
+   "art": "item_bow",
+   "name": "Быстрый выстрел",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "series",
+       "n": 2
+      },
+      "repeat": 1
+     }
+    ],
+    "vfx": "barrage"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Комбо",
+    "Повтор"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Быстрая рука",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Быстрая метка",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Далёкая серия",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С серией",
+       "name": "Мгновенная серия",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 1
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_quiver_echo": {
+   "ill": [
+    "quench_bath",
+    0.52,
+    0.52,
+    0.7
+   ],
+   "art": "arrow_piercing",
+   "name": "Эхо колчана",
+   "cost": 2,
+   "type": "power",
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "play",
+     "tag": "Выстрел",
+     "aim": "nearest",
+     "do": [
+      {
+       "op": "damage",
+       "n": 2
+      }
+     ]
+    },
+    "vfx": "barrage"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Повтор"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 3
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Эхо и метка",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 2
+          },
+          {
+           "op": "mark",
+           "n": 1
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С щитом",
+       "name": "Эхо и щит",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 2
+          },
+          {
+           "op": "block",
+           "n": 2
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Эхо и брешь",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 2
+          },
+          {
+           "op": "vulnerable",
+           "n": 1
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "Всем",
+       "name": "Эхо по всем",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "all",
+         "do": [
+          {
+           "op": "damage",
+           "n": 1
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
   }
  }
 }

@@ -103,7 +103,7 @@ def _op_phrase(op):
     if op.get("per"):                                       # «за каждую…»
         per = op["per"]
         word = {"damage": "урона", "block": "*защиты*", "bleed": "*кровотечения*", "burn": "*горения*",
-                "poison": "*яда*", "heal": "*лечения*", "counter": "*контратаки*"}.get(t, t)
+                "poison": "*яда*", "mark": "*метки*", "heal": "*лечения*", "counter": "*контратаки*"}.get(t, t)
         verb = {"damage": "Нанести", "block": "Получить", "heal": "Восстановить", "counter": "Получить"}.get(t, "Наложить")
         head = f"{verb} {_n(n)} {word}" if n else f"{verb} {word}"
         return f"{head}: {_n('+' + str(per.get('k', 1)))} {per_text(per)}."
@@ -179,6 +179,7 @@ def _op_phrase(op):
 PER_TEXT = {
     "played": "за каждую карту, сыгранную до неё в этот ход", "strength": "за каждую *мощь*",
     "bleed": "за каждое *кровотечение* цели", "burn": "за каждое *горение* цели", "poison": "за каждый *яд* цели",
+    "mark": "за каждую *метку* цели",
     "vulnerable": "за каждую *уязвимость* цели", "weak": "за каждую *слабость* цели",
     "exhausted": "за каждую *изгнанную* в этом бою карту", "hand": "за каждую карту в руке",
     "counter": "за каждую *контратаку*", "shield": "за каждую *защиту*", "heat": "за каждый *жар*",
@@ -348,7 +349,7 @@ def card_extras(d, lit=()):
 # ---------- теги: из того, что карта делает ----------
 
 TAG_ORDER = ["Огонь", "Удар", "Выстрел", "Шаг", "Защита", "Толчок", "Шипы", "Кровь", "Клич", "Метка", "Яд",
-             "Ловушка", "Создание", "Изгнание"]
+             "Ловушка", "Создание", "Изгнание", "Комбо", "Повтор"]
 
 
 def use_tags(u):
@@ -387,6 +388,12 @@ def use_tags(u):
         tags.add("Яд")
     if {"trap", "root"} & set(ops):
         tags.add("Ловушка")
+    conds = [c.get("when", {}) for c in u.get("if", []) if isinstance(c, dict)]
+    if any(c.get("repeat") for c in u.get("if", []) if isinstance(c, dict)) or any(
+            c.get("k") in ("series", "first", "allin") for c in conds):
+        tags.add("Комбо")
+    if any(c.get("k") == "resonance" for c in conds):
+        tags.add("Повтор")
     return tags
 
 
@@ -518,6 +525,8 @@ TAG_INFO = {
     "Метка": "Метка: следующий удар по цели сильнее.",
     "Яд": "Яд: урон в начале хода цели мимо защиты.",
     "Ловушка": "Капканы и корни.",
+    "Комбо": "Карта считает или строит серию розыгрышей за ход.",
+    "Повтор": "Карта повторяется или даёт дополнительный удар при условии.",
 }
 
 
@@ -857,7 +866,8 @@ class Run:
         self.max_hp = h["hp"]
         self.hp = h["hp"]
         self.variant = variant or (next(iter(h["passives"])) if h.get("passives") else None)
-        self.deck = [Card(cid, self.defs) for cid in h["starter"]]
+        starter = (h.get("starter_by_variant") or {}).get(self.variant) or h["starter"]
+        self.deck = [Card(cid, self.defs) for cid in starter]
         self.fight = 0                   # сколько боёв выиграно
         self.result = None
         fl = self.data["enemies"]["floor"]
@@ -962,10 +972,19 @@ class Run:
         if self.hero.get("mechanic") == "idols":           # Жрец: свитки создаются под глубину (+ редкий)
             from .idols import offer_scrolls
             return [Card(cid, self.defs) for cid in offer_scrolls(self, n)]
+        from .items import mod
+        count = max(1, n - mod(self, "fewer_rewards"))
+        core = list((self.hero.get("rewards_by_variant") or {}).get(self.variant) or [])
+        if core:                                      # школа: 2 карты направления + 1 свобода
+            picks = self.rng.sample(core, min(len(core), 2 if count >= 3 else count))
+            rest = [cid for cid in self.hero["rewards"] if cid not in core and cid not in picks]
+            if len(picks) < count and rest:
+                picks += self.rng.sample(rest, min(count - len(picks), len(rest)))
+            self.rng.shuffle(picks)
+            return [Card(cid, self.defs) for cid in picks]
         pool = list(self.hero["rewards"])
         self.rng.shuffle(pool)
-        from .items import mod
-        return [Card(cid, self.defs) for cid in pool[:max(1, n - mod(self, "fewer_rewards"))]]
+        return [Card(cid, self.defs) for cid in pool[:count]]
 
     def take(self, card):
         self.deck.append(card)

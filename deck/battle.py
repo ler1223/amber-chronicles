@@ -1110,7 +1110,7 @@ class Battle:
             return sum(w[4:] in t for t in self.turn_tags[:before])
         if w == "strength":
             return max(0, h.ds["strength"])
-        if w in ("bleed", "burn", "poison", "vulnerable", "weak"):
+        if w in ("bleed", "burn", "poison", "mark", "vulnerable", "weak"):
             return tgt.ds[w] if tgt is not None and hasattr(tgt, "ds") else 0
         if w == "exhausted":
             return sum(1 for c in self.exhaust if not c.d.get("token"))

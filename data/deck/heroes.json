@@ -92,15 +92,15 @@
    "passives": {
     "range": {
      "name": "Дальний выстрел",
-     "desc": "Дальние атаки: +1 урона за каждую клетку до цели сверх 3 (до +4). Враг вплотную — уходи."
+     "desc": "Дальность: +1 урона за клетку сверх 3 (до +4). Колода: прицел и снайперские выстрелы."
     },
     "mark": {
      "name": "Метка добычи",
-     "desc": "В начале боя ближайший враг — Добыча: по ней +3 урона. Добыча пала — метка переходит на ближайшего, +1 энергия и +1 карта."
+     "desc": "Добыча: +3 по ней, убийство — +1 энергия и карта. Колода: метки и добивание."
     },
     "quiver": {
      "name": "Колчан",
-     "desc": "В начале каждого хода в руку — Стрела (0 энергии, 3 урона по обзору, сгорает). Карты могут добавлять ещё стрел."
+     "desc": "Стрела в руку каждый ход. Колода: стрелы, добор и повторные выстрелы."
     }
    },
    "starter": [
@@ -148,9 +148,104 @@
     "h_deadeye",
     "h_knife",
     "h_ambush2",
-    "h_lure"
+    "h_lure",
+    "h_scope",
+    "h_snipe",
+    "h_steady",
+    "h_mark_burst",
+    "h_mark_web",
+    "h_hunt",
+    "h_echo_shot",
+    "h_rapid",
+    "h_quiver_echo",
+    "h_aimed"
    ],
-   "hand": 6
+   "hand": 6,
+   "starter_by_variant": {
+    "range": [
+     "h_shot",
+     "h_shot",
+     "h_shot",
+     "h_shot",
+     "h_aimed",
+     "h_long",
+     "h_focus",
+     "h_dodge",
+     "h_dodge",
+     "h_backstep",
+     "h_shoot_roll"
+    ],
+    "mark": [
+     "h_shot",
+     "h_shot",
+     "h_shot",
+     "h_marking",
+     "h_marking",
+     "h_mark_burst",
+     "h_dodge",
+     "h_dodge",
+     "h_trail",
+     "h_net",
+     "h_aimed"
+    ],
+    "quiver": [
+     "h_shot",
+     "h_shot",
+     "h_shot",
+     "h_fill",
+     "h_fill",
+     "h_volley",
+     "h_dodge",
+     "h_dodge",
+     "h_shoot_roll",
+     "h_barrage",
+     "h_rapid"
+    ]
+   },
+   "rewards_by_variant": {
+    "range": [
+     "h_long",
+     "h_aimed",
+     "h_focus",
+     "h_horn",
+     "h_pierce",
+     "h_deadeye",
+     "h_evade",
+     "h_brush",
+     "h_trail",
+     "h_scope",
+     "h_snipe",
+     "h_steady"
+    ],
+    "mark": [
+     "h_marking",
+     "h_mark_burst",
+     "h_mark_web",
+     "h_hunt",
+     "h_lure",
+     "h_net",
+     "h_finish",
+     "h_trail",
+     "h_aimed",
+     "h_pierce",
+     "h_deadeye",
+     "h_knife"
+    ],
+    "quiver": [
+     "h_fill",
+     "h_full_quiver",
+     "h_master_quiver",
+     "h_barrage",
+     "h_volley",
+     "h_echo_shot",
+     "h_rapid",
+     "h_quiver_echo",
+     "h_knife",
+     "h_shoot_roll",
+     "h_evade",
+     "h_rain"
+    ]
+   }
   },
   "pyro": {
    "name": "Пиромантка",
