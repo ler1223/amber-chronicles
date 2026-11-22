@@ -125,15 +125,26 @@ def test_chain_variant_cascades_from_two_shots():
                 "h_chain_guard", "h_chain_mark"):
         b.hand.append(M.Card(cid, run.defs))
     b.energy = 9
+    actions = []
     for cid in ("h_shot", "h_shot"):
         c = next(c for c in b.hand if c.cid == cid)
-        finish(b.play(c, "main", foe))
+        actions.extend(b.play(c, "main", foe))
+    assert sum(1 for a in actions if a and a[0] == "chain_card") >= 4   # карты показываются по одной
+    assert any(a and a[0] == "wait" and a[1] >= 0.4 for a in actions)  # пауза между цепочками
     assert b.played >= 8
     assert b.chain_drawn == 2                              # пассивка Цепной реакции
     assert len(b.hand) >= 8                                # большая рука после каскада
     assert h.shield > 0                                   # защитная цепочка сыграла сама
     assert any(c.cid == "h_chain_mark" for c in b.discard + b.hand)  # мост тоже сработал
     assert foe.hp < 999
+
+
+def test_resonance_text_is_short_and_does_not_repeat_tag_description():
+    data = M.load()
+    assert M.plain(M.cond_text({"k": "resonance", "tag": "Выстрел", "n": 2})) == "Резонанс Выстрел 2"
+    extra = M.plain(M.card_extras(data["cards"]["cards"]["h_chain_1"]))
+    assert extra == "Цепочка: Резонанс Выстрел 2."
+    assert "играется сама" not in extra and "разыгрывается" not in extra
 
 
 def test_chain_quiver_item_buffs_chain_damage():

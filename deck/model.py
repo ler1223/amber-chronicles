@@ -244,7 +244,7 @@ def cond_text(c, lit=False):
     if k == "after":
         return f"{name} [{c['tag']}]"
     if k == "resonance":
-        return f"{name} [{c['tag']}] {_n(c['n'])}"
+        return f"{name} {c['tag']} {_n(c['n'])}"
     if k in ("series", "far", "run", "momentum", "shielded"):
         return f"{name} {_n(c['n'])}"
     return name
@@ -253,7 +253,7 @@ def cond_text(c, lit=False):
 def _if_phrase(c, lit=False):
     head = cond_text(c["when"], lit)
     if c["when"].get("k") == "resonance":
-        return f"{head}: карта разыгрывается ещё раз."       # у резонанса нет своего эффекта
+        return head + "."                                   # тег «Резонанс» уже всё объясняет
     bits = []
     if c.get("plus"):
         bits.append(f"ещё {_n('+' + str(c['plus']))} урона.")
@@ -328,7 +328,7 @@ def card_extras(d, lit=()):
     if d.get("echo"):
         e = d["echo"]
         if e.get("when", {}).get("k") == "resonance":
-            out.append(f"*Резонанс* ({cond_text(e['when'], 'echo' in lit)}): карта разыгрывается ещё раз.")
+            out.append(cond_text(e["when"], "echo" in lit) + ".")
         else:
             ops = " ".join(_ops_phrases(e["do"]))
             aim = e.get("aim", "nearest")
@@ -349,7 +349,7 @@ def card_extras(d, lit=()):
     if d.get("keep"):
         out.append(f"*Задел* ({cond_text(d['keep'], 'keep' in lit)}).")
     if d.get("chain"):
-        out.append(f"*Цепочка* ({cond_text(d['chain']['when'], 'chain' in lit)}): карта играется сама раз за ход.")
+        out.append(f"*Цепочка*: {cond_text(d['chain']['when'], 'chain' in lit)}.")
     return " ".join(out)
 
 
@@ -589,7 +589,7 @@ def lookup(word, style="k"):
     if style == "g":
         for tag, info in TAG_INFO.items():
             if w == tag.lower():
-                return f"Тег: {tag}", info + " Условия вроде «Вслед за [" + tag + "]» и «Резонанс [" + tag +                     "]» считают такие карты."
+                return f"Тег: {tag}", info + " Условия вроде «Вслед за [" + tag + "]» и «Резонанс " + tag +                     " N» считают такие карты."
     for stem, name, expl in GLOSSARY:
         if w.startswith(stem):
             return name, expl

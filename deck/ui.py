@@ -582,6 +582,9 @@ class BattleScreen:
         self.pick = None
         self.job = None
         self.wait = 0.0
+        self.chain_show = None             # карта, которую Цепочка играет сама: крупный показ
+        self.chain_t = 0.0
+        self.chain_dur = 0.0
         self.sel = None                    # (карта, режим): выбрана кликом или тянется
         self.press = None                  # (карта, кнопка, точка) — нажали на карту, ещё не ясно: клик или тяга
         self.press_t = 0.0                 # сколько держат нажатой без движения
@@ -658,6 +661,10 @@ class BattleScreen:
             return
         real = dt
         dt = dt * self.ANIM
+        if self.chain_show is not None:
+            self.chain_t += real
+            if self.chain_t >= self.chain_dur:
+                self.chain_show = None
         over = {}
         for u in self.combat.units:                 # шаги фигурок: бой реального времени здесь не идёт
             if u.move_t < 1.0:
@@ -671,7 +678,10 @@ class BattleScreen:
             if self.wait <= 0:
                 try:
                     act = next(self.job)
-                    if act and act[0] == "impact":          # эффект выпущен — ждём попадания, потом урон
+                    if act and act[0] == "chain_card":      # Цепочка: сначала показать карту, потом эффект
+                        self.chain_show, self.chain_t, self.chain_dur = act[2], 0.0, max(0.35, act[1])
+                        self.wait = max(0.45, act[1]) + 0.06
+                    elif act and act[0] == "impact":        # эффект выпущен — ждём попадания, потом урон
                         self.wait = min(1.4, self.pump()) + 0.02
                     elif act and act[0] == "move":          # шаг пути — сразу следующий, с остатком кадра
                         u = act[2]
@@ -1469,6 +1479,7 @@ class BattleScreen:
             self.draw_top(surf)
             self.draw_side(surf)
         self.draw_hand(surf)
+        self.draw_chain_show(surf)
         self.draw_eye(surf)
         if not self.ui_hidden:
             self.draw_tip(surf)
@@ -1922,6 +1933,30 @@ class BattleScreen:
         sk.button(surf, self.end_rect, "Конец хода", self.end_rect.collidepoint(self.mouse),
                   on=not self.busy and not b.result, primary=not self.hint_text() or "Space" in (self.hint_text() or ""),
                   t=self.hv.t, size=19)
+
+    def draw_chain_show(self, surf):
+        """Крупный показ карты, которую только что сыграла Цепочка: игрок должен увидеть, кто играет."""
+        c = self.chain_show
+        if c is None:
+            return
+        dur = max(0.35, self.chain_dur)
+        t = min(max(0.0, self.chain_t), dur)
+        k = min(1.0, t / 0.12, max(0.0, (dur - t) / 0.18))
+        if k <= 0.01:
+            return
+        dim(surf, int(110 * k))
+        w = round((208 + 8 * min(1.0, t / 0.16)) * (0.96 + 0.04 * k))
+        h = round(w * CF.FH / CF.FW)
+        cr = pygame.Rect(0, 0, w, h)
+        cr.center = (T.SCREEN_W // 2, T.SCREEN_H // 2 - 52)
+        pr = pygame.Rect(cr.x - 18, cr.y - 34, cr.w + 36, cr.h + 70)
+        T.frame(surf, pr, 238, accent=(130, 255, 165), fill=(18, 14, 11))
+        T.text(surf, "ЦЕПОЧКА", (cr.centerx, pr.y + 8), 20, (130, 255, 170), True,
+               center=True, shadow=True)
+        T.text(surf, "играет сама · бесплатно", (cr.centerx, pr.bottom - 24), 13, (200, 225, 200),
+               center=True, shadow=True)
+        CF.blit_card(surf, cr, c, main_ok=True, alt_ok=False, hot=True, alpha=int(255 * k),
+                     lit=("chain",))
 
     def draw_heat(self, surf, ex, ey):
         """Жар Пиромантки: раскалённый шар с числом, деления — до перегрева."""

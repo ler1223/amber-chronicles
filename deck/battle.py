@@ -1031,6 +1031,8 @@ class Battle:
                 if target is None:
                     continue
                 self.echoed.add(c.uid)
+                # Экран: показать карту крупно и дать игроку прочитать, что играет само.
+                yield ("chain_card", 0.8, c)
                 self.say(f"Цепочка: {c.name}", (170, 255, 170))
                 self.fx("chain", unit=self.hero, uid=c.uid, target=target)
                 old = self._free_cast
@@ -1044,6 +1046,8 @@ class Battle:
                         self.say("Цепная реакция: карта", (180, 255, 190))
                 finally:
                     self._free_cast = old
+                if not self.result:
+                    yield ("wait", 0.45)                      # пауза между цепочками
                 acted = True
                 break
             if not acted:
