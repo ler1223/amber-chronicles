@@ -2951,7 +2951,14 @@ class StarterDeckScreen:
         self.confirm_rect = pygame.Rect(T.SCREEN_W // 2 + 170, T.SCREEN_H - 62, 280, 48)
         self.back_rect = pygame.Rect(T.SCREEN_W // 2 - 450, T.SCREEN_H - 62, 220, 48)
         self.toast = None
+        self.toast_t = 0.0
         self.max_scroll = 0
+
+    def update(self, dt):
+        if self.toast_t > 0:
+            self.toast_t = max(0.0, self.toast_t - dt)
+            if self.toast_t <= 0:
+                self.toast = None
 
     @property
     def ready(self):
@@ -3002,6 +3009,7 @@ class StarterDeckScreen:
                 if r.collidepoint(ev.pos) and 390 < ev.pos[1] < T.SCREEN_H - 72:
                     if len(self.selected) >= 4:
                         self.toast = ("Уже выбраны 4 карты — щёлкните по слоту, чтобы заменить", 1.4)
+                        self.toast_t = 1.4
                     else:
                         self.selected.append(c.cid)
                     return

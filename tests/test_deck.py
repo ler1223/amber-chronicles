@@ -257,6 +257,15 @@ def test_hand_view_springs_drag_and_play():
     assert not hv.flying                                                       # улетела и погасла
 
 
+def test_starter_deck_screen_updates():
+    from deck.game import DescentGame
+    from deck.ui import StarterDeckScreen
+    g = DescentGame(seed=2, gd=ED)
+    g.scene.start()
+    assert isinstance(g.scene, StarterDeckScreen)
+    g.update(1 / 60)                                      # экран старта должен жить в общем цикле
+
+
 def test_game_flow_map_battle_shop_camp_boss():
     from deck.game import DescentGame
     from deck.ui import BattleScreen, ChoiceScreen, DeckScreen, EndScreen, MapScreen, ShopScreen

@@ -316,8 +316,10 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
             ic.fill((120, 120, 120, 255), special_flags=pygame.BLEND_RGBA_MULT)
         s.blit(ic, ic.get_rect(center=(cx, cy)))
     if not react:
-        _lab(s, lambda z: font(z, True), 48, str(card.cost), (255, 255, 255) if main_ok else (190, 180, 170),
-             center=(cx, cy + 2), shadow=(0, 0, 0), offs=((2, 2), (-1, 1), (1, -1)))
+        # Цена: белая цифра с толстым тёмным контуром — читается и на светлом, и на тёмном гнезде.
+        _lab(s, lambda z: font(z, True), 50, str(card.cost), (255, 255, 255) if main_ok else (215, 205, 190),
+             center=(cx, cy + 2), shadow=(8, 5, 3),
+             offs=((-3, 0), (3, 0), (0, -3), (0, 3), (-2, -2), (2, -2), (-2, 2), (2, 2)))
     if d["main"].get("seal") and "seal" not in lit:                        # Печать: закрыта
         ch = icon("seal", 40)
         if ch is not None:
