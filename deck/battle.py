@@ -1008,6 +1008,8 @@ class Battle:
             e = c.d.get("echo")
             if not e or e.get("on") or c.uid in self.echoed or self.result or not self.met(e["when"]):
                 continue
+            if e.get("when", {}).get("k") == "resonance":
+                continue                         # резонанс не даёт своего эффекта — карта повторяется при розыгрыше
             yield from self.fire_echo(c, None)
 
     def react(self):
@@ -1235,7 +1237,11 @@ class Battle:
         ctx = {"ranged": u.get("ranged", False), "center": target if isinstance(target, tuple) else None,
                "push_bonus": 0, "tag": u.get("tag"), "card": card if mode == "main" else None}
         if mode == "main":
-            ctx["conds"], ctx["before"] = u.get("if", []), before
+            conds = list(u.get("if", []))
+            echo = card.d.get("echo") or {}
+            if echo.get("when", {}).get("k") == "resonance":
+                conds.append({"when": echo["when"], "repeat": 1})     # резонанс = повтор розыгрыша
+            ctx["conds"], ctx["before"] = conds, before
             self._mom = h.ds["momentum"]
             ctx["emp"] = sum(self.empower.pop(tg, 0) for tg in card.tags)      # «Следующая карта [Тег]»
             ctx["temper"] = self.temper.get(card.uid, 0)
@@ -1254,7 +1260,9 @@ class Battle:
                     "mark" if "mark" in kinds else "card" if "add_card" in kinds else
                     "poison" if "poison" in kinds else "strike" if "damage" in kinds else "buff")
             self.fx("alt", what=kind, unit=h, target=tgt)
-        reps = 1 + sum(c.get("repeat", 0) for c in ctx.get("conds", []) if self.met(c["when"], tgt, before))
+        reps = 1 + sum((1 if c["when"].get("k") == "resonance" else c.get("repeat", 0))
+                       for c in ctx.get("conds", [])
+                       if self.met(c["when"], tgt, before) and (c.get("repeat") or c["when"].get("k") == "resonance"))
         for rep in range(reps):                              # Близнец: дважды
             if rep and (self.result or (tgt is not None and not tgt.alive)):
                 break
@@ -1349,6 +1357,8 @@ class Battle:
         """Усиление: действия условий («В окружении: защита 4») — после основных."""
         h = self.hero
         for c in ctx.get("conds", []):
+            if c["when"].get("k") == "resonance":
+                continue                         # у резонанса нет отдельного эффекта
             if c.get("do") and self.met(c["when"], tgt, ctx.get("before")):
                 ops = [o for o in c["do"] if not area or o["op"] not in ONCE]
                 yield from self.apply(h, ops, tgt, dict(ctx, conds=[]))
@@ -1397,6 +1407,8 @@ class Battle:
                     emp = 0
                     n = self.hero_bonus(tgt, n, op, ctx)
                     for c in ctx.get("conds", []):            # Усиление: «ещё +N», «урон ×N»
+                        if c["when"].get("k") == "resonance":
+                            continue                          # резонанс только повторяет карту
                         if (c.get("plus") or c.get("mult")) and self.met(c["when"], tgt, ctx.get("before")):
                             n = (n + c.get("plus", 0)) * c.get("mult", 1)
                     if self.double_next and ctx.get("card") is not None:     # предмет: двойной урон (итоговый)

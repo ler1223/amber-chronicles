@@ -207,6 +207,17 @@ def adds(cards):
             V("С серией", shot(5, D(3), op("draw", 1),
                               **{"if": [{"when": {"k": "series", "n": 1}, "repeat": 1}]}), "Мгновенная серия"),
         ], vfx="barrage")
+    arrow_well = me(op("add_card", 2, card="arrow"), op("draw", 1))
+    out["h_arrow_well"] = card(
+        "Дно колчана", "skill", 1, arrow_well, {"target": "cell_step", "step": 1, "do": []},
+        arrow_art["art"], ill_from(cards, "h_fill", 0.03, -0.02), ["Создание", "Выстрел", "Резонанс"], [
+            V("Больше стрел", me(op("add_card", 3, card="arrow"), op("draw", 1))),
+            V("С добором", me(op("add_card", 2, card="arrow"), op("draw", 2)), "Полный подсумок"),
+            V("С щитом", me(op("add_card", 2, card="arrow"), op("draw", 1), B(4)), "Стрелы и щит"),
+            V("С резонансом", add_if(arrow_well, {"when": {"k": "resonance", "tag": "Выстрел", "n": 2},
+                                                   "repeat": 1}), "Резонанс колчана"),
+            V("С энергией", me(op("add_card", 2, card="arrow"), op("energy", 1)), "Стрелы и дыхание"),
+        ], vfx="fletching")
     quiver = me(power={"on": "play", "tag": "Выстрел", "aim": "nearest",
                        "do": [op("damage", 2)]})
     out["h_quiver_echo"] = card(
@@ -226,8 +237,26 @@ def adds(cards):
     return out
 
 
+def normalize_resonance(x, in_echo=False):
+    """Резонанс не имеет своего эффекта: do/plus/mult убираем, оставляем повтор."""
+    if isinstance(x, dict):
+        when = x.get("when") or {}
+        if when.get("k") == "resonance":
+            for k in ("do", "plus", "mult"):
+                x.pop(k, None)
+            if not in_echo:
+                x.setdefault("repeat", 1)
+        for k, v in x.items():
+            normalize_resonance(v, in_echo or k == "echo")
+    elif isinstance(x, list):
+        for v in x:
+            normalize_resonance(v, in_echo)
+
+
 def main():
     cards = json.load(open(P_CARDS, encoding="utf-8"))["cards"]
+    for c in cards.values():
+        normalize_resonance(c)
     new = adds(cards)
     for cid, d in new.items():
         cards[cid] = d
@@ -243,7 +272,7 @@ def main():
                   "h_dodge", "h_dodge", "h_backstep", "h_shoot_roll"],
         "mark": ["h_shot", "h_shot", "h_shot", "h_marking", "h_marking", "h_mark_burst",
                  "h_dodge", "h_dodge", "h_trail", "h_net", "h_aimed"],
-        "quiver": ["h_shot", "h_shot", "h_shot", "h_fill", "h_fill", "h_volley",
+        "quiver": ["h_shot", "h_shot", "h_fill", "h_fill", "h_arrow_well", "h_volley",
                    "h_dodge", "h_dodge", "h_shoot_roll", "h_barrage", "h_rapid"],
     }
     # Ядро школы: из него выпадает 2 карты из 3, третья — «свободная» из общего пула.
@@ -252,10 +281,11 @@ def main():
                   "h_brush", "h_trail", "h_scope", "h_snipe", "h_steady"],
         "mark": ["h_marking", "h_mark_burst", "h_mark_web", "h_hunt", "h_lure",
                  "h_net", "h_finish", "h_trail", "h_aimed", "h_pierce", "h_deadeye", "h_knife"],
-        "quiver": ["h_fill", "h_full_quiver", "h_master_quiver", "h_barrage", "h_volley",
-                   "h_echo_shot", "h_rapid", "h_quiver_echo", "h_knife", "h_shoot_roll",
+        "quiver": ["h_fill", "h_full_quiver", "h_master_quiver", "h_arrow_well", "h_barrage",
+                   "h_volley", "h_echo_shot", "h_rapid", "h_quiver_echo", "h_knife", "h_shoot_roll",
                    "h_evade", "h_rain"],
     }
+    h["reward_guarantee"] = {"quiver": ["h_fill", "h_full_quiver", "h_master_quiver", "h_arrow_well"]}
     for ids in h["rewards_by_variant"].values():
         h["rewards"] = list(dict.fromkeys(h["rewards"] + ids))
     h["rewards"] = list(dict.fromkeys(h["rewards"] + list(new)))

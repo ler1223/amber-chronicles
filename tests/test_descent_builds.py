@@ -59,7 +59,7 @@ def test_new_school_tags_are_derived():
 def test_all_new_hunter_cards_can_be_played():
     data = M.load()
     new = ("h_scope", "h_snipe", "h_steady", "h_mark_burst", "h_mark_web", "h_hunt",
-           "h_echo_shot", "h_rapid", "h_quiver_echo")
+           "h_echo_shot", "h_rapid", "h_arrow_well", "h_quiver_echo")
     for cid in new:
         run = M.Run(data=data, seed=4, hero="hunter", variant="mark")
         b = Battle(ED, run, run.fights[0], seed=4)
@@ -75,3 +75,43 @@ def test_all_new_hunter_cards_can_be_played():
         target = targets[0]
         finish(b.play(card, "main", target))
         assert card not in b.hand or card in b.powers, cid
+
+
+def test_resonance_replays_card_instead_of_own_effect():
+    data = M.load()
+    run = M.Run(data=data, seed=6, hero="hunter", variant="quiver")
+    b = Battle(ED, run, run.fights[0], seed=6)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    foe.hp = foe.max_hp = 99
+    # два выстрела уже сыграны — резонанс [Выстрел] 2 выполнен
+    b.turn_tags = [{"Выстрел"}, {"Выстрел"}]
+    b.played = 2
+    card = M.Card("h_echo_shot", run.defs)
+    b.hand.append(card)
+    b.energy = 9
+    hp = foe.hp
+    finish(b.play(card, "main", foe))
+    assert hp - foe.hp == 10                              # 5 урона, карта разыграна ещё раз
+
+
+def test_quiver_rewards_guarantee_arrow_cards():
+    data = M.load()
+    run = M.Run(data=data, seed=7, hero="hunter", variant="quiver")
+    creators = {"h_fill", "h_full_quiver", "h_master_quiver", "h_arrow_well"}
+    for _ in range(12):
+        offers = {c.cid for c in run.reward_offer()}
+        assert offers & creators, offers
+
+
+def test_arrow_well_creates_free_shots():
+    data = M.load()
+    run = M.Run(data=data, seed=8, hero="hunter", variant="quiver")
+    b = Battle(ED, run, run.fights[0], seed=8)
+    card = M.Card("h_arrow_well", run.defs)
+    b.hand.append(card)
+    b.energy = 9
+    finish(b.play(card, "main", b.hero))
+    assert sum(1 for c in b.hand if c.cid == "arrow") >= 2

@@ -691,7 +691,12 @@ def test_tags_and_conditions_seal_bonus_echo_keep_twin():
         shot = card(b, "h_shot")
         if b.targets(shot, "main"):
             finish(b.play(shot, "main", b.targets(shot, "main")[0]))
-    assert trail.uid in b.echoed and trail in b.hand                           # сработала сама, осталась в руке
+    assert trail.uid not in b.echoed and trail in b.hand                       # резонанс не срабатывает сам
+    b.hand.append(trail)
+    b.energy = 9
+    target = b.targets(trail, "main")[0]
+    finish(b.play(trail, "main", target))                                      # при игре — повтор розыгрыша
+    assert b.hero.shield >= 6                                                  # блок 3 сработал дважды
     kept = M.Card("h_trail", run.defs)
     kept.pick(4)                                                                # вариант «Задел (Серия 3)»
     assert kept.d.get("keep") == {"k": "series", "n": 3}

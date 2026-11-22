@@ -252,6 +252,8 @@ def cond_text(c, lit=False):
 
 def _if_phrase(c, lit=False):
     head = cond_text(c["when"], lit)
+    if c["when"].get("k") == "resonance":
+        return f"{head}: карта разыгрывается ещё раз."       # у резонанса нет своего эффекта
     bits = []
     if c.get("plus"):
         bits.append(f"ещё {_n('+' + str(c['plus']))} урона.")
@@ -325,17 +327,20 @@ def card_extras(d, lit=()):
         out.append("*Реакция*: самому не сыграть.")
     if d.get("echo"):
         e = d["echo"]
-        ops = " ".join(_ops_phrases(e["do"]))
-        aim = e.get("aim", "nearest")
-        who = {"nearest": "ближайшему врагу — ", "source": "ему — "}.get(aim, "") if e.get("on") != "kill" or \
-            aim != "source" else ""
-        if e.get("on"):
-            head = " ".join(f"*{w}*" for w in EVENT_NAMES[e["on"]].split())
-            if e.get("when"):
-                head += f", {cond_text(e['when'], 'echo' in lit)}"
+        if e.get("when", {}).get("k") == "resonance":
+            out.append(f"*Резонанс* ({cond_text(e['when'], 'echo' in lit)}): карта разыгрывается ещё раз.")
         else:
-            head = cond_text(e["when"], "echo" in lit)
-        out.append(f"*Отклик* ({head}): {who}{_low(ops)}")
+            ops = " ".join(_ops_phrases(e["do"]))
+            aim = e.get("aim", "nearest")
+            who = {"nearest": "ближайшему врагу — ", "source": "ему — "}.get(aim, "") if e.get("on") != "kill" or \
+                aim != "source" else ""
+            if e.get("on"):
+                head = " ".join(f"*{w}*" for w in EVENT_NAMES[e["on"]].split())
+                if e.get("when"):
+                    head += f", {cond_text(e['when'], 'echo' in lit)}"
+            else:
+                head = cond_text(e["when"], "echo" in lit)
+            out.append(f"*Отклик* ({head}): {who}{_low(ops)}")
     if d.get("temper"):
         tp = d["temper"]
         head = f" ({cond_text(tp['when'], 'temper' in lit)})" if tp.get("when") else ""
@@ -349,13 +354,19 @@ def card_extras(d, lit=()):
 # ---------- теги: из того, что карта делает ----------
 
 TAG_ORDER = ["Огонь", "Удар", "Выстрел", "Шаг", "Защита", "Толчок", "Шипы", "Кровь", "Клич", "Метка", "Яд",
-             "Ловушка", "Создание", "Изгнание", "Комбо", "Повтор"]
+             "Ловушка", "Создание", "Изгнание", "Комбо", "Резонанс", "Повтор", "Свиток", "Атака", "Оборона",
+             "Движение", "Проклятие", "Дар", "Призыв", "Хор"]
 
 
 def use_tags(u):
     ops = [o["op"] for o in u.get("do", [])]
     for o in u.get("do", []):
         ops += [x["op"] for x in o.get("do", [])]          # aoe_adjacent и т.п.
+    for c in u.get("if", []):                              # условные усиления тоже часть карты
+        ops += [o["op"] for o in c.get("do", [])]
+    for o in u.get("do", []):
+        for c in o.get("if", []):
+            ops += [x["op"] for x in c.get("do", [])]
     t = u.get("target")
     tags = set()
     dmg = {"damage", "body_slam"} & set(ops)
@@ -388,26 +399,52 @@ def use_tags(u):
         tags.add("Яд")
     if {"trap", "root"} & set(ops):
         tags.add("Ловушка")
+    if {"weak", "vulnerable"} & set(ops):
+        tags.add("Клич")
+    if {"ranged_bonus", "focus"} & set(ops):
+        tags.add("Выстрел")
+    if "heat_regen" in ops:
+        tags.add("Огонь")
+    if "summon" in ops:
+        tags.add("Призыв")
     conds = [c.get("when", {}) for c in u.get("if", []) if isinstance(c, dict)]
     if any(c.get("repeat") for c in u.get("if", []) if isinstance(c, dict)) or any(
             c.get("k") in ("series", "first", "allin") for c in conds):
         tags.add("Комбо")
-    if any(c.get("k") == "resonance" for c in conds):
+    if any(c.get("k") == "resonance" for c in conds) or (u.get("seal") or {}).get("k") == "resonance":
+        tags.add("Резонанс")
+    if any(c.get("repeat") for c in u.get("if", []) if isinstance(c, dict)):
         tags.add("Повтор")
     return tags
+
+
+MEANING_TAGS = {"attack": "Атака", "defense": "Оборона", "move": "Движение", "curse": "Проклятие",
+                "gift": "Дар", "summon": "Призыв"}
 
 
 def card_tags(d):
     """Теги карты: по основному применению (у карт с уровнями — по всем уровням) + заданные вручную."""
     tags = set(d.get("tags", []))
+    if d.get("meaning"):
+        tags.add("Свиток")
+        tags.add(MEANING_TAGS.get(d["meaning"], d["meaning"]))
+        if d["meaning"] == "summon":
+            tags.add("Призыв")
+    for a in d.get("acts", []):
+        if a.get("m") in MEANING_TAGS:
+            tags.add(MEANING_TAGS[a["m"]])
+    if d.get("chorus") or d.get("then") or d.get("double"):
+        tags.add("Хор")
     uses = [L["main"] for L in d.get("levels", [])] or [d["main"]]
     uses = uses + [{"target": "enemy", "range": 1, "do": u["power"].get("do", [])} for u in uses if u.get("power")]
-    if d.get("echo"):                                       # реакция: теги — по тому, что делает отклик
+    if (d.get("echo") or {}).get("do"):                     # реакция: теги — по тому, что делает отклик
         uses = uses + [{"target": "enemy", "range": 1, "do": d["echo"]["do"]}]
     for u in uses:
         tags |= use_tags(u)
     if d.get("element") == "fire" or any("Огонь" in use_tags(u) for u in uses):
         tags.add("Огонь")
+    if (d.get("echo") or {}).get("when", {}).get("k") == "resonance":
+        tags.add("Резонанс")
     return [t for t in TAG_ORDER if t in tags] + sorted(tags - set(TAG_ORDER))
 
 
@@ -526,7 +563,16 @@ TAG_INFO = {
     "Яд": "Яд: урон в начале хода цели мимо защиты.",
     "Ловушка": "Капканы и корни.",
     "Комбо": "Карта считает или строит серию розыгрышей за ход.",
+    "Резонанс": "Когда условие выполнено, карта разыгрывается ещё раз. Своего эффекта у резонанса нет.",
     "Повтор": "Карта повторяется или даёт дополнительный удар при условии.",
+    "Свиток": "Карта Жреца: её смысл исполняет статуя бога.",
+    "Атака": "Смысл свитка: статуя наносит урон.",
+    "Оборона": "Смысл свитка: статуя даёт щит или защиту.",
+    "Движение": "Смысл свитка: статуя двигает героя, врагов или статую.",
+    "Проклятие": "Смысл свитка: статуя ослабляет или оглушает врага.",
+    "Дар": "Смысл свитка: статуя усиливает героя или следующий свиток.",
+    "Призыв": "Смысл свитка: статуя зовёт слугу бога.",
+    "Хор": "Свиток, который исполняют несколько статуй или который повторяется.",
 }
 
 
@@ -976,7 +1022,17 @@ class Run:
         count = max(1, n - mod(self, "fewer_rewards"))
         core = list((self.hero.get("rewards_by_variant") or {}).get(self.variant) or [])
         if core:                                      # школа: 2 карты направления + 1 свобода
-            picks = self.rng.sample(core, min(len(core), 2 if count >= 3 else count))
+            picks = []
+            must = [cid for cid in (self.hero.get("reward_guarantee") or {}).get(self.variant, [])
+                    if cid in core]
+            if must:
+                picks.append(self.rng.choice(must))
+            room = min(2, count)                      # ядро: до двух карт, включая гарантию
+            while len(picks) < room:
+                pool = [cid for cid in core if cid not in picks]
+                if not pool:
+                    break
+                picks.append(self.rng.choice(pool))
             rest = [cid for cid in self.hero["rewards"] if cid not in core and cid not in picks]
             if len(picks) < count and rest:
                 picks += self.rng.sample(rest, min(count - len(picks), len(rest)))
