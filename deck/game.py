@@ -5,6 +5,7 @@ from sim.data import GameData
 
 from . import model as M
 from .battle import Battle
+from .sound import SoundPanel
 from .ui import BattleScreen, ChoiceScreen, DeckScreen, EndScreen, HeroSelect, MapScreen, ShopScreen
 
 CAMP_HEAL = 0.3
@@ -21,6 +22,7 @@ class DescentGame:
         self.frame = None                                 # последний кадр боя — фон под выбором
         self._imgs = {}
         self.data = M.load()
+        self.sound = SoundPanel()                         # F10: громкость музыки поверх любого экрана
         self.run = None
         self.new_run()
 
@@ -302,6 +304,8 @@ class DescentGame:
     # ---------- цикл ----------
 
     def handle(self, ev):
+        if self.sound.handle(ev):                         # F10 / панель звука поверх сцены
+            return
         self.scene.handle(ev)
 
     def update(self, dt):
@@ -309,5 +313,6 @@ class DescentGame:
 
     def draw(self, surf):
         self.scene.draw(surf)
+        self.sound.draw(surf)
         if isinstance(self.scene, BattleScreen) and (self.scene.b.result or self.frame is None):
             self.frame = surf.copy()                        # фон под наградой — кадр конца боя

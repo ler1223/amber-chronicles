@@ -1,6 +1,7 @@
 """Титульное меню и настройки. Фон — живой костёр (ui/campfire.py), общий с лагерем."""
 import pygame
 
+from ui import audio
 from ui import settings as S
 from ui import theme as T
 from ui import widgets as W
@@ -348,6 +349,9 @@ class SettingsScene(CampBackdrop):
                 if r.collidepoint(ev.pos):
                     S.cycle(key)
                     S.save()
+                    if key in ("music_volume", "music_muted"):
+                        audio.start()
+                        audio.apply()
                     if key == "window":
                         from ui import display
                         if display.CURRENT:

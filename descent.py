@@ -30,8 +30,10 @@ def main():
     pygame.init()
     pygame.display.set_caption("Спуск — прототип")
     from deck import gfx as G
-    from ui import settings
+    from ui import audio, settings
     settings.load()                                  # качество моделек (M на карте этажа) и прочее — с прошлого раза
+    if not args.screenshot:
+        audio.start()                                # тихий фон; громкость — F10 в игре
     full = not args.window and not args.screenshot
 
     def open_window(full):

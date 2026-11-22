@@ -37,6 +37,7 @@ import pygame  # noqa: E402
 from game.app import App, last_mode, remember_mode, stats_path  # noqa: E402
 from sim.data import GameData  # noqa: E402
 from sim.expedition import ExpeditionProfile, expedition_data  # noqa: E402
+from ui import audio  # noqa: E402
 from ui import settings  # noqa: E402
 from ui import theme as T  # noqa: E402
 from ui.present import Presenter  # noqa: E402
@@ -76,6 +77,8 @@ def dispatch(scene, ev):
 def main():
     pygame.init()
     settings.load()
+    if not args.screenshot:
+        audio.start()
     pygame.display.set_caption("Хроники янтаря")
     use_gl = not args.cpu
     disp = None
@@ -114,6 +117,8 @@ def main():
                 continue
             if ev.type == pygame.QUIT:
                 running = False
+            elif audio.handle_key(ev):
+                pass
             elif ev.type == pygame.KEYDOWN and (ev.key == pygame.K_F11 or
                                                 (ev.key == pygame.K_RETURN and ev.mod & pygame.KMOD_ALT)):
                 disp.toggle_fullscreen()

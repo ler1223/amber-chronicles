@@ -13,6 +13,7 @@ import pygame
 
 from sim.combat import ENEMY
 from sim.grid import cheb
+from ui import audio
 from ui import projection as P
 from ui import theme as T
 from ui.battle_view import FR, BattleView, Fx
@@ -2530,6 +2531,7 @@ class MapScreen:
         self.deck_rect = pygame.Rect(T.SCREEN_W - 260, T.SCREEN_H - 66, 236, 44)
         self.bag_rect = pygame.Rect(T.SCREEN_W - 520 - 12 - 220, T.SCREEN_H - 66, 220, 44)
         self.res_rect = pygame.Rect(T.SCREEN_W - 520, T.SCREEN_H - 66, 248, 44)
+        self.sound_rect = pygame.Rect(24, 76, 214, 28)
         self.toast = None
         fl = game.run.floor
         layers = max(n["layer"] for n in fl.nodes.values()) + 1
@@ -2557,6 +2559,10 @@ class MapScreen:
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.sound_rect.collidepoint(ev.pos):
+                if getattr(self.game, "sound", None) is not None:
+                    self.game.sound.toggle()
+                return
             if self.deck_rect.collidepoint(ev.pos):
                 self.game.show_deck()
                 return
@@ -2590,6 +2596,7 @@ class MapScreen:
                    f"Подземелье · этаж {fl.depth}",
                    f"Выберите путь: клик или 1–3 · враги этажа: HP ×{hk:.2f}, урон ×{dk:.2f} · D — колода")
         self.bag.bar(surf, run, (T.SCREEN_W - 40, 74), self.mouse, right=True)
+        button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
         board = pygame.Rect(40, 110, T.SCREEN_W - 80, 450)
         T.frame(surf, board, 150, accent=T.AMBER_DIM)
         avail = set(fl.available())
