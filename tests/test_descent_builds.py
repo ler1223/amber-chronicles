@@ -70,6 +70,7 @@ def test_all_new_hunter_cards_can_be_played():
            "h_patient_shot", "h_dmg_expose", "h_dmg_cripple", "h_dmg_pack_mark",
            "h_dmg_black_volley", "h_dmg_rupture", "h_dmg_predator", "h_dmg_trophy",
            "h_dmg_ritual", "h_dmg_execute")
+    new += tuple(cid for cid in data["cards"]["cards"] if cid.startswith("h_rng_"))
     for cid in new:
         run = M.Run(data=data, seed=4, hero="hunter", variant="mark")
         b = Battle(ED, run, run.fights[0], seed=4)

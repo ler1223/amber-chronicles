@@ -118,6 +118,7 @@ python tools/descent_builds.py
 python tools/descent_czn_pack.py       # if CZN cards changed
 python tools/descent_hunter_more.py
 python tools/descent_hunter_damage.py
+python tools/descent_hunter_ranger.py   # CZN Ranger/Hunter pack
 python tools/descent_items.py
 python tools/descent_tiers.py          # last; preserves CZN source cards
 ```

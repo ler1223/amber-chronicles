@@ -391,7 +391,9 @@
    "cost": "1",
    "traits": "",
    "effect": "Create 3 Handgun Bullets",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_stealth_reload"
+   ]
   },
   {
    "character": "Luke",
@@ -503,7 +505,9 @@
    "cost": "1",
    "traits": "",
    "effect": "50% Damage · Add 1 Hit for each Bullet card activated this turn",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_demon_dance"
+   ]
   },
   {
    "character": "Luke",
@@ -559,7 +563,9 @@
    "cost": "0",
    "traits": "Unactivatable, Unique, Bullet",
    "effect": "500% Damage · When 5 Handgun Bullet cards are activated, remove Unactivatable",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_finisher"
+   ]
   },
   {
    "character": "Luke",
@@ -571,7 +577,9 @@
    "cost": "5",
    "traits": "",
    "effect": "450% Damage · +25% base Damage Amount for each card in hand",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_lethal_design"
+   ]
   },
   {
    "character": "Tiphera",
@@ -1119,7 +1127,9 @@
    "cost": "1",
    "traits": "",
    "effect": "150% Shield · 2 Tenacity Damage",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_tactical"
+   ]
   },
   {
    "character": "Selena",
@@ -1189,7 +1199,9 @@
    "cost": "5",
    "traits": "",
    "effect": "300% Damage · 3 Mark​",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_final_shot"
+   ]
   },
   {
    "character": "Khalipe",
@@ -2225,7 +2237,9 @@
    "cost": "1",
    "traits": "",
    "effect": "Draw 1 Quietus card(s) · Discard 2",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_blooming"
+   ]
   },
   {
    "character": "Diana",
@@ -2292,7 +2306,9 @@
    "cost": "2",
    "traits": "",
    "effect": "Draw 2 Exhaust Bullet card(s) · 300% Damage · Increase base Damage Amount by 30% for each different Bullet card in hand",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_liberated"
+   ]
   },
   {
    "character": "Diana",
@@ -3791,7 +3807,9 @@
    "cost": "1",
    "traits": "Quietus",
    "effect": "Draw 3 · Apply Linked to those cards for this turn",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_hero"
+   ]
   },
   {
    "character": "Heidemarie",
@@ -3847,7 +3865,9 @@
    "cost": "1",
    "traits": "Linked",
    "effect": "120% Damage · +120% Damage Amount for each Linked card in hand before activation",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_thread"
+   ]
   },
   {
    "character": "Heidemarie",
@@ -3971,7 +3991,9 @@
    "cost": "5",
    "traits": "",
    "effect": "400% Damage · +80% Damage Amount for each card Discarded this battle (max 20 cards)",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_elysium"
+   ]
   },
   {
    "character": "Rita",
@@ -5494,7 +5516,9 @@
    "cost": "2",
    "traits": "",
    "effect": "180% Damage to all enemies · Draw 1 · Discard 1",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_flamethrower"
+   ]
   },
   {
    "character": "Lucas",
@@ -5550,7 +5574,9 @@
    "cost": "1",
    "traits": "",
    "effect": "120% Damage to all enemies · 2 Weaken · If the target has Shield, +50% Damage",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_flashbang"
+   ]
   },
   {
    "character": "Lucas",
@@ -5618,7 +5644,9 @@
    "cost": "5",
    "traits": "",
    "effect": "Draw 2 · 250% Damage to all enemies​",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_full_burst"
+   ]
   },
   {
    "character": "Orlea",
@@ -6665,7 +6693,9 @@
    "cost": "1",
    "traits": "Unique, Lead",
    "effect": "On Hit, 2 Zero In",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_big_game"
+   ]
   },
   {
    "character": "Hilde",
@@ -6721,7 +6751,9 @@
    "cost": "1",
    "traits": "Unique",
    "effect": "Draw 3 · 120% Damage to all enemies · +60% Damage Amount for each Attack Card Drawn through an ability this turn (max 8 cards)",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_vortex"
+   ]
   },
   {
    "character": "Hilde",
@@ -6733,7 +6765,9 @@
    "cost": "4",
    "traits": "",
    "effect": "+15% Weakness Damage Amount taken to all enemies for 1 turn(s) · Draw 3 Attack Card(s) of this unit · Apply Weakness Attack to those cards for 1 turn",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_matrix"
+   ]
   },
   {
    "character": "Arabella",
@@ -7358,7 +7392,9 @@
    "cost": "1",
    "traits": "",
    "effect": "100% Shield · Draw 2 card(s) from other combatant",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_repose"
+   ]
   },
   {
    "character": "Veronica",
@@ -7492,7 +7528,9 @@
    "cost": "1",
    "traits": "",
    "effect": "Select 1 Ballista card in hand and +100% Damage Amount until activated · Draw 1",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_kowalski"
+   ]
   },
   {
    "character": "Veronica",
@@ -7560,7 +7598,9 @@
    "cost": "5",
    "traits": "",
    "effect": "250% Piercing Damage to all enemies · Gain Maximum Reload",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_hunting_time"
+   ]
   },
   {
    "character": "Mika",
@@ -7958,7 +7998,9 @@
    "cost": "2",
    "traits": "Retain",
    "effect": "270% Damage · Retain: +135% Damage Amount",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_charged"
+   ]
   },
   {
    "character": "Beryl",
@@ -8014,7 +8056,9 @@
    "cost": "0",
    "traits": "Exhaust",
    "effect": "Draw 3",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_guilty"
+   ]
   },
   {
    "character": "Beryl",
@@ -8070,7 +8114,9 @@
    "cost": "1",
    "traits": "",
    "effect": "100% Shield · +80% Damage Amount to the next Attack Card of this unit activated",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_unlimited"
+   ]
   },
   {
    "character": "Beryl",
@@ -8138,7 +8184,9 @@
    "cost": "5",
    "traits": "",
    "effect": "350% Damage to all enemies​",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_max_output"
+   ]
   },
   {
    "character": "Renoa",
@@ -8230,7 +8278,9 @@
    "cost": "1",
    "traits": "",
    "effect": "220% Damage · If Dirge Bullet is in hand, discard 1 and +100% Damage Amount",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_instant"
+   ]
   },
   {
    "character": "Renoa",
@@ -8297,7 +8347,9 @@
    "cost": "1",
    "traits": "",
    "effect": "60% Damage × 3 · +20% base Damage Amount for each Dirge Bullet in hand",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_ballad"
+   ]
   },
   {
    "character": "Renoa",
@@ -8420,7 +8472,9 @@
    "cost": "1",
    "traits": "Retain",
    "effect": "300% Damage (+-50%) · Discard all Dirge Bullet, +50% Damage Amount for each",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_last_ditch"
+   ]
   },
   {
    "character": "Renoa",
@@ -9102,7 +9156,9 @@
    "cost": "1",
    "traits": "",
    "effect": "120% Damage · 0.5 Tenacity Damage · If the target is not Ravaged, proc 1 more time.",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_plasma_missile"
+   ]
   },
   {
    "character": "Sereniel",
@@ -9225,7 +9281,9 @@
    "cost": "3",
    "traits": "",
    "effect": "140% Damage × 4 to random enemies · 1 Tenacity Damage for each Hit",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_cobalt"
+   ]
   },
   {
    "character": "Sereniel",
@@ -9292,7 +9350,9 @@
    "cost": "2",
    "traits": "",
    "effect": "150% Damage · Proc 3 Homing Laser in Draw Pile and Graveyard",
-   "adapted_as": []
+   "adapted_as": [
+    "h_rng_pale_star"
+   ]
   },
   {
    "character": "Sereniel",
