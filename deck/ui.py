@@ -3013,19 +3013,12 @@ class StarterDeckScreen:
         T.text(surf, "6 базовых карт уже в колоде · выберите 4 карты первого тира",
                (T.SCREEN_W // 2, 61), 15, T.TEXT_DIM, center=True)
 
-        # 6 базовых карт: по две копии.
-        basics = []
-        seen = []
-        for cid in self.basic:
-            if cid not in seen:
-                seen.append(cid)
-                basics.append(cid)
+        # 6 базовых карт: две атаки, две защиты и два перемещения.
         bw, bh = 92, 138
-        bx = T.SCREEN_W // 2 - (len(basics) * (bw + 18) - 18) // 2
-        for i, cid in enumerate(basics):
+        bx = T.SCREEN_W // 2 - (len(self.basic) * (bw + 18) - 18) // 2
+        for i, cid in enumerate(self.basic):
             r = pygame.Rect(bx + i * (bw + 18), 86, bw, bh)
             CF.blit_card(surf, r, M.Card(cid, self.data["cards"]["cards"]))
-            T.text(surf, "×2", (r.right - 4, r.bottom - 18), 15, T.AMBER, True, center=True)
             role = self.data["cards"]["cards"][cid].get("basic_role", "")
             T.text(surf, {"attack": "атака", "defense": "защита", "movement": "перемещение"}.get(role, ""),
                    (r.centerx, r.bottom + 3), 11, T.TEXT_DIM, center=True)
