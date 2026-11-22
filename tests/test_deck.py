@@ -113,7 +113,7 @@ def test_step_reach_and_push_collision():
     b.energy = 3
     hp = foe.hp
     finish(b.play(ram, "main", foe))                                           # 8 урона + толчок 2 в край
-    assert foe.hp == hp - 8 - 2 * 3
+    assert foe.hp == hp - 8 - 2 * 3 - 2        # Натиск: столкновение +2
 
 
 def test_enemy_intents_melee_zone_shot_los():

@@ -1283,6 +1283,69 @@
      "damage": 2
     }
    ]
+  },
+  "hunt_horn": {
+   "name": "Рог гона",
+   "icon": "gift_prey",
+   "rarity": "rare",
+   "about": "Карты [Травля]: +2 урона; первая [Травля] за ход даёт +1 травлю.",
+   "on": "play",
+   "do": [
+    {
+     "op": "hunt",
+     "n": 1
+    }
+   ],
+   "tag": "Травля",
+   "once": "turn",
+   "tag_bonus": [
+    {
+     "tag": "Травля",
+     "damage": 2
+    }
+   ]
+  },
+  "area_seal": {
+   "name": "Печать области",
+   "icon": "item_charm",
+   "rarity": "rare",
+   "about": "Карты [Область]: +2 урона; первая [Область] за ход даёт +1 {res}.",
+   "on": "play",
+   "do": [
+    {
+     "op": "resource",
+     "n": 1
+    }
+   ],
+   "tag": "Область",
+   "once": "turn",
+   "tag_bonus": [
+    {
+     "tag": "Область",
+     "damage": 2
+    }
+   ]
+  },
+  "retain_box": {
+   "name": "Ларец сохранения",
+   "icon": "item_seal",
+   "rarity": "uncommon",
+   "about": "Карты [Сохранение]: +3 защиты; первая [Сохранение] за ход берёт карту.",
+   "on": "play",
+   "do": [
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "tag": "Сохранение",
+   "once": "turn",
+   "tag_bonus": [
+    {
+     "tag": "Сохранение",
+     "block": 3
+    }
+   ]
   }
  }
 }

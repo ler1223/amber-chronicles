@@ -28242,6 +28242,14 @@
       {
        "op": "mark",
        "n": 2
+      },
+      {
+       "op": "hunt",
+       "n": 1
+      },
+      {
+       "op": "hunt",
+       "n": 1
       }
      ],
      "once": true
@@ -28254,7 +28262,8 @@
    },
    "tags": [
     "Метка",
-    "Выстрел"
+    "Выстрел",
+    "Травля"
    ],
    "growth": [
     {
@@ -30237,6 +30246,1826 @@
     },
     "once": "turn"
    }
+  },
+  "h_beat": {
+   "ill": [
+    "archer_ambush",
+    0.62,
+    0.52,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Загон",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "push",
+      "n": 1
+     },
+     {
+      "op": "mark",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "push",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Загон и дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "push",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Загон и метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "У стены",
+       "name": "Загон у стены",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "push",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "wall"
+          },
+          "plus": 4
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разбега",
+       "name": "Загон с ходу",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "push",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "run",
+           "n": 2
+          },
+          "do": [
+           {
+            "op": "draw",
+            "n": 1
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Выстрел",
+    "Травля",
+    "Толчок",
+    "Метка"
+   ]
+  },
+  "h_stalk": {
+   "name": "Преследование",
+   "type": "skill",
+   "cost": 1,
+   "art": "gift_bog_roots",
+   "ill": [
+    "croc_legend",
+    0.42,
+    0.59,
+    0.65
+   ],
+   "main": {
+    "target": "cell_step",
+    "step": 2,
+    "do": [
+     {
+      "op": "block",
+      "n": 3
+     },
+     {
+      "op": "hunt",
+      "n": 2
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Дальше",
+       "main": {
+        "target": "cell_step",
+        "step": 3,
+        "do": [
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "hunt",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Больше травли",
+       "name": "Преследование",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "hunt",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "name": "Преследование и щит",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "hunt",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Преследование и метка",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "hunt",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разбега",
+       "name": "Преследование с ходу",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "hunt",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "run",
+           "n": 2
+          },
+          "do": [
+           {
+            "op": "energy",
+            "n": 1
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Шаг",
+    "Травля"
+   ]
+  },
+  "h_mark_hunt": {
+   "ill": [
+    "magpie_nest",
+    0.58,
+    0.53,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Гон по метке",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5,
+      "per": {
+       "what": "mark",
+       "k": 2
+      }
+     }
+    ]
+   },
+   "alt": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": false,
+    "do": [
+     {
+      "op": "mark",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7,
+          "per": {
+           "what": "mark",
+           "k": 2
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "Глубже",
+       "name": "Гон по метке",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "mark",
+           "k": 3
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Гон и дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "mark",
+           "k": 2
+          }
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Гон и брешь",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "mark",
+           "k": 2
+          }
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Издалека",
+       "name": "Далёкий гон",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "mark",
+           "k": 2
+          }
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "far",
+           "n": 5
+          },
+          "plus": 3
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Выстрел",
+    "Травля",
+    "Метка"
+   ]
+  },
+  "h_area_hunt": {
+   "ill": [
+    "wisp_lead",
+    0.59,
+    0.54,
+    0.5
+   ],
+   "art": "gift_leech_arrows",
+   "name": "Веерный обстрел",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "mark",
+      "n": 1
+     }
+    ],
+    "ranged": true,
+    "vfx": "rain_of_arrows"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "Шире",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Веер и дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Веер и брешь",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С меткой",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Выстрел",
+    "Область",
+    "Метка"
+   ]
+  },
+  "h_hunt_final": {
+   "ill": [
+    "archer_ambush",
+    0.66,
+    0.55,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Завершение гона",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 6,
+      "per": {
+       "what": "hunt",
+       "k": 2
+      }
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 9,
+          "per": {
+           "what": "hunt",
+           "k": 2
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "Глубже",
+       "name": "Завершение гона",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6,
+          "per": {
+           "what": "hunt",
+           "k": 3
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Гон и дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6,
+          "per": {
+           "what": "hunt",
+           "k": 2
+          }
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Гон и метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6,
+          "per": {
+           "what": "hunt",
+           "k": 2
+          }
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "По раненому",
+       "name": "Добить загнанного",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6,
+          "per": {
+           "what": "hunt",
+           "k": 2
+          }
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "wounded"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Выстрел",
+    "Травля",
+    "Комбо"
+   ]
+  },
+  "m_bulldoze": {
+   "ill": [
+    "croc_legend",
+    0.5,
+    0.63,
+    0.55
+   ],
+   "art": "gift_giant_slayer",
+   "name": "Снести",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "reach",
+    "reach": 2,
+    "do": [
+     {
+      "op": "damage",
+      "n": 6
+     },
+     {
+      "op": "push",
+      "n": 1
+     }
+    ],
+    "vfx": "charge",
+    "if": [
+     {
+      "when": {
+       "k": "wall"
+      },
+      "plus": 3
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_dash",
+    "dash": 3,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 9
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "wall"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Снести с пути",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "push",
+          "n": 2
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "wall"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Снести с разгона",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "mom_k": 1
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "wall"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С щитом",
+       "name": "Снести и устоять",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "wall"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Снести и пробить",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "push",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "wall"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Толчок",
+    "Шаг"
+   ]
+  },
+  "m_ring": {
+   "ill": [
+    "village_mob",
+    0.67,
+    0.64,
+    0.5
+   ],
+   "art": "item_axe",
+   "name": "Круговая стойка",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "aoe_adjacent",
+      "do": [
+       {
+        "op": "damage",
+        "n": 5
+       },
+       {
+        "op": "push",
+        "n": 1
+       }
+      ]
+     }
+    ],
+    "vfx": "whirlwind",
+    "if": [
+     {
+      "when": {
+       "k": "surrounded"
+      },
+      "plus": 3
+     }
+    ]
+   },
+   "alt": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "push",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "damage",
+            "n": 7
+           },
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         }
+        ],
+        "vfx": "whirlwind",
+        "if": [
+         {
+          "when": {
+           "k": "surrounded"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "Шире",
+       "name": "Круговая стойка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "damage",
+            "n": 5
+           },
+           {
+            "op": "push",
+            "n": 2
+           }
+          ]
+         }
+        ],
+        "vfx": "whirlwind",
+        "if": [
+         {
+          "when": {
+           "k": "surrounded"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С щитом",
+       "name": "Стойка и щит",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "damage",
+            "n": 5
+           },
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         }
+        ],
+        "vfx": "whirlwind",
+        "if": [
+         {
+          "when": {
+           "k": "surrounded"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Стойка и брешь",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "damage",
+            "n": 5
+           },
+           {
+            "op": "push",
+            "n": 1
+           },
+           {
+            "op": "vulnerable",
+            "n": 1
+           }
+          ]
+         }
+        ],
+        "vfx": "whirlwind",
+        "if": [
+         {
+          "when": {
+           "k": "surrounded"
+          },
+          "plus": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Стойка с разгоном",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "damage",
+            "n": 4
+           },
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         }
+        ],
+        "vfx": "whirlwind",
+        "if": [
+         {
+          "when": {
+           "k": "surrounded"
+          },
+          "plus": 3
+         }
+        ],
+        "plus": 0
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Толчок",
+    "Область"
+   ]
+  },
+  "m_grapple": {
+   "ill": [
+    "drowning",
+    0.58,
+    0.65,
+    0.45
+   ],
+   "art": "gift_spear_wall",
+   "name": "Зацеп",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 4,
+    "los": true,
+    "do": [
+     {
+      "op": "pull",
+      "n": 2
+     },
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "vulnerable",
+      "n": 1
+     }
+    ],
+    "vfx": "hook"
+   },
+   "alt": {
+    "target": "enemy",
+    "range": 2,
+    "los": true,
+    "do": [
+     {
+      "op": "pull",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "do": [
+         {
+          "op": "pull",
+          "n": 2
+         },
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "hook"
+       }
+      },
+      {
+       "label": "Ближе",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "do": [
+         {
+          "op": "pull",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "hook"
+       }
+      },
+      {
+       "label": "С меткой",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "do": [
+         {
+          "op": "pull",
+          "n": 2
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "vfx": "hook"
+       }
+      },
+      {
+       "label": "С щитом",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "do": [
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "pull",
+          "n": 2
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "hook"
+       }
+      },
+      {
+       "label": "С разгоном",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "do": [
+         {
+          "op": "pull",
+          "n": 2
+         },
+         {
+          "op": "damage",
+          "n": 4,
+          "mom_k": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "hook"
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Толчок",
+    "Клич"
+   ]
+  },
+  "m_break": {
+   "ill": [
+    "croc_legend",
+    0.55,
+    0.66,
+    0.55
+   ],
+   "art": "gift_giant_slayer",
+   "name": "Прорыв строя",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "reach",
+    "reach": 3,
+    "do": [
+     {
+      "op": "damage",
+      "n": 8
+     },
+     {
+      "op": "push",
+      "n": 2
+     }
+    ],
+    "vfx": "charge",
+    "if": [
+     {
+      "when": {
+       "k": "momentum",
+       "n": 3
+      },
+      "do": [
+       {
+        "op": "stun"
+       }
+      ]
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_dash",
+    "dash": 3,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 11
+         },
+         {
+          "op": "push",
+          "n": 2
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "momentum",
+           "n": 3
+          },
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "main": {
+        "target": "reach",
+        "reach": 4,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "push",
+          "n": 3
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "momentum",
+           "n": 3
+          },
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С щитом",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "push",
+          "n": 2
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "momentum",
+           "n": 3
+          },
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "momentum",
+           "n": 3
+          },
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7,
+          "mom_k": 2
+         },
+         {
+          "op": "push",
+          "n": 2
+         }
+        ],
+        "vfx": "charge",
+        "if": [
+         {
+          "when": {
+           "k": "momentum",
+           "n": 3
+          },
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Толчок",
+    "Шаг"
+   ]
+  },
+  "m_quake": {
+   "ill": [
+    "wisp_lead",
+    0.62,
+    0.57,
+    0.5
+   ],
+   "art": "fx_fire_wall",
+   "name": "Землетряс",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "area",
+    "range": 4,
+    "radius": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     },
+     {
+      "op": "push",
+      "n": 1
+     }
+    ],
+    "vfx": "quake"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "vfx": "quake"
+       }
+      },
+      {
+       "label": "Шире",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "vfx": "quake"
+       }
+      },
+      {
+       "label": "С щитом",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "vfx": "quake"
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "push",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "quake"
+       }
+      },
+      {
+       "label": "С разгоном",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4,
+          "mom_k": 1
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "vfx": "quake"
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Толчок",
+    "Область"
+   ]
   }
  }
 }

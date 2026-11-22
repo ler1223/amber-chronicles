@@ -62,7 +62,8 @@ def test_all_new_hunter_cards_can_be_played():
     new = ("h_scope", "h_snipe", "h_steady", "h_mark_burst", "h_mark_web", "h_hunt",
            "h_echo_shot", "h_rapid", "h_arrow_well", "h_quiver_echo",
            "h_chain_1", "h_chain_2", "h_chain_3", "h_chain_finish", "h_chain_draw",
-           "h_chain_guard", "h_chain_mark", "h_chain_song")
+           "h_chain_guard", "h_chain_mark", "h_chain_song",
+           "h_beat", "h_stalk", "h_mark_hunt", "h_area_hunt", "h_hunt_final")
     for cid in new:
         run = M.Run(data=data, seed=4, hero="hunter", variant="mark")
         b = Battle(ED, run, run.fights[0], seed=4)

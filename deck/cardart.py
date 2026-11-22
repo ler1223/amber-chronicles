@@ -243,18 +243,28 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
     # теги — значки и слова на гравированной планке
     tags = card.tags
     if tags:
-        f = font(21, True)
-        parts = [(icon(tg, 30), tg.upper(), f.size(tg.upper())) for tg in tags]
-        w = sum((p[0].get_width() + 6 if p[0] else 0) + p[2][0] + 24 for p in parts) - 24
+        # 3–4 тега не должны вылезать за карту: сперва пробуем обычный размер, потом мельче.
+        avail = FW - 80
+        size = 21
+        while True:
+            icon_size = max(16, round(size * 1.43))
+            gap = max(9, round(size * 1.05))
+            f = font(size, True)
+            parts = [(icon(tg, icon_size), tg.upper(), f.size(tg.upper())) for tg in tags]
+            w = sum((p[0].get_width() + max(4, gap // 3) if p[0] else 0) + p[2][0] + gap
+                    for p in parts) - gap
+            if w <= avail or size <= 13:
+                break
+            size -= 1
         x = FW // 2 - w // 2
         y = m["tags_y"]
         for (ic, word, (tw, th)), tg in zip(parts, tags):
             if ic is not None:
                 s.blit(ic, (x, y - ic.get_height() // 2))
-                x += ic.get_width() + 6
-            r = _lab(s, lambda z: font(z, True), 21, word, TAG_TEXT, topleft=(x, y - th // 2), shadow=(0, 0, 0))
+                x += ic.get_width() + max(4, gap // 3)
+            _lab(s, lambda z: font(z, True), size, word, TAG_TEXT, topleft=(x, y - th // 2), shadow=(0, 0, 0))
             boxes.append((pygame.Rect(x, y - th // 2, tw, th), tg, "g"))
-            x += tw + 24
+            x += tw + gap
     # основной текст
     react = bool(d.get("react"))
     extra = M.card_extras(d, lit)

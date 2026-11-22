@@ -252,6 +252,18 @@ ITEMS = {
                          "Карты [Цепочка]: +2 урона; первая цепочка за ход берёт карту.",
                          "chain", op("draw", 1), hero="hunter", tag="Цепочка", once="turn",
                          tag_bonus=[{"tag": "Цепочка", "damage": 2}]),
+    "hunt_horn": item("Рог гона", "gift_prey", "rare",
+                      "Карты [Травля]: +2 урона; первая [Травля] за ход даёт +1 травлю.",
+                      "play", op("hunt", 1), tag="Травля", once="turn",
+                      tag_bonus=[{"tag": "Травля", "damage": 2}]),
+    "area_seal": item("Печать области", "item_charm", "rare",
+                      "Карты [Область]: +2 урона; первая [Область] за ход даёт +1 {res}.",
+                      "play", op("resource", 1), tag="Область", once="turn",
+                      tag_bonus=[{"tag": "Область", "damage": 2}]),
+    "retain_box": item("Ларец сохранения", "item_seal", "uncommon",
+                       "Карты [Сохранение]: +3 защиты; первая [Сохранение] за ход берёт карту.",
+                       "play", op("draw", 1), tag="Сохранение", once="turn",
+                       tag_bonus=[{"tag": "Сохранение", "block": 3}]),
 }
 
 

@@ -77,9 +77,62 @@
     "m_runner",
     "m_last_word",
     "m_unbreak",
-    "m_butcher"
+    "m_butcher",
+    "m_bulldoze",
+    "m_ring",
+    "m_grapple",
+    "m_break",
+    "m_quake"
    ],
-   "hand": 6
+   "hand": 6,
+   "passives": {
+    "press": {
+     "name": "Натиск",
+     "desc": "Толчок даёт +1 Разгон; столкновения бьют сильнее на 2. Колода: сдвиг и область."
+    }
+   },
+   "starter_by_variant": {
+    "press": [
+     "strike",
+     "strike",
+     "strike",
+     "defend",
+     "defend",
+     "lunge_rush",
+     "lunge_rush",
+     "shield_ram",
+     "shield_ram",
+     "sweep",
+     "m_bulldoze",
+     "m_ring"
+    ]
+   },
+   "rewards_by_variant": {
+    "press": [
+     "sweep",
+     "wall_smash",
+     "charge",
+     "hook",
+     "m_ram",
+     "m_wallbash",
+     "m_stomp",
+     "m_blade_storm",
+     "m_runner",
+     "m_crush",
+     "m_bulldoze",
+     "m_ring",
+     "m_grapple",
+     "m_break",
+     "m_quake"
+    ]
+   },
+   "reward_guarantee": {
+    "press": [
+     "m_bulldoze",
+     "m_ring",
+     "m_quake"
+    ]
+   }
   },
   "hunter": {
    "name": "Охотница",
@@ -171,7 +224,12 @@
     "h_chain_draw",
     "h_chain_song",
     "h_chain_guard",
-    "h_chain_mark"
+    "h_chain_mark",
+    "h_beat",
+    "h_stalk",
+    "h_mark_hunt",
+    "h_area_hunt",
+    "h_hunt_final"
    ],
    "hand": 6,
    "starter_by_variant": {
@@ -191,15 +249,15 @@
     "mark": [
      "h_shot",
      "h_shot",
-     "h_shot",
      "h_marking",
      "h_marking",
      "h_mark_burst",
+     "h_beat",
+     "h_stalk",
      "h_dodge",
      "h_dodge",
      "h_trail",
-     "h_net",
-     "h_aimed"
+     "h_net"
     ],
     "quiver": [
      "h_shot",
@@ -255,7 +313,12 @@
      "h_aimed",
      "h_pierce",
      "h_deadeye",
-     "h_knife"
+     "h_knife",
+     "h_beat",
+     "h_stalk",
+     "h_mark_hunt",
+     "h_area_hunt",
+     "h_hunt_final"
     ],
     "quiver": [
      "h_fill",
@@ -305,6 +368,11 @@
      "h_chain_1",
      "h_chain_2",
      "h_chain_draw"
+    ],
+    "mark": [
+     "h_beat",
+     "h_stalk",
+     "h_mark_hunt"
     ]
    }
   },
@@ -365,9 +433,56 @@
     "p_sun",
     "p_geyser",
     "p_flame_armor",
-    "p_burnout"
+    "p_burnout",
+    "p_fireball",
+    "p_stride"
    ],
-   "hand": 6
+   "hand": 6,
+   "passives": {
+    "ash": {
+     "name": "Пепел",
+     "desc": "[Область] наносит +2 урона. Колода: огонь, зоны и сдвиг врагов."
+    }
+   },
+   "starter_by_variant": {
+    "ash": [
+     "p_bolt",
+     "p_bolt",
+     "p_bolt",
+     "p_ward",
+     "p_ward",
+     "p_stride",
+     "p_stride",
+     "p_fireball",
+     "p_grenade",
+     "p_oil",
+     "p_ashstep"
+    ]
+   },
+   "rewards_by_variant": {
+    "ash": [
+     "p_grenade",
+     "p_oil",
+     "p_fireball",
+     "p_fire_rain",
+     "p_geyser",
+     "p_meteor",
+     "p_sun",
+     "p_keg",
+     "p_smoke",
+     "p_barrier",
+     "p_lance",
+     "p_chain",
+     "p_stride"
+    ]
+   },
+   "reward_guarantee": {
+    "ash": [
+     "p_grenade",
+     "p_oil",
+     "p_fireball"
+    ]
+   }
   },
   "priest": {
    "name": "Жрец",

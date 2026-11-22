@@ -174,7 +174,7 @@ class Battle:
         u.ds = {"burn": 0, "poison": 0, "frost": 0, "wet": 0, "weak": 0, "vulnerable": 0, "stun": False,
                 "strength": 0, "thorns": 0, "mark": 0, "aim": 1, "rage": 0, "root": 0,
                 "momentum": 0, "keep_mom": False, "heat": 0, "heat_regen": 0, "ranged_bonus": 0, "focus": False,
-                "veil": 0, "hex": 0, "fort": 0, "bleed": 0, "counter": 0}
+                "veil": 0, "hex": 0, "fort": 0, "bleed": 0, "counter": 0, "hunt": 0}
         u.phase = 0                                           # фаза босса (0 — первая)
         u.eid = eid
         u.edef = d if eid else None
@@ -623,7 +623,7 @@ class Battle:
                 return
             if not self.free(nxt, exclude=tgt):
                 left = n - k
-                dmg = COLLIDE * left * self.collide_k
+                dmg = COLLIDE * left * self.collide_k + (2 if self.variant == "press" and src is self.hero else 0)
                 other = next((v for v in self.c.units if v.alive and v.cell == nxt and v is not tgt), None)
                 self.c.emit("collision", unit=tgt, amount=dmg)
                 self.say(f"Столкновение: {tgt.name} −{dmg}" + (f", {other.name} −{dmg}" if other else ""),
@@ -1184,6 +1184,8 @@ class Battle:
             return h.shield
         if w == "heat":
             return h.ds["heat"]
+        if w == "hunt":
+            return h.ds.get("hunt", 0)
         if w == "walked":
             return self.walked
         if w in ("foes_burning", "foes_bleeding"):
@@ -1341,6 +1343,8 @@ class Battle:
             else:
                 yield from self.apply(h, ops, tgt, ctx)
                 yield from self.cond_extras(ctx, tgt)
+        if mode == "main":
+            yield from self.hunt_followup(card, tgt)
         card.manual = False
         back = False
         if mode == "main":
@@ -1377,6 +1381,18 @@ class Battle:
             yield from self.items.fire("play", card=card, tgt=tgt, mom=mom0, heat=paid if card.levels else 0)
             yield from self.react()
         self.sync_levels()
+
+    def hunt_followup(self, card, tgt):
+        """Травля: после одноцелевой атаки с тегом [Травля] — дополнительный выстрел за стаки."""
+        if tgt is None or not getattr(tgt, "alive", False) or "Травля" not in card.tags:
+            return
+        n = self.hero.ds.get("hunt", 0)
+        if n <= 0 or not self.is_attack(card, "main"):
+            return
+        self.say(f"Травля: {card.name} — ещё {n}", (255, 210, 120))
+        self.fx("react", unit=tgt, what="shot")
+        yield from self.strike(self.hero, tgt, n, kind="shot" if card.d["main"].get("ranged") else "melee",
+                               tag="Травля")
 
     def play_scroll(self, card, target):
         """Свиток через статую: target — IdolCast(статуя, цель). Бесплатно; добил с Мёртвой водой — в руку."""
@@ -1474,6 +1490,8 @@ class Battle:
                         if (c.get("plus") or c.get("mult")) and self.met(c["when"], tgt, ctx.get("before")):
                             n = (n + c.get("plus", 0)) * c.get("mult", 1)
                     n += self.items.card_bonus(ctx.get("card"), "damage")   # предметы: карты тега сильнее
+                    if self.variant == "ash" and ctx.get("card") is not None and "Область" in ctx["card"].tags:
+                        n += 2                                              # Пепел: области сильнее
                     if self.double_next and ctx.get("card") is not None:     # предмет: двойной урон (итоговый)
                         dbl = 2
                         self.double_next = False
@@ -1550,6 +1568,8 @@ class Battle:
                 self.c.emit("shield", unit=src, amount=n)
             elif k in ("push", "pull") and tgt is not None:
                 yield from self.push(src, tgt, n + (ctx.get("push_bonus", 0) if k == "push" else 0), toward=k == "pull")
+                if k == "push" and src is h and self.variant == "press":
+                    src.ds["momentum"] = min(self.hero_def.get("momentum_max", 5), src.ds["momentum"] + 1)
             elif k == "retreat" and tgt is not None:                       # отскок от цели
                 d = (sign(src.cell[0] - tgt.cell[0]), sign(src.cell[1] - tgt.cell[1]))
                 path, p = [], src.cell
@@ -1621,6 +1641,9 @@ class Battle:
                 self.say(f"{tgt.name} оглушён — пропустит намерение", (255, 230, 140))
             elif k == "mark" and tgt is not None:
                 tgt.ds["mark"] += n
+            elif k == "hunt" and src is h:
+                src.ds["hunt"] = min(5, src.ds.get("hunt", 0) + n)
+                self.say(f"Травля +{n}", (255, 220, 120))
             elif k == "draw":
                 self.draw(n)
             elif k == "energy":
