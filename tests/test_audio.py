@@ -17,6 +17,20 @@ def test_music_file_and_settings_exist():
     assert any(key == "music_volume" for key, _, _, _ in settings.OPTIONS)
 
 
+def test_all_music_locations_have_existing_tracks():
+    assert {"menu", "swamp", "dungeon", "forge", "battle", "boss", "camp", "shop", "end"} <= set(audio.TRACKS)
+    for names in audio.TRACKS.values():
+        assert names and all(os.path.getsize(os.path.join(audio.AUDIO_DIR, name)) > 100_000 for name in names)
+
+
+def test_context_can_be_set_before_music_starts(monkeypatch):
+    monkeypatch.setattr(audio, "_ensure_mixer", lambda: False)
+    monkeypatch.setattr(audio, "_started", False)
+    monkeypatch.setattr(audio, "_loaded", False)
+    audio.set_context("battle")
+    assert audio.context() == "battle"
+
+
 def test_volume_steps_and_mute(monkeypatch):
     monkeypatch.setattr(audio, "_ensure_mixer", lambda: False)
     audio.set_index(0, save=False)

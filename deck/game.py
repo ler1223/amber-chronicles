@@ -3,6 +3,7 @@
 from sim import expedition as X
 from sim.data import GameData
 
+from ui import audio
 from . import model as M
 from .battle import Battle
 from .sound import SoundPanel
@@ -28,6 +29,7 @@ class DescentGame:
 
     def new_run(self):
         """Новый забег — с выбора героя."""
+        audio.set_context("menu")
         self.scene = HeroSelect(self)
 
     def start_run(self, hero="merc", variant=None, starter=None):
@@ -38,6 +40,7 @@ class DescentGame:
     def open_starter(self, hero, variant=None):
         """Выбор стартовой колоды: 6 базовых + 4 карты первого тира."""
         from .ui import StarterDeckScreen
+        audio.set_context("menu")
         self.scene = StarterDeckScreen(self, hero, variant)
 
     # ---------- сохранение забега ----------
@@ -69,6 +72,7 @@ class DescentGame:
 
     def end_run(self):
         """Забег кончился (гибель или победа) — сохранение стирается."""
+        audio.set_context("end")
         if self.save_path:
             from . import save as SV
             SV.delete(self.save_path)
@@ -76,8 +80,19 @@ class DescentGame:
     def run_defs(self):
         return self.data["cards"]["cards"]
 
+    def map_context(self):
+        """Музыка локации: болото, кузни или глубокое подземелье."""
+        chapter = (getattr(self.run, "chapter_name", "") or "").lower()
+        floor = (getattr(self.run, "floor_name", "") or "").lower()
+        if any(word in chapter or word in floor for word in ("кузн", "горн", "литей", "шлак")):
+            return "forge"
+        if self.run.depth >= 3 or "сердце" in floor:
+            return "dungeon"
+        return "swamp"
+
     def to_map(self, toast=None):
         self.autosave()
+        audio.set_context(self.map_context())
         self.scene = MapScreen(self)
         if toast:
             self.scene.toast = (toast, 3.0)
@@ -97,6 +112,7 @@ class DescentGame:
         if n["type"] in ("battle", "elite", "boss"):
             self.start_battle(n["fight"])
         elif n["type"] == "camp":
+            audio.set_context("camp")
             heal = int(self.run.max_hp * CAMP_HEAL)
             from .items import mod
             rest = [] if mod(self.run, "no_camp_heal") else [(f"Отдохнуть: +{heal} HP", None, "rest")]
@@ -105,10 +121,13 @@ class DescentGame:
                                        "Котелок бодрости не даёт уснуть — можно только избавиться от карты."),
                                       rest + [("Удалить карту", None, "remove")], self._camp)
         elif n["type"] == "shop":
+            audio.set_context("shop")
             self.scene = ShopScreen(self)
         elif n["type"] == "workshop":                     # мастерская: улучшить простое применение карты
+            audio.set_context("camp")
             self.offer_workshop()
         elif n["type"] in ("chest", "altar"):            # сундук: предмет на выбор (1 из 3)
+            audio.set_context("camp")
             self.offer_relics(3, "Сундук", lambda toast=None: self.to_map(toast), source="chest")
 
     def offer_workshop(self):
@@ -134,6 +153,7 @@ class DescentGame:
 
     def start_battle(self, fight):
         run = self.run
+        audio.set_context("boss" if (self.node or {}).get("type") == "boss" else "battle")
         b = Battle(self.gd, run, fight, seed=(self.seed or 0) * 1000 + run.depth * 50 + len(run.floor.path))
         self.scene = BattleScreen(self, b)
 
@@ -227,6 +247,7 @@ class DescentGame:
 
     def _card_reward(self):
         run = self.run
+        audio.set_context("camp")
         offer = run.reward_offer()
         self.scene = ChoiceScreen(self, "Победа!", f"+{self._gold} золота · HP {run.hp}/{run.max_hp} (между боями "
                                   "не восстанавливается). Возьмите карту в колоду:", [("", c, c) for c in offer],
@@ -242,6 +263,7 @@ class DescentGame:
         if not ready:
             self._after_rewards()
             return
+        audio.set_context("camp")
         card = ready[0]
         opts = card.options()                              # 3 случайных из 5 вариантов (как эпифании)
         self.scene = ChoiceScreen(self, f"Прозрение: {card.name}",
@@ -287,6 +309,7 @@ class DescentGame:
 
     def offer_relics(self, n, title, then, source="chest"):
         """Предмет на выбор (n штук); then(toast) — дальше (пропуск — тоже). source — редкость: сундук, элита, страж."""
+        audio.set_context("camp")
         run = self.run
         offer = run.relic_offer(n, source)
         if not offer:

@@ -57,6 +57,22 @@ def make_app(data):
     return app
 
 
+def music_context(scene):
+    """Локация для музыки «Хроник янтаря» по имени сцены (без жёстких импортов сцен)."""
+    name = type(scene).__name__.lower()
+    if "battle" in name:
+        return "battle"
+    if "end" in name:
+        return "end"
+    if "shop" in name or "anvil" in name:
+        return "shop"
+    if "camp" in name or "hub" in name or "tavern" in name or "room" in name or "event" in name or "reward" in name:
+        return "camp"
+    if "map" in name or "expedition" in name:
+        return "dungeon"
+    return "menu"
+
+
 def dispatch(scene, ev):
     """Событие → сцена. Сцена-колонка (stage, 1280×800 по центру широкого окна): мышь сдвигается в её координаты,
     а обработка идёт в размере 1280×800 — в тех же координатах, в которых сцена рисуется (иначе кнопки и области,
@@ -131,6 +147,7 @@ def main():
                 holder.scene.update(dt)
         else:
             holder.scene.update(dt)
+        audio.set_context(music_context(holder.scene))
         prof = getattr(holder, "profile", None)
         if prof is not None and hasattr(prof, "mine_tick"):      # шахта работает, пока игра открыта
             prof.mine_tick(dt)

@@ -1,17 +1,25 @@
 # Музыка и звук
 
-## Трек
+## Треки
 
-В игре используется спокойный фоновый эмбиент **«Outer Space Loop»**:
+В игре — набор фэнтезийных треков для разных локаций. Все они **CC0 1.0 Universal (Public Domain)**
+с OpenGameArt.org; авторы и ссылки — в `assets/audio/README.md`.
 
-- автор: **wipics**;
-- источник: <https://opengameart.org/content/outer-space-loop>;
-- лицензия: **CC0 1.0 Universal (Public Domain)**;
-- файл: `assets/audio/outer_space_loop.ogg` (перекодирован из исходного MP3 для pygame);
-- подробности: `assets/audio/README.md`.
+| Локация | Треки |
+|---|---|
+| Меню, выбор героя | Mythica, Doodle menu like song |
+| Болото | Forest Ambience, Alone |
+| Подземелье | Dungeon Ambience, Narrow Corridors, Cave explorer |
+| Кузни | Through the Portal, Crystal Cave |
+| Бой | Battle Theme A, Random Battle |
+| Босс | Battle Theme A, war, Random Battle |
+| Костёр, награды | The Great Grog, Forest Ambience |
+| Магазин | The Great Grog, Doodle menu like song |
+| Финал | Alone |
 
-Трек запускается один раз при старте и циклически играет в «Спуске» и «Хрониках янтаря».
-Если в системе нет аудиоустройства или mixer не инициализировался, игра продолжает работать без звука.
+При смене локации включается подходящий трек; при возвращении в ту же локацию выбирается другой
+из её набора. Если в системе нет аудиоустройства или mixer не инициализировался, игра продолжает
+работать без звука.
 
 ## Управление
 
