@@ -27,13 +27,15 @@ OBJ_TEAMS = {"enemy": ENEMY, "player": PLAYER}
 
 class Combat:
     def __init__(self, data, encounter_index=0, seed=1, ai_teams=(ENEMY,), player_positions=None, squad=None,
-                 enemy_scale=None, fx=None, difficulty="normal"):
+                 enemy_scale=None, fx=None, difficulty="normal", rounds=False):
         """squad — список {"cls", "proto", "hp"} (из забега); по умолчанию базовые классы из squad.json.
         player_positions — желаемая расстановка; если не помещается в зону высадки, берутся точки карты.
         enemy_scale — {"hp", "damage"}: множители врагов по угрозе региона.
         fx — боевые эффекты реликвий отряда: reaction_mult, start_shield, kill_ap.
-        difficulty — сложность главы: добавочные враги из пула главы, модификаторы, частота событий поля."""
+        difficulty — сложность главы: добавочные враги из пула главы, модификаторы, частота событий поля.
+        rounds — бой раундами (прототип, sim/rounds.py): пауза перед раундом, намерения врагов, навык за раунд."""
         self.data = data
+        self.rounds = None
         self.cfg = data.config
         self.tags = data.tags
         self.enc = data.encounters[encounter_index]
@@ -151,6 +153,9 @@ class Combat:
         self.controllers = []                  # нейросети юнитов: tick(combat, dt) каждый шаг
         # отряд игрока применяет навыки по настройкам автокаста; в демо-режиме — все навыки без условий
         self.autocaster = autocast.AutoCaster(self, PLAYER, force=PLAYER in ai_teams)
+        if rounds:
+            from .rounds import Rounds
+            self.rounds = Rounds(self)
         self._necro_start()
 
     def _scale_enemy(self, u, scale):
@@ -461,6 +466,11 @@ class Combat:
             return False, "Нет такого навыка"
         if u.cooldowns.get(sid, 0) > 0:
             return False, "Перезарядка"
+        if self.rounds or u.day_charges:
+            why = self.rounds.why_not(u, sid, sk) if self.rounds else (
+                "Нет зарядов до привала" if u.day_charges.get(sid, 1) <= 0 else "")
+            if why:
+                return False, why
         if self._hp_cost(u, sk) and u.hp <= self._hp_cost(u, sk):
             return False, "Мало HP"
         # AP тратятся только на старте каста, но с нехваткой лучше сразу сказать
@@ -528,6 +538,8 @@ class Combat:
             channel = bool(u.cast.get("channel"))
             u.ap = min(u.ap_max, u.ap + u.cast["ap"])
             u.cooldowns.pop(sid, None)
+            if self.rounds:
+                self.rounds.undo(u, sid)
             u.cast = None
             if channel:
                 self.emit("channel_end", unit=u, skill=sid, reason="cancel")
@@ -542,6 +554,8 @@ class Combat:
         if self.intermission > 0:
             self._intermission_step(dt)
             return
+        if self.rounds:                       # бой раундами: начало раунда — намерения врагов, навык раунда
+            self.rounds.pre_step()
         if self.time == 0.0:                  # первый шаг боя: правила «в начале боя» (предметы, благословения)
             for u in list(self.units):
                 if u.alive and u.proto.get("rules"):
@@ -590,7 +604,8 @@ class Combat:
         self._update_vortices(dt)
         for ai in self.ais:
             ai.update(dt)
-        self.autocaster.update(dt)
+        if not (self.rounds and not self.autocaster.force):   # раунды: без приказа герой только бьёт
+            self.autocaster.update(dt)
         for ctl in self.controllers:           # нейросети юнитов (sim/neural.py)
             ctl.tick(self, dt)
         for u in self.units:
@@ -609,6 +624,8 @@ class Combat:
         self._phases_update()
         self._waves_update(dt)
         self._check_end()
+        if self.rounds:
+            self.rounds.post_step(dt)
 
     # ---------- волны, передышка, цели боя ----------
 
@@ -1589,6 +1606,10 @@ class Combat:
         u.last_target = t
         tag = u.buff("atk_tag", None) or u.atk_tag          # ядовитый клинок и т.п. — тег на время
         amount = u.atk_damage * u.buff("atk_mult", 1.0) * self._reveal(u) * self.blood_mult(u)
+        if self.rounds and u.team == PLAYER and not u.summon and u.owner is None:
+            amount *= self.rounds.cfg["aa_mult"]          # раунды: автоатака — фон, решают навыки
+        elif self.rounds and u.team != PLAYER:
+            amount *= self.rounds.cfg.get("enemy_aa", 1.0)   # и у врагов: опасны их задуманные удары
         p = u.passive
         if p and p["kind"] == "backstab" and u.pp >= p["pp"] and self.exposed(t, u):
             self._use_passive(u, f"урон ×{p['mult']:g}", t)
@@ -1657,8 +1678,12 @@ class Combat:
             u.hp -= cost
             self.emit("damage", unit=u, amount=cost, absorbed=0, kind="hp_cost", tag=None, cover=False, blocked=None)
             self.gain(u, "blood")
-        if sk["cooldown"]:
+        if self.rounds and self.rounds.on_cast(u, sid, sk):
+            pass                                # раунды: откат в раундах, навык раунда потрачен
+        elif sk["cooldown"]:
             u.cooldowns[sid] = sk["cooldown"]
+        if not self.rounds and sid in u.day_charges:
+            u.day_charges[sid] = max(0, u.day_charges[sid] - 1)
         then = o.get("then")
         if then and then.alive:
             u.order = {"type": "attack", "target": then}
@@ -1862,6 +1887,7 @@ class Combat:
         return k * ref.get("atk", 1) if pct else k
 
     def _apply_effects(self, caster, effects, center, tunit=None):
+        rk = self.rounds.skill_k(caster) if self.rounds else 1.0   # раунды: навыки героя сильнее
         for eff in effects:
             if eff.get("if_form") and (caster.form or "human") != eff["if_form"]:
                 continue
@@ -1871,7 +1897,7 @@ class Combat:
                 if not outer:
                     caster._pw_base = caster.power
                 flat = self._flat
-                caster.power = self.stat_k(caster, of, eff.get("pct")) * caster.buff("skill_mult", 1.0)
+                caster.power = self.stat_k(caster, of, eff.get("pct")) * caster.buff("skill_mult", 1.0) * rk
                 self._flat = True
                 try:
                     stop = self._apply_eff(caster, eff, center, tunit)
@@ -1880,6 +1906,13 @@ class Combat:
                     caster.power = caster._pw_base
                     if not outer:
                         del caster._pw_base
+            elif rk != 1.0:
+                p0 = caster.power
+                caster.power = p0 * rk
+                try:
+                    stop = self._apply_eff(caster, eff, center, tunit)
+                finally:
+                    caster.power = p0
             else:
                 stop = self._apply_eff(caster, eff, center, tunit)
             if stop:
@@ -2167,6 +2200,8 @@ class Combat:
         return 1.0 + k * (1 - u.hp / max(1, u.max_hp)) if k else 1.0
 
     def add_buff(self, u, stat, value, duration, src=None):
+        if stat == "silence" and self.rounds and duration > 0:
+            self.rounds.broken(u)
         if stat == "bleed":                       # кровотечение — дот со стаками, а не обычный бафф
             return self.apply_dot(u, "bleed", value, duration, attacker=src or self._actor)
         if duration > 0 and (stat in ("silence", "exposed", "armor_shred")
@@ -4056,6 +4091,8 @@ class Combat:
             return
         dur = self._debuff_dur(u, dur)
         self._interrupt(u)
+        if self.rounds and dur > 0:
+            self.rounds.broken(u)                # раунды: оглушение срывает задуманный навык
         if self._actor is not None and self._actor.team != u.team:
             self._actor.tally["cc"] += max(0.0, dur - max(0.0, u.stun))
         if dur >= u.stun:

@@ -29,6 +29,7 @@ class GameData:
         self.story_progression = load("story_progression.json")   # сюжет: пул навыков, слоты, доктрины
         self.runes = load("runes.json")
         self.relics = load("relics.json")
+        self.rounds = load("rounds.json")            # бой раундами (прототип, sim/rounds.py)
         self.camp = load("camp.json")
         self.summons = load("summons.json")
         self.necro_upgrades = load("necro_upgrades.json")

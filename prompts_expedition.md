@@ -10,6 +10,8 @@
 | Иконки даров (17) — готово | Лист C | `python tools/import_sheet.py assets/art_src/sheet_icons_gifts.png --set icons_gifts --preview p.png` | `assets/icons` |
 | Иллюстрации (44, по 4 на лист) | Листы 0–10 | `python tools/import_illustrations.py assets/art_src/ill_3.png --sheet 3 --preview p.png` | `assets/illustrations` |
 | Враги и союзники событий (10) — готово | Лист E | `python tools/import_sheet.py assets/art_src/sheet_swamp_events.png --set swamp_events --preview p.png` | `assets/sprites` |
+| Пиксельные рамки карт «Спуска» с объёмом (10 картинок) — готово | DC2 | `python tools/import_card_art.py --preview p.png` | `assets/cards` |
+| Живое поле боя «Спуска»: детали болота (4 листа) | DC3 | импорт сделаю, когда будут листы | `assets/art_src/field` |
 | Иллюстрации событий с последствиями (32) — готово | Листы 11–18 | `python tools/import_illustrations.py assets/art_src/ill_11.png --sheet 11 --preview p.png` | `assets/illustrations` |
 | Иконки узлов карты похода (7) — готово | Лист F | `python tools/import_sheet.py assets/art_src/sheet_icons_map.png --set icons_map --preview p.png` | `assets/icons` |
 | Иконки: новые дары, часть 1 (22) — готово | Лист G1 | `python tools/import_sheet.py assets/art_src/sheet_icons_gifts2.png --set icons_gifts2 --preview p.png` | `assets/icons` |
@@ -2019,3 +2021,795 @@ the right. Order: top-left, top-right, bottom-left, bottom-right.
    leading to it, fog pooling on the floor. Clear flagstones in the lower left.
 4. (bottom-right) EMPTY: fill this cell with flat solid black, no objects, no border inside the cell.
 ```
+
+
+---
+
+## «Спуск»: иллюстрации карт Наёмника (лист DC1)
+
+Карточный рогалик «Спуск» (`python descent.py`, docs/descent.md). Пока на картах стоят фрагменты иллюстраций
+событий (`data/deck/cards.json` → `ill`: имя, центр x, центр y, ширина — доли картинки). Этот лист заменит их
+своими сценами в том же стиле, что иллюстрации событий в `assets/illustrations/hd`. Окно рисунка на карте —
+268×196 (≈ 4:3).
+
+Нарезка: 15 ячеек сеткой 5×3, ряды сверху вниз, в ряду слева направо. Инструмента нарезки пока нет, сделаю,
+когда будет лист. Пока можно положить отдельные картинки 1536×1024 в `assets/illustrations/hd/card_<id>.png` и
+вписать в `ill` карты `["card_<id>", 0.5, 0.5, 1.0]`. Порядок и id карт:
+1. Удар — strike
+2. Защита — defend
+3. Рывок — lunge_rush
+4. Выпад — lunge
+5. Таран щитом — shield_ram
+6. Сшибка — sweep
+7. Вбить в стену — wall_smash
+8. Ответный удар — riposte
+9. Удар телом — body_slam
+10. Кровавый размах — blood_sweep
+11. Боевой раж — battle_rage
+12. Натиск — charge
+13. Упереться — brace
+14. Крюк — hook
+15. Боевой клич — war_cry
+
+```
+Make ONE image, 2560x1536, split into a 5 columns x 3 rows grid of 15 equal cells (4:3 each) separated by
+thin 4-pixel black lines. Each cell is a card illustration for a dark medieval fantasy roguelike deckbuilder,
+in the exact same style as the previous event illustrations: richly detailed high-resolution painted
+pixel-art look, crisp edges, warm torchlight against cold swamp blues and greens, dramatic rim light,
+strong silhouette, deep shadows. The hero in every scene is the same mercenary: a battered middle-aged
+swordsman in rust-red cloak and dented steel armor with a round iron-rimmed wooden shield. No text, no
+letters, no frames, no UI. Each scene is a dynamic close-up of ONE action, readable even when small,
+subject in the center and upper part of the cell (the lower quarter will be covered by a name ribbon).
+Cells in order (rows top to bottom, left to right):
+1. "Strike": the mercenary mid-swing, a bright arc of a sword slash, sparks flying.
+2. "Defend": the round shield raised, an arrow glancing off it in a burst of splinters.
+3. "Rush": the mercenary sprinting forward low through swamp water, spray behind.
+4. "Lunge": a long sword thrust toward the right, the whole body extended.
+5. "Shield Ram": shield-first charge slamming a green swamp slime, slime splattering.
+6. "Sweep": a wide spinning swing knocking two shadowy swamp creatures away.
+7. "Into the Wall": a swamp creature smashed into a mossy stone wall, cracks and dust.
+8. "Riposte": the shield blocks a claw while the sword counters in the same instant.
+9. "Body Slam": the mercenary crashing shoulder-first, armor flashing in torchlight.
+10. "Blood Sweep": a crimson arc of blood-red energy from a wide sword swing.
+11. "Battle Rage": the mercenary roaring, eyes glowing red, red light seeping through armor seams.
+12. "Charge": a full-speed charge with sword forward across a ruined causeway.
+13. "Brace": boots dug into mud, shield planted, a huge claw stopped against it.
+14. "Hook": a chain-hook flying out and catching a frog-shaman, dragging it closer.
+15. "War Cry": the mercenary with raised sword shouting, a shockwave ring, enemies flinching.
+```
+
+---
+
+## «Спуск»: пиксельные рамки карт с объёмом (DC2)
+
+Стиль — **детальный пиксель-арт**, как у иллюстраций событий и листа DC1. Картинка карты остаётся
+**одной** — её даёт лист DC1 (выше). Объём делает **рамка**: она собрана из нескольких слоёв на разной глубине.
+Когда карту наклоняют мышью или она покачивается в руке, картинка сдвигается «вглубь окна», а накладки рамки
+выходят вперёд — как будто смотришь в окно.
+
+| Слой (снизу вверх) | Откуда | Сдвиг при наклоне |
+|---|---|---|
+| Картинка (DC1) | лист DC1, чуть больше окна | −0.6 (глубже окна) |
+| Тень окна | рисует игра | −0.2 |
+| Основа рамки | сообщение 1 | 0 |
+| Накладки: уголки, навершие, гнездо цены, концы ленты | сообщение 2 | +0.5 (ближе) |
+| Блик, текст, числа | рисует игра | — |
+
+Накладки рисуются **отдельными деталями**: игра сама ставит их по местам, поэтому они точно совпадут с
+основой, даже если ChatGPT нарисует основу чуть иначе.
+
+### Размеры и разметка
+
+Картинка 1024×1536 = сетка **256×384 «пикселей арта»** (один пиксель арта = 4×4 пикселя картинки). Игра
+уменьшит её до этой сетки и будет выводить чётко, без размытия. Разметка — в пикселях арта, она совпадает с
+нынешним лицом карты:
+
+| Часть | Где (x, y в сетке 256×384) |
+|---|---|
+| Рамка по краю | толщина 12, скруглённые углы |
+| Окно картинки (4:3) | x 14–242, y 14–185 |
+| Лента имени | y 168–203, поверх нижнего края окна |
+| Строка тегов | y 206–222 |
+| Плашка текста | x 18–238, y 229–317 |
+| Полоса прозрения | y 319–323 |
+| Полоса простого применения | x 12–244, y 325–376 |
+| Гнездо цены | центр 30, 30, диаметр 46 |
+
+Пурпурный **#FF00FF** — «пусто»: импорт вырежет его (окно картинки, места под текст, всё за скруглёнными
+углами).
+
+### Порядок: 5 сообщений в одном чате
+
+Лучше в том же чате, где делали листы иллюстраций, — пиксельный стиль совпадёт. Если ChatGPT остановился
+раньше, чем нарисовал все картинки, написать `continue with the next image`.
+
+| № | Сообщение | Картинок | Сохранить в `assets/art_src/cards/` |
+|---|---|---|---|
+| 1 | Четыре основы рамки | 4 | `frame_attack.png`, `frame_skill.png`, `frame_power.png`, `frame_reaction.png` |
+| 2 | Накладки всех рамок (лист) | 1 | `frame_parts.png` |
+| 3 | Плашки (лист) | 1 | `ui_plates.png` |
+| 4 | Значки (лист) | 1 | `ui_icons.png` |
+| 5 | Три рубашки | 3 | `back_merc.png`, `back_hunter.png`, `back_pyro.png` |
+
+**Готово (2026-11-19).** Импорт: `python tools/import_card_art.py --preview p.png` — вырезает пурпур, уменьшает
+до 512×768, режет листы и сам находит разметку каждой рамки (окна, лента, гнездо цены) → `assets/cards/`,
+`frames.json`. Если перерисовать картинку — положить с тем же именем и запустить импорт снова. Сборка карты и
+наклон — `deck/cardart.py`.
+
+**Блок стиля** (уже вставлен в каждое сообщение):
+```
+STYLE: detailed high-resolution pixel art in the same style as the earlier illustrations in this chat:
+crisp hard-edged square pixels on a visible grid, one art pixel = exactly 4x4 image pixels (so the art is
+a 256-wide pixel grid), limited palette per material, careful ordered dithering instead of smooth
+gradients, clean dark outlines, warm torch-lit highlights and cool shadows, light from the top left.
+Grounded dark-medieval craftsmanship: forged metal, carved wood, worn leather, believable wear, ornate but
+restrained (no oversized spikes or skulls). No anti-aliasing blur, no painterly brush strokes, no text,
+no letters, no logos.
+```
+
+**Сообщение 1 — четыре основы рамки**
+```
+Generate 4 SEPARATE images, one after another (not a collage), 1024x1536 portrait each: the base frames of
+a fantasy trading card. All four have exactly the same shape and layout and differ only in material and
+color. Seen straight on, perfectly symmetrical, flat front view, no perspective.
+LAYOUT in art pixels on the 256x384 grid (multiply by 4 for image pixels):
+- an outer border 12 art pixels thick around the whole card, slightly rounded corners;
+- the picture window, a 4:3 rectangle from x 14 to 242 and y 14 to 185 — fill it with solid pure magenta
+  #FF00FF (it will be cut out); give the window a thin bevelled inner rim;
+- a horizontal name banner bar across the card from y 168 to 203, lying over the bottom edge of the window,
+  empty (no text);
+- a thin engraved line for tags from y 206 to 222;
+- a text plate from x 18 to 238 and y 229 to 317: a dark recessed panel, fill its inner area with solid
+  pure magenta #FF00FF;
+- a thin empty progress groove from y 319 to 323;
+- a bottom strip from x 12 to 244 and y 325 to 376 framed by a thin rim, its inner area solid pure magenta;
+- a round empty socket for the cost gem centered at x 30, y 30, diameter 46, overlapping the border,
+  dark inside;
+- everything outside the rounded card corners: solid pure magenta.
+Leave the corners and the top center fairly plain — separate ornaments will be placed there later.
+Image 1 — ATTACK: blackened forged iron with rust-red enamel inlays and worn brass rivets.
+Image 2 — SKILL: weathered bronze with deep blue enamel and a thin silver edge.
+Image 3 — POWER: darkened silver with violet enamel and touches of old gold.
+Image 4 — REACTION: dark gunmetal steel with moss-green enamel and copper rivets.
+STYLE: detailed high-resolution pixel art in the same style as the earlier illustrations in this chat:
+crisp hard-edged square pixels on a visible grid, one art pixel = exactly 4x4 image pixels (so the art is
+a 256-wide pixel grid), limited palette per material, careful ordered dithering instead of smooth
+gradients, clean dark outlines, warm torch-lit highlights and cool shadows, light from the top left.
+Grounded dark-medieval craftsmanship: forged metal, carved wood, worn leather, believable wear, ornate but
+restrained (no oversized spikes or skulls). No anti-aliasing blur, no painterly brush strokes, no text,
+no letters, no logos.
+```
+
+**Сообщение 2 — накладки всех рамок (один лист)**
+
+Детали, которые лягут поверх основы и будут «ближе» при наклоне. Строка листа — тип карты, столбец — деталь.
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sprite sheet of frame ornaments
+for fantasy trading cards, arranged in a strict grid of 4 rows and 6 columns, each piece centered in its
+cell with empty magenta space around it, pieces never touching. Same scale for all pieces (art pixel =
+4x4 image pixels).
+Rows (one material per row, matching the card frames):
+row 1 — ATTACK: blackened forged iron with rust-red enamel and brass rivets;
+row 2 — SKILL: weathered bronze with deep blue enamel and a silver edge;
+row 3 — POWER: darkened silver with violet enamel and old gold;
+row 4 — REACTION: dark gunmetal steel with moss-green enamel and copper rivets.
+Columns (the same piece for every row):
+1. a top-left corner bracket, about 36x36 art pixels, L-shaped, to cover the frame corner;
+2. a top crest for the middle of the top edge, about 60x20 art pixels — attack: crossed blades; skill:
+   a small round shield; power: a crown of thorns; reaction: an open eye;
+3. a ring for the cost gem socket, about 52x52 art pixels, a ring only, hollow center in magenta;
+4. a left end cap of the name banner, about 18x40 art pixels (the right one will be mirrored);
+5. a small rivet or stud cluster, about 10x10 art pixels;
+6. a thin decorative bar for the bottom edge, about 90x10 art pixels.
+STYLE: detailed high-resolution pixel art in the same style as the earlier illustrations in this chat:
+crisp hard-edged square pixels on a visible grid, one art pixel = exactly 4x4 image pixels, limited palette
+per material, careful ordered dithering instead of smooth gradients, clean dark outlines, warm highlights
+and cool shadows, light from the top left. Grounded dark-medieval craftsmanship, ornate but restrained.
+No anti-aliasing blur, no painterly brush strokes, no text, no letters, no logos.
+```
+
+**Сообщение 3 — плашки (один лист)**
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: separate card UI pieces with
+generous empty space between them, flat front views, no text:
+1. a name banner — a horizontal strip of dark oiled leather over a thin iron bar, stitched edges, about
+   215x24 art pixels, ends slightly folded back;
+2. a text plate — a dark smoked-glass panel with a thin bronze edge, about 220x88 art pixels, the inner
+   area dark and even so text stays readable;
+3. a free-action strip — greenish oxidized copper with a thin rim, about 232x50 art pixels;
+4. a thin progress groove of engraved iron, about 190x6 art pixels, empty inside, plus beside it a short
+   gold fill segment for the progress, about 40x4 art pixels.
+STYLE: detailed high-resolution pixel art in the same style as the earlier illustrations in this chat:
+crisp hard-edged square pixels on a visible grid, one art pixel = exactly 4x4 image pixels, limited palette
+per material, careful ordered dithering, clean dark outlines, light from the top left. Grounded
+dark-medieval craftsmanship. No anti-aliasing blur, no painterly brush strokes, no text, no letters.
+```
+
+**Сообщение 4 — значки (один лист)**
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sprite sheet of 24 icons in a strict
+grid of 6 columns and 4 rows, each icon about 32x32 art pixels (art pixel = 4x4 image pixels), centered in
+its cell with empty space around it, never touching. One clear object per icon, strong silhouette, readable
+at small size, dark outline, light from the top left, no text, no letters. Rows top to bottom, left to right:
+Row 1 — cost: 1. a cut pale-blue crystal (energy); 2. a glowing coal ember with orange cracks (heat);
+3. an open steel eye with a green iris (reaction — cannot be played by hand); 4. an empty dark socket;
+5. a small golden star (insight); 6. a broken chain link (sealed card).
+Row 2 — tags: 7. a sword blade (Strike); 8. a boot print (Step); 9. a fist hitting a shield (Push);
+10. a round wooden shield (Defense); 11. a thorny iron bramble (Thorns); 12. a drop of blood (Blood).
+Row 3 — tags: 13. a war horn (War Cry); 14. a small flame (Fire); 15. a fletched arrow (Shot);
+16. a red cut cross, a hunter's mark (Mark); 17. a green poison drop with a bubble (Poison);
+18. a bear trap (Trap).
+Row 4 — gods' gifts, each a small hanging cloth pennant on a short pole: 19. a smith's hammer on rust-orange
+cloth (god of the forge); 20. a flame on deep red cloth (goddess of fire); 21. a winding road on green cloth
+(god of roads); 22. two mirrored faces on violet cloth (god of repetition); 23. a veiled face on grey-blue
+cloth (goddess of cunning); 24. an empty pennant on plain cloth.
+STYLE: detailed high-resolution pixel art in the same style as the earlier illustrations in this chat:
+crisp hard-edged square pixels, limited palette, careful dithering, clean dark outlines. No anti-aliasing
+blur, no painterly brush strokes.
+```
+
+**Сообщение 5 — три рубашки**
+```
+Generate 3 SEPARATE images, one after another (not a collage), 1024x1536 portrait each: the backs of fantasy
+trading cards, one per hero, the same shape as the card frames (rounded corners, border 12 art pixels on the
+256x384 art-pixel grid). Each: symmetrical, flat front view, a dark field of the given material with a large
+central emblem and a restrained engraved border; aged real materials; no text, no letters; everything
+outside the rounded card corners solid pure magenta #FF00FF.
+Image 1 — the Mercenary: dark oiled leather over wood with iron corner caps; emblem: a round iron-rimmed
+shield with a crossed sword behind it and a faded red stripe.
+Image 2 — the Huntress: deep green waxed canvas with brass corner caps; emblem: a longbow and three crossed
+arrows over a stag skull.
+Image 3 — the Pyromancer: charred black oak with veins of glowing ember in the grain, copper corner caps;
+emblem: a hand cupping a small flame inside a ring of runes without letters.
+STYLE: detailed high-resolution pixel art in the same style as the earlier illustrations in this chat:
+crisp hard-edged square pixels on a visible grid, one art pixel = exactly 4x4 image pixels, limited palette
+per material, careful ordered dithering, clean dark outlines, warm highlights and cool shadows, light from
+the top left. No anti-aliasing blur, no painterly brush strokes, no text, no letters, no logos.
+```
+
+### Если ChatGPT нарисовал «шахматку» вместо пурпурного
+
+Повторить сообщение, дописав в конец:
+`The background and all cut-out areas must be one flat solid color, pure magenta #FF00FF, with no checkerboard and no gradient; nothing else in the image may use that color.`
+
+---
+
+## «Спуск»: живое поле боя — детали болота (DC3)
+
+Поле станет в 2 раза чётче (внутренний кадр 2560×1600). Земля — настоящие **64×64 пикселя арта на клетку**,
+фигурки остаются прежними (32×32 на клетку): пиксель деталей вдвое мельче пикселя героев. Детали ничего не
+меняют в игре — только оживляют картинку.
+
+Что рисует ChatGPT — 4 листа ниже. Что рисует игра сама: тени предметов, пятна света, виньетку, тени облаков,
+полосы тумана, мошкару, светлячков, падающие листья, рябь и круги на воде, покачивание травы и камышей.
+
+**Общие правила для всех листов** (уже вставлены в запросы):
+- пиксель-арт в стиле иллюстраций и фигурок этого чата, тёмное болото: мох, ржавая осока, торф, холодная вода;
+- **крупность пикселя**: 1 пиксель арта = 4×4 пикселя картинки (размеры деталей ниже — в пикселях арта);
+- фон и промежутки — сплошной пурпурный **#FF00FF**, детали не касаются друг друга;
+- свет сверху-слева, тёмный контур, без размытия и сглаживания, без текста.
+
+| № | Лист | Вид | Размер | Сохранить как (`assets/art_src/field/`) |
+|---|---|---|---|---|
+| 1 | Сор на земле | строго сверху | 1536×1024 | `field_ground.png` |
+| 2 | Трава, цветы, камыши | сбоку (стоят на земле) | 1536×1024 | `field_plants.png` |
+| 3 | Берег и вода | строго сверху | 1536×1024 | `field_water.png` |
+| 4 | Птицы и живность | кадры анимации | 1536×1024 | `field_critters.png` |
+
+Импорт и расстановку по полю сделаю, когда будут листы (хватит одного, чтобы начать).
+
+**Лист 1 — сор на земле (вид строго сверху)**
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sprite sheet of 24 small ground
+details for a dark swamp battlefield, seen STRICTLY FROM ABOVE (top-down, flat on the ground, no
+perspective), arranged in a strict grid of 6 columns and 4 rows, each detail centered in its cell with
+empty magenta space around it, details never touching. Detailed pixel art in the same style as the earlier
+illustrations and character sprites in this chat: one art pixel = exactly 4x4 image pixels, limited earthy
+palette (moss green, olive, peat brown, rust, bone, grey stone), dark outline only where needed, light from
+the top left, no anti-aliasing, no text. Sizes are in art pixels.
+Row 1 — stones: 1. three small pebbles (12x8); 2. a cluster of gravel (16x10); 3. one flat mossy stone
+(18x12); 4. two round grey stones (14x10); 5. a cracked flat stone slab piece (20x14); 6. scattered tiny
+pebbles (20x12).
+Row 2 — wood and bones: 7. a short broken branch (24x6); 8. two crossed twigs (16x12); 9. a rotten log
+chunk (22x10); 10. scattered wood chips (16x10); 11. a small animal skull (12x10); 12. scattered small bones
+(18x10).
+Row 3 — plants lying flat: 13. a patch of moss (22x14); 14. a clump of clover leaves (14x12); 15. fallen
+leaves, rusty brown (18x12); 16. fallen leaves, yellow-green (18x12); 17. a tangle of roots (24x14);
+18. a ring of tiny mushrooms (16x16).
+Row 4 — mud and water: 19. a small dark mud puddle (22x12); 20. a muddy footprint trail (24x10); 21. a
+small clear puddle reflecting the sky (18x10); 22. a peat patch (22x14); 23. a patch of dry sedge flattened
+on the ground (22x12); 24. a few scattered feathers (14x10).
+```
+
+**Лист 2 — трава, цветы, камыши (стоят на земле, вид сбоку)**
+
+Эти детали «стоят»: игра ставит их на клетки по глубине и качает от ветра. Основание у каждой — ровная
+линия внизу (где детали касаются земли).
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sprite sheet of 24 standing swamp
+plants for a battlefield, seen from the side (slightly from above, like the character sprites in this
+chat), arranged in a strict grid of 6 columns and 4 rows, each plant centered in its cell with empty
+magenta space around it, plants never touching. Each plant has a flat base line at the bottom where it
+touches the ground. Detailed pixel art in the same style as the earlier illustrations and character sprites
+in this chat: one art pixel = exactly 4x4 image pixels, limited palette (moss green, olive, ochre, rust,
+dry straw), dark outline, light from the top left, no anti-aliasing, no text. Sizes are in art pixels.
+Row 1 — grass: 1. a small grass tuft (10x8); 2. a medium grass tuft (14x12); 3. a tall grass tuft
+(14x18); 4. a dry yellowed tuft (12x10); 5. a wide low tuft (20x8); 6. a few separate blades (8x12).
+Row 2 — sedge and ferns: 7. a sedge clump with long bent leaves (18x16); 8. a young fern (16x14); 9. a big
+fern (22x18); 10. horsetail stems (10x16); 11. a thistle (12x18); 12. a low leafy weed (14x8).
+Row 3 — flowers: 13. three tiny white swamp flowers (10x10); 14. yellow marsh marigolds (12x10); 15. a
+purple loosestrife stalk (8x20); 16. a small pale bell flower (8x12); 17. blue forget-me-nots (12x8);
+18. a red berry sprig (10x10).
+Row 4 — reeds and bushes: 19. a reed clump (14x26); 20. cattails with brown heads (12x28); 21. a short
+reed clump bent by wind (16x20); 22. a small round bush (20x14); 23. a dead dry bush of thin twigs (18x16);
+24. a tall reed clump with a broken stem (16x30).
+```
+
+**Лист 3 — берег и вода (вид строго сверху)**
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sprite sheet of 16 water and
+shore details for a dark swamp battlefield, seen STRICTLY FROM ABOVE (top-down, flat, no perspective),
+arranged in a strict grid of 4 columns and 4 rows, each detail centered in its cell with empty magenta
+space around it, never touching. Detailed pixel art in the same style as the earlier illustrations in this
+chat: one art pixel = exactly 4x4 image pixels, limited palette (dark teal water, lily green, pale flower
+white and pink, peat brown, mud), light from the top left, no anti-aliasing, no text. Sizes in art pixels.
+Row 1 — water lilies: 1. one round lily pad (12x10); 2. two overlapping lily pads (18x12); 3. a lily pad
+with a white flower (14x12); 4. a lily pad with a pink flower (14x12).
+Row 2 — duckweed and floaters: 5. a patch of bright green duckweed (24x14); 6. a thin trail of duckweed
+(28x8); 7. a floating rotten leaf cluster (14x10); 8. a small floating log (26x8).
+Row 3 — shore: 9. a curved strip of wet mud along a shore (32x10); 10. a strip of reed roots and mud along a
+shore (32x10); 11. a stone half sunk in water with a wet ring (16x12); 12. a mossy shore stone (14x12).
+Row 4 — misc: 13. a tangle of drowned branches poking out of water (24x14); 14. a cluster of bubbles on the
+water surface (12x8); 15. a patch of green algae scum (24x14); 16. reed stubs sticking out of water (18x10).
+```
+
+**Лист 4 — птицы и живность (кадры анимации)**
+
+Каждый ряд — одна анимация, кадры слева направо, все кадры одного ряда одного размера и в одной позе-опоре
+(чтобы не «прыгали»).
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sprite sheet of small swamp
+animals as animation frames, arranged in 5 rows; each row is one animation with its frames from left to
+right, frames evenly spaced, all frames of a row the same size and aligned on the same baseline, nothing
+touching. Detailed pixel art in the same style as the earlier character sprites in this chat: one art pixel
+= exactly 4x4 image pixels, limited palette, dark outline, light from the top left, no anti-aliasing, no
+text. Sizes in art pixels.
+Row 1 — a black crow flying to the right, side view, 6 frames of a full wing beat (16x12 each).
+Row 2 — the same crow: sitting on the ground (frame 1), crouching (2), jumping up with wings opening (3),
+wings fully open taking off (4); 4 frames (16x14 each).
+Row 3 — a small dark swamp bird flying to the right (seen from below and slightly from the side, for flocks
+in the sky), 4 frames of a wing beat (8x6 each).
+Row 4 — a blue-green dragonfly seen from above, 2 frames (wings up / wings blurred) (12x10 each); then a
+small pale moth seen from above, 3 frames (wings open, half, closed) (8x8 each).
+Row 5 — a green frog sitting, 2 frames (sitting, throat puffed) (12x10 each); then a fish jumping out of
+water and diving back, 4 frames (10x12 each).
+```
+
+### Если ChatGPT нарисовал «шахматку» вместо пурпурного
+
+Повторить запрос, дописав в конец:
+`The background and all empty space must be one flat solid color, pure magenta #FF00FF, with no checkerboard and no gradient; nothing else in the image may use that color.`
+
+---
+
+## «Спуск»: интерфейс боя — свой у каждого героя (DC4)
+
+Интерфейс боя рисуется **чётко, в полном разрешении экрана** (не пиксель-арт): панели, шар энергии, кнопка
+«Конец хода», медальоны намерений над врагами, значки состояний. Материал рамок у каждого героя свой. Игра
+сама собирает из деталей панели любого размера и дорисовывает свечение, тени, числа и текст. Пока картинок
+нет, всё рисуется самой игрой попроще.
+
+**Что нужно:** 4 картинки. 3 набора интерфейса (по одному на героя, одинаковая раскладка) + 1 лист значков
+(общий).
+
+| № | Лист | Размер | Сохранить как (`assets/art_src/ui/`) |
+|---|---|---|---|
+| 1 | Набор Наёмника | 1536×1024 | `ui_merc.png` |
+| 2 | Набор Охотницы | 1536×1024 | `ui_hunter.png` |
+| 3 | Набор Пиромантки | 1536×1024 | `ui_pyro.png` |
+| 4 | Значки намерений и состояний | 1536×1024 | `ui_icons.png` |
+
+Импорт: `python tools/import_ui_art.py` (разрежет по сетке в `assets/ui/<герой>/` и `assets/ui/icons/`).
+
+**Фон — прозрачный.** Если ChatGPT нарисовал «шахматку» вместо прозрачности, повторить с пурпурным фоном:
+дописать в конец `Background: one flat solid pure magenta #FF00FF instead of transparency, nothing else uses
+that color.` Импорт поймёт оба варианта.
+
+### Листы 1–3 — набор интерфейса героя
+
+Один и тот же запрос, меняется только строка **MATERIAL** (ниже — три варианта). Раскладка строго сеткой 4×3:
+игра режет лист по клеткам.
+
+```
+Make ONE image, 1536x1024, with a TRANSPARENT background (PNG with alpha): a UI kit sheet for a dark fantasy
+card battle game, arranged in a strict grid of 4 columns and 3 rows (each cell 384x341 px), each element
+centered in its own cell with empty space around it, elements never touching or crossing cell borders.
+Style: high-resolution painted game UI, crisp clean edges, NOT pixel art, no blur, realistic materials with
+fine detail (scratches, wear, rivets, stitching), soft light from the top left, front view, no perspective, no
+text, no letters, no numbers.
+MATERIAL: <see below>
+Row 1:
+1. Top-left corner ornament of a panel frame: an L-shaped corner piece, about 200x200, the inside of the L
+   (bottom-right side) is empty.
+2. A straight horizontal frame border strip, about 360x44, perfectly seamless and tileable left-to-right, no
+   end caps.
+3. A square panel background texture, about 300x300, perfectly seamless and tileable, dark and low-contrast
+   (text will be written on it).
+4. The hero's portrait bust inside a round frame of the same material, about 300x300, the character from this
+   chat's card illustrations, looking slightly to the side.
+Row 2:
+5. A round energy orb frame: a thick ring, about 300x300, the center is a fully empty hole (the game paints a
+   glowing glass orb inside), small notches around the ring.
+6. A wide button plaque, about 360x130, with an empty flat center area for a label, ornamented ends.
+7. A title ribbon / banner plate, about 360x96, empty center for a title, decorative ends, the middle part
+   plain so it can be stretched.
+8. A thin horizontal divider ornament, about 360x36, with a small central motif.
+Row 3:
+9. A round medallion, about 200x200, with a fully empty dark center (an icon goes inside), and a small
+   rectangular tab attached under it for a number (tab center empty).
+10. A small round badge frame, about 140x140, with an empty center (a status icon goes inside).
+11. A small lit gem / pip, about 90x90, glowing in the accent color.
+12. The same gem socket unlit and empty, about 90x90.
+```
+
+**MATERIAL — Наёмник (`ui_merc.png`):**
+```
+MATERIAL: a veteran mercenary's gear — darkened scratched bronze and riveted black iron, worn dark brown
+leather with stitching, brass rivets, small amber glass insets glowing warm amber; practical, battle-worn,
+not royal, not shiny gold.
+```
+
+**MATERIAL — Охотница (`ui_hunter.png`):**
+```
+MATERIAL: a forest huntress's gear — carved dark ash wood with knotwork carving, antler and bone inlays,
+green-dyed leather with braided cord bindings, small feathers and a few beads, accents glowing soft moss
+green; natural, handmade, wild.
+```
+
+**MATERIAL — Пиромантка (`ui_pyro.png`):**
+```
+MATERIAL: a pyromancer's gear — blackened wrought iron and cracked dark basalt / obsidian, thin glowing ember
+cracks and molten orange inlays, soot stains, a few small runes etched into the metal; hot, dangerous,
+arcane.
+```
+
+### Лист 4 — значки намерений врагов и состояний (общий)
+
+Значки — светлые силуэты-символы **без рамок** (рамку-медальон даёт набор героя, цвет — игра).
+
+```
+Make ONE image, 1536x1024, with a TRANSPARENT background (PNG with alpha): a sheet of 32 game icons arranged in
+a strict grid of 8 columns and 4 rows (each cell 192x256 px), each icon about 150x150, centered in its cell,
+icons never touching. Style: crisp high-resolution painted emblem symbols, NOT pixel art, each a bold readable
+silhouette in warm ivory / bone white with soft inner shading and a thin dark outline, no frame, no
+background, no text, no letters, no numbers. All icons the same visual weight, readable when small.
+Row 1 — enemy intents: 1. a sword (melee strike); 2. a drawn bow with an arrow (ranged shot); 3. a ground
+burst with cracks (area strike); 4. a round shield (gains block); 5. an eye inside a crosshair (takes aim);
+6. a heart with a small leaf (heals ally); 7. a roaring open maw with sound waves (weakening roar); 8. two
+forward arrows with speed lines (charge).
+Row 2 — enemy intents: 9. a hook on a chain (pulls the hero); 10. a tower shield covering small figures
+(guards allies); 11. a war banner (rallies allies, strength); 12. a swirl of mist (vanishes in fog); 13. a
+blob of swamp slime (adds a junk card); 14. an evil eye (hex: fewer cards); 15. a hand rising from water
+(drowns cards); 16. a cracking egg with a summoning circle (summon).
+Row 3 — states: 17. a flame (burn); 18. a drop with a small skull (poison); 19. a broken sword (weak); 20. a
+cracked shield (vulnerable); 21. a water drop (wet); 22. circling stars (stunned); 23. a clenched fist
+(strength); 24. a thorny vine (thorns).
+Row 4 — states: 25. a running boot with speed lines (momentum); 26. an angry flaming face (rage); 27. a
+glowing ember core (heat); 28. a snowflake (frost); 29. a target mark (marked prey); 30. a closed eye (hidden,
+veil); 31. an eye with a star (focus, next shot doubled); 32. a raised shield with a plus (block / armor).
+```
+
+---
+
+## «Спуск»: значки славянских богов — дары на картах (DC5)
+
+Боги «Спуска» теперь славянские (docs/descent_heroes2.md, 1.6). Их дар на карте отмечен вымпелом в том же
+стиле, что прежние значки карт (лист 4 из DC2, ряд 4). Нужен **1 лист**, 8 вымпелов.
+
+Сохранить как `assets/art_src/cards/gods_slavic.png`, затем `python tools/import_card_art.py` (разрежет в
+`assets/cards/icons/god_<бог>.png`).
+
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sprite sheet of 8 icons in a strict
+grid of 4 columns and 2 rows, each icon about 40x40 art pixels (art pixel = 4x4 image pixels), centered in
+its cell with lots of empty space around it, never touching. Each icon is a small hanging cloth pennant on a
+short wooden pole (the same kind of pennant as the god icons earlier in this chat), with one clear symbol of
+an old Slavic god painted on the cloth, strong silhouette, readable at small size, dark outline, light from
+the top left, no text, no letters. Left to right, top to bottom:
+Row 1: 1. Perun — a lightning bolt crossing a battle axe, on dark blue cloth; 2. Svarog — a smith's hammer
+over an anvil with a spark, on rust-orange cloth; 3. Stribog — three swirling wind curls, on pale sky-blue
+cloth; 4. Yarilo — a radiant sun with an ear of wheat, on golden-yellow cloth.
+Row 2: 5. Veles — a curled serpent with a small ram's horn, on moss-green cloth; 6. Mokosh — a spindle with
+spun thread winding around it, on violet cloth; 7. Morana — a sickle with frost crystals, on icy white-blue
+cloth; 8. Chernobog — a black horned mask with empty glowing eyes, on charcoal-black cloth with red trim.
+STYLE: detailed high-resolution pixel art in the same style as the earlier illustrations in this chat:
+crisp hard-edged square pixels, limited palette, careful dithering, clean dark outlines. No anti-aliasing
+blur, no painterly brush strokes.
+```
+
+---
+
+## «Спуск»: иллюстрации новых карт — заклинания и приёмы (DC6)
+
+Новые карты Наёмника, Охотницы и Пиромантки (tools/descent_cards_czn.py) пока показывают фрагменты иллюстраций
+событий. Эти листы дают каждой карте свою сцену в стиле листа DC1. Окно рисунка на карте ≈ 4:3, нижняя четверть
+закрыта лентой с названием — главное держать в центре и вверху.
+
+Как положить в игру: сохранить лист как `assets/art_src/cards/<лист>.png` и запустить
+`python tools/import_descent_art.py assets/art_src/cards/<лист>.png --set <лист> --preview проверка.png`.
+Ячейки режутся по сетке (чёрные линии срезаются), каждая сохраняется как
+`assets/illustrations/hd/card_<id>.png`, и игра сама ставит её на карту.
+
+Листы (лучше в одном чате по порядку — герои будут похожи между листами):
+
+| Лист | Сетка | Что |
+|---|---|---|
+| dc6_m1 | 4×3, 2048×1152 | Наёмник, 12 карт |
+| dc6_m2 | 3×2, 1536×768 | Наёмник, 5 карт + «Метательный нож» |
+| dc6_h1 | 4×3, 2048×1152 | Охотница, 12 карт |
+| dc6_h2 | 3×2, 1536×768 | Охотница, 5 карт + «Стрела» |
+| dc6_p1 | 4×3, 2048×1152 | Пиромантка, 12 карт |
+| dc6_p2 | 4×2, 2048×768 | Пиромантка, 6 карт + «Искра» + «Тина» |
+
+Общий стиль (уже вписан в каждый промт ниже — копировать промт целиком):
+
+```
+STYLE: card illustrations for a dark medieval fantasy roguelike deckbuilder, in the exact same style as the
+previous card illustrations in this chat: richly detailed high-resolution painted pixel-art look, crisp
+edges, warm torch and fire light against cold swamp blues and greens, dramatic rim light, strong
+silhouettes, deep shadows. No text, no letters, no numbers, no frames, no UI. Each cell is ONE readable
+action, subject in the center and upper part of the cell (the lower quarter will be covered by a name
+ribbon). Cells are separated by thin 4-pixel black lines, no other borders.
+```
+
+### Лист dc6_m1 — Наёмник, 12 карт
+
+Порядок: m_rend, m_open, m_blade_storm, m_duelist, m_riposte, m_meet, m_rising, m_crush, m_leader_cry,
+m_limit, m_knives, m_blood_trail.
+
+```
+Make ONE image, 2048x1152, split into a 4 columns x 3 rows grid of 12 equal cells (4:3 each).
+The hero in every scene is the same mercenary: a battered middle-aged swordsman in a rust-red cloak and dented
+steel armor with a round iron-rimmed wooden shield.
+Cells in order (rows top to bottom, left to right):
+1. "Rending Wound": a fast dagger slash across a swamp brigand's arm, a deep bleeding cut, red droplets in
+the air.
+2. "Open the Wounds": the mercenary drives his blade into an already bleeding beast, old wounds burst with
+blood-red light.
+3. "Blade Storm": the mercenary spinning with sword and axe, a whirlwind of steel arcs cutting two
+creatures, blood trails in the spin.
+4. "Duelist Stance": a calm duelist stance, sword low, shield raised, a glint on the blade, the enemy
+hesitates.
+5. "Riposte Lunge": the shield knocks a toad spear aside and the sword lunges past it in the same instant.
+6. "Meet Them Head-On": the mercenary standing firm on a narrow plank bridge, three foes charging at him,
+a faint red aura of readiness around him.
+7. "Rising Fury": the mercenary kneeling, veins glowing red, steam rising from his armor, fury building.
+8. "Crush": a huge overhead blow smashing the ground, a cracked crater and a shockwave of mud.
+9. "Leader's Cry": the mercenary raises his sword and shouts, a battle banner behind him, enemies
+cowering from the shockwave.
+10. "Limit": the mercenary's eyes blaze, a red-gold aura explodes around him, cracks of light in his
+armor.
+11. "Throwing Knives": a fan of throwing knives in his hand, two already flying toward a swamp creature.
+12. "Blood Trail": the mercenary running across mud, his footprints glow blood-red, creatures he passed
+are bleeding.
+STYLE: card illustrations for a dark medieval fantasy roguelike deckbuilder, in the exact same style as the
+previous card illustrations in this chat: richly detailed high-resolution painted pixel-art look, crisp
+edges, warm torch and fire light against cold swamp blues and greens, dramatic rim light, strong
+silhouettes, deep shadows. No text, no letters, no numbers, no frames, no UI. Each cell is ONE readable
+action, subject in the center and upper part of the cell (the lower quarter will be covered by a name
+ribbon). Cells are separated by thin 4-pixel black lines, no other borders.
+```
+
+### Лист dc6_m2 — Наёмник, 5 карт и «Метательный нож»
+
+Порядок: m_frenzy, m_runner, m_last_word, m_unbreak, m_butcher, t_knife.
+
+```
+Make ONE image, 1536x768, split into a 3 columns x 2 rows grid of 6 equal cells (4:3 each).
+The hero is the same mercenary as before: a battered middle-aged swordsman in a rust-red cloak and dented
+steel armor with a round iron-rimmed wooden shield.
+Cells in order:
+1. "Frenzy": a flurry of rapid strikes, several motion-blurred sword arcs at once.
+2. "Ramming Run": a sprinting shoulder charge through reeds, a toad warrior knocked flying.
+3. "Final Argument": one decisive executioner's strike on a wounded giant swamp horror, a flash of light at
+the moment of impact.
+4. "Unbreakable": the mercenary behind his shield, arrows and claws breaking against it, a golden glow.
+5. "Thrill of Slaughter": the mercenary standing over fallen foes, a wild grin, red light, eyes on the next
+target.
+6. "Throwing Knife": a single throwing knife spinning in flight, close-up, blurred swamp behind.
+STYLE: card illustrations for a dark medieval fantasy roguelike deckbuilder, in the exact same style as the
+previous card illustrations in this chat: richly detailed high-resolution painted pixel-art look, crisp
+edges, warm torch and fire light against cold swamp blues and greens, dramatic rim light, strong
+silhouettes, deep shadows. No text, no letters, no numbers, no frames, no UI. Each cell is ONE readable
+action, subject in the center and upper part of the cell (the lower quarter will be covered by a name
+ribbon). Cells are separated by thin 4-pixel black lines, no other borders.
+```
+
+### Лист dc6_h1 — Охотница, 12 карт
+
+Порядок: h_jagged, h_tendon, h_pierce, h_barrage, h_full_quiver, h_rain, h_spikes, h_pit, h_net, h_finish,
+h_patience, h_master_quiver.
+
+```
+Make ONE image, 2048x1152, split into a 4 columns x 3 rows grid of 12 equal cells (4:3 each).
+The hero in every scene is the same huntress: a young woman ranger in a moss-green hooded cloak and dark
+leather armor, braided hair, a longbow and a quiver of fletched arrows.
+Cells in order:
+1. "Jagged Arrow": close-up of a barbed jagged arrowhead hitting a swamp beast, blood spraying.
+2. "Hamstring": an arrow pinning a frog warrior's leg to the muddy ground, the warrior stumbling.
+3. "Armor Piercer": a heavy arrow punching through a crab knight's shell, cracks spreading.
+4. "Arrow Barrage": the huntress loosing arrows in rapid succession, three arrows in the air at once.
+5. "Full Quiver": the huntress filling her quiver with freshly fletched arrows by a small campfire.
+6. "Rain of Arrows": dozens of arrows raining from a dark sky onto a swamp clearing.
+7. "Spiked Trap": a spiked trap hidden in moss snapping shut on a creature's foot.
+8. "Wolf Pit": a deep pit with sharpened stakes, a beast tumbling into it.
+9. "Hunting Net": a weighted net thrown over a swamp creature, the huntress pulling the rope.
+10. "Finish the Wounded": the huntress calmly aiming at a staggering wounded beast leaving a blood trail.
+11. "Hold Breath": the huntress hidden in tall reeds under moonlight, arrow nocked, perfectly still.
+12. "Master's Quiver": an ornate enchanted quiver glowing green, new arrows forming inside it by
+themselves.
+STYLE: card illustrations for a dark medieval fantasy roguelike deckbuilder, in the exact same style as the
+previous card illustrations in this chat: richly detailed high-resolution painted pixel-art look, crisp
+edges, warm torch and fire light against cold swamp blues and greens, dramatic rim light, strong
+silhouettes, deep shadows. No text, no letters, no numbers, no frames, no UI. Each cell is ONE readable
+action, subject in the center and upper part of the cell (the lower quarter will be covered by a name
+ribbon). Cells are separated by thin 4-pixel black lines, no other borders.
+```
+
+### Лист dc6_h2 — Охотница, 5 карт и «Стрела»
+
+Порядок: h_toxic, h_deadeye, h_knife, h_ambush2, h_lure, arrow.
+
+```
+Make ONE image, 1536x768, split into a 3 columns x 2 rows grid of 6 equal cells (4:3 each).
+The hero is the same huntress as before: a young woman ranger in a moss-green hooded cloak and dark leather
+armor, braided hair, a longbow.
+Cells in order:
+1. "Poison Cloud": a clay flask shattering among enemies, a thick green poison cloud billowing.
+2. "Deadly Shot": an extreme long shot, a bright arrow trail across the whole swamp straight into the eye
+of a beast.
+3. "Hunting Knife": the huntress slashing with a hunting knife and leaping back in the same motion.
+4. "Ambush": the huntress and her shadow hidden in tall reeds, only her eyes glinting.
+5. "Lure": a bait on a hooked rope pulling a swamp creature toward the huntress.
+6. "Arrow": a single arrow in flight, close-up, motion streaks behind it.
+STYLE: card illustrations for a dark medieval fantasy roguelike deckbuilder, in the exact same style as the
+previous card illustrations in this chat: richly detailed high-resolution painted pixel-art look, crisp
+edges, warm torch and fire light against cold swamp blues and greens, dramatic rim light, strong
+silhouettes, deep shadows. No text, no letters, no numbers, no frames, no UI. Each cell is ONE readable
+action, subject in the center and upper part of the cell (the lower quarter will be covered by a name
+ribbon). Cells are separated by thin 4-pixel black lines, no other borders.
+```
+
+### Лист dc6_p1 — Пиромантка, 12 карт
+
+Порядок: p_chain, p_grenade, p_oil, p_sparks, p_eternal, p_ash_eater, p_spark_forge, p_heart, p_sacrifice,
+p_whip, p_keg, p_fire_rain.
+
+```
+Make ONE image, 2048x1152, split into a 4 columns x 3 rows grid of 12 equal cells (4:3 each).
+The hero in every scene is the same pyromancer: a young woman fire mage in a deep purple hooded robe with
+ember-orange trim, a wooden staff topped with a glowing ember, fire around her hands.
+Cells in order:
+1. "Chain Lightning": crackling lightning jumping between three swamp creatures.
+2. "Grenade": a clay fire grenade exploding in a burst of flame and shrapnel.
+3. "Oil Flask": a flask of black oil shattering over enemies, oil dripping, an ember about to ignite it.
+4. "Shower of Sparks": the pyromancer opening her palms, a burst of dancing sparks.
+5. "Eternal Flame": a flame that never dies in an iron brazier, glowing runes circling it.
+6. "Ash Eater": the pyromancer inhaling a swirl of ash from burning pages, her eyes glowing.
+7. "Spark Forge": a small floating anvil of fire, a hammer of flame striking sparks from it.
+8. "Heart of Flame": a glowing fiery heart in her chest, flames wrapping her like armor.
+9. "Sacrificial Fire": the pyromancer burning a paper card in her hand, the fire rising stronger.
+10. "Fire Whip": a whip of fire lashing several burning enemies at once.
+11. "Powder Keg": a barrel of gunpowder exploding, a huge blast of fire and splinters.
+12. "Fire Rain": fiery barrels and burning debris raining down on a swamp.
+STYLE: card illustrations for a dark medieval fantasy roguelike deckbuilder, in the exact same style as the
+previous card illustrations in this chat: richly detailed high-resolution painted pixel-art look, crisp
+edges, warm torch and fire light against cold swamp blues and greens, dramatic rim light, strong
+silhouettes, deep shadows. No text, no letters, no numbers, no frames, no UI. Each cell is ONE readable
+action, subject in the center and upper part of the cell (the lower quarter will be covered by a name
+ribbon). Cells are separated by thin 4-pixel black lines, no other borders.
+```
+
+### Лист dc6_p2 — Пиромантка, 6 карт, «Искра» и «Тина»
+
+Порядок: p_melt, p_smoke, p_sun, p_geyser, p_flame_armor, p_burnout, t_spark, slime_rot.
+
+```
+Make ONE image, 2048x768, split into a 4 columns x 2 rows grid of 8 equal cells (4:3 each).
+The hero is the same pyromancer as before: a young woman fire mage in a deep purple hooded robe with
+ember-orange trim, a staff topped with a glowing ember.
+Cells in order:
+1. "Melt Armor": molten metal dripping off an armored knight's breastplate under her fire.
+2. "Smoke Screen": a thick smoke cloud, the pyromancer's silhouette fading in it, enemies coughing.
+3. "Sun Core": a miniature sun forming between her hands, blinding white-gold light.
+4. "Fire Geyser": a geyser of fire erupting from the ground, enemies tossed into the air.
+5. "Flame Armor": armor of flames around her, an enemy burned just by touching it.
+6. "Burnout": the pyromancer exhausted, ash swirling around her, burnt pages scattering.
+7. "Spark": a single bright spark flying, close-up, a thin trail of embers.
+8. "Swamp Muck": a clump of green swamp slime and rotten weeds stuck to a deck of cards (a junk card).
+STYLE: card illustrations for a dark medieval fantasy roguelike deckbuilder, in the exact same style as the
+previous card illustrations in this chat: richly detailed high-resolution painted pixel-art look, crisp
+edges, warm torch and fire light against cold swamp blues and greens, dramatic rim light, strong
+silhouettes, deep shadows. No text, no letters, no numbers, no frames, no UI. Each cell is ONE readable
+action, subject in the center and upper part of the cell (the lower quarter will be covered by a name
+ribbon). Cells are separated by thin 4-pixel black lines, no other borders.
+```
+
+---
+
+## «Спуск»: значки предметов (DC7)
+
+Предметы (tools/descent_items.py, 61 штука) пока показывают общие значки игры. Нужны **2 листа** по 8×4 — свой
+значок каждому предмету. Значки — в чётком стиле интерфейса «Спуска» (не пиксели): рамку по редкости рисует
+игра.
+
+Как положить в игру: сохранить лист как `assets/art_src/ui/<лист>.png` и запустить
+`python tools/import_descent_art.py assets/art_src/ui/<лист>.png --set <лист> --preview проверка.png`.
+Пурпур вырезается, значок вписывается в 128×128 и сохраняется как `assets/ui/items/<id>.png`. Сумка и полоска
+предметов сразу берут его.
+
+### Лист dc7_items1 — общие предметы, часть 1
+
+Порядок: pen_nib, horn_cleat, wheel, bog_flower, puzzle, inkwell, spin_top, war_treatise · pocketwatch, fan,
+letter_knife, shuriken, kunai, sundial, red_skull, gremlin_horn · charon_ash, dry_branch, herb_pills,
+last_stand, bandage, boots, still_pool, fort_stone · blood_vial, fate_thread, lizard_tail, censer, nunchaku,
+two_faced, bells, snake_skull.
+
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sheet of 32 item icons in a strict
+grid of 8 columns and 4 rows (each cell 192x256 px), each icon about 150x150, centered in its cell, icons
+never touching, no magenta inside the icons. Style: crisp high-resolution painted game icons for a dark
+medieval fantasy roguelike, NOT pixel art; rich but muted colors, a bold readable silhouette, a thin dark
+outline, soft light from the top left with a warm rim light; readable when shown at 26x26. No frames, no
+background, no text, no letters, no numbers.
+Row 1: 1. a raven-feather quill pen with a steel nib dripping red ink; 2. a curved war horn with bronze
+bands; 3. a small ship's steering wheel of dark wood and brass; 4. a glowing pale swamp lily; 5. an old
+wooden puzzle box with brass sliding parts; 6. a glass inkwell with a feather in it; 7. a wooden spinning
+top with motion lines; 8. a leather-bound book with a crossed-swords emblem.
+Row 2: 9. an open brass pocket watch; 10. an ornate carved folding fan; 11. a slim silver letter opener;
+12. a four-pointed steel throwing star; 13. a black throwing dagger with a ring pommel; 14. a small stone
+sundial; 15. a crimson skull with a faint red glow; 16. a twisted little gremlin horn.
+Row 3: 17. a funeral urn leaking grey ash with an old coin on its lid; 18. a dead dry branch with one
+ember-glowing bud; 19. a small cloth pouch spilling green and orange herbal pills; 20. a torn battle banner
+on a broken pole; 21. a roll of tight linen bandage; 22. worn leather boots with small wings at the heels;
+23. a stone bowl of still dark water reflecting the moon; 24. a fortress cornerstone with a carved rune.
+Row 4: 25. a stoppered vial of dark red blood; 26. a spool of glowing golden thread; 27. a curled green
+lizard tail; 28. a hanging brass censer with smoke; 29. wooden nunchaku with a short chain; 30. a two-faced
+stone idol head; 31. a bunch of small brass bells on a cord; 32. a serpent skull with long fangs.
+```
+
+### Лист dc7_items2 — предметы стража и классовые
+
+Порядок: calendar, black_crown, velvet_collar, kettle, cursed_key, rune_pyramid, phylactery, greed_eye ·
+m_whet, m_gutter, m_mirror, m_heavy_shield, m_trophy, m_spurs, h_raven, h_horn · h_owl, h_hide, h_fang,
+h_quiver, p_crucible, p_flint, p_urn, p_salamander · p_melt, p_cold_heart, i_beads, i_bear, i_candle
+(в последнем ряду 3 ячейки пустые).
+
+```
+Make ONE image, 1536x1024, on a solid pure magenta #FF00FF background: a sheet of 29 item icons in a strict
+grid of 8 columns and 4 rows (each cell 192x256 px; the last 3 cells of row 4 stay empty magenta), each icon
+about 150x150, centered in its cell, icons never touching, no magenta inside the icons. Same style as the
+previous icon sheet in this chat: crisp high-resolution painted game icons, NOT pixel art, bold readable
+silhouettes, thin dark outline, soft top-left light, readable at 26x26. No frames, no background, no text.
+Row 1 (powerful cursed boss treasures, slightly sinister, a faint purple glow): 1. a round stone calendar
+disc with carved runes; 2. a black iron crown dripping green slime; 3. a purple velvet collar with a gold
+clasp and a tiny padlock; 4. a soot-black kettle steaming over a small flame; 5. a large ornate key wrapped
+in dark smoke; 6. a small stone pyramid with glowing runes; 7. a dark crystal phylactery with a trapped
+soul light; 8. a gold-ringed gem shaped like an eye with a ruby iris.
+Row 2: 9. a whetstone with a blade edge sparkling on it; 10. a short sword with a deep blood groove,
+dripping; 11. a small polished round duelist's buckler like a mirror; 12. a massive tower shield with iron
+studs; 13. a belt hung with trophies: teeth, rings, a claw; 14. a pair of iron spurs with sharp rowels;
+15. an arrow with black raven-feather fletching; 16. a hunting horn made of antler.
+Row 3: 17. an owl's eye amulet; 18. a folded camouflage cloak of leaves and reeds; 19. a venomous snake fang
+dripping green; 20. a deep leather quiver overflowing with arrows; 21. a glowing crucible with molten
+metal; 22. a flint stone striking bright sparks; 23. a small urn with glowing embers inside; 24. a little
+fire salamander in a glass jar.
+Row 4: 25. a smelting pot held in iron tongs; 26. a heart of black obsidian with frost cracks; 27. a string
+of wooden prayer beads with a carved pagan charm; 28. a bear-claw amulet on a leather cord; 29. a tall wax
+candle with a steady flame.
+```
+
+### Если ChatGPT нарисовал «шахматку» вместо пурпурного
+
+Попросить в том же чате: «Same image, but the background must be a flat solid #FF00FF magenta, not a
+checkerboard and not transparent».

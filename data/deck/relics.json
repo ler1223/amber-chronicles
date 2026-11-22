@@ -1,0 +1,1066 @@
+{
+ "_doc": "Предметы забега (как реликвии StS): срабатывают только при редком условии. Формат — deck/items.py; пишет tools/descent_items.py.",
+ "relics": {
+  "pen_nib": {
+   "name": "Перо-наконечник",
+   "icon": "relic_whetstone",
+   "rarity": "common",
+   "about": "Каждая 10-я сыгранная атака (счёт идёт через все бои): следующая атака — двойной урон.",
+   "on": "play",
+   "do": [
+    {
+     "op": "double_next"
+    }
+   ],
+   "type": "attack",
+   "count": 10,
+   "scope": "run"
+  },
+  "horn_cleat": {
+   "name": "Боевой рог",
+   "icon": "necro_c_banner",
+   "rarity": "common",
+   "about": "Каждый 5-й ход боя: 16 защиты.",
+   "on": "turn",
+   "do": [
+    {
+     "op": "block",
+     "n": 16
+    }
+   ],
+   "every": 5
+  },
+  "wheel": {
+   "name": "Штурвал",
+   "icon": "art_belt_common",
+   "rarity": "common",
+   "about": "На 3-м ходу, если врагов всё ещё 3+: 18 защиты.",
+   "on": "turn",
+   "do": [
+    {
+     "op": "block",
+     "n": 18
+    }
+   ],
+   "turn": 3,
+   "when": [
+    {
+     "k": "foes_min",
+     "n": 3
+    }
+   ]
+  },
+  "bog_flower": {
+   "name": "Болотный цветок",
+   "icon": "mat_herbs",
+   "rarity": "common",
+   "about": "Каждый 6-й ход боя: +3 {res2}.",
+   "on": "turn",
+   "do": [
+    {
+     "op": "resource",
+     "n": 3
+    }
+   ],
+   "every": 6
+  },
+  "puzzle": {
+   "name": "Старая головоломка",
+   "icon": "gem_topaz",
+   "rarity": "common",
+   "about": "HP впервые за бой падает ниже половины: взять 3 карты.",
+   "on": "hp_low",
+   "do": [
+    {
+     "op": "draw",
+     "n": 3
+    }
+   ]
+  },
+  "inkwell": {
+   "name": "Чернильница",
+   "icon": "item_seal",
+   "rarity": "common",
+   "about": "Каждая 15-я сыгранная карта (через все бои): взять 2 карты.",
+   "on": "play",
+   "do": [
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ],
+   "count": 15,
+   "scope": "run"
+  },
+  "spin_top": {
+   "name": "Волчок",
+   "icon": "item_charm",
+   "rarity": "common",
+   "about": "Сыграли последнюю карту из руки: взять карту.",
+   "on": "play",
+   "do": [
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "when": [
+    {
+     "k": "hand_empty"
+    }
+   ]
+  },
+  "war_treatise": {
+   "name": "Трактат о войне",
+   "icon": "gift_word_power",
+   "rarity": "common",
+   "about": "Ход без единой атаки, но с 3+ сыгранными картами: в следующий ход +1 {res}.",
+   "on": "end",
+   "do": [
+    {
+     "op": "next_energy",
+     "n": 1
+    }
+   ],
+   "when": [
+    {
+     "k": "no_attack"
+    },
+    {
+     "k": "played_min",
+     "n": 3
+    }
+   ]
+  },
+  "pocketwatch": {
+   "name": "Карманные часы",
+   "icon": "art_amulet_common",
+   "rarity": "common",
+   "about": "Сыграли за ход 1 карту или ни одной: в следующий ход +3 карты.",
+   "on": "end",
+   "do": [
+    {
+     "op": "next_draw",
+     "n": 3
+    }
+   ],
+   "when": [
+    {
+     "k": "played_max",
+     "n": 1
+    }
+   ]
+  },
+  "fan": {
+   "name": "Резной веер",
+   "icon": "relic_wanderer_cloak",
+   "rarity": "common",
+   "about": "Каждое 3-е умение за ход: 4 защиты.",
+   "on": "play",
+   "do": [
+    {
+     "op": "block",
+     "n": 4
+    }
+   ],
+   "type": "skill",
+   "count": 3,
+   "scope": "turn"
+  },
+  "letter_knife": {
+   "name": "Нож для писем",
+   "icon": "item_dagger",
+   "rarity": "common",
+   "about": "Каждое 3-е умение за ход: 5 урона всем врагам.",
+   "on": "play",
+   "do": [
+    {
+     "op": "damage",
+     "n": 5
+    }
+   ],
+   "type": "skill",
+   "count": 3,
+   "scope": "turn",
+   "aim": "all"
+  },
+  "shuriken": {
+   "name": "Звёздочка",
+   "icon": "necro_s_backstab",
+   "rarity": "common",
+   "about": "Каждая 4-я атака за ход: +1 мощь до конца боя.",
+   "on": "play",
+   "do": [
+    {
+     "op": "strength",
+     "n": 1
+    }
+   ],
+   "type": "attack",
+   "count": 4,
+   "scope": "turn"
+  },
+  "kunai": {
+   "name": "Кунай",
+   "icon": "necro_s_shadow",
+   "rarity": "common",
+   "about": "Каждая 4-я атака за ход: контратака 3.",
+   "on": "play",
+   "do": [
+    {
+     "op": "counter",
+     "n": 3
+    }
+   ],
+   "type": "attack",
+   "count": 4,
+   "scope": "turn"
+  },
+  "sundial": {
+   "name": "Солнечные часы",
+   "icon": "gift_spare_time",
+   "rarity": "common",
+   "about": "Каждая 3-я перетасовка колоды за бой: +2 {res2}.",
+   "on": "shuffle",
+   "do": [
+    {
+     "op": "resource",
+     "n": 2
+    }
+   ],
+   "count": 3,
+   "scope": "battle"
+  },
+  "red_skull": {
+   "name": "Красный череп",
+   "icon": "necro_r_death_blast",
+   "rarity": "uncommon",
+   "about": "HP впервые за бой падает ниже половины: +3 мощи.",
+   "on": "hp_low",
+   "do": [
+    {
+     "op": "strength",
+     "n": 3
+    }
+   ]
+  },
+  "gremlin_horn": {
+   "name": "Рог гремлина",
+   "icon": "gift_pack_call",
+   "rarity": "uncommon",
+   "about": "Двое убиты за один ход: +1 {res} и 2 карты.",
+   "on": "kill",
+   "do": [
+    {
+     "op": "resource",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ],
+   "when": [
+    {
+     "k": "kills_turn",
+     "n": 2
+    }
+   ],
+   "once": "turn"
+  },
+  "charon_ash": {
+   "name": "Пепел Харона",
+   "icon": "mat_bonedust",
+   "rarity": "uncommon",
+   "about": "Карта изгнана: 3 урона всем врагам.",
+   "on": "exhaust",
+   "do": [
+    {
+     "op": "damage",
+     "n": 3
+    }
+   ],
+   "aim": "all"
+  },
+  "dry_branch": {
+   "name": "Сухая ветвь",
+   "icon": "gift_bog_roots",
+   "rarity": "uncommon",
+   "about": "Карта изгнана: в руку случайная карта вашего класса (до конца боя).",
+   "on": "exhaust",
+   "do": [
+    {
+     "op": "add_random",
+     "n": 1
+    }
+   ]
+  },
+  "herb_pills": {
+   "name": "Пилюли травника",
+   "icon": "fx_heal_taken",
+   "rarity": "uncommon",
+   "about": "Сыграли за ход атаку, умение и Силу: снять слабость и уязвимость, +1 {res}, карта.",
+   "on": "play",
+   "do": [
+    {
+     "op": "cleanse"
+    },
+    {
+     "op": "resource",
+     "n": 1
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "when": [
+    {
+     "k": "trio"
+    }
+   ],
+   "once": "turn"
+  },
+  "last_stand": {
+   "name": "Знамя последнего",
+   "icon": "gift_last_stand",
+   "rarity": "uncommon",
+   "about": "Остался последний враг, а у вас HP ниже половины: +3 мощи и 12 защиты.",
+   "on": "last_foe",
+   "do": [
+    {
+     "op": "strength",
+     "n": 3
+    },
+    {
+     "op": "block",
+     "n": 12
+    }
+   ],
+   "when": [
+    {
+     "k": "hp_below",
+     "n": 50
+    }
+   ],
+   "once": "battle"
+  },
+  "bandage": {
+   "name": "Тугая повязка",
+   "icon": "fx_tough",
+   "rarity": "uncommon",
+   "about": "Конец хода, в руке 2+ карты с Сохранением: 8 защиты.",
+   "on": "end",
+   "do": [
+    {
+     "op": "block",
+     "n": 8
+    }
+   ],
+   "when": [
+    {
+     "k": "retained",
+     "n": 2
+    }
+   ]
+  },
+  "boots": {
+   "name": "Сапоги скорохода",
+   "icon": "gift_elusive_step",
+   "rarity": "uncommon",
+   "about": "Каждая 12-я клетка, пройденная за бой: +1 {res}.",
+   "on": "step",
+   "do": [
+    {
+     "op": "resource",
+     "n": 1
+    }
+   ],
+   "count": 12,
+   "scope": "battle"
+  },
+  "still_pool": {
+   "name": "Тихий омут",
+   "icon": "gift_reed_shadow",
+   "rarity": "uncommon",
+   "about": "Ход, в котором вы не двигались и не атаковали: 10 защиты.",
+   "on": "end",
+   "do": [
+    {
+     "op": "block",
+     "n": 10
+    }
+   ],
+   "when": [
+    {
+     "k": "not_walked"
+    },
+    {
+     "k": "no_attack"
+    }
+   ]
+  },
+  "fort_stone": {
+   "name": "Крепостной камень",
+   "icon": "fx_sanctuary",
+   "rarity": "uncommon",
+   "about": "Конец хода с 15+ защиты: половина защиты останется на следующий ход.",
+   "on": "end",
+   "do": [
+    {
+     "op": "fort",
+     "n": 1
+    }
+   ],
+   "when": [
+    {
+     "k": "shield_min",
+     "n": 15
+    }
+   ]
+  },
+  "blood_vial": {
+   "name": "Склянка крови",
+   "icon": "gift_amber_blood",
+   "rarity": "uncommon",
+   "about": "Бой начинается при HP ниже половины: лечение 6 и +2 мощи.",
+   "on": "battle",
+   "do": [
+    {
+     "op": "heal",
+     "n": 6
+    },
+    {
+     "op": "strength",
+     "n": 2
+    }
+   ],
+   "when": [
+    {
+     "k": "hp_below",
+     "n": 50
+    }
+   ]
+  },
+  "fate_thread": {
+   "name": "Нить судьбы",
+   "icon": "gift_fate_threads",
+   "rarity": "uncommon",
+   "about": "Колода перетасована, когда у вас HP ниже половины: 8 защиты и 2 карты.",
+   "on": "shuffle",
+   "do": [
+    {
+     "op": "block",
+     "n": 8
+    },
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ],
+   "when": [
+    {
+     "k": "hp_below",
+     "n": 50
+    }
+   ]
+  },
+  "lizard_tail": {
+   "name": "Хвост ящерицы",
+   "icon": "gift_second_wind",
+   "rarity": "rare",
+   "about": "Раз за забег: смертельный удар оставляет вас с половиной HP.",
+   "mods": {
+    "revive": 1
+   }
+  },
+  "censer": {
+   "name": "Курильница",
+   "icon": "fx_prayer",
+   "rarity": "rare",
+   "about": "Каждый 6-й ход боя: 25 защиты и +1 {res}.",
+   "on": "turn",
+   "do": [
+    {
+     "op": "block",
+     "n": 25
+    },
+    {
+     "op": "resource",
+     "n": 1
+    }
+   ],
+   "every": 6
+  },
+  "nunchaku": {
+   "name": "Нунчаки",
+   "icon": "item_staff",
+   "rarity": "rare",
+   "about": "Каждая 10-я сыгранная атака (через все бои): +1 {res}.",
+   "on": "play",
+   "do": [
+    {
+     "op": "resource",
+     "n": 1
+    }
+   ],
+   "type": "attack",
+   "count": 10,
+   "scope": "run"
+  },
+  "two_faced": {
+   "name": "Двуликий идол",
+   "icon": "item_idol",
+   "rarity": "rare",
+   "about": "Сыграли 6 карт за ход: +1 {res} и 6 защиты.",
+   "on": "play",
+   "do": [
+    {
+     "op": "resource",
+     "n": 1
+    },
+    {
+     "op": "block",
+     "n": 6
+    }
+   ],
+   "when": [
+    {
+     "k": "played_min",
+     "n": 6
+    }
+   ],
+   "once": "turn"
+  },
+  "bells": {
+   "name": "Колокольцы",
+   "icon": "gift_perfect_pitch",
+   "rarity": "rare",
+   "about": "Каждая 5-я созданная за бой карта: 6 урона ближайшему врагу и карта.",
+   "on": "create",
+   "do": [
+    {
+     "op": "damage",
+     "n": 6
+    },
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "count": 5,
+   "scope": "battle",
+   "aim": "nearest"
+  },
+  "snake_skull": {
+   "name": "Змеиный череп",
+   "icon": "necro_m_souls",
+   "rarity": "rare",
+   "about": "Бой начинается против 4+ врагов: все враги уязвимы 3 хода.",
+   "on": "battle",
+   "do": [
+    {
+     "op": "vulnerable",
+     "n": 3
+    }
+   ],
+   "when": [
+    {
+     "k": "foes_min",
+     "n": 4
+    }
+   ],
+   "aim": "all"
+  },
+  "calendar": {
+   "name": "Каменный календарь",
+   "icon": "relic_soul_catcher",
+   "rarity": "rare",
+   "about": "На 7-м ходу боя: 40 урона всем врагам.",
+   "on": "turn",
+   "do": [
+    {
+     "op": "damage",
+     "n": 40
+    }
+   ],
+   "turn": 7,
+   "aim": "all"
+  },
+  "black_crown": {
+   "name": "Чёрная корона",
+   "icon": "art_amulet_legendary",
+   "rarity": "boss",
+   "about": "+1 {res} каждый ход. Минус: в начале боя в колоду замешаны 2 «Тины».",
+   "mods": {
+    "energy": 1,
+    "slime": 2
+   }
+  },
+  "velvet_collar": {
+   "name": "Бархатный ошейник",
+   "icon": "art_ring_legendary",
+   "rarity": "boss",
+   "about": "+1 {res} каждый ход. Минус: за ход можно сыграть основным не больше 6 карт.",
+   "mods": {
+    "energy": 1,
+    "play_limit": 6
+   }
+  },
+  "kettle": {
+   "name": "Котелок бодрости",
+   "icon": "relic_boiling_pot",
+   "rarity": "boss",
+   "about": "+1 {res} каждый ход. Минус: у костра нельзя отдохнуть.",
+   "mods": {
+    "energy": 1,
+    "no_camp_heal": 1
+   }
+  },
+  "cursed_key": {
+   "name": "Проклятый ключ",
+   "icon": "art_talisman_legendary",
+   "rarity": "boss",
+   "about": "+1 {res} каждый ход. Минус: враги начинают бой с +1 мощью.",
+   "mods": {
+    "energy": 1,
+    "foe_strength": 1
+   }
+  },
+  "rune_pyramid": {
+   "name": "Руническая пирамида",
+   "icon": "gem_amethyst",
+   "rarity": "boss",
+   "about": "Карты не сбрасываются в конце хода. Минус: в начале хода на 1 карту меньше.",
+   "mods": {
+    "retain_all": 1,
+    "hand": -1
+   }
+  },
+  "phylactery": {
+   "name": "Филактерия",
+   "icon": "relic_iron_vow",
+   "rarity": "boss",
+   "about": "+1 {res} каждый ход. Минус: в начале каждого боя −6 HP.",
+   "mods": {
+    "energy": 1,
+    "start_hp": 6
+   }
+  },
+  "greed_eye": {
+   "name": "Око жадности",
+   "icon": "gem_ruby",
+   "rarity": "boss",
+   "about": "+1 {res} каждый ход. Минус: в награду за бой — на 1 карту меньше на выбор.",
+   "mods": {
+    "energy": 1,
+    "fewer_rewards": 1
+   }
+  },
+  "m_whet": {
+   "name": "Точило разгона",
+   "icon": "relic_whetstone",
+   "rarity": "uncommon",
+   "about": "Удар с Разгоном 5: цель оглушена.",
+   "on": "play",
+   "do": [
+    {
+     "op": "stun"
+    }
+   ],
+   "hero": "merc",
+   "tag": "Удар",
+   "when": [
+    {
+     "k": "momentum_min",
+     "n": 5
+    }
+   ],
+   "aim": "target"
+  },
+  "m_gutter": {
+   "name": "Кровосток",
+   "icon": "gift_blood_thirst",
+   "rarity": "uncommon",
+   "about": "Враг гибнет с кровотечением 6+: его кровотечение переходит соседям.",
+   "on": "kill",
+   "do": [
+    {
+     "op": "spread",
+     "what": "bleed"
+    }
+   ],
+   "hero": "merc",
+   "when": [
+    {
+     "k": "victim_bleed",
+     "n": 6
+    }
+   ],
+   "aim": "around"
+  },
+  "m_mirror": {
+   "name": "Зерцало дуэлянта",
+   "icon": "gift_duel_honor",
+   "rarity": "rare",
+   "about": "3 контратаки за один ход врагов: +1 мощь до конца боя.",
+   "on": "counter",
+   "do": [
+    {
+     "op": "strength",
+     "n": 1
+    }
+   ],
+   "hero": "merc",
+   "count": 3,
+   "scope": "turn"
+  },
+  "m_heavy_shield": {
+   "name": "Тяжёлый щит",
+   "icon": "necro_g_shield",
+   "rarity": "common",
+   "about": "Конец хода с 20+ защиты: контратака 3.",
+   "on": "end",
+   "do": [
+    {
+     "op": "counter",
+     "n": 3
+    }
+   ],
+   "hero": "merc",
+   "when": [
+    {
+     "k": "shield_min",
+     "n": 20
+    }
+   ]
+  },
+  "m_trophy": {
+   "name": "Трофейный пояс",
+   "icon": "art_belt_epic",
+   "rarity": "rare",
+   "about": "Трое убиты за один ход: +2 мощи до конца боя.",
+   "on": "kill",
+   "do": [
+    {
+     "op": "strength",
+     "n": 2
+    }
+   ],
+   "hero": "merc",
+   "when": [
+    {
+     "k": "kills_turn",
+     "n": 3
+    }
+   ],
+   "once": "turn"
+  },
+  "m_spurs": {
+   "name": "Шпоры",
+   "icon": "gift_battering",
+   "rarity": "common",
+   "about": "Каждая 20-я клетка, пройденная за бой: следующая атака — двойной урон.",
+   "on": "step",
+   "do": [
+    {
+     "op": "double_next"
+    }
+   ],
+   "hero": "merc",
+   "count": 20,
+   "scope": "battle"
+  },
+  "h_raven": {
+   "name": "Вороново оперение",
+   "icon": "arrow_piercing",
+   "rarity": "uncommon",
+   "about": "Каждая 6-я сыгранная Стрела (через все бои): следующая атака — двойной урон.",
+   "on": "play",
+   "do": [
+    {
+     "op": "double_next"
+    }
+   ],
+   "hero": "hunter",
+   "card": "arrow",
+   "count": 6,
+   "scope": "run"
+  },
+  "h_horn": {
+   "name": "Охотничий рог",
+   "icon": "relic_war_drum",
+   "rarity": "uncommon",
+   "about": "Враг попал в капкан: 2 карты и +1 {res}.",
+   "on": "trap",
+   "do": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "resource",
+     "n": 1
+    }
+   ],
+   "hero": "hunter"
+  },
+  "h_owl": {
+   "name": "Глаз совы",
+   "icon": "gift_far_sight",
+   "rarity": "common",
+   "about": "Выстрел с 7+ клеток: метка 6 на цель (раз за ход).",
+   "on": "play",
+   "do": [
+    {
+     "op": "mark",
+     "n": 6
+    }
+   ],
+   "hero": "hunter",
+   "tag": "Выстрел",
+   "when": [
+    {
+     "k": "far",
+     "n": 7
+    }
+   ],
+   "aim": "target",
+   "once": "turn"
+  },
+  "h_hide": {
+   "name": "Засидка",
+   "icon": "item_leather",
+   "rarity": "common",
+   "about": "Ход без движения: в следующий ход +1 карта, следующий выстрел ×2.",
+   "on": "end",
+   "do": [
+    {
+     "op": "next_draw",
+     "n": 1
+    },
+    {
+     "op": "focus"
+    }
+   ],
+   "hero": "hunter",
+   "when": [
+    {
+     "k": "not_walked"
+    }
+   ]
+  },
+  "h_fang": {
+   "name": "Ядовитый клык",
+   "icon": "item_fang",
+   "rarity": "uncommon",
+   "about": "Враг гибнет отравленным 5+: его яд переходит соседям.",
+   "on": "kill",
+   "do": [
+    {
+     "op": "spread",
+     "what": "poison"
+    }
+   ],
+   "hero": "hunter",
+   "when": [
+    {
+     "k": "victim_poison",
+     "n": 5
+    }
+   ],
+   "aim": "around"
+  },
+  "h_quiver": {
+   "name": "Бездонный колчан",
+   "icon": "arrow_storm",
+   "rarity": "rare",
+   "about": "Каждая 8-я созданная за бой карта: +2 {res2}.",
+   "on": "create",
+   "do": [
+    {
+     "op": "resource",
+     "n": 2
+    }
+   ],
+   "hero": "hunter",
+   "count": 8,
+   "scope": "battle"
+  },
+  "p_crucible": {
+   "name": "Горнило",
+   "icon": "mat_emberheart",
+   "rarity": "uncommon",
+   "about": "Перегрев не ранит: лишний жар уходит горением ×2 всем врагам.",
+   "hero": "pyro",
+   "mods": {
+    "overheat_burn": 1
+   }
+  },
+  "p_flint": {
+   "name": "Кремень",
+   "icon": "mat_ember",
+   "rarity": "common",
+   "about": "Каждая 5-я Искра за бой: +2 жара.",
+   "on": "play",
+   "do": [
+    {
+     "op": "resource",
+     "n": 2
+    }
+   ],
+   "hero": "pyro",
+   "card": "t_spark",
+   "count": 5,
+   "scope": "battle"
+  },
+  "p_urn": {
+   "name": "Пепельная урна",
+   "icon": "gift_ash_heart",
+   "rarity": "rare",
+   "about": "Каждая 3-я изгнанная за бой карта: +1 жар в начале каждого хода до конца боя.",
+   "on": "exhaust",
+   "do": [
+    {
+     "op": "heat_regen",
+     "n": 1
+    }
+   ],
+   "hero": "pyro",
+   "count": 3,
+   "scope": "battle"
+  },
+  "p_salamander": {
+   "name": "Саламандра в банке",
+   "icon": "gift_fire_soul",
+   "rarity": "uncommon",
+   "about": "Враг гибнет с горением 6+: его горение переходит соседям.",
+   "on": "kill",
+   "do": [
+    {
+     "op": "spread",
+     "what": "burn"
+    }
+   ],
+   "hero": "pyro",
+   "when": [
+    {
+     "k": "victim_burn",
+     "n": 6
+    }
+   ],
+   "aim": "around"
+  },
+  "p_melt": {
+   "name": "Плавильный тигель",
+   "icon": "art_talisman_rare",
+   "rarity": "uncommon",
+   "about": "Карта за 4+ жара: взять 2 карты.",
+   "on": "play",
+   "do": [
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ],
+   "hero": "pyro",
+   "when": [
+    {
+     "k": "heat_min",
+     "n": 4
+    }
+   ]
+  },
+  "p_cold_heart": {
+   "name": "Остывшее сердце",
+   "icon": "gift_frost_soul",
+   "rarity": "common",
+   "about": "Конец хода с 0 жара после 4+ сыгранных карт: в следующий ход +2 карты и +1 жар.",
+   "on": "end",
+   "do": [
+    {
+     "op": "next_draw",
+     "n": 2
+    },
+    {
+     "op": "next_energy",
+     "n": 1
+    }
+   ],
+   "hero": "pyro",
+   "when": [
+    {
+     "k": "heat_zero"
+    },
+    {
+     "k": "played_min",
+     "n": 4
+    }
+   ]
+  },
+  "i_beads": {
+   "name": "Чётки",
+   "icon": "item_band",
+   "rarity": "uncommon",
+   "about": "Четвёртый свиток в одну статую за ход: 2 свитка и 8 защиты.",
+   "on": "scroll",
+   "do": [
+    {
+     "op": "draw",
+     "n": 2
+    },
+    {
+     "op": "block",
+     "n": 8
+    }
+   ],
+   "hero": "priest",
+   "when": [
+    {
+     "k": "same_statue",
+     "n": 4
+    }
+   ],
+   "once": "turn"
+  },
+  "i_bear": {
+   "name": "Медвежий оберег",
+   "icon": "gift_warden",
+   "rarity": "common",
+   "about": "Осквернена третья статуя за бой: 15 защиты и 2 свитка.",
+   "on": "desecrated",
+   "do": [
+    {
+     "op": "block",
+     "n": 15
+    },
+    {
+     "op": "draw",
+     "n": 2
+    }
+   ],
+   "hero": "priest",
+   "count": 3,
+   "scope": "battle"
+  },
+  "i_candle": {
+   "name": "Свеча бдения",
+   "icon": "fx_vow",
+   "rarity": "common",
+   "about": "Ход, в котором свитки получили все статуи: в следующий ход +1 свиток.",
+   "on": "end",
+   "do": [
+    {
+     "op": "next_draw",
+     "n": 1
+    }
+   ],
+   "hero": "priest",
+   "when": [
+    {
+     "k": "all_fed"
+    }
+   ]
+  }
+ }
+}

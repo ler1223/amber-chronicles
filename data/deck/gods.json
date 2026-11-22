@@ -1,0 +1,148 @@
+{
+ "_doc": "Боги «Спуска» — славянские (docs/descent_heroes2.md, 1.6): божественное прозрение — дар поверх карты (одно на карту). Алтарь на карте этажа и награда стража лестницы предлагают двух богов на выбор, затем — карту под дар. add_do — действия к основному применению, add_if — условие-усиление, plus_reach — к шагу/рывку/подходу/дальности; plus_damage — прибавка к удару карты; needs — какой карте подходит (target — с целью, reach — с движением или дальностью).",
+ "gods": {
+  "perun": {
+   "id": "perun",
+   "name": "Перун",
+   "title": "бог грома",
+   "color": [
+    150,
+    190,
+    255
+   ],
+   "needs": "target",
+   "about": "Молния: карта наносит ещё 3 урона.",
+   "plus_damage": 3,
+   "statue": "totem_rod"
+  },
+  "svarog": {
+   "id": "svarog",
+   "name": "Сварог",
+   "title": "небесный кузнец",
+   "color": [
+    230,
+    150,
+    70
+   ],
+   "about": "Карта даёт ещё 4 защиты.",
+   "add_do": [
+    {
+     "op": "block",
+     "n": 4
+    }
+   ],
+   "statue": "totem_stone_rock"
+  },
+  "stribog": {
+   "id": "stribog",
+   "name": "Стрибог",
+   "title": "дед ветров",
+   "color": [
+    170,
+    220,
+    230
+   ],
+   "needs": "reach",
+   "about": "Шаг, подход и дальность карты — на 1 больше.",
+   "plus_reach": 1,
+   "statue": "totem_spirit_wise"
+  },
+  "yarilo": {
+   "id": "yarilo",
+   "name": "Ярило",
+   "title": "бог весны и солнца",
+   "color": [
+    255,
+    215,
+    110
+   ],
+   "about": "Карта лечит героя на 2.",
+   "add_do": [
+    {
+     "op": "heal",
+     "n": 2
+    }
+   ],
+   "statue": "totem_heal"
+  },
+  "veles": {
+   "id": "veles",
+   "name": "Велес",
+   "title": "владыка Нави",
+   "color": [
+    130,
+    170,
+    90
+   ],
+   "needs": "target",
+   "about": "Цель отравлена: яд 2.",
+   "add_do": [
+    {
+     "op": "poison",
+     "n": 2
+    }
+   ],
+   "statue": "idol"
+  },
+  "mokosh": {
+   "id": "mokosh",
+   "name": "Мокошь",
+   "title": "пряха судьбы",
+   "color": [
+    200,
+    160,
+    230
+   ],
+   "about": "Серия 2: карта срабатывает дважды.",
+   "add_if": [
+    {
+     "when": {
+      "k": "series",
+      "n": 2
+     },
+     "repeat": 1
+    }
+   ],
+   "statue": "totem_spirit_might"
+  },
+  "morana": {
+   "id": "morana",
+   "name": "Морана",
+   "title": "богиня зимы и смерти",
+   "color": [
+    180,
+    220,
+    255
+   ],
+   "needs": "target",
+   "about": "Цель мёрзнет: мороз 3.",
+   "add_do": [
+    {
+     "op": "frost",
+     "n": 3
+    }
+   ],
+   "statue": "ice_idol"
+  },
+  "chernobog": {
+   "id": "chernobog",
+   "name": "Чернобог",
+   "title": "тёмный бог",
+   "color": [
+    120,
+    90,
+    130
+   ],
+   "needs": "target",
+   "about": "Сделка: ещё 6 урона, но герой теряет 2 HP.",
+   "add_do": [
+    {
+     "op": "lose_hp",
+     "n": 2
+    }
+   ],
+   "plus_damage": 6,
+   "statue": "totem_rage_war"
+  }
+ }
+}

@@ -136,7 +136,7 @@ def sp_value(p):
 DIRECT = ("melee", "ranged", "spell")
 
 
-def skill_values(p, sk, power=None):
+def skill_values(p, sk, power=None, mult=1.0):
     """Чистые числа навыка для экрана: [(что, обычное, с критом или None)]. Учитывает стат навыка (атака / сила /
     здоровье), крит (прокачка и вещи уже в прототипе); реакции, бафы в бою и бонусы отряда — нет."""
     crit = p.get("crit_mult", 1.75) if p.get("crit") else None
@@ -144,12 +144,12 @@ def skill_values(p, sk, power=None):
     for eff in _shown(sk.get("effects", [])):
         t = eff["type"]
         if eff.get("of") and (p.get("ref") or eff.get("pct")):
-            k = stat_k(p, eff["of"], eff.get("pct"))
+            k = stat_k(p, eff["of"], eff.get("pct")) * mult
         else:
             pw = p.get("power", 1.0) if power is None else power
             sc = p.get("scale") or {}
             kind = eff.get("kind", "melee" if t in ("push", "rush", "toss") else "spell")
-            k = pw * (sc.get("heal", 1.0) if t in ("heal", "shield") else sc.get(kind, 1.0))
+            k = pw * mult * (sc.get("heal", 1.0) if t in ("heal", "shield") else sc.get(kind, 1.0))
         if t in ("damage", "line", "chain", "push", "rush", "toss", "detonate", "shatter", "collapse") \
                 and eff.get("amount"):
             kind = eff.get("kind", "melee" if t in ("push", "rush", "toss") else "spell")

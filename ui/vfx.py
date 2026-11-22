@@ -1176,7 +1176,9 @@ class VfxWorld:
 
     # ---------- упрощённая отрисовка на CPU (без OpenGL: тесты, --cpu) ----------
 
-    def draw_cpu(self, surf, textures, cache, offset=(0, 0), limit=2500, props=None):
+    def draw_cpu(self, surf, textures, cache, offset=(0, 0), limit=2500, props=None, scale=1.0):
+        """scale — рисовать сразу в кадр крупнее логического (×scale, со сдвигом offset): частицы в полном
+        разрешении экрана («Спуск», deck/ui.py)."""
         import pygame
         from ui.vfx_textures import NAMES, cpu_ids
         groups = self.batches(cpu_ids())
@@ -1186,24 +1188,26 @@ class VfxWorld:
                 img = props.get(p.name)
                 if img is None:
                     continue
-                img = pygame.transform.rotozoom(img, -math.degrees(p.rot), p.scale)
+                img = pygame.transform.rotozoom(img, -math.degrees(p.rot), p.scale * scale)
                 if dim < 1.0:
                     img.set_alpha(int(255 * dim))
-                surf.blit(img, (p.x - img.get_width() / 2 + offset[0], p.y - img.get_height() / 2 + offset[1]))
+                surf.blit(img, (p.x * scale - img.get_width() / 2 + offset[0],
+                                p.y * scale - img.get_height() / 2 + offset[1]))
         for gname in GROUPS:
             rows, add = groups[gname], gname.endswith("add")
             for r in rows[:limit]:
-                w, h = int(r[2] * 2), int(r[3] * 2 * r[5])
+                w, h = int(r[2] * 2 * scale), int(r[3] * 2 * r[5] * scale)
                 a = r[9] * dim
                 if w < 1 or h < 1 or a <= 0.02:
                     continue
                 col = tuple(int(min(1.0, c) * 255) // 32 * 32 for c in r[6:9])
                 lvl = int(a * 8)
-                key = (int(r[10]), min(w, 400) // 4, min(h, 400) // 4, col, lvl, int(math.degrees(r[4])) // 30 % 12)
+                cap = int(400 * scale)
+                key = (int(r[10]), min(w, cap) // 4, min(h, cap) // 4, col, lvl, int(math.degrees(r[4])) // 30 % 12)
                 img = cache.get(key)
                 if img is None:
                     shape = textures[NAMES[int(r[10])]]
-                    img = pygame.transform.smoothscale(shape, (max(1, min(w, 400)), max(1, min(h, 400))))
+                    img = pygame.transform.smoothscale(shape, (max(1, min(w, cap)), max(1, min(h, cap))))
                     if key[5]:
                         img = pygame.transform.rotate(img, -key[5] * 30)
                     img = img.copy()
@@ -1221,5 +1225,6 @@ class VfxWorld:
                     if len(cache) > 3000:
                         cache.clear()
                     cache[key] = img
-                pos = (float(r[0]) - img.get_width() / 2 + offset[0], float(r[1]) - img.get_height() / 2 + offset[1])
+                pos = (float(r[0]) * scale - img.get_width() / 2 + offset[0],
+                       float(r[1]) * scale - img.get_height() / 2 + offset[1])
                 surf.blit(img, pos, special_flags=pygame.BLEND_RGB_ADD if add else 0)

@@ -135,3 +135,101 @@ def test_altar_rolls_offers_spends_souls_and_persists():
     d = run_.to_dict()
     again = X.Expedition.from_dict(X.expedition_data(DATA), d)
     assert again.souls == run_.souls and again.necro_upgrades == run_.necro_upgrades
+
+
+def test_map_altar_button_is_above_torch_and_material_hud():
+    """Кнопка Алтаря душ не должна прятаться под полосой Факелов/Жара и материалами."""
+    import pygame
+    from ui import theme as T
+    from game.expedition_scenes import MapScene
+
+    pygame.init()
+    hero = X.Hero({"uid": "n1", "name": "Некромант", "cls": "necro",
+                   "skills": ["summon_warrior", "corpse_blast", "blood_bones"], "level": 6})
+    run_ = X.Expedition(X.expedition_data(DATA), [hero], seed=3, chapter="crypt")
+
+    class App:
+        exp = run_
+        run = None
+        profile = None
+
+        def switch(self, scene):
+            self.scene = scene
+
+    rect = MapScene(App()).altar_rect()
+    assert rect.top == 14 and rect.bottom == 46
+    assert not rect.colliderect(pygame.Rect(T.SCREEN_W - 420, 84, 300, 14))      # Факелы/Жар
+    assert not rect.colliderect(pygame.Rect(T.SCREEN_W - 26 - 2 * 78, 52, 2 * 78, 24))  # материалы
+    gold_w = T.font(22, True).size(f"Золото: {run_.gold}")[0]
+    assert rect.right <= T.SCREEN_W - 26 - gold_w - 14                          # не наезжает на золото
+
+
+def test_hero_menu_opens_altar_only_for_necromancer():
+    """В меню Некроманта есть вход в Алтарь душ; у других классов его нет."""
+    from game import expedition_scenes as E
+
+    class Profile:
+        def save(self, run):
+            pass
+
+    class App:
+        profile = Profile()
+        neural = None
+
+        def __init__(self, run_):
+            self.exp = run_
+            self.scene = None
+
+        def switch(self, scene):
+            self.scene = scene
+
+    necro = X.Hero({"uid": "n1", "name": "Некромант", "cls": "necro",
+                    "skills": ["summon_warrior", "corpse_blast", "blood_bones"], "level": 6})
+    run_ = X.Expedition(X.expedition_data(DATA), [necro], seed=3)
+    app = App(run_)
+    E.HeroScene(app, 0, back=lambda: None).act("altar")
+    assert isinstance(app.scene, E.AltarScene)
+
+    warrior = X.Hero({"uid": "w1", "name": "Воин", "cls": "warrior", "skills": ["power_strike"], "level": 1})
+    other = X.Expedition(X.expedition_data(DATA), [warrior], seed=4)
+    app2 = App(other)
+    mark = object()
+    app2.scene = mark
+    E.HeroScene(app2, 0, back=lambda: None).act("altar")
+    assert app2.scene is mark
+
+
+def test_altar_escape_saves_purchase():
+    """Закрытие Алтаря по Esc не теряет купленное улучшение."""
+    import pygame
+    from game import expedition_scenes as E
+
+    class Profile:
+        def __init__(self):
+            self.saved = 0
+
+        def save(self, run):
+            self.saved += 1
+
+    class App:
+        neural = None
+
+        def __init__(self, run_, profile):
+            self.exp, self.profile = run_, profile
+
+        def switch(self, scene):
+            self.scene = scene
+
+    hero = X.Hero({"uid": "n1", "name": "Некромант", "cls": "necro",
+                   "skills": ["summon_warrior", "corpse_blast", "blood_bones"], "level": 6})
+    run_ = X.Expedition(X.expedition_data(DATA), [hero], seed=5)
+    run_.souls = 20
+    prof = Profile()
+    app = App(run_, prof)
+    scene = E.AltarScene(app, back=lambda: None)
+    uid = scene.offers[0]
+    scene.act(("take", uid))
+    assert uid in run_.necro_upgrades
+    saved = prof.saved
+    scene.key(pygame.K_ESCAPE)
+    assert prof.saved == saved + 1

@@ -158,6 +158,9 @@ class BattleView:
         self._cpu_tex = None
         self._cpu_cache = {}
         self.simple = False        # сюжет: без подсказок клавиш, журнала и легенды — только нужное в бою
+        self.crisp = False         # «Спуск»: клетка под курсором и кольца у ног — у сцены, чётким слоем
+        self.unit_blits = []       # при crisp: (спрайт, место) фигурок этого кадра
+        self.height_at = None      # «Спуск»: высота земли (deck/terrain.Ground.height_at) для декора
         self.stats_open = False    # панель статов героя (C) — со всеми бафами боя
         from ui.pix_weapons import WEAPON_SKILLS
         self._weapon_ids = WEAPON_SKILLS
@@ -173,6 +176,7 @@ class BattleView:
         self.sprite_rects = []     # (rect, unit) в порядке отрисовки — для клика по спрайту
         self.combat = None
         self._emit_acc = {}
+        self.num_boost, self.num_dy = 0, 0     # цифры урона: прибавка к размеру и сдвиг (пошаговый «Спуск»)
         self._dim = {}
         self._line = ("pierce_line", (235, 240, 255), 1.0, 0)
         self.gl_camera = False     # рисуем через OpenGL — интерфейс над юнитами следует за камерой
@@ -251,7 +255,14 @@ class BattleView:
         ax, ay = P.cell_ground(u.prev_cell)
         bx, by = P.cell_ground(u.cell)
         t = u.move_t
-        t = t * t * (3 - 2 * t)
+        me = getattr(u, "move_ease", None)            # «Спуск»: путь одним движением (deck/battle.walk)
+        ease = me[0] if me and me[1] == u.cell else "inout"
+        if ease == "in":
+            t = t * t
+        elif ease == "out":
+            t = 1 - (1 - t) * (1 - t)
+        elif ease == "inout":
+            t = t * t * (3 - 2 * t)
         return ax + (bx - ax) * t, ay + (by - ay) * t
 
     def feet_pos(self, u):
@@ -387,20 +398,24 @@ class BattleView:
 
     def consume(self, events):
         """События одного кадра симуляции. После атаки/навыка со снарядом связанные события (урон, реакции,
-        смерть) показываются по прилёте — откладываются на время полёта."""
+        смерть) показываются по прилёте — откладываются на время полёта. Возвращает самое долгое время до
+        попадания (пошаговый бой ждёт его, прежде чем применить урон)."""
         delay = 0.0
+        longest = 0.0
         for e in events:
             t = e["t"]
             if t == "log":
                 self.log.append((e["text"], e["color"]))
                 self.log = self.log[-60:]
             elif t in ("attack", "skill"):
-                d = self._action(e)
+                d = self._action(e) or 0.0
+                longest = max(longest, d)
                 delay = 0.0 if e.get("hit") is not None else d   # бой сам применит урон по прилёте
             elif delay > 0 and t in DELAYED:
                 self.vfx.after(delay, lambda e=e: self._event(e))
             else:
                 self._event(e)
+        return longest
 
     def skill_spec(self, sid, sk):
         """Описание визуала навыка с учётом ветки: у ветки может быть свой вид (branches.A/B), ступень и руны
@@ -540,7 +555,8 @@ class BattleView:
             if e.get("cover"):
                 s += " (укр.)"
             if not self._merge_damage(u, e, col):
-                f = self.float_text(u, s, col, 18 if e["amount"] >= 15 else 15, kind="number")
+                f = self.float_text(u, s, col, (18 if e["amount"] >= 15 else 15) + self.num_boost,
+                                    dy=self.num_dy, kind="number")
                 if f is not None:
                     f.dmg = (u, e["amount"], col)
             if e["kind"] in ("melee", "ranged", "spell"):
@@ -1544,6 +1560,7 @@ class BattleView:
         self._draw_objective_ground(c)
         self._draw_targeting(scene)
         self._draw_telegraphs(c)
+        self._draw_intents(c)
         for f in self.fx:
             if f.kind == "tele":                   # метка навыка: заливка нарастает, край пульсирует, к удару — ярко
                 r = FR(f.pos)
@@ -1561,7 +1578,10 @@ class BattleView:
                 pygame.draw.rect(self.overlay, (*f.color, 230), r.inflate(-int(30 * (1 - f.k)), -int(30 * (1 - f.k))), 3)
         self._draw_mechanics_ground(c)
         self._draw_guardian_zones(c)
-        hover = scene.hover_cell if not scene.dragging else None
+        hook = getattr(scene, "ground_hook", None)      # свои подсветки на земле (карточный «Спуск», deck/ui.py)
+        if hook:
+            hook(self.overlay)
+        hover = scene.hover_cell if not scene.dragging and not self.crisp else None
         if hover:                                  # мягкая сетка: клетка под курсором подсвечена на земле
             pygame.draw.rect(self.overlay, (255, 255, 255, 40), FR(hover))
             pygame.draw.rect(self.overlay, (255, 255, 255, 200), FR(hover), 3)
@@ -1688,6 +1708,7 @@ class BattleView:
         self.info_close = None
         self._draw_meteor_warn(surf)
         self.icon_tips = []
+        self._fc = self._forecast(scene)
         for u in c.units:
             if u.alive and u.merged <= 0 and not (scene.dragging and u is scene.picked):
                 self._draw_hud(surf, u)
@@ -1857,8 +1878,10 @@ class BattleView:
         Всё стоящее — билборды: стоят вертикально на своей точке земли, масштаб — по глубине."""
         c = scene.combat
         items = []
+        self.unit_blits = []
+        hz = self.height_at                              # «Спуск»: неплоская земля — декор стоит на ней
         for gx, gy, kind, col, vk, flip in self.painter.props(c):
-            x, y, k = P.project(gx, gy)
+            x, y, k = P.project(gx, gy, hz(gx, gy) if hz else 0.0)
             if -120 < x < T.SCREEN_W + 120 and -40 < y < T.SCREEN_H + 200:
                 items.append((y, 0, "prop", (x, y, k * vk, kind, col, gy, flip)))
         for u in c.units:
@@ -1877,6 +1900,9 @@ class BattleView:
         items += self.pix.world_items(c)
         self.ghosts = [g for g in self.ghosts if self.clock - g[3] < g[4]]
         items += [(g[2] - 0.5, 0, "ghost", g) for g in self.ghosts]
+        life = getattr(self, "life", None)               # живое поле (ui/field_life.py) — только где включено
+        if life is not None:
+            items += life.world_items(self)
         items.sort(key=lambda it: (it[0], it[1]))
         self.sprite_rects = []
         for _, _, kind, obj in items:
@@ -1892,6 +1918,8 @@ class BattleView:
             else:      # живой — или только что павший, чья смерть ещё «в полёте» снаряда
                 selected = obj is scene.selected or obj in getattr(scene, "selected_units", ())
                 self._draw_unit(surf, obj, selected, scene)
+        if life is not None:
+            life.draw_air(surf, self)
 
     def _draw_prop(self, surf, x, y, k, kind, col, gy, flip=False):
         """Укрытие, дерево или декор: билборд у ног (x, y), масштаб k; вдали — тонет в дымке, как и земля."""
@@ -2002,6 +2030,37 @@ class BattleView:
                 pygame.draw.rect(self.overlay, (*col, 50 + int(70 * k)), r)
                 pygame.draw.rect(self.overlay, (*col, 220), r.inflate(-int(60 * (1 - k)), -int(50 * (1 - k))), 2)
 
+    def _draw_intents(self, c):
+        """Бой раундами: что задумали враги в этом раунде — кого бьют (пунктир), куда ударит навык (зона), на кого
+        навык (линия с кольцом). Зона щита/усиления — синим контуром."""
+        R = getattr(c, "rounds", None)
+        if not R:
+            return
+        pulse = 0.5 + 0.5 * math.sin(self.clock * 5)
+        for u in c.alive():
+            it = u.intent if u.team != PLAYER else None
+            if not it or u.obj:
+                continue
+            a = self.flat_feet(u)
+            t = it.get("attack")
+            if t is not None and t.alive:
+                self._dashed(self.overlay, (255, 110, 90, 120), a, self.flat_feet(t), 10)
+            if not it.get("skill") or it.get("done"):
+                continue
+            hostile = it.get("hostile", True)
+            col = (255, 70, 50) if hostile else (110, 170, 255)
+            for p in it.get("zone") or []:
+                r = FR(p)
+                if hostile:
+                    pygame.draw.rect(self.overlay, (*col, int(45 + 40 * pulse)), r)
+                pygame.draw.rect(self.overlay, (*col, 230), r.inflate(-6, -6), 3)
+            tgt = it.get("target")
+            if hasattr(tgt, "cell") and tgt is not u and not it.get("zone"):
+                lc = (255, 150, 60) if hostile else (120, 230, 140)
+                b = self.flat_feet(tgt)
+                pygame.draw.line(self.overlay, (*lc, 210), a, b, 4)
+                pygame.draw.circle(self.overlay, (*lc, 230), b, 20, 4)
+
     def _draw_route(self, start, cells, col, alpha, show_cost=True):
         """Маршрут по клеткам на земле: линия по центрам, точка на каждой клетке, медленные клетки — крупнее."""
         pts = [start] + [P.ground_to_flat(*P.cell_ground(p)) for p in cells]
@@ -2088,7 +2147,8 @@ class BattleView:
         lift = math.sin(math.pi * (1 - a.toss / TOSS_T)) * 60 if a.toss > 0 else 0
         shadow = pygame.Rect(0, 0, int(w * 0.55), max(8, int(w * 0.18)))
         shadow.center = (fx, fy)
-        pygame.draw.ellipse(surf, T.mix(T.BG, (0, 0, 0), 0.5), shadow)
+        if not self.crisp:
+            pygame.draw.ellipse(surf, T.mix(T.BG, (0, 0, 0), 0.5), shadow)
         if u.team == PLAYER:
             pygame.draw.ellipse(surf, T.TEAM_PLAYER, shadow.inflate(8, 4), 2)
         elif u.obj.get("source"):
@@ -2122,7 +2182,7 @@ class BattleView:
         sx, sy = 1 - 0.02 * math.sin(ph), 1 + 0.035 * math.sin(ph)
         if a.hit > 0:
             sx, sy = 1.08, 0.9
-        hop = math.sin(math.pi * u.move_t) * 7 if u.move_t < 1 else 0
+        hop = math.sin(math.pi * u.move_t) * (4 if self.crisp else 7) if u.move_t < 1 else 0
         if a.toss > 0:                                # брошен — летит по дуге
             hop += math.sin(math.pi * (1 - a.toss / TOSS_T)) * 60
         if a.leap is not None:                        # прыжок: присел — высоко вверх — вниз копьём
@@ -2178,14 +2238,16 @@ class BattleView:
         sw = int(w0 * (0.75 if u.boss else 0.62) * (0.7 if u.flying else 1.0))
         shadow = pygame.Rect(0, 0, sw, max(8, sw // 3))
         shadow.center = (fx, fy)
-        pygame.draw.ellipse(surf, T.mix(T.BG, (0, 0, 0), 0.5), shadow)
+        if not self.crisp:                            # «Спуск»: мягкая тень — чётким слоем (deck/hints.py)
+            pygame.draw.ellipse(surf, T.mix(T.BG, (0, 0, 0), 0.5), shadow)
         team = T.TEAM_PLAYER if u.team == PLAYER else T.TEAM_ENEMY
-        if u.boss or u.elite:
+        if (u.boss or u.elite) and not self.crisp:   # crisp — кольца рисует сцена чётким слоем (deck/hints.py)
             pygame.draw.ellipse(surf, (240, 200, 80) if u.boss else (200, 205, 215), shadow.inflate(10, 6), 2)
-        pygame.draw.ellipse(surf, T.SELECT if selected else team, shadow.inflate(4, 2), 3 if selected else 2)
+        if not self.crisp:
+            pygame.draw.ellipse(surf, T.SELECT if selected else team, shadow.inflate(4, 2), 3 if selected else 2)
         if scene.phase == "deploy" and scene.picked is u:
             pygame.draw.ellipse(surf, (120, 255, 140), shadow.inflate(16, 8), 3)
-        if u is self.hover_unit or u is getattr(scene, "pick", None):   # под курсором или в списке врагов
+        if (u is self.hover_unit or u is getattr(scene, "pick", None)) and not self.crisp:   # под курсором / в списке
             col = T.SELECT if getattr(scene, "targeting", None) else (255, 255, 255)
             pulse = int(3 * math.sin(self.clock * 8))
             pygame.draw.ellipse(surf, col, shadow.inflate(20 + pulse, 10 + pulse // 2), 3)
@@ -2197,6 +2259,8 @@ class BattleView:
         if look == "trap":
             self._draw_trap(surf, fx, fy, dk)
         surf.blit(img, rect)
+        if self.crisp:                                # «Спуск»: фигурку кладут ещё раз поверх чётких подсказок
+            self.unit_blits.append((img, rect))
         self._mark_depth(img, rect.topleft, fy)
         req = self._ghost_req.pop(u.id, None)
         if req:                                       # послеобраз: тонированная копия тает на месте
@@ -2334,6 +2398,21 @@ class BattleView:
         if u.shield:                                    # щит — светлая полоса поверх HP
             sw = min(bw, bw * u.shield / u.max_hp)
             pygame.draw.rect(surf, (240, 244, 255), (bx, by - 1, sw, 3))
+        fc = (getattr(self, "_fc", None) or {}).get(self.combat.units.index(u)) if self.combat else None
+        if fc:                                          # прогноз навыка при прицеливании: сколько снимет
+            lost, kill = fc
+            x1 = bx + bw * k
+            x0 = bx if kill else bx + bw * max(0.0, (u.hp + u.shield - lost) / u.max_hp)
+            pulse = 0.55 + 0.45 * math.sin(self.clock * 8)
+            pygame.draw.rect(surf, T.mix((255, 240, 160), (255, 255, 255), pulse), (x0, by, max(2, x1 - x0), 7))
+            T.text(surf, "добьёт" if kill else f"−{lost}", (fx, by - 46), 15,
+                   (255, 120, 90) if kill else (255, 230, 150), True, center=True, shadow=True)
+        R = getattr(self.combat, "rounds", None) if self.combat else None
+        it = u.intent if R and u.team != PLAYER else None
+        if it and it.get("skill") and not it.get("done") and not u.cast:   # раунды: что враг задумал
+            left = max(0.0, it["fire"] - R.t)
+            T.text(surf, f"{it['name']} · {left:.1f}с", (fx, by + 22), 12,
+                   (255, 160, 110) if it.get("hostile", True) else (150, 200, 255), True, center=True, shadow=True)
         if u.cast:
             kc = 1 - u.cast["left"] / u.cast["total"]
             pygame.draw.rect(surf, (10, 7, 5), (bx - 2, by + 8, bw + 4, 6), border_radius=2)
@@ -2381,6 +2460,10 @@ class BattleView:
 
     def _pip_layout(self, u):
         x, y = self.cam(self.feet_pos(u))
+        if getattr(self.combat, "rounds", None):        # раунды: AP нет — только личная шкала
+            step = 12 if u.pp_max <= 6 else max(7, 66 // max(1, u.pp_max - 1))
+            px = x - (u.pp_max - 1) * step / 2
+            return [], [(px + i * step, y + 12) for i in range(u.pp_max)]
         total = u.ap_max + u.pp_max
         step = 12 if total <= 6 else max(7, 66 // max(1, total - 1))  # много пипсов — плотнее, в ширину клетки
         gap = (6 if u.ap_max and u.pp_max else 0)
@@ -2445,6 +2528,24 @@ class BattleView:
         shade.fill((90, 190, 255, 38))
         surf.blit(shade, rect.topleft)
         pygame.draw.rect(surf, (150, 225, 255), rect, 1)
+
+    def _forecast(self, scene):
+        """Прогноз навыка, на который сейчас целятся (по копии боя, sim/rounds.forecast) — раз на цель и миг боя."""
+        u, sid, pos = scene.selected, scene.targeting, scene.hover_cell
+        c = scene.combat
+        if not (u and sid and pos and u.alive) or c.result or sid not in u.skill_defs:
+            self._fc_key = None
+            return None
+        sk = u.skill_defs[sid]
+        tgt = c.unit_at(pos) if sk["target"] in ("enemy", "ally") else pos
+        if tgt is None:
+            return None
+        key = (u.id, sid, pos, round(c.time, 2))
+        if getattr(self, "_fc_key", None) != key:
+            from sim import rounds as RD
+            self._fc_key = key
+            self._fc_val = RD.forecast(c, u, sid, tgt) if c.check_skill(u, sid, tgt)[0] else {}
+        return self._fc_val
 
     def _forecast_damage(self, u, sk, target):
         """Грубый прогноз прямого урона навыка до реакции: цифра для решения, не точная формула."""
@@ -2629,6 +2730,15 @@ class BattleView:
             sr = pygame.Rect(T.GRID_X + 510, 10, 70, 30)
             self.speed_rect = sr
             T.text(surf, f"×{speed:g}", sr.center, 20, T.TEXT_DIM, True, center=True)
+        R = getattr(c, "rounds", None)
+        if R and R.started:                         # бой раундами: номер и ход времени раунда
+            rx = T.GRID_X + 760
+            T.text(surf, f"Раунд {R.n}", (rx, 12), 20, T.AMBER, True)
+            bar = pygame.Rect(rx, 38, 130, 7)
+            pygame.draw.rect(surf, (20, 14, 10), bar, border_radius=3)
+            pygame.draw.rect(surf, T.AMBER, (bar.x, bar.y, int(bar.w * min(1.0, R.t / R.L)), bar.h), border_radius=3)
+            if scene.paused and not c.result:
+                T.text(surf, "приказы · Space — играть раунд", (rx + 140, 30), 14, T.TEXT_DIM, True)
         if scene.paused and not c.result:
             T.text(surf, "ПАУЗА", (T.GRID_X + 590, 16), 24, T.SELECT, True)
         elif scene.slowmo:
@@ -3375,7 +3485,12 @@ class BattleView:
         T.text(surf, f"Атака {atk:.0f}, дальность {u.atk_range}, раз в {u.atk_cd:.2f}с", (x, y), 14, T.TEXT_DIM)
         y += 22
         if u.ap_max:
-            T.text(surf, f"AP {u.ap}/{u.ap_max}  (+1 за {u.ap_regen:g}с)", (x, y), 15, T.AP_COLOR, True)
+            R = getattr(self.combat, "rounds", None)
+            if R:                                      # раунды: вместо AP — навык раунда
+                T.text(surf, "Навык раунда: " + ("потрачен" if u.round_lock else "готов"), (x, y), 15,
+                       (150, 120, 100) if u.round_lock else T.AP_COLOR, True)
+            else:
+                T.text(surf, f"AP {u.ap}/{u.ap_max}  (+1 за {u.ap_regen:g}с)", (x, y), 15, T.AP_COLOR, True)
             y += 20
         gc = self.gauge_color(u)
         core = (u.passive or {}).get("core")
@@ -3427,6 +3542,10 @@ class BattleView:
             ult = bool(sk.get("ult"))
             cd = u.cooldowns.get(sid, 0)
             ok_ap = u.ap >= sk["ap"]
+            R = getattr(self.combat, "rounds", None) if self.combat else None
+            if R:                                      # раунды: откат в раундах, навык раунда, заряды на день
+                cd = R.rounds_left(u, sid) if sid in u.cooldowns else 0
+                ok_ap = not (u.round_lock and R.locks(u, sk)) and u.day_charges.get(sid, 1) > 0
             T.frame(surf, r, 245, accent=T.SELECT if active else (tint["accent"] if ult else tint["dim"]), corners=ult,
                     fill=tint["hot"] if active else (T.mix(tint["fill"], tint["accent"], 0.08) if ult else tint["fill"]),
                     corner=tint["accent"])
@@ -3440,23 +3559,39 @@ class BattleView:
             for j, line in enumerate(T.wrap(sk["name"], 16, name_w, True)[:2]):
                 T.text(surf, line, (r.x + 34, r.y + 8 + j * 18), 16, T.TEXT, True)
             info_y = r.y + 48
-            for k in range(min(sk["ap"], 6)):              # AP — кружками: хватает ли сейчас
-                cxk = r.x + 14 + k * 13
-                full = k < u.ap
-                pygame.draw.circle(surf, (10, 8, 6), (cxk, info_y + 7), 6)
-                pygame.draw.circle(surf, T.AP_COLOR if full else (70, 60, 52), (cxk, info_y + 7), 5)
-            if sk["ap"] == 0:
-                T.text(surf, "без AP", (r.x + 10, info_y), 13, T.TEXT_DIM, True)
+            lead = 13 * max(1, min(sk["ap"], 6))
+            if R:
+                if sid in u.day_charges:
+                    top = (u.proto.get("day_max") or {}).get(sid, u.day_charges[sid])
+                    lab = f"заряды {u.day_charges[sid]}/{top}"
+                    col = (255, 200, 120) if u.day_charges[sid] > 0 else (200, 90, 80)
+                elif R.locks(u, sk):
+                    lab, col = ("навык раунда", T.AP_COLOR) if ok_ap else ("раунд потрачен", (150, 120, 100))
+                else:
+                    lab, col = "свободно", T.TEXT_DIM
+                T.text(surf, lab, (r.x + 10, info_y), 12, col, True)
+                lead = T.font(12, True).size(lab)[0] + 2
+            else:
+                for k in range(min(sk["ap"], 6)):              # AP — кружками: хватает ли сейчас
+                    cxk = r.x + 14 + k * 13
+                    full = k < u.ap
+                    pygame.draw.circle(surf, (10, 8, 6), (cxk, info_y + 7), 6)
+                    pygame.draw.circle(surf, T.AP_COLOR if full else (70, 60, 52), (cxk, info_y + 7), 5)
+                if sk["ap"] == 0:
+                    T.text(surf, "без AP", (r.x + 10, info_y), 13, T.TEXT_DIM, True)
             extra = []
             if sk["cast"]:
                 extra.append(f"каст {sk['cast']:g}с")
             if sk["range"]:
                 extra.append(f"дал. {sk['range']}")
-            if sk["cooldown"]:
+            if R:
+                if R.cd_rounds(sk):
+                    extra.append(f"кд {R.cd_rounds(sk)} р.")
+            elif sk["cooldown"]:
                 extra.append(f"кд {sk['cooldown']:g}с")
-            T.text(surf, fit(" · ".join(extra), 12, cw - 22 - 13 * min(sk["ap"], 6)),
-                   (r.x + 18 + 13 * max(1, min(sk["ap"], 6)), info_y + 1), 12, T.TEXT_DIM)
-            vals = ST.skill_values(u.proto, sk, u.power)
+            T.text(surf, fit(" · ".join(extra), 12, max(20, cw - 22 - lead)),
+                   (r.x + 18 + lead, info_y + 1), 12, T.TEXT_DIM)
+            vals = ST.skill_values(u.proto, sk, u.power, R.skill_k(u) if R else 1.0)   # раунды: навыки сильнее
             y2 = info_y + 20
             if vals:                                   # чистый урон/лечение навыка (без реакций и бафов)
                 what, v, c2 = vals[0]
@@ -3483,7 +3618,10 @@ class BattleView:
                 label = "готов!" if have >= need else f"{what}: {have}/{need}"
                 T.text(surf, fit(label, 12, bar.w - 8), bar.center, 12, (30, 20, 8) if have >= need else T.TEXT,
                        True, center=True)
-            if cd > 0:                                  # перезарядка — затемнение по кругу, как часы
+            if cd > 0 and R:                            # раунды: сколько раундов ждать
+                self._cooldown_pie(surf, r, min(1.0, cd / max(1, R.cd_rounds(sk))))
+                T.text(surf, f"{cd} р.", (r.centerx, r.centery - 4), 22, T.TEXT, True, center=True, shadow=True)
+            elif cd > 0:                                # перезарядка — затемнение по кругу, как часы
                 total = max(0.01, sk["cooldown"] or cd)
                 self._cooldown_pie(surf, r, min(1.0, cd / total))
                 T.text(surf, f"{cd:.1f}", (r.centerx, r.centery - 4), 22, T.TEXT, True, center=True, shadow=True)

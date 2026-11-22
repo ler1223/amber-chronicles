@@ -1,0 +1,53 @@
+{
+ "_doc": "Бой раундами (прототип, docs/vision.md §11): раунд len секунд, пауза перед каждым; у героя 1 навык за раунд, AP нет, откаты в раундах; без приказа герой только бьёт автоатакой. Враги планируют раунд заранее (намерения) и действуют по роли.",
+ "len": 3.0,
+ "aa_mult": 0.6,
+ "skill_mult": 3.0,
+ "enemy_aa": 0.7,
+ "enemy_hp": 0.7,
+ "role_dmg": 4.0,
+ "_balance": "замер tools/rounds_bench.py 16 (2026-11-18): только автоатаки 3/16, автопилот 12/16 (HP 0.62), бот по намерениям 15/16 (HP 0.85, ~55 с)",
+ "cd_ap_k": 1.0,
+ "skills_in_battle": 3,
+ "day": {"ult": 1, "strong": 2, "strong_count": 1, "strong_min_ap": 3},
+ "default_fire": 1.8,
+ "late": 1.2,
+ "roles": {
+  "brute": {"name": "Громила", "desc": "бьёт сильно и по площади — отойди из отмеченной зоны", "skill": "r_smash"},
+  "shooter": {"name": "Стрелок", "desc": "прицельный выстрел по герою — сбей каст или закройся", "skill": "r_aimed"},
+  "caster": {"name": "Заклинатель", "desc": "взрыв по площади в конце раунда — уйди из зоны или сбей", "skill": "r_blast"},
+  "healer": {"name": "Лекарь", "desc": "лечит раненых союзников — сбей каст или убей первым", "skill": "r_mend"},
+  "guard": {"name": "Щитовик", "desc": "закрывает соседей щитом — бей тех, кто вне стены", "skill": "r_guard"}
+ },
+ "by_role": {"melee": "brute", "ranged": "shooter", "caster": "caster", "support": "healer"},
+ "enemy_roles": {
+  "beetle": "brute", "slime": "guard", "toxic_slime": "brute", "slime_king": "brute", "bog_horror": "brute",
+  "bog_croc": "brute", "drowned": "brute", "elder_leech": "brute", "mosquito_swarm": "brute",
+  "bog_archer": "shooter", "will_wisp": "shooter",
+  "frog_shaman": "healer", "bog_hag": "caster", "spore_shroom": "caster",
+  "toad_spearman": "guard"
+ },
+ "skills": {
+  "r_smash": {"name": "Размах", "role": "brute", "ap": 0, "cast": 0.0, "cooldown": 0, "rounds_cd": 2, "range": 2,
+              "target": "cell", "ai": "smash", "radius": 1, "fire": 2.0,
+              "effects": [{"type": "damage", "amount": 2.2, "of": "atk", "pct": true, "kind": "melee", "radius": 1}],
+              "desc": "Через 2 с бьёт по отмеченной зоне: 220% атаки всем героям в ней."},
+  "r_aimed": {"name": "Прицельный выстрел", "role": "shooter", "ap": 0, "cast": 1.4, "cooldown": 0, "rounds_cd": 2,
+              "range": 6, "target": "enemy", "ai": "enemy_in_range", "fire": 2.0,
+              "effects": [{"type": "damage", "amount": 3.0, "of": "atk", "pct": true, "kind": "ranged"}],
+              "desc": "Целится 1.4 с, затем 300% атаки по герою. Оглушение срывает выстрел."},
+  "r_blast": {"name": "Взрыв трясины", "role": "caster", "ap": 0, "cast": 1.0, "cooldown": 0, "rounds_cd": 2,
+              "range": 5, "target": "cell", "ai": "cluster", "radius": 1, "min_targets": 1, "fire": 2.2,
+              "effects": [{"type": "damage", "amount": 2.4, "of": "atk", "pct": true, "kind": "spell", "radius": 1}],
+              "desc": "Колдует 1 с, затем взрыв по зоне: 240% атаки. Уйди из зоны или сбей каст."},
+  "r_mend": {"name": "Обновление", "role": "healer", "ap": 0, "cast": 1.4, "cooldown": 0, "rounds_cd": 2,
+             "range": 5, "target": "ally", "ai": "heal_ally", "fire": 2.0,
+             "effects": [{"type": "heal", "amount": 0.35, "of": "hp", "pct": true}],
+             "desc": "Колдует 1.4 с и лечит раненого союзника на 35% своего HP. Сбей каст или убей лекаря."},
+  "r_guard": {"name": "Стена щитов", "role": "guard", "ap": 0, "cast": 0.0, "cooldown": 0, "rounds_cd": 3,
+              "range": 0, "target": "self", "ai": "guard", "radius": 1, "fire": 0.3,
+              "effects": [{"type": "shield", "amount": 0.25, "of": "hp", "pct": true, "duration": 6, "affects": "allies",
+                           "radius": 1}],
+              "desc": "В начале раунда — щит 25% своего HP себе и соседям на 6 с."}
+ }
+}

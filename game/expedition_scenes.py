@@ -238,10 +238,13 @@ def enter(app, nid):
 def battle(app):
     run = app.exp
     n = run.nodes[run.node]
+    from ui import settings
+    rounds = bool(settings.SETTINGS.get("battle_rounds")) and not getattr(run, "solo", False)
+    run.rounds_mode = rounds                  # бой раундами (прототип): 3 навыка + ульт, заряды на день
     app.switch(BattleScene(run.data, n["encounter"], autoplay=app.autoplay, squad=run.combat_squad(),
                            formation=run.formation, on_finish=lambda c, f: battle_done(app, c, f),
                            enemy_scale=run.enemy_scale(), difficulty=run.difficulty, cheats=app.profile.sandbox,
-                           simple=True, solo=getattr(run, "solo", False), **neural_args(app)))
+                           simple=True, solo=getattr(run, "solo", False), rounds=rounds, **neural_args(app)))
 
 
 def neural_args(app):
@@ -832,6 +835,13 @@ class MapScene(XScene):
                 return nid
         return None
 
+    def altar_rect(self):
+        """Кнопка Алтаря душ — в верхнем ряду слева от золота. Ниже идут материалы, факелы и Жар,
+        поэтому ставить её в правый столбец нельзя: они перекрывают кнопку."""
+        gold = f"Золото: {self.run.gold}"
+        gold_x = T.SCREEN_W - 26 - T.font(22, True).size(gold)[0]
+        return pygame.Rect(gold_x - 14 - 232, 14, 232, 32)
+
     def handle(self, ev):
         if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
             nid = self.node_at(ev.pos)
@@ -881,8 +891,12 @@ class MapScene(XScene):
                     f"  ·  выберите узел: клик или 1–3  ·  F1–F4 / H — лист героя  ·  Esc — в таверну (сохранено)")
         x = self.draw_buffs(surf, 26, 78)
         if run.has_necro():
-            self.button(surf, pygame.Rect(T.SCREEN_W - 248, 72, 222, 32),
-                        f"Алтарь душ · {run.souls}", "altar", accent=(150, 230, 180),
+            accent = (150, 230, 180)
+            if run.souls >= run.altar_cost():                 # можно взять улучшение — мягко пульсирует
+                pulse = 0.5 + 0.5 * math.sin(self.clock * 4)
+                accent = T.mix((120, 200, 150), (225, 255, 225), pulse)
+            self.button(surf, self.altar_rect(),
+                        f"Алтарь душ · {run.souls}", "altar", accent=accent,
                         tip=["Потратить Души на улучшения скелетов", f"Следующее улучшение: {run.altar_cost()}"])
         if run.bag:
             msg = f"В сумке вещей: {len(run.bag)} — наденьте в листе героя"
@@ -1075,6 +1089,9 @@ class HeroScene(XScene):
             self.app.switch(AutocastScene(self.app, idx, back=lambda: self.app.switch(self)))
         elif kind == "chronicle":
             self.app.switch(ChronicleScene(self.app, self.hero, back=lambda: self.app.switch(self)))
+        elif kind == "altar" and h.cls == "necro":
+            save(self.app)
+            self.app.switch(AltarScene(self.app, back=lambda: self.app.switch(self)))
         elif kind == "back":
             save(self.app)
             self.back()
@@ -1086,6 +1103,8 @@ class HeroScene(XScene):
             self.act("autocast")
         elif k == pygame.K_l:
             self.act("chronicle")
+        elif k == pygame.K_t and not self.preview and self.hero.cls == "necro":
+            self.act("altar")
         elif pygame.K_1 <= k <= pygame.K_9 and k - pygame.K_1 < len(self.run.heroes):
             self.idx = k - pygame.K_1
         elif k == pygame.K_TAB:
@@ -1200,6 +1219,7 @@ class HeroScene(XScene):
             self.hit(dr, None, [pd["name"], pd["passive"].get("desc", "")])
         self._draw_skills(surf, p)
         self._draw_gear(surf)
+        self._draw_altar(surf)
         if getattr(self.app, "neural", None) is not None:       # режим обучения: опыт сети героя
             from game.learn_mode import draw_progress
             draw_progress(surf, pygame.Rect(24, T.SCREEN_H - 200, 330, 128), self.app.neural.agent(h).stats,
@@ -1364,6 +1384,45 @@ class HeroScene(XScene):
             if old:
                 tip.append((f"вместо: {X.item_name(old)}", T.TEXT_DIM))
             self.hit(r, ("equip", item["uid"]), tip)
+
+    def _draw_altar(self, surf):
+        """Некромант: Души и вход в Алтарь прямо из листа героя (между боями)."""
+        run, h = self.run, self.hero
+        if self.preview or h.cls != "necro":
+            return
+        left = pygame.Rect(24, 128, 330, 600)
+        box = pygame.Rect(left.x + 12, left.bottom - 156, left.w - 24, 144)
+        pygame.draw.rect(surf, (28, 26, 34), box, border_radius=8)
+        pygame.draw.rect(surf, (110, 170, 120), box, 1, border_radius=8)
+        T.text(surf, "Алтарь душ", (box.x + 12, box.y + 8), 16, BLESS, True)
+        T.text(surf, f"Души: {run.souls}", (box.x + 12, box.y + 30), 15, BLESS, True)
+        T.text(surf, f"Следующее: {run.altar_cost()}", (box.x + 12, box.y + 50), 13, T.TEXT_DIM)
+        got = len(run.necro_upgrades)
+        T.text(surf, f"взято: {got}", (box.right - 82, box.y + 31), 13, T.TEXT_DIM)
+        ix = box.x + 12
+        for uid in run.necro_upgrades[:6]:
+            up = run.altar_upgrade(uid)
+            if not up:
+                continue
+            ir = pygame.Rect(ix, box.y + 70, 26, 26)
+            ic = IC.asset_icon(f"necro_{uid}", 24)
+            if ic:
+                surf.blit(ic, (ir.x + 1, ir.y + 1))
+            else:
+                pygame.draw.circle(surf, BLESS, ir.center, 8, 2)
+            self.hit(ir, None, [(up["name"], BLESS), up.get("desc", "")])
+            ix += 30
+        if not got:
+            T.text(surf, "улучшений пока нет", (box.x + 12, box.y + 74), 13, T.TEXT_DIM)
+        elif got > 6:
+            T.text(surf, f"+{got - 6}", (ix, box.y + 75), 13, T.TEXT_DIM)
+        accent = (120, 200, 150)
+        if run.souls >= run.altar_cost():              # хватает на улучшение — кнопка заметнее
+            pulse = 0.5 + 0.5 * math.sin(self.clock * 4)
+            accent = T.mix((100, 180, 130), (220, 255, 220), pulse)
+        self.button(surf, pygame.Rect(box.x + 12, box.y + 102, box.w - 24, 32),
+                    "Открыть Алтарь (T)", "altar", True, accent,
+                    ["Потратить Души на скелетов и ритуалы", f"Следующее улучшение: {run.altar_cost()}"])
 
 
 # ---------- событие ----------
@@ -1929,7 +1988,7 @@ class AltarScene(XScene):
 
     def key(self, k):
         if k == pygame.K_ESCAPE:
-            self.back()
+            self.act("close")
         elif pygame.K_1 <= k <= pygame.K_9:
             i = k - pygame.K_1
             if i < len(self.offers):

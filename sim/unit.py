@@ -122,6 +122,11 @@ class Unit:
         self.taunt_time = 0.0
         self.cooldowns = {}
         self.reaction_cd = {}
+        # бой раундами (sim/rounds.py): навык раунда потрачен, заряды на день, намерение врага, роль
+        self.round_lock = False
+        self.day_charges = dict(proto.get("day_charges") or {})
+        self.intent = None
+        self.round_role = None
         self.dot_acc = 0.0
         self.hazard_acc = 0.0
 
@@ -204,6 +209,10 @@ class Unit:
         return m
 
     def skill_ready(self, sid, skill):
+        if self.round_lock and (self.team != "player" or skill["ap"] > 0 or skill.get("ult")):
+            return False                     # бой раундами: навык этого раунда уже был
+        if self.day_charges.get(sid, 1) <= 0:
+            return False
         return self.ap >= skill["ap"] and self.cooldowns.get(sid, 0) <= 0
 
     @property

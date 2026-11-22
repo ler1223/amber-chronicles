@@ -25,7 +25,10 @@ class TeamAI:
             if u.ai_timer > 0:
                 continue
             u.ai_timer = self.THINK
-            if getattr(self.brain, "rules", False):
+            if self.c.rounds and self.team != PLAYER:     # бой раундами: враг действует по намерению
+                u.ai_timer = 0.15
+                self.c.rounds.think(self, u)
+            elif getattr(self.brain, "rules", False):
                 self.think(u)
             else:
                 B.apply_action(self.c, u, self.brain.decide(B.observe(self.c, u)))

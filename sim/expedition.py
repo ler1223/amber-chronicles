@@ -455,6 +455,7 @@ class Hero:
         self.task = d.get("task")                        # на поручении: {"id", "left", "chance", "with": [uid]}
         self.rest = int(d.get("rest", 0))                # ранен на поручении: пропускает столько походов
         self.arts = list(d.get("arts") or [])            # надетые артефакты: uid из хранилища таверны
+        self.day_used = dict(d.get("day_used") or {})    # бой раундами: потраченные заряды на день (до привала)
 
     def to_dict(self):
         return {"uid": self.uid, "name": self.name, "cls": self.cls, "rank": self.rank, "trait": self.trait,
@@ -467,7 +468,8 @@ class Hero:
                 "quivers": self.quivers, "motifs": self.motifs, "mark_type": self.mark_type,
                 "ac_order": self.ac_order, "ac_reserve": self.ac_reserve,
                 "falls": self.falls, "chronicle": self.chronicle, "feats": self.feats, "titles": self.titles,
-                "dorm": self.dorm, "task": self.task, "rest": self.rest, "arts": self.arts}
+                "dorm": self.dorm, "task": self.task, "rest": self.rest, "arts": self.arts,
+                "day_used": self.day_used}
 
     @property
     def rpg(self):
@@ -617,6 +619,7 @@ class Expedition:
         self.result = None                   # None | "victory" | "defeat"
         self.counts = {"battle": 0, "elite": 0, "boss": 0, "event": 0}
         self.formation = None
+        self.rounds_mode = False               # бой раундами (прототип): ставит экран боя по настройке
         self.after_battle = []               # действия события, которые сработают после победы
         self.stage = None                    # где сейчас игрок внутри узла (для продолжения после выхода)
         self.uid_n = 0
@@ -1004,6 +1007,8 @@ class Expedition:
         always = [s for s in story_meta.cfg(self.data)["classes"][h.cls].get("always", []) if s in self.data.skills]
         regular = [s for s in h.skills if s != ult and s not in always]
         regular = regular[:story_meta.slots(self.data)]
+        if getattr(self, "rounds_mode", False):      # бой раундами: 3 навыка + ульт
+            regular = regular[:max(0, int(self.data.rounds["skills_in_battle"]) - len(always))]
         out = always + regular + ([ult] if ult in h.skills and ult_open(self.data, h) else [])
         mech = story_meta.mech_of(self.data, h.cls)    # кнопка механики класса (Фитиль) — всегда, клавиша F
         if mech and mech in self.data.skills and mech not in out:
@@ -1214,6 +1219,10 @@ class Expedition:
         for h in self.heroes:
             p = self.proto(h)
             self.preset_autocast(h, p["skill_defs"])
+            if getattr(self, "rounds_mode", False):  # бой раундами: ульт и самый дорогой навык — заряды на день
+                p = dict(p)
+                p["day_max"] = self.day_max(p)
+                p["day_charges"] = {sid: max(0, n - h.day_used.get(sid, 0)) for sid, n in p["day_max"].items()}
             out.append({"cls": h.cls, "proto": p, "hp": self.hp_of(h), "autocast": h.autocast or None,
                         "ac_order": h.ac_order, "ac_reserve": h.ac_reserve})
         return out
@@ -1230,6 +1239,17 @@ class Expedition:
                 st = AC.default_setting(sk)
                 st["on"] = self.autocast_mode == "on"
                 h.autocast[sid] = st
+
+    def day_max(self, p):
+        """Заряды на день (бой раундами): ульт и strong_count самых дорогих навыков (от strong_min_ap AP)."""
+        cfg = self.data.rounds["day"]
+        defs = p["skill_defs"]
+        out = {sid: cfg["ult"] for sid in p["skills"] if defs.get(sid, {}).get("ult")}
+        strong = sorted((sid for sid in p["skills"] if sid in defs and not defs[sid].get("ult")
+                         and defs[sid].get("ap", 0) >= cfg["strong_min_ap"]), key=lambda s: -defs[s]["ap"])
+        for sid in strong[:cfg["strong_count"]]:
+            out[sid] = cfg["strong"]
+        return out
 
     def heal_all(self, pct):
         for h in self.heroes:
@@ -1827,6 +1847,8 @@ class Expedition:
         learned = []
         dying = []                                   # третье падение за поход — гибель насовсем
         for h, u in zip(self.heroes, units):
+            for sid, n in (u.proto.get("day_max") or {}).items():   # бой раундами: заряды на день
+                h.day_used[sid] = n - u.day_charges.get(sid, n)
             h.autocast = u.autocast
             h.ac_order, h.ac_reserve = list(u.ac_order), dict(u.ac_reserve)     # приоритет, поправленный в бою
             if combat.result == "victory":
@@ -2015,6 +2037,7 @@ class Expedition:
 
     def camp_rest(self):
         for h in self.heroes:
+            h.day_used = {}                      # привал: заряды на день вернулись
             if h.wounded:
                 self._keep_hp(lambda h=h: setattr(h, "wounded", False))
         self.heal_all(self.cfg["camp_heal"])

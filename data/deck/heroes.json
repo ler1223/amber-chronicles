@@ -1,0 +1,292 @@
+{
+ "_doc": "Герои «Спуска» (docs/descent.md). У каждого своя механика, без общего шаблона: Наёмник — Разгон; Охотница — пассивка на выбор (дистанция / метка добычи / колчан); Пиромантка — жар вместо энергии, карты с уровнями за 1–3 жара.",
+ "order": [
+  "merc",
+  "hunter",
+  "pyro",
+  "priest"
+ ],
+ "heroes": {
+  "merc": {
+   "name": "Наёмник",
+   "sprite": "warrior",
+   "hp": 80,
+   "energy": 4,
+   "mechanic": "momentum",
+   "about": "Ближний бой, толчки и столкновения.",
+   "rule": "Разгон: каждая клетка, пройденная за ход, даёт +1 к урону следующего удара (до 5). Удар тратит разгон; разгон 3+ ещё и толкает дальше на 1. В конце хода разгон гаснет.",
+   "momentum_max": 5,
+   "starter": [
+    "strike",
+    "strike",
+    "strike",
+    "strike",
+    "defend",
+    "defend",
+    "defend",
+    "lunge_rush",
+    "lunge_rush",
+    "lunge",
+    "shield_ram",
+    "m_hit_back"
+   ],
+   "rewards": [
+    "sweep",
+    "wall_smash",
+    "riposte",
+    "body_slam",
+    "blood_sweep",
+    "battle_rage",
+    "charge",
+    "brace",
+    "hook",
+    "war_cry",
+    "m_ram",
+    "m_inertia",
+    "m_halt",
+    "m_run",
+    "m_flurry",
+    "m_wallbash",
+    "m_counter",
+    "m_ambush",
+    "m_trophy",
+    "m_duel",
+    "m_shieldbreak",
+    "m_stomp",
+    "m_temper",
+    "m_drill",
+    "m_rally",
+    "m_bloodpact",
+    "m_shieldwall",
+    "m_hit_back",
+    "m_bastion",
+    "m_leech",
+    "m_rend",
+    "m_open",
+    "m_blade_storm",
+    "m_duelist",
+    "m_riposte",
+    "m_meet",
+    "m_rising",
+    "m_crush",
+    "m_leader_cry",
+    "m_limit",
+    "m_knives",
+    "m_blood_trail",
+    "m_frenzy",
+    "m_runner",
+    "m_last_word",
+    "m_unbreak",
+    "m_butcher"
+   ],
+   "hand": 6
+  },
+  "hunter": {
+   "name": "Охотница",
+   "sprite": "archer",
+   "hp": 70,
+   "energy": 3,
+   "mechanic": "hunter",
+   "about": "Дальний бой: держать дистанцию, отскоки, ловушки.",
+   "rule": "Выбери пассивку перед спуском — от неё зависит стиль игры.",
+   "passives": {
+    "range": {
+     "name": "Дальний выстрел",
+     "desc": "Дальние атаки: +1 урона за каждую клетку до цели сверх 3 (до +4). Враг вплотную — уходи."
+    },
+    "mark": {
+     "name": "Метка добычи",
+     "desc": "В начале боя ближайший враг — Добыча: по ней +3 урона. Добыча пала — метка переходит на ближайшего, +1 энергия и +1 карта."
+    },
+    "quiver": {
+     "name": "Колчан",
+     "desc": "В начале каждого хода в руку — Стрела (0 энергии, 3 урона по обзору, сгорает). Карты могут добавлять ещё стрел."
+    }
+   },
+   "starter": [
+    "h_shot",
+    "h_shot",
+    "h_shot",
+    "h_shot",
+    "h_dodge",
+    "h_dodge",
+    "h_dodge",
+    "h_kick",
+    "h_backstep",
+    "h_aimed",
+    "h_shoot_roll"
+   ],
+   "rewards": [
+    "h_volley",
+    "h_poison",
+    "h_pin",
+    "h_long",
+    "h_marking",
+    "h_fill",
+    "h_horn",
+    "h_trap",
+    "h_evade",
+    "h_focus",
+    "h_last",
+    "h_trail",
+    "h_shoot_roll",
+    "h_brush",
+    "h_herbs",
+    "h_jagged",
+    "h_tendon",
+    "h_pierce",
+    "h_barrage",
+    "h_full_quiver",
+    "h_rain",
+    "h_spikes",
+    "h_pit",
+    "h_net",
+    "h_finish",
+    "h_patience",
+    "h_master_quiver",
+    "h_toxic",
+    "h_deadeye",
+    "h_knife",
+    "h_ambush2",
+    "h_lure"
+   ],
+   "hand": 6
+  },
+  "pyro": {
+   "name": "Пиромантка",
+   "sprite": "mage",
+   "hp": 72,
+   "energy": 0,
+   "mechanic": "heat",
+   "about": "Огонь по зонам и горение. Вместо энергии — жар.",
+   "rule": "Жар — её валюта: карты не тратят энергию, у карт уровни за 1, 2 и 3 жара (колесо над картой — выбрать). +1 жар в начале хода, простое действие карт — «Раздуть» (+1 жар). Жар копится, но выше 8 в конце хода — перегрев: 2 урона себе за каждую единицу сверх.",
+   "heat_start": 2,
+   "heat_turn": 2,
+   "overheat": 8,
+   "heat_max": 12,
+   "overheat_dmg": 2,
+   "starter": [
+    "p_bolt",
+    "p_bolt",
+    "p_bolt",
+    "p_bolt",
+    "p_ward",
+    "p_ward",
+    "p_ward",
+    "p_stride",
+    "p_stride",
+    "p_fireball",
+    "p_ashstep"
+   ],
+   "rewards": [
+    "p_flash",
+    "p_wall",
+    "p_stoke",
+    "p_phoenix",
+    "p_meteor",
+    "p_cool",
+    "p_lance",
+    "p_ember",
+    "p_blaze",
+    "p_kindle",
+    "p_barrier",
+    "p_ashstep",
+    "p_breath",
+    "p_chain",
+    "p_grenade",
+    "p_oil",
+    "p_sparks",
+    "p_eternal",
+    "p_ash_eater",
+    "p_spark_forge",
+    "p_heart",
+    "p_sacrifice",
+    "p_whip",
+    "p_keg",
+    "p_fire_rain",
+    "p_melt",
+    "p_smoke",
+    "p_sun",
+    "p_geyser",
+    "p_flame_armor",
+    "p_burnout"
+   ],
+   "hand": 6
+  },
+  "priest": {
+   "name": "Жрец",
+   "sprite": "priest",
+   "hp": 52,
+   "energy": 0,
+   "mechanic": "idols",
+   "about": "Сам не бьёт — молится. Статуи его богов падают на поле, свитки исполняет бог статуи.",
+   "rule": "Свиток тянут на статую — бог исполняет все его действия по-своему; ступень I–IV — новый эффект. Свитки бесплатны, +2 за ход (до 5). Ходит на 3. Глубже — свитки толще.",
+   "passives": {
+    "storm": {
+     "name": "Гроза и Навь",
+     "gods": [
+      "perun",
+      "veles",
+      "mokosh"
+     ],
+     "desc": "Перун, Велес, Мокошь: молнии по мокрым, яд и топь, нити судьбы."
+    },
+    "forge": {
+     "name": "Кузня и ветер",
+     "gods": [
+      "svarog",
+      "stribog",
+      "yarilo"
+     ],
+     "desc": "Сварог, Стрибог, Ярило: щиты и молот, ветер толкает, солнце лечит."
+    },
+    "winter": {
+     "name": "Зима и тьма",
+     "gods": [
+      "morana",
+      "chernobog",
+      "perun"
+     ],
+     "desc": "Морана, Чернобог, Перун: мороз по мокрым, тёмные сделки, гроза."
+    },
+    "random": {
+     "name": "Случайные боги",
+     "random": 3,
+     "desc": "Каждый бой — 3 случайных бога из восьми (проверить всех)."
+    }
+   },
+   "starter": [
+    "sc_attack",
+    "sc_attack",
+    "sc_attack",
+    "sc_defense",
+    "sc_defense",
+    "sc_move",
+    "sc_curse",
+    "sc_gift",
+    "sc_summon",
+    "sc_defense_relay"
+   ],
+   "rewards": [
+    "sc_attack",
+    "sc_defense",
+    "sc_move",
+    "sc_curse",
+    "sc_gift",
+    "sc_summon",
+    "sc_attack_chorus",
+    "sc_curse_chorus",
+    "sc_defense_relay",
+    "sc_move_relay",
+    "sc_curse_relay",
+    "sc_gift_relay",
+    "sc_summon_relay",
+    "sc_defense_double",
+    "sc_gift_double"
+   ]
+  }
+ },
+ "tokens": [
+  "arrow"
+ ]
+}

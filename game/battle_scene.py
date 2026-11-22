@@ -34,8 +34,9 @@ class BattleScene:
 
     def __init__(self, data, encounter_index=0, autoplay=False, squad=None, formation=None, on_finish=None,
                  enemy_scale=None, scout_hp=False, fx=None, difficulty="normal", cheats=False, tutorial=None,
-                 simple=False, names=None, solo=False, neural=None, neural_done=None):
+                 simple=False, names=None, solo=False, neural=None, neural_done=None, rounds=False):
         self.data = data
+        self.rounds = rounds          # бой раундами (прототип, sim/rounds.py): пауза перед каждым раундом
         self.neural = neural          # режим обучения: neural(combat) → контроллер нейросетей (sim/neural.py)
         self.neural_done = neural_done
         self.solo = solo              # одиночка: один герой, выбор с него не спадает, камера едет за ним
@@ -71,11 +72,12 @@ class BattleScene:
         teams = (PLAYER, ENEMY) if self.autoplay else (ENEMY,)
         self.combat = Combat(self.data, self.encounter_index, ai_teams=teams, squad=self.squad,
                              player_positions=self.positions.get(self.encounter_index) or self.formation,
-                             enemy_scale=self.enemy_scale, fx=self.fx, difficulty=self.difficulty)
+                             enemy_scale=self.enemy_scale, fx=self.fx, difficulty=self.difficulty,
+                             rounds=self.rounds)
         self.view.reset(self.combat)
         self.phase = "battle" if self.autoplay else "deploy"
         self.paused = not self.autoplay
-        self.auto_pause = bool(self.on_finish) and not self.autoplay and not self.view.simple
+        self.auto_pause = bool(self.on_finish) and not self.autoplay and not self.view.simple and not self.rounds
         self._auto_hp_cd = 0.0
         self.slowmo = False
         self.view.speed_rect = None
@@ -128,6 +130,10 @@ class BattleScene:
         self.drag_start = None
         self.paused = True
         self.combat.assign_initial_targets(PLAYER)
+        R = self.combat.rounds
+        if R and not R.started:                   # раунд 1 — сразу: враги задумали ход, игрок отдаёт приказы
+            R.begin()
+            R.awaiting = False
         self.say("Бой начался. Space — снять паузу")
 
     @property
@@ -164,6 +170,14 @@ class BattleScene:
             self.combat.step()
             self.acc -= self.combat.dt
             steps += 1
+            R = self.combat.rounds
+            if R and R.awaiting:                  # новый раунд: враги задумали ход — пауза на приказы
+                R.awaiting = False
+                if not self.autoplay and not self.combat.result:
+                    self.paused = True
+                    self.acc = 0.0
+                    self.say(f"Раунд {R.n}: приказы — Space, играть раунд")
+                    break
         if self._auto_hp_cd > 0:
             self._auto_hp_cd = max(0.0, self._auto_hp_cd - real_dt)
         if self.auto_pause and not self.paused and not self.combat.result:

@@ -26,13 +26,14 @@ OPTIONS = [
      ["авто", "вкл"]),
     ("autocast_start", "Автокаст в начале похода", ["default", "on", "off"],
      ["как задумано", "всё включено", "всё выключено"]),
+    ("battle_rounds", "Бой раундами (прототип)", [False, True], ["выкл", "вкл"]),
     ("fx_style", "Стиль огня и льда (F9)", ["old", "pixel", "flipbook", "shader", "mesh", "fluid"],
      ["старые", "пиксельные", "флипбуки Blender", "шейдеры", "меш-эффекты", "симуляция"]),
 ]
 DEFAULTS = {"bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "window": "auto",
             "sprite_res": 32, "fx_style": "pixel", "autocast_start": "default", "battle_speed": 1,
             "fx_alpha": 1.0, "text_status": True, "text_skills": True, "text_numbers": True,
-            "gl_safe_upload": False}
+            "gl_safe_upload": False, "battle_rounds": False}
 STYLES = next(o[2] for o in OPTIONS if o[0] == "fx_style")
 
 
