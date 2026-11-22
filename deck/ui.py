@@ -2953,6 +2953,10 @@ class StarterDeckScreen:
         self.rects = []
         self.deck_rects = []
         self.reading = None
+        self.W, self.H = T.SCREEN_W, T.SCREEN_H
+        self.canvas = None
+        self.card_w = 132
+        self.card_h = round(self.card_w * CF.FH / CF.FW)
         self.confirm_rect = pygame.Rect(T.SCREEN_W - 300, T.SCREEN_H - 58, 270, 44)
         self.back_rect = pygame.Rect(320, T.SCREEN_H - 58, 210, 44)
         self.toast = None
@@ -2969,9 +2973,15 @@ class StarterDeckScreen:
     def ready(self):
         return len(self.selected) == 4
 
+    def _leave(self):
+        if self.canvas is not None:
+            self.canvas.reset_layout()
+            self.canvas = None
+
     def finish(self):
         if not self.ready:
             return False
+        self._leave()
         self.game.start_run(self.hero, self.variant, starter=self.basic + self.selected)
         return True
 
@@ -2995,17 +3005,17 @@ class StarterDeckScreen:
         return None
 
     def layout(self):
-        per = 7
-        w, h = 112, 168
         gap = 9
-        x0 = 332
+        x0 = self.right_x + 12
         top = 326
+        per = max(4, (self.right_w - 24) // (self.card_w + gap))
         rows = -(-len(self.pool) // per)
-        view_h = T.SCREEN_H - 58 - top
-        self.max_scroll = max(0, rows * (h + 8) - view_h)
+        view_h = self.H - 58 - top
+        self.max_scroll = max(0, rows * (self.card_h + 8) - view_h)
         self.scroll = max(0, min(self.scroll, self.max_scroll))
-        self.rects = [(pygame.Rect(x0 + (i % per) * (w + gap),
-                                   top + (i // per) * (h + 8) - self.scroll, w, h), c)
+        self.rects = [(pygame.Rect(x0 + (i % per) * (self.card_w + gap),
+                                   top + (i // per) * (self.card_h + 8) - self.scroll,
+                                   self.card_w, self.card_h), c)
                       for i, c in enumerate(self.pool)]
 
     def handle(self, ev):
@@ -3017,11 +3027,13 @@ class StarterDeckScreen:
             self.scroll -= ev.y * 100
         elif ev.type == pygame.KEYDOWN:
             if ev.key == pygame.K_ESCAPE:
+                self._leave()
                 self.game.new_run()
             elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
                 self.finish()
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
             if self.back_rect.collidepoint(ev.pos):
+                self._leave()
                 self.game.new_run()
                 return
             if self.confirm_rect.collidepoint(ev.pos):
@@ -3045,21 +3057,36 @@ class StarterDeckScreen:
                     return
 
     def draw(self, surf):
+        if G.is_canvas(surf):                                   # широкий экран: используем боковые поля
+            self.canvas = surf
+            nw, nh = surf.native.get_size()
+            self.W = max(T.SCREEN_W, round(T.SCREEN_H * nw / max(1, nh)))
+            self.H = T.SCREEN_H
+            surf.set_layout(self.W, self.H)
+        else:
+            self.W, self.H = T.SCREEN_W, T.SCREEN_H
+        self.card_w = 132 if self.W < 1500 else 150
+        self.card_h = round(self.card_w * CF.FH / CF.FW)
+        self.left_w = 300 if self.W < 1500 else 350
+        self.right_x = 16 + self.left_w + 18
+        self.right_w = self.W - self.right_x - 18
+        self.back_rect = pygame.Rect(self.right_x, self.H - 58, 210, 44)
+        self.confirm_rect = pygame.Rect(self.W - 300, self.H - 58, 270, 44)
         backdrop(surf, 205)
-        T.text(surf, f"Стартовая колода · {self.h['name']}", (T.SCREEN_W // 2, 22), 27, T.AMBER,
+        T.text(surf, f"Стартовая колода · {self.h['name']}", (self.W // 2, 22), 27, T.AMBER,
                True, center=True, shadow=True)
         passive = (self.h.get("passives") or {}).get(self.variant, {})
-        sub = " · ".join(x for x in (passive.get("name", ""), f"базовых: 6", f"выбрано: {len(self.selected)}/4") if x)
-        T.text(surf, sub, (T.SCREEN_W // 2, 53), 14, T.TEXT_DIM, center=True)
+        sub = " · ".join(x for x in (passive.get("name", ""), "базовых: 6", f"выбрано: {len(self.selected)}/4") if x)
+        T.text(surf, sub, (self.W // 2, 53), 14, T.TEXT_DIM, center=True)
 
         # ---------- слева: собранная колода ----------
-        lr = pygame.Rect(16, 76, 292, T.SCREEN_H - 150)
+        lr = pygame.Rect(16, 76, self.left_w, self.H - 150)
         T.frame(surf, lr, 232, accent=T.AMBER, fill=(24, 19, 15))
         T.text(surf, f"Колода  {len(self.deck_ids())}/10", (lr.x + 14, lr.y + 8), 18, T.AMBER, True)
         T.text(surf, "повторяющиеся карты показаны как ×N", (lr.x + 14, lr.y + 32), 11, T.TEXT_DIM)
         self.deck_rects = []
-        seen = 0
-        cw, ch = 76, 114
+        cw = 78 if self.left_w < 330 else 90
+        ch = round(cw * CF.FH / CF.FW)
         for i, (cid, n) in enumerate(self.deck_counts()):
             c = M.Card(cid, self.data["cards"]["cards"])
             r = pygame.Rect(lr.x + 14 + (i % 2) * (cw + 10), lr.y + 58 + (i // 2) * (ch + 8), cw, ch)
@@ -3067,14 +3094,13 @@ class StarterDeckScreen:
             if n > 1:
                 T.text(surf, f"×{n}", (r.right - 8, r.bottom - 16), 14, T.AMBER, True, center=True)
             self.deck_rects.append((r, c))
-            seen += 1
         if not self.selected:
             T.text(surf, "Добавьте 4 карты из 1 тира", (lr.centerx, lr.bottom - 24), 12, T.TEXT_DIM, center=True)
         T.text(surf, "Клик по карте колоды — убрать выбранную копию", (lr.centerx, lr.bottom - 8), 10,
                T.TEXT_DIM, center=True)
 
         # ---------- справа сверху: герой и пассивка ----------
-        tr = pygame.Rect(320, 76, T.SCREEN_W - 338, 178)
+        tr = pygame.Rect(self.right_x, 76, self.right_w, 178)
         T.frame(surf, tr, 232, accent=(200, 180, 110), fill=(24, 20, 16))
         img = self.game.hero_img(self.h["sprite"], 1.15)
         surf.blit(img, (tr.x + 16, tr.y + 18))
@@ -3095,7 +3121,7 @@ class StarterDeckScreen:
             T.text(surf, ln, (tx, tr.bottom - 38 + i * 14), 12, (200, 190, 170))
 
         # ---------- справа снизу: доступные карты ----------
-        br = pygame.Rect(320, 264, T.SCREEN_W - 338, T.SCREEN_H - 330)
+        br = pygame.Rect(self.right_x, 264, self.right_w, self.H - 330)
         T.frame(surf, br, 232, accent=(120, 170, 220), fill=(20, 18, 16))
         T.text(surf, "Доступные карты · 1 тир", (br.x + 14, br.y + 8), 16, (150, 210, 255), True)
         T.text(surf, "Нажмите карту, чтобы добавить · Shift — подробное чтение",
@@ -3113,10 +3139,8 @@ class StarterDeckScreen:
         surf.set_clip(None)
 
         if self.toast:
-            T.text(surf, self.toast[0], (T.SCREEN_W // 2, T.SCREEN_H - 88), 14, (255, 180, 120),
+            T.text(surf, self.toast[0], (self.W // 2, self.H - 88), 14, (255, 180, 120),
                    center=True, shadow=True)
-        T.text(surf, "Каждая карта 1 тира — одна копия; повторный клик добавляет ещё",
-               (320, T.SCREEN_H - 70), 11, T.TEXT_DIM)
         button(surf, self.back_rect, "Назад (Esc)", self.mouse)
         button(surf, self.confirm_rect, "В подземелье" if self.ready else f"Выберите ещё {4 - len(self.selected)}",
                self.mouse, on=self.ready, primary=True)

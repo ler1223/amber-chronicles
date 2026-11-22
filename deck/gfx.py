@@ -28,14 +28,26 @@ class Canvas(pygame.Surface):
     def __init__(self, native):
         super().__init__((1, 1), pygame.SRCALPHA)
         self.native = native
+        self.LW, self.LH = LW, LH
         w, h = native.get_size()
-        self.S = min(w / LW, h / LH)
-        self.ox = (w - LW * self.S) / 2
-        self.oy = (h - LH * self.S) / 2
+        self.S = min(w / self.LW, h / self.LH)
+        self.ox = (w - self.LW * self.S) / 2
+        self.oy = (h - self.LH * self.S) / 2
         self.pixel = False             # мир с пиксельными фигурками: всё увеличивать ближайшими пикселями
         self._tick, self._turns = -1, 0  # дорогие повороты карт за кадр (blit_hd)
         self._pxtick, self._seen, self._seen_new = -1, set(), set()
         self._px = {}                  # готовые увеличения: (id картинки, размер) → (картинка, увеличенная)
+
+    def set_layout(self, lw, lh):
+        """Сменить логическую ширину сцены (широкий экран) и заново вписать её в окно."""
+        self.LW, self.LH = max(1, int(lw)), max(1, int(lh))
+        w, h = self.native.get_size()
+        self.S = min(w / self.LW, h / self.LH)
+        self.ox = (w - self.LW * self.S) / 2
+        self.oy = (h - self.LH * self.S) / 2
+
+    def reset_layout(self):
+        self.set_layout(LW, LH)
 
     # --- пересчёт ---
     def pt(self, p):
@@ -53,20 +65,20 @@ class Canvas(pygame.Surface):
         return 0 if not v else max(1, round(v * self.S))
 
     def content(self):
-        return self.rect((0, 0, LW, LH))
+        return self.rect((0, 0, self.LW, self.LH))
 
     # --- поверхность ---
     def get_size(self):
-        return (LW, LH)
+        return (self.LW, self.LH)
 
     def get_width(self):
-        return LW
+        return self.LW
 
     def get_height(self):
-        return LH
+        return self.LH
 
     def get_rect(self, **kw):
-        return pygame.Rect(0, 0, LW, LH).move(0, 0) if not kw else pygame.Rect(0, 0, LW, LH)
+        return pygame.Rect(0, 0, self.LW, self.LH)
 
     def blit_world(self, src):
         """Кадр поля 1280×800 — растянуть целиком (быстро; пиксель-арт остаётся пиксельным)."""
@@ -165,7 +177,7 @@ class Canvas(pygame.Surface):
         self.native.set_clip(self.rect(rect) if rect is not None else None)
 
     def get_clip(self):
-        return pygame.Rect(0, 0, LW, LH)
+        return pygame.Rect(0, 0, self.LW, self.LH)
 
     def copy(self):
         return self.native.copy()
