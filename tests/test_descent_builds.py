@@ -60,7 +60,9 @@ def test_new_school_tags_are_derived():
 def test_all_new_hunter_cards_can_be_played():
     data = M.load()
     new = ("h_scope", "h_snipe", "h_steady", "h_mark_burst", "h_mark_web", "h_hunt",
-           "h_echo_shot", "h_rapid", "h_arrow_well", "h_quiver_echo")
+           "h_echo_shot", "h_rapid", "h_arrow_well", "h_quiver_echo",
+           "h_chain_1", "h_chain_2", "h_chain_3", "h_chain_finish", "h_chain_draw",
+           "h_chain_guard", "h_chain_mark", "h_chain_song")
     for cid in new:
         run = M.Run(data=data, seed=4, hero="hunter", variant="mark")
         b = Battle(ED, run, run.fights[0], seed=4)
@@ -105,6 +107,51 @@ def test_quiver_rewards_guarantee_arrow_cards():
     for _ in range(12):
         offers = {c.cid for c in run.reward_offer()}
         assert offers & creators, offers
+
+
+def test_chain_variant_cascades_from_two_shots():
+    data = M.load()
+    run = M.Run(data=data, seed=11, hero="hunter", variant="chain")
+    assert len(run.deck) == 11
+    assert {"h_chain_1", "h_chain_2", "h_chain_3", "h_chain_draw", "h_chain_guard"} <= {c.cid for c in run.deck}
+    assert "h_chain_mark" in data["heroes"]["heroes"]["hunter"]["rewards_by_variant"]["chain"]
+    b = Battle(ED, run, run.fights[0], seed=11)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    foe.hp = foe.max_hp = 999
+    for cid in ("h_shot", "h_shot", "h_chain_1", "h_chain_2", "h_chain_3", "h_chain_finish",
+                "h_chain_guard", "h_chain_mark"):
+        b.hand.append(M.Card(cid, run.defs))
+    b.energy = 9
+    for cid in ("h_shot", "h_shot"):
+        c = next(c for c in b.hand if c.cid == cid)
+        finish(b.play(c, "main", foe))
+    assert b.played >= 8
+    assert b.chain_drawn == 2                              # пассивка Цепной реакции
+    assert len(b.hand) >= 8                                # большая рука после каскада
+    assert h.shield > 0                                   # защитная цепочка сыграла сама
+    assert any(c.cid == "h_chain_mark" for c in b.discard + b.hand)  # мост тоже сработал
+    assert foe.hp < 999
+
+
+def test_chain_quiver_item_buffs_chain_damage():
+    data = M.load()
+    run = M.Run(data=data, seed=12, hero="hunter", variant="chain")
+    run.relics = [dict(data["relics"]["relics"]["chain_quiver"], id="chain_quiver")]
+    b = Battle(ED, run, run.fights[0], seed=12)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    foe.hp = foe.max_hp = 99
+    c = M.Card("h_chain_1", run.defs)
+    b.hand.append(c)
+    b.energy = 9
+    hp = foe.hp
+    finish(b.play(c, "main", foe))
+    assert hp - foe.hp == 6                                # 4 базовых + 2 от Колчана эха
 
 
 def test_tag_items_passively_buff_cards():

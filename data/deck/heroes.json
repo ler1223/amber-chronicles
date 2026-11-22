@@ -101,6 +101,10 @@
     "quiver": {
      "name": "Колчан",
      "desc": "Стрела в руку каждый ход. Колода: стрелы, добор и повторные выстрелы."
+    },
+    "chain": {
+     "name": "Цепная реакция",
+     "desc": "[Цепочка] сама играется на [Выстрел] 2/3/4/5. Первые две цепочки за ход берут карту."
     }
    },
    "starter": [
@@ -159,7 +163,15 @@
     "h_rapid",
     "h_quiver_echo",
     "h_aimed",
-    "h_arrow_well"
+    "h_arrow_well",
+    "h_chain_1",
+    "h_chain_2",
+    "h_chain_3",
+    "h_chain_finish",
+    "h_chain_draw",
+    "h_chain_song",
+    "h_chain_guard",
+    "h_chain_mark"
    ],
    "hand": 6,
    "starter_by_variant": {
@@ -201,6 +213,19 @@
      "h_shoot_roll",
      "h_barrage",
      "h_rapid"
+    ],
+    "chain": [
+     "h_shot",
+     "h_shot",
+     "h_shot",
+     "h_chain_1",
+     "h_chain_1",
+     "h_chain_2",
+     "h_chain_3",
+     "h_chain_draw",
+     "h_chain_guard",
+     "h_arrow_well",
+     "h_dodge"
     ]
    },
    "rewards_by_variant": {
@@ -246,6 +271,27 @@
      "h_shoot_roll",
      "h_evade",
      "h_rain"
+    ],
+    "chain": [
+     "h_chain_1",
+     "h_chain_2",
+     "h_chain_3",
+     "h_chain_finish",
+     "h_chain_draw",
+     "h_chain_guard",
+     "h_chain_mark",
+     "h_chain_song",
+     "h_echo_shot",
+     "h_rapid",
+     "h_arrow_well",
+     "h_fill",
+     "h_full_quiver",
+     "h_master_quiver",
+     "h_focus",
+     "h_evade",
+     "h_volley",
+     "h_barrage",
+     "h_trail"
     ]
    },
    "reward_guarantee": {
@@ -254,6 +300,11 @@
      "h_full_quiver",
      "h_master_quiver",
      "h_arrow_well"
+    ],
+    "chain": [
+     "h_chain_1",
+     "h_chain_2",
+     "h_chain_draw"
     ]
    }
   },

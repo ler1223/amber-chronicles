@@ -2917,16 +2917,17 @@ class HeroSelect:
             y = rich_rect.y + hgt + 14
             if h.get("passives"):                              # Охотница: пассивка на выбор
                 compact = len(h["passives"]) > 3                 # много наборов — плотнее
-                step = 60 if compact else 80
+                step = 50 if compact else 80
                 for k, (pid, p) in enumerate(h["passives"].items()):
                     pr = pygame.Rect(r.x + 14, y + k * step, w - 28, step - 6)
                     on = self.variant[hid] == pid
                     T.frame(surf, pr, 235, accent=(255, 210, 120) if on else T.PANEL_EDGE,
                             fill=(60, 44, 24) if on else (34, 26, 20))
-                    T.text(surf, ("● " if on else "○ ") + p["name"], (pr.x + 10, pr.y + 5), 15,
+                    T.text(surf, ("● " if on else "○ ") + p["name"], (pr.x + 10, pr.y + 4), 14,
                            (255, 220, 140) if on else T.TEXT, True)
-                    for j, line in enumerate(T.wrap(p["desc"], 12, pr.w - 20)[:2 if compact else 3]):
-                        T.text(surf, line, (pr.x + 12, pr.y + 26 + j * 15), 12, T.TEXT_DIM)
+                    size, line_h, lines = (10, 11, 2) if compact else (12, 15, 3)
+                    for j, line in enumerate(T.wrap(p["desc"], size, pr.w - 20)[:lines]):
+                        T.text(surf, line, (pr.x + 12, pr.y + 21 + j * line_h), size, T.TEXT_DIM)
                     self.hits.append((pr, ("variant", hid, pid)))
             else:                                               # стартовые карты — лица
                 seen = []

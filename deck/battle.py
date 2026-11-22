@@ -108,6 +108,7 @@ class Battle:
         self.walked = 0                                   # клеток героем за ход (С разбега)
         self.echoed = set()                               # Отклик/Цепочка: какие карты уже сработали в этот ход
         self._free_cast = False                           # Цепочка: карта играется без стоимости
+        self.chain_drawn = 0                              # Цепная реакция Охотницы: добор за цепочки
         self.queue = []                                   # события для Отклика: (вид, юнит)
         self.guard = []                                   # карты, ждущие в руке ход врага (отклик на события)
         self.empower = {}                                 # «Следующая карта [Тег]»: бонус урона
@@ -650,6 +651,7 @@ class Battle:
         self.collide_k = 1
         self.played = 0
         self.turn_tags, self.walked, self.echoed = [], 0, set()
+        self.chain_drawn = 0
         self.empower = {}
         for c in self.guard:                                             # ждали ход врага и не сработали — в сброс
             if c in self.hand:
@@ -1017,23 +1019,35 @@ class Battle:
             yield from self.fire_echo(c, None)
 
     def chains(self):
-        """Цепочка: карта с этим тегом играется сама, когда выполнено её условие."""
-        for c in list(self.hand):
-            ch = c.d.get("chain")
-            if not ch or c.uid in self.echoed or self.result or not self.met(ch["when"]):
-                continue
-            target = self.chain_target(c)
-            if target is None:
-                continue
-            self.echoed.add(c.uid)
-            self.say(f"Цепочка: {c.name}", (170, 255, 170))
-            self.fx("chain", unit=self.hero, uid=c.uid, target=target)
-            old = self._free_cast
-            self._free_cast = True
-            try:
-                yield from self.play(c, "main", target, free=True)
-            finally:
-                self._free_cast = old
+        """Цепочка: карта с этим тегом играется сама, когда выполнено её условие.
+        После розыгрыша пересматриваем руку: добор мог принести следующую цепочку."""
+        while not self.result:
+            acted = False
+            for c in list(self.hand):
+                ch = c.d.get("chain")
+                if not ch or c.uid in self.echoed or not self.met(ch["when"]):
+                    continue
+                target = self.chain_target(c)
+                if target is None:
+                    continue
+                self.echoed.add(c.uid)
+                self.say(f"Цепочка: {c.name}", (170, 255, 170))
+                self.fx("chain", unit=self.hero, uid=c.uid, target=target)
+                old = self._free_cast
+                self._free_cast = True
+                try:
+                    yield from self.play(c, "main", target, free=True)
+                    yield from self.items.fire("chain", card=c)
+                    if self.mech == "hunter" and self.variant == "chain" and self.chain_drawn < 2:
+                        self.chain_drawn += 1
+                        self.draw(1)
+                        self.say("Цепная реакция: карта", (180, 255, 190))
+                finally:
+                    self._free_cast = old
+                acted = True
+                break
+            if not acted:
+                return
 
     def chain_target(self, c):
         """Куда сама сыграет карта Цепочки: атака — лучшая цель, шаг — первая доступная клетка."""

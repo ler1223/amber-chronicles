@@ -1261,6 +1261,28 @@
    ],
    "tag": "Комбо",
    "once": "turn"
+  },
+  "chain_quiver": {
+   "name": "Колчан эха",
+   "icon": "arrow_storm",
+   "rarity": "rare",
+   "about": "Карты [Цепочка]: +2 урона; первая цепочка за ход берёт карту.",
+   "on": "chain",
+   "do": [
+    {
+     "op": "draw",
+     "n": 1
+    }
+   ],
+   "hero": "hunter",
+   "tag": "Цепочка",
+   "once": "turn",
+   "tag_bonus": [
+    {
+     "tag": "Цепочка",
+     "damage": 2
+    }
+   ]
   }
  }
 }

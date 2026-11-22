@@ -4,7 +4,7 @@
 
 Предмет: {id, name, icon, rarity: common|uncommon|rare|boss|shop, hero?, about, on, …фильтры, do, aim}.
   on     — событие боя: battle, turn, play, kill, hit, exhaust, create, shuffle, step, end, hp_low, last_foe,
-           trap, counter, scroll, desecrated.
+           trap, counter, scroll, desecrated, chain.
   фильтры: tag / type / card (что сыграно), turn (номер хода), every (каждые N ходов), when — список проверок
            состояния (no_attack, played_max, hand_min, hand_empty, shield_min, not_walked, hp_below, trio,
            victim_bleed, victim_burn, momentum_min, far, heat_min, foes_min), count+scope — счётчик (run | battle

@@ -29016,6 +29016,1227 @@
      ]
     }
    ]
+  },
+  "h_chain_1": {
+   "ill": [
+    "mage_gas",
+    0.57,
+    0.5,
+    0.7
+   ],
+   "art": "item_bow",
+   "name": "Первое эхо",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ],
+    "vfx": "aimed_shot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Резонанс",
+    "Цепочка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Эхо и метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Эхо и взгляд",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Далёкое эхо",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разбега",
+       "name": "Эхо на ходу",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 2
+    },
+    "once": "turn"
+   }
+  },
+  "h_chain_2": {
+   "ill": [
+    "runaway_apprentice",
+    0.52,
+    0.53,
+    0.5
+   ],
+   "art": "item_bow",
+   "name": "Второе эхо",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ],
+    "vfx": "aimed_shot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Резонанс",
+    "Цепочка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Эхо и метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Эхо и взгляд",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Далёкое эхо",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разбега",
+       "name": "Эхо на ходу",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 3
+    },
+    "once": "turn"
+   }
+  },
+  "h_chain_3": {
+   "ill": [
+    "mage_gas",
+    0.56,
+    0.53,
+    0.7
+   ],
+   "art": "item_bow",
+   "name": "Третье эхо",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 6
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ],
+    "vfx": "aimed_shot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Резонанс",
+    "Цепочка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Эхо и метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Эхо и взгляд",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Далёкое эхо",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разбега",
+       "name": "Эхо на ходу",
+       "main": {
+        "target": "reach",
+        "reach": 2,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 4
+    },
+    "once": "turn"
+   }
+  },
+  "h_chain_finish": {
+   "ill": [
+    "cryo_pond",
+    0.54,
+    0.52,
+    0.5
+   ],
+   "art": "item_bow",
+   "name": "Последнее эхо",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5,
+      "per": {
+       "what": "tag:Цепочка",
+       "k": 2
+      }
+     }
+    ],
+    "vfx": "headshot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Резонанс",
+    "Цепочка",
+    "Комбо"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7,
+          "per": {
+           "what": "tag:Цепочка",
+           "k": 2
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "Глубже",
+       "name": "Последнее эхо",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4,
+          "per": {
+           "what": "tag:Цепочка",
+           "k": 3
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Эхо и метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "tag:Цепочка",
+           "k": 2
+          }
+         },
+         {
+          "op": "mark",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Эхо и дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "tag:Цепочка",
+           "k": 2
+          }
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Эхо и брешь",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5,
+          "per": {
+           "what": "tag:Цепочка",
+           "k": 2
+          }
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 5
+    },
+    "once": "turn"
+   }
+  },
+  "h_chain_draw": {
+   "ill": [
+    "mirror_pool",
+    0.48,
+    0.53,
+    0.5
+   ],
+   "art": "arrow_piercing",
+   "name": "Раскрыть колчан",
+   "cost": 0,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 2
+     }
+    ],
+    "vfx": "fletching"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Комбо"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Больше карт",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С щитом",
+       "name": "Колчан и щит",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 4
+         }
+        ]
+       }
+      },
+      {
+       "label": "Со стрелой",
+       "name": "Стрела в руке",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "add_card",
+          "n": 1,
+          "card": "arrow"
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Колчан и метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_chain_song": {
+   "ill": [
+    "plague_village",
+    0.53,
+    0.49,
+    0.7
+   ],
+   "art": "gift_prey",
+   "name": "Песнь цепи",
+   "cost": 2,
+   "type": "power",
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "play",
+     "tag": "Цепочка",
+     "do": [
+      {
+       "op": "draw",
+       "n": 1
+      }
+     ],
+     "once": true
+    }
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Цепочка",
+    "Комбо"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Щедрее",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Цепочка",
+         "do": [
+          {
+           "op": "draw",
+           "n": 2
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Песнь и дыхание",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Цепочка",
+         "do": [
+          {
+           "op": "resource",
+           "n": 1
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Песнь и метка",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Цепочка",
+         "do": [
+          {
+           "op": "mark",
+           "n": 1
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "С щитом",
+       "name": "Песнь и щит",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Цепочка",
+         "do": [
+          {
+           "op": "block",
+           "n": 4
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Песнь и брешь",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Цепочка",
+         "do": [
+          {
+           "op": "vulnerable",
+           "n": 1
+          }
+         ],
+         "once": true
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_chain_guard": {
+   "ill": [
+    "reed_child",
+    0.54,
+    0.57,
+    0.45
+   ],
+   "art": "gift_elusive_step",
+   "name": "Тень за спиной",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 5
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Цепочка",
+    "Защита"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Прочнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Тень и дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Тень и метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Тень и дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Тень и брешь",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 2
+    },
+    "once": "turn"
+   }
+  },
+  "h_chain_mark": {
+   "ill": [
+    "magpie_nest",
+    0.55,
+    0.52,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Метка эха",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "mark",
+      "n": 2
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ],
+    "vfx": "aimed_shot"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Резонанс",
+    "Цепочка",
+    "Метка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "Глубже метка",
+       "name": "Метка эха",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "mark",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Метка и дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "name": "Метка и брешь",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Далёкая метка",
+       "main": {
+        "target": "enemy",
+        "range": 7,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "chain": {
+    "when": {
+     "k": "resonance",
+     "tag": "Выстрел",
+     "n": 2
+    },
+    "once": "turn"
+   }
   }
  }
 }

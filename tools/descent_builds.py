@@ -218,6 +218,87 @@ def adds(cards):
                                                    "repeat": 1}), "Резонанс колчана"),
             V("С энергией", me(op("add_card", 2, card="arrow"), op("energy", 1)), "Стрелы и дыхание"),
         ], vfx="fletching")
+    # ---------- chain: рука, добор и каскад резонанса ----------
+    def chain_shot(cid, name, dmg, threshold, draw=1, cost=1, tags=("Выстрел", "Резонанс", "Цепочка"),
+                   ill_src="h_echo_shot", dx=0.04, dy=0.01):
+        base = shot(6, D(dmg), op("draw", draw))
+        c = card(name, "attack", cost, base, {"target": "cell_step", "step": 1, "do": []},
+                 shot_art["art"], ill_from(cards, ill_src, dx, dy), list(tags), [
+                     V("Сильнее", bump(base)),
+                     V("С меткой", add_op(base, op("mark", 2)), "Эхо и метка"),
+                     V("С добором", add_op(base, op("draw", 1)), "Эхо и взгляд"),
+                     V("Дальше", shot(7, D(dmg), op("draw", draw)), "Далёкое эхо"),
+                     V("С разбега", {"target": "reach", "reach": 2,
+                                     "do": [D(max(2, dmg - 1)), op("draw", 1)]}, "Эхо на ходу"),
+                 ], vfx="aimed_shot")
+        c["chain"] = {"when": {"k": "resonance", "tag": "Выстрел", "n": threshold}, "once": "turn"}
+        out[cid] = c
+
+    chain_shot("h_chain_1", "Первое эхо", 4, 2, ill_src="h_echo_shot", dx=0.04, dy=0.01)
+    chain_shot("h_chain_2", "Второе эхо", 5, 3, ill_src="h_rapid", dx=0.05, dy=0.02)
+    chain_shot("h_chain_3", "Третье эхо", 6, 4, ill_src="h_barrage", dx=0.06, dy=0.03)
+    finish = shot(6, D(5, per={"what": "tag:Цепочка", "k": 2}))
+    out["h_chain_finish"] = card(
+        "Последнее эхо", "attack", 2, finish, {"target": "cell_step", "step": 1, "do": []},
+        shot_art["art"], ill_from(cards, "h_long", 0.04, 0.02), ["Выстрел", "Резонанс", "Цепочка", "Комбо"], [
+            V("Сильнее", bump(finish)),
+            V("Глубже", shot(6, D(4, per={"what": "tag:Цепочка", "k": 3})), "Последнее эхо"),
+            V("С меткой", add_op(finish, op("mark", 3)), "Эхо и метка"),
+            V("С добором", add_op(finish, op("draw", 2)), "Эхо и дыхание"),
+            V("С уязвимостью", add_op(finish, op("vulnerable", 2)), "Эхо и брешь"),
+        ], vfx="headshot")
+    out["h_chain_finish"]["chain"] = {"when": {"k": "resonance", "tag": "Выстрел", "n": 5}, "once": "turn"}
+
+    chain_mark_use = shot(6, D(3), op("mark", 2), op("draw", 1))
+    out["h_chain_mark"] = card(
+        "Метка эха", "attack", 1, chain_mark_use, {"target": "cell_step", "step": 1, "do": []},
+        mark_art["art"], ill_from(cards, "h_marking", 0.05, 0.02), ["Выстрел", "Резонанс", "Цепочка", "Метка"], [
+            V("Сильнее", bump(chain_mark_use)),
+            V("Глубже метка", shot(6, D(3), op("mark", 3), op("draw", 1)), "Метка эха"),
+            V("С добором", shot(6, D(3), op("mark", 2), op("draw", 2)), "Метка и дыхание"),
+            V("С уязвимостью", shot(6, D(3), op("mark", 2), op("vulnerable", 1), op("draw", 1)),
+              "Метка и брешь"),
+            V("Дальше", shot(7, D(4), op("mark", 2), op("draw", 1)), "Далёкая метка"),
+        ], vfx="aimed_shot")
+    out["h_chain_mark"]["chain"] = {"when": {"k": "resonance", "tag": "Выстрел", "n": 2}, "once": "turn"}
+
+    chain_guard = me(B(5), op("draw", 1))
+    out["h_chain_guard"] = card(
+        "Тень за спиной", "skill", 1, chain_guard, {"target": "cell_step", "step": 1, "do": []},
+        cards["h_dodge"]["art"], ill_from(cards, "h_dodge", 0.04, 0.02), ["Цепочка", "Защита"], [
+            V("Прочнее", me(B(7), op("draw", 1))),
+            V("С добором", me(B(5), op("draw", 2)), "Тень и дыхание"),
+            V("С меткой", me(B(5), op("draw", 1), op("mark", 1)), "Тень и метка"),
+            V("С энергией", me(B(5), op("draw", 1), op("energy", 1)), "Тень и дыхание"),
+            V("С уязвимостью", me(B(5), op("vulnerable", 1)), "Тень и брешь"),
+        ])
+    out["h_chain_guard"]["chain"] = {"when": {"k": "resonance", "tag": "Выстрел", "n": 2}, "once": "turn"}
+
+    chain_draw = me(op("draw", 2))
+    out["h_chain_draw"] = card(
+        "Раскрыть колчан", "skill", 0, chain_draw, {"target": "cell_step", "step": 1, "do": []},
+        arrow_art["art"], ill_from(cards, "h_focus", -0.02, 0.03), ["Комбо"], [
+            V("Больше карт", me(op("draw", 3))),
+            V("С щитом", me(op("draw", 2), B(4)), "Колчан и щит"),
+            V("Со стрелой", me(op("draw", 2), op("add_card", 1, card="arrow")), "Стрела в руке"),
+            V("С энергией", me(op("draw", 1), op("energy", 1)), "Второе дыхание"),
+            V("С меткой", me(op("draw", 2), op("mark", 1)), "Колчан и метка"),
+        ], vfx="fletching")
+    chain_song = me(power={"on": "play", "tag": "Цепочка", "do": [op("draw", 1)], "once": True})
+    out["h_chain_song"] = card(
+        "Песнь цепи", "power", 2, chain_song, {"target": "cell_step", "step": 1, "do": []},
+        mark_art["art"], ill_from(cards, "h_patience", 0.03, -0.01), ["Цепочка", "Комбо"], [
+            V("Щедрее", me(power={"on": "play", "tag": "Цепочка", "do": [op("draw", 2)], "once": True})),
+            V("С энергией", me(power={"on": "play", "tag": "Цепочка", "do": [op("resource", 1)],
+                                      "once": True}), "Песнь и дыхание"),
+            V("С меткой", me(power={"on": "play", "tag": "Цепочка", "do": [op("mark", 1)],
+                                    "once": True}), "Песнь и метка"),
+            V("С щитом", me(power={"on": "play", "tag": "Цепочка", "do": [op("block", 4)],
+                                   "once": True}), "Песнь и щит"),
+            V("С уязвимостью", me(power={"on": "play", "tag": "Цепочка",
+                                         "do": [op("vulnerable", 1)], "once": True}), "Песнь и брешь"),
+        ])
+
     quiver = me(power={"on": "play", "tag": "Выстрел", "aim": "nearest",
                        "do": [op("damage", 2)]})
     out["h_quiver_echo"] = card(
@@ -278,6 +359,8 @@ def main():
                  "h_dodge", "h_dodge", "h_trail", "h_net", "h_aimed"],
         "quiver": ["h_shot", "h_shot", "h_fill", "h_fill", "h_arrow_well", "h_volley",
                    "h_dodge", "h_dodge", "h_shoot_roll", "h_barrage", "h_rapid"],
+        "chain": ["h_shot", "h_shot", "h_shot", "h_chain_1", "h_chain_1", "h_chain_2",
+                  "h_chain_3", "h_chain_draw", "h_chain_guard", "h_arrow_well", "h_dodge"],
     }
     # Ядро школы: из него выпадает 2 карты из 3, третья — «свободная» из общего пула.
     h["rewards_by_variant"] = {
@@ -288,8 +371,13 @@ def main():
         "quiver": ["h_fill", "h_full_quiver", "h_master_quiver", "h_arrow_well", "h_barrage",
                    "h_volley", "h_echo_shot", "h_rapid", "h_quiver_echo", "h_knife", "h_shoot_roll",
                    "h_evade", "h_rain"],
+        "chain": ["h_chain_1", "h_chain_2", "h_chain_3", "h_chain_finish", "h_chain_draw",
+                  "h_chain_guard", "h_chain_mark", "h_chain_song", "h_echo_shot", "h_rapid", "h_arrow_well", "h_fill",
+                  "h_full_quiver", "h_master_quiver", "h_focus", "h_evade", "h_volley",
+                  "h_barrage", "h_trail"],
     }
-    h["reward_guarantee"] = {"quiver": ["h_fill", "h_full_quiver", "h_master_quiver", "h_arrow_well"]}
+    h["reward_guarantee"] = {"quiver": ["h_fill", "h_full_quiver", "h_master_quiver", "h_arrow_well"],
+                             "chain": ["h_chain_1", "h_chain_2", "h_chain_draw"]}
     for ids in h["rewards_by_variant"].values():
         h["rewards"] = list(dict.fromkeys(h["rewards"] + ids))
     h["rewards"] = list(dict.fromkeys(h["rewards"] + list(new)))
@@ -299,6 +387,11 @@ def main():
                                      "Колода: метки и добивание.")
     h["passives"]["quiver"]["desc"] = ("Стрела в руку каждый ход. "
                                        "Колода: стрелы, добор и повторные выстрелы.")
+    h["passives"]["chain"] = {
+        "name": "Цепная реакция",
+        "desc": ("[Цепочка] сама играется на [Выстрел] 2/3/4/5. "
+                 "Первые две цепочки за ход берут карту."),
+    }
     with open(P_HEROES, "w", encoding="utf-8") as f:
         json.dump(heroes, f, ensure_ascii=False, indent=1)
     print("новых карт:", len(new), "—", ", ".join(new))

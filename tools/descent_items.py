@@ -248,6 +248,10 @@ ITEMS = {
     "combo_echo": item("Раковина эха", "item_charm", "rare",
                        "Первая [Комбо] за ход: следующая атака — двойной урон.",
                        "play", op("double_next"), tag="Комбо", once="turn"),
+    "chain_quiver": item("Колчан эха", "arrow_storm", "rare",
+                         "Карты [Цепочка]: +2 урона; первая цепочка за ход берёт карту.",
+                         "chain", op("draw", 1), hero="hunter", tag="Цепочка", once="turn",
+                         tag_bonus=[{"tag": "Цепочка", "damage": 2}]),
 }
 
 
