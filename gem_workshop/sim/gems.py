@@ -401,6 +401,75 @@ def form_yield(form):
     return FORM_YIELD.get(form, 1.0)
 
 
+# Облик куска сырья (docs/rough_to_gem_reality.md): в партиях в основном обломки,
+# пластинки, щепки и кристаллы в породе; окатыши — у прочных камней из россыпей;
+# целый красивый кристалл — редкость.
+SHAPE_NAMES = {"fragment": "обломок", "plate": "пластинка", "sliver": "щепка", "matrix": "в породе",
+               "pebble": "окатыш", "crystal": "кристалл"}
+# Выход: из плоской пластинки и тонкой щепки камень выходит меньше; у куска в породе
+# часть кристалла скрыта.
+SHAPE_YIELD = {"fragment": 0.95, "plate": 0.72, "sliver": 0.75, "matrix": 0.85, "pebble": 1.0, "crystal": 1.1}
+ALLUVIAL = {"ruby", "sapphire", "spinel", "garnet", "peridot", "zircon", "diamond"}
+SHAPE_WEIGHTS = {"fragment": 0.42, "plate": 0.13, "sliver": 0.15, "matrix": 0.22, "crystal": 0.08}
+SHAPE_WEIGHTS_ALLUVIAL = {"pebble": 0.25, "fragment": 0.30, "plate": 0.15, "sliver": 0.05, "matrix": 0.18,
+                          "crystal": 0.07}
+SHAPE_WEIGHTS_GID = {"tourmaline": {"sliver": 0.35, "fragment": 0.30, "matrix": 0.20, "plate": 0.07, "crystal": 0.08}}
+# Порода, в которой сидит кристалл: 0 — белый мрамор, 1 — пегматит (полевой шпат, кварц, слюда),
+# 2 — тёмная порода (базальт, сланец), 3 — серая агатовая корка жеоды.
+MATRIX_ROCK = {"ruby": 0, "spinel": 0, "sapphire": 2, "emerald": 2, "garnet": 2, "amethyst": 3,
+               "tourmaline": 1, "topaz": 1}
+# Белые непрозрачные зоны (их отрезают): у кварца — белое основание кристаллов.
+MILKY_CHANCE = {"amethyst": 0.5, "sapphire": 0.3, "ruby": 0.25, "emerald": 0.3, "topaz": 0.2, "tourmaline": 0.25}
+
+
+def roll_look(gid, seed):
+    """Облик куска: форма и ржавый налёт на старых изломах (свой поток случайности)."""
+    rng = random.Random(f"look:{gid}:{seed}")         # строка хешируется: без корреляций соседних зёрен
+    w = SHAPE_WEIGHTS_GID.get(gid) or (SHAPE_WEIGHTS_ALLUVIAL if gid in ALLUVIAL else SHAPE_WEIGHTS)
+    x = rng.uniform(0, sum(w.values()))
+    shape = "fragment"
+    for k, v in w.items():
+        x -= v
+        if x <= 0:
+            shape = k
+            break
+    stain = 0.0
+    if rng.random() < (0.75 if shape == "matrix" else 0.5):
+        stain = round(rng.uniform(0.25, 0.9), 2)
+    return {"shape": shape, "stain": stain}
+
+
+def rough_shape(r):
+    """Облик куска; у старых сохранений — по прежней «форме»."""
+    if r.get("shape"):
+        return r["shape"]
+    if r.get("form") == "massive":
+        return "pebble" if r.get("id") in ALLUVIAL else "fragment"
+    return "crystal"
+
+
+def shape_name(r):
+    return SHAPE_NAMES.get(rough_shape(r), "кусок")
+
+
+def rough_yield(r):
+    if r.get("shape"):
+        return SHAPE_YIELD.get(r["shape"], 1.0)
+    return form_yield(r.get("form"))
+
+
+def roll_milky(gid, seed):
+    """Белая непрозрачная зона — у конца или края куска; её стоит увести в отход."""
+    rng = random.Random(f"milky:{gid}:{seed}")
+    if rng.random() >= MILKY_CHANCE.get(gid, 0.15):
+        return []
+    a = rng.uniform(0, math.tau)
+    rr = rng.uniform(0.25, 0.5)
+    z = rng.choice((-1, 1)) * rng.uniform(0.35, 0.6)
+    return [{"k": "milky", "p": [round(rr * math.cos(a), 3), round(rr * math.sin(a), 3), round(z, 3)],
+             "r": round(rng.uniform(0.16, 0.28), 3), "seed": round(rng.random(), 4)}]
+
+
 DEF = {
     "rough_ct": {"median": 2.2, "sigma": 0.55, "min": 0.4, "max": 7.0},
     "yield": 0.2,                     # ожидаемая доля массы после огранки (для цены сырого)
@@ -415,7 +484,11 @@ DEF = {
     "incl_kinds": {"crystal": {"name": "кристаллик", "w": 1.0}, "bubble": {"name": "пузырёк", "w": 0.5},
                    "feather": {"name": "трещина", "w": 1.3}, "cloud": {"name": "облачко", "w": 0.6},
                    "silk": {"name": "шёлк", "w": 0.25}, "cavity": {"name": "каверна", "w": 1.5},
-                   "cleavage": {"name": "спайность", "w": 1.8}, "graining": {"name": "внутреннее зерно", "w": 0.8}},
+                   "cleavage": {"name": "спайность", "w": 1.8}, "graining": {"name": "внутреннее зерно", "w": 0.8},
+                   # залеченная трещина: видна, но камень не колет
+                   "fingerprint": {"name": "отпечаток", "w": 0.55},
+                   "two_phase": {"name": "полость с пузырьком", "w": 0.7},
+                   "milky": {"name": "белая зона", "w": 1.1}},
     "jeweler": {"chance": 0.55, "books": [1, 2], "rough": [1, 2], "rare_chance": 0.2,
                 "names": ["Ювелир Мирон Скло", "Огранщица Ветта", "Старый Лазарь Гранёный", "Ювелирша Ольва"]},
 }
@@ -455,6 +528,8 @@ def roll_rough(xd, gid, rng, uid, size=None, premium=False):
     r["axis"] = tuple(round(v / am, 4) for v in ax)
     r["incl"] = roll_incl(xd, gid, random.Random(r["seed"] * 7 + 1), premium)
     r["cf"] = roll_window(random.Random(r["seed"] * 11 + 3))
+    r.update(roll_look(gid, r["seed"]))
+    r["incl"] += roll_milky(gid, r["seed"])
     return r
 
 
@@ -463,9 +538,87 @@ def roll_window(rng):
     return {"o": [round(rng.uniform(-4000, 4000), 2) for _ in range(3)]}
 
 
+# Рецепты включений по минералу (docs/atlas_inclusions_rough.md, §1 и §3): какие
+# типы и как часто, во сколько раз больше/меньше среднего числа, доля кристалликов
+# с ореолом напряжения. Пузыри газа — признак стекла/синтетики, у природных камней их нет.
+INCL_RECIPES = {
+    # кварц: залеченные трещины, перья, полости с пузырьком; кристаллики почти невидимы (тот же n)
+    "amethyst": {"kinds": {"fingerprint": 3.0, "feather": 2.0, "two_phase": 2.0, "crystal": 1.0, "cloud": 1.0},
+                 "mean": 1.0},
+    # корунд: кристаллики (циркон — с ореолом), отпечатки, облака; шёлк — отдельно (вид в данных)
+    "sapphire": {"kinds": {"crystal": 2.5, "fingerprint": 3.0, "feather": 1.5, "cloud": 1.5, "two_phase": 0.5,
+                           "cavity": 0.3}, "halo": 0.4, "mean": 1.0},
+    "ruby": {"kinds": {"crystal": 2.5, "fingerprint": 2.5, "feather": 2.0, "cloud": 1.5, "cavity": 0.4},
+             "halo": 0.3, "mean": 1.1},
+    # изумруд: «сад» — трещины и многофазные полости, это норма вида
+    # clarity: включения весят меньше — рынок ждёт «сад» у изумруда, у аквамарина — нет
+    "emerald": {"kinds": {"feather": 3.0, "two_phase": 3.0, "crystal": 1.5, "fingerprint": 1.5, "cloud": 1.0},
+                "mean": 1.3, "clarity": 0.55},
+    # топаз: спайность по базису, полости, отпечатки
+    "topaz": {"kinds": {"cleavage": 1.5, "two_phase": 2.0, "fingerprint": 2.0, "feather": 1.0, "crystal": 0.5},
+              "mean": 0.9},
+    "tourmaline": {"kinds": {"feather": 2.0, "fingerprint": 2.0, "two_phase": 1.5, "graining": 0.8},
+                   "mean": 1.0},
+}
+DEFAULT_RECIPE = {"kinds": {"crystal": 2.0, "feather": 1.0, "cloud": 2.0, "fingerprint": 1.0, "cavity": 0.5,
+                            "graining": 0.5}, "mean": 1.0}
+
+# Радиус — доля радиуса кристалла (кристалл ≈ 10 мм: 0.1 ≈ 0.5 мм).
+INCL_SIZE = {"crystal": (0.02, 0.08), "bubble": (0.015, 0.05), "feather": (0.06, 0.17),
+             "cloud": (0.04, 0.1), "cavity": (0.025, 0.075), "cleavage": (0.05, 0.14),
+             "graining": (0.02, 0.06), "fingerprint": (0.09, 0.22), "two_phase": (0.025, 0.07)}
+
+
+def incl_recipe(gid):
+    return INCL_RECIPES.get(gid, DEFAULT_RECIPE)
+
+
+def _pick(rng, weights):
+    total = sum(weights.values())
+    x = rng.uniform(0, total)
+    for k, w in weights.items():
+        x -= w
+        if x <= 0:
+            return k
+    return k
+
+
+def _unit(v):
+    m = math.sqrt(sum(x * x for x in v)) or 1.0
+    return [round(x / m, 4) for x in v]
+
+
+def _incl_place(rng, k):
+    """Положение включения (доли кристалла: xy — радиус призмы, z — полудлина).
+
+    Залеченные трещины и перья чаще идут от поверхности внутрь (кристалл трескался
+    и залечивался снаружи), остальное — по всему объёму."""
+    a = rng.uniform(0, math.tau)
+    if k in ("fingerprint", "feather"):
+        rr = 0.75 * (0.35 + 0.65 * math.sqrt(rng.random()))
+    else:
+        rr = 0.75 * math.sqrt(rng.random())
+    return [round(rr * math.cos(a), 3), round(rr * math.sin(a), 3), round(rng.uniform(-0.72, 0.72), 3)]
+
+
+def _plane_normal(rng, k, p_):
+    """Нормаль плоского включения. Отпечатки и перья тянутся вдоль поверхности
+    (нормаль ближе к радиальной), спайность — строго поперёк оси кристалла."""
+    if k == "cleavage":
+        return [0.0, 0.0, 1.0]
+    rnd = [rng.gauss(0, 1) for _ in range(3)]
+    radial = [p_[0], p_[1], 0.0]
+    if k in ("fingerprint", "feather") and (radial[0] or radial[1]):
+        rad = _unit(radial)
+        rnd = _unit(rnd)
+        return _unit([rad[i] * 0.9 + rnd[i] * 0.7 for i in range(3)])
+    return _unit(rnd)
+
+
 def roll_incl(xd, gid, rng, premium=False):
     gd = gem_def(xd, gid)
-    mean = gd.get("incl", 2.0) * (0.5 if premium else 1.0)
+    rec = incl_recipe(gid)
+    mean = gd.get("incl", 2.0) * rec.get("mean", 1.0) * (0.5 if premium else 1.0)
     n = 0
     L, p = math.exp(-mean), 1.0                          # число примесей — по Пуассону
     while True:
@@ -474,16 +627,13 @@ def roll_incl(xd, gid, rng, premium=False):
             break
         n += 1
     out = []
-    kinds = ("crystal", "crystal", "bubble", "feather", "cloud", "cloud", "cavity", "cleavage", "graining")
     for _ in range(n):
-        k = rng.choice(kinds)
-        a = rng.uniform(0, math.tau)
-        rr = 0.75 * math.sqrt(rng.random())
-        p_ = [round(rr * math.cos(a), 3), round(rr * math.sin(a), 3), round(rng.uniform(-0.72, 0.72), 3)]
-        lo, hi = {"crystal": (0.02, 0.08), "bubble": (0.015, 0.05), "feather": (0.05, 0.14),
-                  "cloud": (0.04, 0.1), "cavity": (0.025, 0.075), "cleavage": (0.04, 0.12),
-                  "graining": (0.02, 0.06)}[k]
+        k = _pick(rng, rec["kinds"])
+        p_ = _incl_place(rng, k)
+        lo, hi = INCL_SIZE[k]
         base_r = rng.uniform(lo, hi)
+        halo = k == "crystal" and rng.random() < rec.get("halo", 0.0)
+        n_plane = _plane_normal(rng, k, p_) if k in ("feather", "cleavage", "fingerprint") else None
 
         # Облака и кристаллики — не один шар, а маленькая ассоциация.
         # Так включение читается как природное образование, а не примитив.
@@ -504,16 +654,18 @@ def roll_incl(xd, gid, rng, premium=False):
                 "p": [round(p_[0] + jitter[0], 3), round(p_[1] + jitter[1], 3),
                       round(p_[2] + jitter[2], 3)],
                 "r": round(base_r * (rng.uniform(0.45, 0.8) if j else 1.0), 3),
+                "seed": round(rng.random(), 4),           # форма и материал включения в рендере
             }
-            if k in ("feather", "cleavage"):
-                v = [rng.gauss(0, 1) for _ in range(3)]
-                m = math.sqrt(sum(x * x for x in v)) or 1.0
-                inc["n"] = [round(x / m, 4) for x in v]
+            if n_plane is not None:
+                # соседние куски одной трещины почти параллельны
+                inc["n"] = n_plane if j == 0 else _unit([n_plane[i] + rng.gauss(0, 0.15) for i in range(3)])
             if k in ("crystal", "cloud", "bubble"):
-                v = [rng.gauss(0, 1) for _ in range(3)]
-                m = math.sqrt(sum(x * x for x in v)) or 1.0
-                inc["axis"] = [round(x / m, 4) for x in v]
+                inc["axis"] = _unit([rng.gauss(0, 1) for _ in range(3)])
                 inc["aspect"] = 1.0 if k == "bubble" else round(rng.uniform(0.55, 1.55), 2)
+            if k == "two_phase":                          # полость повторяет кристалл: вытянута по его оси
+                inc["aspect"] = round(rng.uniform(1.2, 2.2), 2)
+            if halo and j == 0:
+                inc["halo"] = 1.0
             if k == "cavity":
                 inc["surf"] = 1.0
             elif k == "feather" and rng.random() < 0.35:
@@ -588,6 +740,49 @@ COLOR_MAPS = {
 WAVE_AMPS = (1.0, 0.6, 0.4, 0.25)
 _WAVES = {}
 
+# Зоны роста по геометрии кристалла (atlas §1.9): полосы параллельны граням.
+# hex — шестиугольником вокруг оси (корунд, берилл); rhomb — под гранями ромбоэдра
+# (кварц/аметист), tip — цвет гуще к верхушке (+z). amp — сдвиг по палитре, lam — шаг (мм).
+# Та же формула — в шейдере (game/gem_fs.glsl: zone_t); считается в осях кристалла (мм).
+ZONES = {
+    "amethyst": {"mode": "rhomb", "amp": 0.06, "lam": 1.6, "tip": 0.10},
+    "sapphire": {"mode": "hex", "amp": 0.05, "lam": 1.2, "tip": 0.0},
+    "ruby": {"mode": "hex", "amp": 0.04, "lam": 1.5, "tip": 0.0},
+    "emerald": {"mode": "hex", "amp": 0.035, "lam": 2.0, "tip": 0.0},
+    "topaz": {"mode": "hex", "amp": 0.03, "lam": 2.2, "tip": 0.03},
+}
+ZONE_MODES = {"hex": 0, "rhomb": 1}
+_RHOMB = math.radians(51.8)                           # нормаль грани r кварца к оси c
+
+
+def zone_phase(o):
+    """Фаза полос — своя у каждого камня (от его окна в карте)."""
+    if not o:
+        return 0.0
+    v = (o[0] * 0.0137 + o[1] * 0.0291 + o[2] * 0.0173) % 1.0
+    return v * math.tau
+
+
+def zone_t(gid, pc, o):
+    """Сдвиг t от зон роста; pc — точки в осях кристалла (мм, ось c = z), o — окно камня."""
+    import numpy as np
+    z = ZONES.get(gid)
+    pc = np.asarray(pc, float).reshape(-1, 3)
+    if not z or o is None:
+        return np.zeros(len(pc))
+    x, y, h = pc[:, 0], pc[:, 1], pc[:, 2]
+    if z["mode"] == "rhomb":
+        s, c = math.sin(_RHOMB), math.cos(_RHOMB)
+        d = np.full(len(pc), -1e9)
+        for k in range(6):
+            a = k * math.pi / 3
+            sg = 1.0 if k % 2 == 0 else -1.0
+            d = np.maximum(d, x * s * math.cos(a) + y * s * math.sin(a) + h * c * sg)
+    else:
+        d = np.maximum(np.maximum(np.abs(x), np.abs(0.5 * x + 0.866 * y)), np.abs(-0.5 * x + 0.866 * y))
+    band = np.tanh(2.2 * np.sin(math.tau * d / z["lam"] + zone_phase(o))) / math.tanh(2.2)
+    return z["amp"] * band + z["tip"] * np.clip(h / 3.0, -1.0, 1.0)
+
 
 def color_map(gid):
     return COLOR_MAPS.get(gid) or {"lam": (8.0, 16.0), "gain": 0.6, "sharp": 0.8, "zoning": "penalty",
@@ -610,8 +805,9 @@ def waves(gid):
     return _WAVES[gid]
 
 
-def field_t(gid, pts):
-    """t ∈ [0, 1] карты вида в точках (мм); pts — список (x, y, z). Та же формула — в шейдере (gem_gl)."""
+def field_t(gid, pts, o=None):
+    """t ∈ [0, 1] карты вида в точках (мм); pts — список (x, y, z). Та же формула — в шейдере (gem_gl).
+    o — начало окна камня в карте (центр кристалла): с ним добавляются зоны роста по граням."""
     import numpy as np
     cm = color_map(gid)
     p = np.asarray(pts, float).reshape(-1, 3)
@@ -619,6 +815,8 @@ def field_t(gid, pts):
     for a, (kx, ky, kz, ph) in zip(WAVE_AMPS, waves(gid)):
         s += a * np.sin(p @ np.array([kx, ky, kz]) + ph)
     t = 0.5 + 0.5 * s / sum(WAVE_AMPS) * cm["gain"]
+    if o is not None:
+        t = t + zone_t(gid, p - np.asarray(o, float), o)
     sh = cm["sharp"]
     t = 0.5 + 0.5 * np.tanh(sh * (t - 0.5) * 2) / math.tanh(sh)
     return np.clip(t, 0.0, 1.0)
@@ -677,11 +875,12 @@ def color_stats(gid, ts):
     return {"top": top, "hv": round(hv, 3), "mi": round(1 - top[0][1], 3)}
 
 
-def sphere_stats(gid, center, radius_mm):
-    """Оттенки шара радиусом radius_mm вокруг точки карты (сырой камень «как есть», камень с прилавка)."""
+def sphere_stats(gid, center, radius_mm, o=None):
+    """Оттенки шара радиусом radius_mm вокруг точки карты (сырой камень «как есть», камень с прилавка).
+    o — центр кристалла в карте (зоны роста); у сырья это и есть центр шара."""
     pts = [(center[0] + x * radius_mm, center[1] + y * radius_mm, center[2] + z * radius_mm)
            for x, y, z in unit_ball()]
-    return color_stats(gid, field_t(gid, pts))
+    return color_stats(gid, field_t(gid, pts, o))
 
 
 def stone_mm_radius(xd, gid, ct):
@@ -721,12 +920,12 @@ def gem_colors(xd, g):
     cf = g.get("cf")
     if not cf:
         return None
-    return sphere_stats(g["id"], cf["b"], stone_mm_radius(xd, g["id"], g.get("size", 0.45)))
+    return sphere_stats(g["id"], cf["b"], stone_mm_radius(xd, g["id"], g.get("size", 0.45)), cf.get("o"))
 
 
 def rough_colors(xd, r):
     ensure_rough(xd, r)
-    return sphere_stats(r["id"], r["cf"]["o"], stone_mm_radius(xd, r["id"], r["size"]))
+    return sphere_stats(r["id"], r["cf"]["o"], stone_mm_radius(xd, r["id"], r["size"]), r["cf"]["o"])
 
 
 def colors_text(gid, cz):
@@ -749,10 +948,13 @@ def random_rotation(rng):
 
 # ---------- чистота, цвет ----------
 
-def incl_weight(xd, inc, scale=1.0):
-    """Заметность примеси: вид × размер^1.5; со стороны короны (−z, видна сквозь площадку) — сильнее."""
+def incl_weight(xd, inc, scale=1.0, gid=None):
+    """Заметность примеси: вид × размер^1.5; со стороны короны (−z, видна сквозь площадку) — сильнее.
+    gid — вид камня: у изумруда включения — норма и весят меньше."""
     j = cfg(xd)
     kw = j["incl_kinds"].get(inc["k"], {"w": 1.0})["w"]
+    if gid:
+        kw *= incl_recipe(gid).get("clarity", 1.0)
     if inc["k"] == "silk":
         return kw * inc.get("d", 0.5)
     r = inc["r"] * scale / 100.0
@@ -760,15 +962,15 @@ def incl_weight(xd, inc, scale=1.0):
     return kw * 9.0 * r ** 1.5 * vis
 
 
-def clarity(xd, incl, scale=1.0):
-    """Чистота 0–1 по примесям (в единицах огранённого камня; scale — пересчёт)."""
-    return round(math.exp(-sum(incl_weight(xd, i, scale) for i in incl)), 3)
+def clarity(xd, incl, scale=1.0, gid=None):
+    """Чистота 0–1 по примесям (в единицах огранённого камня; scale — пересчёт; gid — вид камня)."""
+    return round(math.exp(-sum(incl_weight(xd, i, scale, gid) for i in incl)), 3)
 
 
 def rough_clarity(xd, r):
     """Чистота сырого камня, если гранить «как есть» (все примеси остаются): радиус — в доле кристалла,
     огранённый камень ≈ 55% радиуса кристалла."""
-    return clarity(xd, r.get("incl", []), scale=100 / 0.55)
+    return clarity(xd, r.get("incl", []), scale=100 / 0.55, gid=r.get("id"))
 
 
 def grade(xd, cl):
@@ -828,10 +1030,19 @@ def rough_value(xd, r):
     """Цена сырого: доля ожидаемой цены огранённого (выход массы, чистота «как есть», обычная работа)."""
     ensure_rough(xd, r)
     j = cfg(xd)
-    ct = r["size"] * j["yield"] * form_yield(r.get("form"))
+    ct = r["size"] * j["yield"] * rough_yield(r)
     cz = rough_colors(xd, r)
     v = j["rough_k"] * per_ct(xd, r["id"]) * ct ** j["ct_exp"] * k_color(xd, r["col"]) * \
         k_clarity(xd, rough_clarity(xd, r)) * k_hue(cz) * k_zoning(r["id"], cz)
+    return int(round(v, -1)) if v > 100 else int(v)
+
+
+def rough_visible_value(xd, r):
+    """Цена куска по видимому: масса, форма, цвет; чистота — средняя (нутра продавец не знает)."""
+    ensure_rough(xd, r)
+    j = cfg(xd)
+    ct = r["size"] * j["yield"] * rough_yield(r)
+    v = j["rough_k"] * per_ct(xd, r["id"]) * ct ** j["ct_exp"] * k_color(xd, r["col"]) * k_clarity(xd, 0.55)
     return int(round(v, -1)) if v > 100 else int(v)
 
 
@@ -875,7 +1086,7 @@ def describe(xd, g, rough=False):
         ensure_rough(xd, g)
         n = len([i for i in g["incl"] if i["k"] != "silk"])
         silk = any(i["k"] == "silk" for i in g["incl"])
-        out = [f"{g['size']:.2f} кар. · цвет {color_word(xd, g['col'])} · {form_name(g.get('form'))}",
+        out = [f"{g['size']:.2f} кар. · цвет {color_word(xd, g['col'])} · {shape_name(g)}",
                f"примесей: {n}" + (" · шёлк (звезда в кабошоне)" if silk else "") +
                f" · «как есть»: {grade(xd, rough_clarity(xd, g)).lower()}"]
         ct_ = colors_text(g["id"], rough_colors(xd, g))
@@ -914,10 +1125,10 @@ def roll_cut(xd, rng, uid, gid):
     sg = gem_def(xd, gid).get("sg", 3.5)
     mmu = (200.0 * ct / sg / 1.6e6) ** (1 / 3)          # мм на единицу формы (объём идеала ≈ 1.6e6)
     rot = random_rotation(rng)
-    cf = {"A": [round(v * mmu, 6) for row in rot for v in row], "b": r["cf"]["o"]}
+    cf = {"A": [round(v * mmu, 6) for row in rot for v in row], "b": r["cf"]["o"], "o": r["cf"]["o"]}
     g = {"uid": uid, "id": gid, "q": round(Q_MIN + (cap - Q_MIN) * rng.uniform(0.4, 0.9), 2), "size": ct,
-         "col": r["col"], "incl": incl, "cl": clarity(xd, incl), "cut": cut, "cf": cf}
-    g["cz"] = sphere_stats(gid, cf["b"], stone_mm_radius(xd, gid, ct))
+         "col": r["col"], "incl": incl, "cl": clarity(xd, incl, gid=gid), "cut": cut, "cf": cf}
+    g["cz"] = sphere_stats(gid, cf["b"], stone_mm_radius(xd, gid, ct), cf["o"])
     return g
 
 

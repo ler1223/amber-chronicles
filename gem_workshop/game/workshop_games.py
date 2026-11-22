@@ -239,7 +239,7 @@ def cf_stats(gid, cf, pts):
     A = cf["A"]
     q = [(A[0] * x + A[1] * y + A[2] * z + cf["b"][0], A[3] * x + A[4] * y + A[5] * z + cf["b"][1],
           A[6] * x + A[7] * y + A[8] * z + cf["b"][2]) for x, y, z in pts]
-    return GM.color_stats(gid, GM.field_t(gid, q))
+    return GM.color_stats(gid, GM.field_t(gid, q, cf.get("o")))
 
 
 class Plan:
@@ -377,7 +377,7 @@ class Plan:
     def est_clarity(self):
         xd = self.g.xd
         inside = [si for si, ok in self.stone_incl() if ok]
-        return GM.clarity(xd, inside) if xd else 1.0
+        return GM.clarity(xd, inside, gid=self.rough["id"]) if xd else 1.0
 
     def risk(self):
         """Риск скола/раскола: трещины и каверны у будущей поверхности."""
@@ -396,7 +396,8 @@ class Plan:
     def cf_rough(self):
         """Кристалл в карте оттенков: мм = mmr·p + окно камня."""
         mmr = self.mm_per_unit()
-        return {"A": [mmr, 0, 0, 0, mmr, 0, 0, 0, mmr], "b": list(self.rough["cf"]["o"])}
+        o = list(self.rough["cf"]["o"])
+        return {"A": [mmr, 0, 0, 0, mmr, 0, 0, 0, mmr], "b": o, "o": o}
 
     def cf_stone(self, s=None):
         """Будущий камень в карте оттенков: p_кристалла = Mᵀ(s·Q·p + o) → мм = A·p + b."""
@@ -408,7 +409,8 @@ class Plan:
         A = [[mmr * s * sum(mt[i][k] * qc[j][k] for k in range(3)) for j in range(3)] for i in range(3)]
         mo = _mv(mt, self.o)
         b = [mmr * mo[i] + self.rough["cf"]["o"][i] for i in range(3)]
-        return {"A": [v for row in A for v in row], "b": b}
+        # o — центр кристалла в карте: зоны роста считаются от него в осях кристалла
+        return {"A": [v for row in A for v in row], "b": b, "o": list(self.rough["cf"]["o"])}
 
     def ideal_points(self):
         """Точки внутри будущего камня (оси камня) — для оценки оттенков."""
@@ -443,6 +445,7 @@ class JewelCut(Game):
     title = "Огранка"
     HINTS = {"choose": "выберите огранку: клик или клавиша 1–9 · колесо — прокрутка",
              "plan": "ЛКМ — камень, ПКМ — проекция, СКМ — камера, Q/E — крен, WASD — сдвиг, колесо — размер, Enter — на станок, J — диагностика",
+             "grind": "Обдирка: ЛКМ — повернуть кусок, Пробел — прижать к грубому кругу, Shift — бережно, Enter — на станок",
              "cut": "W/S — угол, A/D — индекс, Пробел — к диску, Enter/ПКМ — грань готова, F — перевернуть, J — диагностика"}
 
     @property
@@ -522,6 +525,9 @@ class JewelCut(Game):
         self.inspect = None                     # осмотр снятого камня (Tab): свободное вращение
         self.inspect_btn = None
         self.diag = False                       # J — диагностические ортогональные виды
+        self.grind = None                       # обдирка (между разметкой и станком)
+        self.grind_stats = None
+        self.glints = []                        # вспышки полировки
 
     # --- выбор огранки ---
     def choose(self, i):
@@ -589,7 +595,59 @@ class JewelCut(Game):
         self.mm = pl.mm_per_unit() * s
         dia = 2 * self.R * self.mm
         self.S = 1.1 * max(0.6, min(1.35, dia / 6.5))
+        self._start_grind(pl, s)
+        return True
+
+    # --- обдирка ---
+    def _start_grind(self, pl, s):
+        """Кусок как есть (родная поверхность, налёт, порода) — в осях будущего камня; обдирка до заготовки."""
+        from game import grinding as GR
+
+        def body(faces, keep=True):
+            src = []
+            out = G3.box(self.R * 12, -self.R * 12, self.R * 12)
+            for f in faces:
+                if not f["pts"]:
+                    continue
+                mn = _mv(pl.m, f["n"])
+                n_s = pl.qt(mn)
+                h_s = (G3.dot(f["n"], f["pts"][0]) - G3.dot(mn, pl.o)) / s
+                out = G3.clip(out, n_s, h_s, f["kind"] if keep else "rough",
+                              grit=f.get("grit") if keep else None) or out
+                src.append((n_s, h_s, f))
+            if keep:                                        # штриховка и точки удара — в новые оси
+                for face in out:
+                    best = max(src, key=lambda t: G3.dot(face["n"], t[0]))
+                    fd = best[2].get("fdir")
+                    if not fd or G3.dot(face["n"], best[0]) < 0.9999:
+                        continue
+                    if best[2]["kind"] == "conch":
+                        p = pl.to_stone(fd[:3], s)
+                        face["fdir"] = (p[0], p[1], p[2], 0.0)
+                    elif fd[3] > 0:
+                        gdir = pl.qt(_mv(pl.m, fd[:3]))
+                        face["fdir"] = (gdir[0], gdir[1], gdir[2], fd[3] * s)
+            return out
+
+        rock = JW.rough_matrix(self.rough)
+        self.grind_s = s
+        self.grind_rock_kind = GM.MATRIX_ROCK.get(self.rough.get("id"), 1)
+        incl_all = [si for si, _ in pl.stone_incl(s)]
+        self.grind = GR.Grind(body(pl.faces), body(rock, keep=False) if rock else None, self.stone, incl_all,
+                              seed=self.rng.random())
+        self.phase = "grind"
+
+    def finish_grind(self):
+        """Преформа готова: на станок идёт заготовка (с тем, что ушло за контур)."""
+        gr = self.grind
+        if gr is None or not gr.can_finish():
+            return False
+        self.stone = gr.result()
+        planes = [(f["n"], G3.dot(f["n"], f["pts"][0])) for f in self.stone if f["pts"]]
+        self.incl = [i for i in self.incl if all(G3.dot(n, i["p"]) - off <= i["r"] * 0.3 for n, off in planes)]
+        self.grind_stats = {"overcut": round(gr.overcut, 3), "chips": gr.chips}
         self.phase = "cut"
+        self.flash.append(["Преформа готова — на станок", (255, 220, 130), 1.8])
         return True
 
     # --- лупа ---
@@ -690,6 +748,10 @@ class JewelCut(Game):
         return n, G3.dot(n, pt)
 
     def click(self, pos):
+        if self.phase == "grind":
+            if getattr(self, "grind_btn", None) and self.grind_btn.collidepoint(pos):
+                self.finish_grind()
+            return True
         if self.phase == "plan" and getattr(self, "plan_btn", None) and self.plan_btn.collidepoint(pos):
             self.start_cut()
             return True
@@ -704,6 +766,9 @@ class JewelCut(Game):
 
     # --- управление ---
     def press(self):
+        if self.phase == "grind" and self.grind is not None:
+            self.grind.hold = True
+            return
         if self.inspect is None and not self.done and self.phase == "cut" and \
                 self.flip_a == (0.0 if self.side > 0 else math.pi):
             self.hold = True
@@ -718,6 +783,22 @@ class JewelCut(Game):
     def pointer(self, ev, rect):
         """Мышь в осмотре — вращать камень; клик по кнопке «Осмотреть» — снять камень; в разметке — крутить
         кристалл."""
+        if self.phase == "grind" and self.grind is not None:
+            gr = self.grind
+            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and rect.collidepoint(ev.pos):
+                if getattr(self, "grind_btn", None) and self.grind_btn.collidepoint(ev.pos):
+                    self.finish_grind()
+                    return True
+                gr.drag = ev.pos
+                return True
+            if ev.type == pygame.MOUSEMOTION and gr.drag:
+                gr.turn(ev.pos[0] - gr.drag[0], ev.pos[1] - gr.drag[1])
+                gr.drag = ev.pos
+                return True
+            if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and gr.drag:
+                gr.drag = None
+                return True
+            return False
         if self.phase == "plan" and self.plan is not None:
             pl = self.plan
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 2 and rect.collidepoint(ev.pos):
@@ -779,6 +860,8 @@ class JewelCut(Game):
 
     def release(self):
         self.hold = False
+        if getattr(self, "grind", None) is not None:
+            self.grind.hold = False
 
     def wheel(self, dy):
         if self.phase == "choose":                  # много огранок — прокрутка сетки
@@ -787,6 +870,8 @@ class JewelCut(Game):
             return
         if self.phase == "plan" and self.plan is not None:
             self.plan.wheel(dy)
+            return
+        if self.phase == "grind":
             return
         if self.inspect is not None:
             self.inspect.wheel(dy)
@@ -800,6 +885,11 @@ class JewelCut(Game):
     def key(self, k):
         if k == pygame.K_j and self.inspect is None and self.phase in ("plan", "cut"):
             self.diag = not self.diag
+            return True
+        if self.phase == "grind":
+            if k in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                if not self.finish_grind():
+                    self.flash.append(["Сначала снимите лишнее до контура", (240, 200, 120), 1.2])
             return True
         if self.phase == "choose":                  # 1–9 — по видимым карточкам (сетка прокручивается)
             i = getattr(self, "choose_top", 0) * getattr(self, "choose_cols", 1) + k - pygame.K_1
@@ -905,6 +995,8 @@ class JewelCut(Game):
 
     def can_abort(self):
         """Ещё ни одной готовой грани — можно уйти, камень останется необработанным."""
+        if (self.phase == "grind" and self.grind is not None and self.grind.touched) or self.grind_stats:
+            return False                                    # кусок уже обдирали — назад не вернуть
         return self.split is None and (self.phase in ("choose", "plan") or all(x is None for x in self.scores))
 
     def stop(self):
@@ -980,7 +1072,13 @@ class JewelCut(Game):
         self.h = self.h_max
         self.stone = G3.polished(self.stone)       # грань готова — полировка: начинает играть светом
         self._mass = self.calc_mass()
+        # вспышка полировки: грань из матовой стала зеркальной
+        self.glints += [[self.rng.uniform(-1, 1), self.rng.uniform(-1, 1), self.rng.uniform(0.6, 1.0)]
+                        for _ in range(5)]
         if all(x is not None for x in self.scores):
+            self.glints += [[self.rng.uniform(-1.2, 1.2), self.rng.uniform(-1.2, 1.2), self.rng.uniform(0.8, 1.6)]
+                            for _ in range(18)]
+            self.flash.append(["Последняя грань отполирована — камень ожил!", (255, 230, 150), 2.5])
             self.finish()
         else:
             self.pick_active()
@@ -1052,6 +1150,12 @@ class JewelCut(Game):
                 self.flip_a + (step if want_a > self.flip_a else -step)
         if self.inspect is not None:
             self.inspect.update(dt)
+        for gl in self.glints:
+            gl[2] -= dt * 1.2
+        self.glints = [gl for gl in self.glints if gl[2] > 0]
+        if self.phase == "grind" and self.grind is not None:
+            self.grind.update(dt, self._fine())
+            return
         if self.done or self.phase != "cut":
             return
         try:
@@ -1167,6 +1271,8 @@ class JewelCut(Game):
         surf.set_clip(rect)
         if self.phase == "choose":
             self.draw_choose(surf, rect)
+        elif self.phase == "grind" and self.grind is not None:
+            self.grind.draw(self, surf, rect)
         elif self.diag and self.inspect is None and self.phase in ("plan", "cut"):
             JW.draw_diag_sheet(self, surf, rect)
         elif self.phase == "plan":

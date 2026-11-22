@@ -11,7 +11,55 @@ import numpy as np
 import pygame
 
 MAXP = 128
-KIND = {"polish": 0.0, "frost": 1.0, "rough": 2.0, "girdle": 3.0}
+KIND = {"polish": 0.0, "frost": 1.0, "rough": 2.0, "girdle": 3.0, "natural": 4.0, "conch": 5.0}
+
+# Типы включений в шейдере (см. docs/atlas_inclusions_rough.md).
+INCL_KIND = {"crystal": 0.0, "bubble": 1.0, "feather": 2.0, "cloud": 3.0, "silk": 4.0,
+             "cavity": 5.0, "cleavage": 6.0, "graining": 7.0, "fingerprint": 8.0,
+             "two_phase": 9.0, "halo": 10.0, "milky": 3.0}
+
+# Показатель преломления содержимого включения: видимость = разница с хозяином.
+INCL_N = {"bubble": 1.0, "feather": 1.0, "cleavage": 1.0, "halo": 1.0, "cavity": 1.0,
+          "fingerprint": 1.33, "two_phase": 1.33, "cloud": 2.0, "silk": 2.7}
+
+# Твёрдые включения: (n, непрозрачность). Выбор — по зерну включения.
+CRYSTAL_MINERALS = ((1.53, 0.0), (1.56, 0.0), (1.64, 0.0), (1.66, 0.05), (1.95, 0.0),
+                    (2.7, 0.55), (3.0, 1.0), (1.76, 0.0))
+
+
+def _incl_seed(i):
+    s = i.get("seed")
+    if s is not None:
+        return float(s) % 1.0
+    p = i.get("p", (0.0, 0.0, 0.0))
+    h = math.sin(p[0] * 12.9898 + p[1] * 78.233 + p[2] * 37.719 + i.get("r", 0.0) * 3.7) * 43758.5453
+    return h - math.floor(h)
+
+
+def incl_material(i, host_n):
+    """(рельеф 0..1, непрозрачность 0..1, зерно 0..1): что видно глазу, решает разница n."""
+    seed = _incl_seed(i)
+    k = i.get("k")
+    opac = 0.0
+    if k == "crystal":
+        n_i, opac = CRYSTAL_MINERALS[int(seed * len(CRYSTAL_MINERALS)) % len(CRYSTAL_MINERALS)]
+    else:
+        n_i = INCL_N.get(k, host_n + 0.02)
+    relief = max(0.06, min(1.0, abs(n_i - host_n) / 0.40))
+    return relief, opac, seed
+
+
+def expand_incl(incl):
+    """Ореолы напряжения — отдельная плоская часть вокруг кристаллика."""
+    out = []
+    for i in incl or []:
+        out.append(i)
+        if i.get("k") == "crystal" and i.get("halo"):
+            seed = _incl_seed(i)
+            a, b = seed * math.tau, seed * 7.1
+            n = (math.cos(a) * math.sin(b), math.sin(a) * math.sin(b), math.cos(b))
+            out.append({"k": "halo", "p": i["p"], "r": i["r"] * 3.2, "n": n, "seed": (seed * 3.3) % 1.0})
+    return out
 
 VS = """
 #version 330
@@ -404,12 +452,15 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
     pl = np.zeros((MAXP, 4), np.float32)
     kd = np.zeros(MAXP, np.float32)
     gr = np.zeros(MAXP, np.float32)
+    fdir = np.zeros((MAXP, 4), np.float32)
     k = 0
     for f in faces[:MAXP]:
         n = f["n"]
         pl[k] = (n[0], n[1], n[2], n[0] * f["pts"][0][0] + n[1] * f["pts"][0][1] + n[2] * f["pts"][0][2])
         kd[k] = KIND.get(f["kind"], 0.0)
         gr[k] = f.get("grit", 0.0)
+        if f.get("fdir"):
+            fdir[k] = tuple(float(v) for v in f["fdir"][:4])
         k += 1
     if dome or getattr(faces, "dome", None):        # кабошон: густое полупрозрачное тело
         darkness *= 3.5
@@ -419,6 +470,7 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
     _set(prog, "u_pl", data=pl.tobytes())
     _set(prog, "u_kind", data=kd.tobytes())
     _set(prog, "u_grit", data=gr.tobytes())
+    _set(prog, "u_fdir", data=fdir.tobytes())
     _set(prog, "u_n", k)
     _set(prog, "u_absorb", tuple(float(x) for x in (absorb or absorb_default)))
     _set(prog, "u_tint", tuple(float(x) for x in tint))
@@ -461,27 +513,45 @@ def stone_uniforms(prog, faces, color, darkness=1.0, incl=None, star=0.0, axis=N
     _set(prog, "u_pleo", float(surface.get("pleo", 0.0)))
     _set(prog, "u_biref", float(surface.get("biref", 0.0)))
     _set(prog, "u_opaxis", tuple(float(v) for v in surface.get("opaxis", (0.0, 0.0, 1.0))))
+    _set(prog, "u_round", float(surface.get("round", 0.0)))
+    _set(prog, "u_stain", float(surface.get("stain", 0.0)))
+    mat = surface.get("matrix")
+    mpl = np.zeros((32, 4), np.float32)
+    mn = 0
+    if mat:
+        for f in mat["faces"][:32]:
+            if not f["pts"]:
+                continue
+            n = f["n"]
+            mpl[mn] = (n[0], n[1], n[2], n[0] * f["pts"][0][0] + n[1] * f["pts"][0][1] + n[2] * f["pts"][0][2])
+            mn += 1
+    _set(prog, "u_mpl", data=mpl.tobytes())
+    _set(prog, "u_mn", mn)
+    _set(prog, "u_mrock", int(mat["rock"]) if mat else 0)
 
     inc = np.zeros((16, 4), np.float32)
     ink = np.zeros((16, 4), np.float32)
     incaxis = np.zeros((16, 4), np.float32)
+    incm = np.zeros((16, 4), np.float32)
     incsurf = np.zeros(16, np.float32)
-    kinds = {"crystal": 0.0, "bubble": 1.0, "feather": 2.0, "cloud": 3.0, "silk": 4.0,
-             "cavity": 5.0, "cleavage": 6.0, "graining": 7.0}
+    host_n = float((ior or (2.38, 2.42, 2.47))[1])
     m = 0
-    for i in (incl or [])[:16]:
+    for i in expand_incl(incl)[:16]:
         inc[m] = (i["p"][0], i["p"][1], i["p"][2], i["r"])
         n = i.get("n") or (0.0, 0.0, 1.0)
         if i["k"] == "silk":                       # шёлк: в .y — густота игл
             n = (i.get("d", 0.6), 0.0, 0.0)
-        ink[m] = (kinds.get(i["k"], 0.0), n[0], n[1], n[2])
+        ink[m] = (INCL_KIND.get(i["k"], 0.0), n[0], n[1], n[2])
         iax = i.get("axis") or (0.0, 0.0, 1.0)
         incaxis[m] = (iax[0], iax[1], iax[2], float(i.get("aspect", 1.0)))
-        incsurf[m] = float(i.get("surf", 0.0))
+        relief, opac, seed = incl_material(i, host_n)
+        incm[m] = (relief, opac, seed, 0.0)
+        incsurf[m] = 3.0 if i["k"] == "milky" else float(i.get("surf", 0.0))   # белая зона — густое облако
         m += 1
     _set(prog, "u_inc", data=inc.tobytes())
     _set(prog, "u_inck", data=ink.tobytes())
     _set(prog, "u_incaxis", data=incaxis.tobytes())
+    _set(prog, "u_incm", data=incm.tobytes())
     _set(prog, "u_incsurf", data=incsurf.tobytes())
     _set(prog, "u_ninc", m)
     _set(prog, "u_star", float(star or 0.0))
@@ -573,6 +643,15 @@ def _set_cfield(prog, cf, color, darkness):
     _set(prog, "u_wk", data=wk.tobytes())
     _set(prog, "u_wa", tuple(float(a) for a in GM.WAVE_AMPS))
     _set(prog, "u_cfg", (float(cm["gain"]), float(cm["sharp"])))
+    zone = GM.ZONES.get(gid)
+    o = cf.get("o")
+    if zone and o is not None:                               # зоны роста — та же формула, что GM.zone_t
+        _set(prog, "u_czon", 1)
+        _set(prog, "u_cfo", tuple(float(v) for v in o))
+        _set(prog, "u_cz", (float(zone["amp"]), float(zone["lam"]), float(zone["tip"]), float(GM.zone_phase(o))))
+        _set(prog, "u_czm", GM.ZONE_MODES[zone["mode"]])
+    else:
+        _set(prog, "u_czon", 0)
     pal = np.zeros((6, 4), np.float32)
     for i, (t, rgb, _, _) in enumerate(cm["pal"][:6]):
         c = GM.tint(rgb, cf.get("col", 0.5))
@@ -592,6 +671,9 @@ def draw(surf, faces, to_world, center, scale, color, t=0.0, extent=None, incl=N
          ior=None, absorb=None, transparency=1.0, flash=(0.5, 0.5, 0.0), light=None, surface=None, env=1.0):
     """Трассировка в квадрат вокруг center (сторона — по размеру камня); False — нет GPU (рисуйте запасной путь)."""
     r = extent or max(math.sqrt(sum(c * c for c in p)) for f in faces for p in f["pts"])
+    mat = (surface or {}).get("matrix")
+    if mat and not extent:                              # порода выходит за кристалл — кадр шире
+        r = max(r, max(math.sqrt(sum(c * c for c in p)) for f in mat["faces"] for p in f["pts"]))
     size = int(2 * r * scale + 8)
     img = render(faces, to_world, size, scale, color, t, incl=incl, star=star, axis=axis, cfield=cfield,
                  ior=ior, absorb=absorb, transparency=transparency, flash=flash,

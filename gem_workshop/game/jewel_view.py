@@ -58,11 +58,13 @@ def stone(surf, faces, to_world, center, scale, color, t, incl=None, star=0.0, a
                                max(1, int(i["r"] * scale)), 0 if i["k"] == "crystal" else 1)
 
 
-def stone_alpha(surf, faces, to_world, center, scale, color, t, alpha, cfield=None):
-    """Камень полупрозрачно (разметка: сквозь кристалл видны контур, примеси и цветовые зоны)."""
+def stone_alpha(surf, faces, to_world, center, scale, color, t, alpha, cfield=None, incl=None, surface=None,
+                ior=None):
+    """Камень полупрозрачно (разметка: сквозь кристалл видны контур, цветовые зоны и то, что видно глазом)."""
     far = max(math.sqrt(G3.dot(p_, p_)) for f in faces for p_ in f["pts"])
     size = int(2 * far * scale + 8)
-    img = GG.render(faces, to_world, size, scale, color, t, cfield=cfield)
+    img = GG.render(faces, to_world, size, scale, color, t, cfield=cfield, incl=incl, axis=ROUGH_CAXIS,
+                    surface=surface, ior=ior)
     if img is not None:
         k = int(255 * alpha)
         img.fill((k, k, k, k), special_flags=pygame.BLEND_RGBA_MULT)
@@ -204,6 +206,14 @@ def draw_machine(g, surf, rect, k=1.0, ox=None, area=None):
     }
     stone(surf, g.stone, g.machine_world, C, S, g.color, g.t, incl=g.incl, axis=g.caxis,
           cfield=g.cfield(), surface=surf_state)
+    for gx, gy, life in getattr(g, "glints", ()):      # вспышки полировки: грань заиграла
+        p = (C[0] + gx * g.R * S * 0.7, C[1] + gy * g.R * S * 0.7)
+        L = (5 + 16 * min(1.0, life)) * k
+        col = (255, 245, 210)
+        AA.line(surf, col, (p[0] - L, p[1]), (p[0] + L, p[1]), K(2))
+        AA.line(surf, col, (p[0], p[1] - L), (p[0], p[1] + L), K(2))
+        AA.line(surf, (255, 220, 150), (p[0] - L * 0.5, p[1] - L * 0.5), (p[0] + L * 0.5, p[1] + L * 0.5), K(1))
+        AA.line(surf, (255, 220, 150), (p[0] - L * 0.5, p[1] + L * 0.5), (p[0] + L * 0.5, p[1] - L * 0.5), K(1))
     # цель грани — пунктир: след плоскости цели (при верных угле и индексе — вдоль диска)
     tgt = None
     if not g.need_flip() and g.flip_a in (0.0, math.pi):
@@ -802,11 +812,11 @@ def gem_cfield(item, faces=None):
         return None
     cf = item["cf"]
     if "A" in cf:
-        return {"gid": item["id"], "col": item.get("col", 0.5), "A": cf["A"], "b": cf["b"]}
+        return {"gid": item["id"], "col": item.get("col", 0.5), "A": cf["A"], "b": cf["b"], "o": cf.get("o")}
     faces = faces or rough_faces(item)
-    from sim.expedition import load_expedition
     mmr = mm_per_unit(item, faces, _xd())
-    return {"gid": item["id"], "col": item.get("col", 0.5), "A": [mmr, 0, 0, 0, mmr, 0, 0, 0, mmr], "b": cf["o"]}
+    return {"gid": item["id"], "col": item.get("col", 0.5), "A": [mmr, 0, 0, 0, mmr, 0, 0, 0, mmr],
+            "b": cf["o"], "o": cf["o"]}
 
 
 _XD = {}
@@ -1018,19 +1028,163 @@ def draw_inspect(g, surf, rect):
     g.inspect_btn = ib
 
 
+# Облик сырья (docs/atlas_inclusions_rough.md, §2): корунд и другие прочные камни
+# из россыпей приходят окатанной галькой; кварц, берилл, топаз, турмалин — кристаллом
+# с родными гранями или обломком со свежим раковистым сколом.
+PEBBLE = {"ruby", "sapphire", "spinel", "garnet", "peridot", "zircon", "diamond"}
+# Штриховка граней призмы: поперёк оси (кварц, корунд) или вдоль (турмалин, берилл, топаз).
+STRIATION = {"amethyst": "h", "ruby": "h", "sapphire": "h",
+             "tourmaline": "v", "emerald": "v", "topaz": "v", "peridot": "v", "zircon": "v"}
+STRIA_FREQ = 0.22                 # ступенек на единицу камня (≈ шаг 0.3–0.4 мм)
+ROUGH_CAXIS = (0.0, 0.0, 1.0)     # ось кристалла в осях сырья: призма строится вдоль z
+
+
+def rough_style(rough):
+    """Облик куска: pebble, fragment, plate, sliver, matrix, crystal (sim/gems.rough_shape)."""
+    return GM.rough_shape(rough)
+
+
+class RoughFaces(list):
+    """Грани куска сырья + то, что к ним прилагается: масштаб включений по осям
+    (у пластинки и щепки он разный) и порода, в которой сидит кристалл."""
+    incl_scale = None
+    matrix = None
+
+
+# Облик сколов: старый излом — матовый, затёртый (grit — сила матовости);
+# свежий скол — блестящий раковистый.
+def _break_kind(rng, fresh=0.3):
+    if rng.random() < fresh:
+        return "conch", None
+    return "rough", round(rng.uniform(0.45, 0.8), 2)
+
+
+def _rand_dir(rng):
+    return G3.norm((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)))
+
+
+def _chunk(rng, R, ext, center=(0.0, 0.0, 0.0), cuts=16, lo=0.72, hi=0.94, fresh=0.3, kind=None, zbias=1.0):
+    """Неровный кусок: анизотропный брусок (полуоси ext·R вокруг center) и случайные сколы.
+    zbias < 1 — сколы чаще по контуру (поперёк оси z), как у пластинки."""
+    faces = G3.box(R * 8, -R * 8, R * 8)
+    for ax in range(3):
+        for s in (-1.0, 1.0):
+            n = tuple(s if i == ax else 0.0 for i in range(3))
+            k, g = kind or _break_kind(rng, fresh)
+            faces = G3.clip(faces, n, G3.dot(n, center) + ext[ax] * R * rng.uniform(0.85, 1.0), k, grit=g)
+    for _ in range(cuts):
+        u = _rand_dir(rng)
+        if zbias != 1.0:
+            u = G3.norm((u[0], u[1], u[2] * zbias))
+        dist = G3.extent(faces, u) - G3.dot(u, center)
+        k, g = kind or _break_kind(rng, fresh)
+        faces = G3.clip(faces, u, G3.dot(u, center) + dist * rng.uniform(lo, hi), k, grit=g)
+    return faces
+
+
+def _remnant_prism(faces, rng, count, depth=(0.86, 0.96)):
+    """Уцелевшие грани призмы на обломке: по ним (и их штриховке) видно ось кристалла."""
+    tw = rng.uniform(0, math.pi / 3)
+    for k in rng.sample(range(6), count):
+        a = tw + math.pi / 3 * k
+        n = (math.cos(a), math.sin(a), 0.0)
+        faces = G3.clip(faces, n, G3.extent(faces, n) * rng.uniform(*depth), "natural")
+    return faces
+
+
+def _prism_crystal(rng, R, L, tips=(1, -1)):
+    """Шестигранная призма с вершинами (природные грани)."""
+    faces = G3.box(R * 3, -L * 2, L * 2)
+    tw = rng.uniform(0, math.pi / 3)
+    for k in range(6):
+        a = tw + math.pi / 3 * k
+        faces = G3.clip(faces, (math.cos(a), math.sin(a), 0.0), R * rng.uniform(0.85, 1.05), "natural")
+    for side in (1, -1):
+        tip = L * rng.uniform(0.8, 1.15)
+        for k in range(6):
+            a = tw + math.pi / 3 * k
+            th = math.radians(rng.uniform(45, 62))
+            n = (math.sin(th) * math.cos(a), math.sin(th) * math.sin(a), side * math.cos(th))
+            faces = G3.clip(faces, n, G3.dot(n, (0.0, 0.0, side * tip)) * rng.uniform(0.9, 1.0), "natural")
+    return faces
+
+
+def rough_matrix(rough):
+    """Порода вокруг кристалла (грани) или None."""
+    return rough_geom(rough)[0].matrix
+
+
+def rough_look(rough):
+    """Облик сырья для шейдера: скругление корки, налёт, порода."""
+    look = {"round": rough_round(rough), "stain": float(rough.get("stain", 0.0))}
+    mat = rough_matrix(rough)
+    if mat:
+        look["matrix"] = {"faces": mat, "rock": GM.MATRIX_ROCK.get(rough.get("id"), 1)}
+    return look
+
+
+def rough_round(rough):
+    """Радиус скругления кромок корки (единицы камня): окатанная галька — крупный."""
+    if rough_style(rough) != "pebble":
+        return 0.0
+    return rough_geom(rough)[1] * 0.30
+
+
+def _label_rough(faces, rough, rng):
+    """Природные грани: штриховка по минералу; сколы: точка удара для ряби."""
+    mode = STRIATION.get(rough.get("id"))
+    z = (0.0, 0.0, 1.0)
+    for f in faces:
+        n = f["n"]
+        if f["kind"] == "natural":
+            g = None
+            if mode and abs(n[2]) < 0.4 and rough.get("form") not in ("octahedron", "cube", "dodecahedron"):
+                if mode == "h":
+                    g = G3.sub(z, G3.mul(n, n[2]))
+                else:
+                    g = G3.cross(n, z)
+                ln = math.sqrt(G3.dot(g, g))
+                g = G3.mul(g, 1.0 / ln) if ln > 1e-6 else None
+            f["fdir"] = (g[0], g[1], g[2], STRIA_FREQ * rng.uniform(0.8, 1.25)) if g else (0.0, 0.0, 0.0, 0.0)
+        elif f["kind"] == "conch":
+            pts = f["pts"]
+            p = pts[rng.randrange(len(pts))]
+            f["fdir"] = (p[0], p[1], p[2], 0.0)
+    return faces
+
+
 def rough_geom(rough):
     """Необработанный камень — природный кристалл из своего seed.
 
     Форма берётся из `rough["form"]`: октаэдр, куб, призма, макл, массивный
     или додекаэдр. Это не косметика: форма меняет выход, ориентацию и выбор
-    огранки. Возвращает (грани, радиус R, полудлина L).
+    огранки. Облик поверхности — `rough_style`. Возвращает (грани, радиус R, полудлина L).
     """
     import random
     form = rough.get("form", "prism")
-    key = ("rough", rough["uid"], rough["seed"], rough.get("size"), form)
+    style = rough_style(rough)
+    # форма — от исходной массы: окошки срезают её, а не уменьшают кристалл целиком
+    size0 = rough.get("size0", rough.get("size", 1.0))
+    wins = tuple((tuple(w["n"]), w["h"]) for w in rough.get("windows") or ())
+    saws = tuple((tuple(w["n"]), w["h"]) for w in rough.get("saws") or ())
+    key = ("rough", rough["seed"], size0, form, rough.get("id"), wins, style, saws)
     if key not in _IDEAL:
         rng = random.Random(rough["seed"])
-        R = 62.0 * (rough.get("size", 1.0) / 2.2) ** (1 / 3)
+        R = 62.0 * (size0 / 2.2) ** (1 / 3)
+        if style in ("fragment", "plate", "sliver", "matrix"):
+            faces, L, scale, matrix = _rough_piece(rough, style, rng, R)
+            faces = _label_rough(faces, rough, rng)
+            for n, h in wins:
+                faces = G3.clip(faces, n, h * R, "polish")
+            for n, h in saws:                           # распил: ровный пропил, тонкая матовость
+                faces = G3.clip(faces, n, h * R, "rough", grit=0.3) or faces
+                if matrix:
+                    matrix = G3.clip(matrix, n, h * R, "rough") or None
+            faces = RoughFaces(faces)
+            faces.incl_scale = scale
+            faces.matrix = matrix
+            _IDEAL[key] = (faces, R, L)
+            return _IDEAL[key]
 
         if form in ("octahedron", "cube"):
             L = R * (0.95 if form == "octahedron" else 1.0)
@@ -1078,13 +1232,72 @@ def rough_geom(rough):
                     n = (math.sin(th) * math.cos(a), math.sin(th) * math.sin(a), side * math.cos(th))
                     faces = G3.clip(faces, n, G3.dot(n, (0.0, 0.0, side * tip)) * rng.uniform(0.9, 1.0), "rough")
 
-        # Естественные сколы. У массивного сырья их больше.
-        chips = rng.randint(4, 8) if form == "massive" else rng.randint(2, 5)
-        for _ in range(chips):
-            u = G3.norm((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)))
-            faces = G3.clip(faces, u, G3.extent(faces, u) * rng.uniform(0.78, 0.92), "rough")
+        if style == "pebble":
+            # Окатанная галька: много мелких срезов углов — округлый силуэт,
+            # вся поверхность — матовая корка (скругление кромок — в шейдере).
+            for f in faces:
+                f["kind"] = "rough"
+            for _ in range(rng.randint(12, 18)):
+                u = G3.norm((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)))
+                faces = G3.clip(faces, u, G3.extent(faces, u) * rng.uniform(0.84, 0.95), "rough")
+        else:
+            for f in faces:
+                f["kind"] = "natural"
+            # Сколы — свежий раковистый излом. У обломка их больше и они глубже.
+            if style == "fragment":
+                chips, lo, hi = rng.randint(4, 7), 0.62, 0.86
+            else:
+                chips, lo, hi = rng.randint(1, 3), 0.80, 0.93
+            for _ in range(chips):
+                u = G3.norm((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)))
+                faces = G3.clip(faces, u, G3.extent(faces, u) * rng.uniform(lo, hi), "conch")
+            faces = _label_rough(faces, rough, rng)
+        for n, h in wins:                               # окошки: маленькие полированные площадки
+            faces = G3.clip(faces, n, h * R, "polish")
+        for n, h in saws:
+            faces = G3.clip(faces, n, h * R, "rough", grit=0.3) or faces
+        faces = RoughFaces(faces)
+        faces.incl_scale = (R, R, L)
         _IDEAL[key] = (faces, R, L)
     return _IDEAL[key]
+
+
+def _rough_piece(rough, style, rng, R):
+    """Обломок, пластинка, щепка или кристалл в породе. → (грани, L, масштаб включений, порода)."""
+    matrix = None
+    if style == "fragment":
+        ext = (1.0, rng.uniform(0.7, 1.0), rng.uniform(0.7, 1.25))
+        faces = _chunk(rng, R, ext, cuts=rng.randint(16, 24), lo=0.6, hi=0.9)
+        faces = _remnant_prism(faces, rng, rng.choice((0, 1, 1, 2)))
+    elif style == "plate":
+        # плоский кусок, сплющенный поперёк оси (таблитчатый кристалл, отколотая пластина)
+        ext = (rng.uniform(1.0, 1.2), rng.uniform(0.8, 1.0), rng.uniform(0.26, 0.4))
+        faces = _chunk(rng, R, ext, cuts=rng.randint(13, 18), lo=0.66, hi=0.93, zbias=0.3)
+        if rng.random() < 0.5:                          # основание таблитчатого кристалла
+            for s in (1.0, -1.0):
+                n = (0.0, 0.0, s)
+                faces = G3.clip(faces, n, G3.extent(faces, n) * rng.uniform(0.9, 0.98), "natural")
+    elif style == "sliver":
+        # щепка / «карандаш»: вытянута вдоль оси, по длине — грани призмы
+        ext = (rng.uniform(0.38, 0.55), rng.uniform(0.32, 0.5), rng.uniform(1.5, 2.2))
+        faces = _chunk(rng, R, ext, cuts=rng.randint(13, 18), lo=0.62, hi=0.92)
+        faces = _remnant_prism(faces, rng, rng.choice((2, 3, 4)), depth=(0.88, 0.97))
+    else:
+        # кристалл, вросший в породу: нижняя часть скрыта
+        ext = (1.0, 1.0, 1.0)
+        L = R * rng.uniform(0.95, 1.3)
+        faces = _prism_crystal(rng, R, L)
+        for _ in range(rng.randint(1, 3)):
+            u = _rand_dir(rng)
+            k, g = _break_kind(rng, 0.5)
+            faces = G3.clip(faces, u, G3.extent(faces, u) * rng.uniform(0.8, 0.93), k, grit=g)
+        # порода — с +z: в осмотре кристалл смотрит на зрителя свободным концом (−z)
+        c = (rng.uniform(-0.2, 0.2) * R, rng.uniform(-0.2, 0.2) * R, L * rng.uniform(0.8, 1.0))
+        matrix = _chunk(rng, R, (rng.uniform(1.2, 1.5), rng.uniform(1.1, 1.4), rng.uniform(0.45, 0.65)),
+                        center=c, cuts=rng.randint(12, 18), lo=0.7, hi=0.93, kind=("rough", None))
+        return faces, L, (R * 0.85, R * 0.85, L * 0.85), matrix
+    L = R * ext[2]
+    return faces, L, (R * ext[0] * 0.85, R * ext[1] * 0.85, L * 0.85), matrix
 
 
 def rough_faces(rough):
@@ -1095,18 +1308,47 @@ def rough_incl(rough):
     """Примеси кристалла в его осях (доли призмы → единицы); вне кристалла (ушли со сколом) — нет."""
     faces, R, L = rough_geom(rough)
     planes = [(f["n"], G3.dot(f["n"], f["pts"][0])) for f in faces if f["pts"]]
+    sx, sy, sz = getattr(faces, "incl_scale", None) or (R, R, L)
+    rs = min(sx, sy, sz) / R if R else 1.0             # у тонкой пластинки и щепки включения мельче
     out = []
     for k, i in enumerate(rough.get("incl", [])):
-        p_ = (i["p"][0] * R, i["p"][1] * R, i["p"][2] * L)
-        r = i["r"] * R
-        if i["k"] != "silk" and not all(G3.dot(n, p_) <= off - r * 0.3 for n, off in planes):
+        p_ = (i["p"][0] * sx, i["p"][1] * sy, i["p"][2] * sz)
+        r = i["r"] * R * max(0.45, rs)
+        d = dict(i, p=p_, r=r, i=k)                         # i — номер примеси в камне (раскол убирает её)
+        if i["k"] in ("feather", "fingerprint", "cleavage"):
+            # плоские включения могут выходить на поверхность — так и бывает: остаются,
+            # если центр внутри; перо/спайность у самой поверхности — риск скола
+            gap = min(off - G3.dot(n, p_) for n, off in planes)
+            if gap < 1.0:
+                continue
+            if gap < r * 0.6 and i["k"] != "fingerprint":
+                d["surf"] = 1.0
+        elif i["k"] != "silk" and not all(G3.dot(n, p_) <= off - r * 0.3 for n, off in planes):
             continue
-        out.append(dict(i, p=p_, r=r, i=k))                 # i — номер примеси в камне (раскол убирает её)
+        if i["k"] == "cleavage":                            # спайность — поперёк оси кристалла, не куда попало
+            d["n"] = ROUGH_CAXIS
+        out.append(d)
     return out
 
 
 def stone_faces(item):
     return rough_faces(item) if "seed" in item and "q" not in item else gem_faces(item)
+
+
+_THUMBS = {}
+
+
+def rough_thumb(rough, color, size, xd=None):
+    """Неподвижная миниатюра куска (кеш): для стола и карточек партий."""
+    key = (rough.get("uid"), size, rough.get("size0"), len(rough.get("windows") or ()), tuple(color))
+    if key not in _THUMBS:
+        img = pygame.Surface((size, size), pygame.SRCALPHA)
+        img.fill((0, 0, 0, 0))
+        draw_rough(img, rough, color, (size // 2, size // 2), size, t=0.6, xd=xd)
+        if len(_THUMBS) > 400:
+            _THUMBS.clear()
+        _THUMBS[key] = img
+    return _THUMBS[key]
 
 
 def draw_rough(surf, rough, color, center, size, t=0.0, tilt=1.25, xd=None):
@@ -1116,7 +1358,11 @@ def draw_rough(surf, rough, color, center, size, t=0.0, tilt=1.25, xd=None):
     scale = size / (2 * far)
     if xd:
         scale *= phys_k(rough, faces, xd, 16.0)
-    stone(surf, faces, turntable(t, tilt), center, scale, gem_color(rough, color), t, cfield=gem_cfield(rough, faces))
+    # Без фонарика, но и без «витринного» окружения ×5: блестящие природные грани бледного
+    # сырья в нём выгорают в белое пятно.
+    stone(surf, faces, turntable(t, tilt), center, scale, gem_color(rough, color), t, cfield=gem_cfield(rough, faces),
+          axis=ROUGH_CAXIS, light={"on": False}, surface=dict(rough_look(rough), roughness=0.85),
+          env=2.4)
 
 
 # ---------- разметка сырого камня ----------
@@ -1156,9 +1402,23 @@ def draw_diag_sheet(g, surf, rect):
     T.text(surf, "J — вернуться к рабочему виду", (rect.x + 14, rect.bottom - 24), 12, T.TEXT_DIM)
 
 
+def _profile_ior(gid):
+    from workshop import optics as OPT
+    return OPT.profile(gid)["ior"]
+
+
+def _mark_icon(surf, pos, short, col, bright=True):
+    """Метка игрока: кружок с короткой подписью."""
+    r = 9
+    pygame.draw.circle(surf, (14, 12, 10), pos, r + 2)
+    pygame.draw.circle(surf, col, pos, r, 2 if bright else 1)
+    T.text(surf, short, pos, 10, col, True, center=True)
+
+
 def draw_plan(g, surf, rect):
-    """Разметка: кристалл полупрозрачен, внутри — контур будущего камня (янтарный каркас), примеси — красные
-    (останутся в камне) и серые (уйдут в отход). Справа — масса, чистота, цвет, примерная цена."""
+    """Разметка: кристалл полупрозрачен, внутри — контур будущего камня (янтарный каркас) и метки игрока —
+    яркие (останутся в камне) и тусклые (уйдут в отход). Справа — масса и оценка по меткам игрока:
+    правды о включениях здесь нет — её показывает только сам камень."""
     pl = g.plan
     xd = g.xd
     view = pygame.Rect(rect.x + 16, rect.y + 16, rect.w - 380, rect.h - 32)
@@ -1174,8 +1434,11 @@ def draw_plan(g, surf, rect):
     to_view = lambda p_: (m[0][0] * p_[0] + m[0][1] * p_[1] + m[0][2] * p_[2],          # noqa: E731
                           m[1][0] * p_[0] + m[1][1] * p_[1] + m[1][2] * p_[2],
                           m[2][0] * p_[0] + m[2][1] * p_[1] + m[2][2] * p_[2])
+    # включения — только физически, как их видно глазом (сквозь корку смутно, сквозь окошко — чётко)
     stone_alpha(surf, pl.faces, to_view, c, scale, g.color, g.t, 0.55,
-                cfield={"gid": g.rough["id"], "col": g.rough.get("col", 0.5), **pl.cf_rough()})
+                cfield={"gid": g.rough["id"], "col": g.rough.get("col", 0.5), **pl.cf_rough()},
+                incl=pl.incl, surface={"round": rough_round(g.rough), "roughness": 0.85},
+                ior=_profile_ior(g.rough["id"]))
     s_ = pl.s()
     # контур будущего камня: каркас граней (дальние — тусклее)
     for f in g.ideal:
@@ -1189,35 +1452,19 @@ def draw_plan(g, surf, rect):
             v = pl.q(p_)
             scr.append((c[0] + (v[0] * s_ + pl.o[0]) * scale, c[1] + (v[1] * s_ + pl.o[1]) * scale))
         AA.lines(surf, col, True, scr, 2 if nv[2] < 0 else 1)
-    # примеси
-    for (si, inside), inc in zip(pl.stone_incl(s_), pl.incl):
-        v = to_view(inc["p"])
-        pos = (int(c[0] + v[0] * scale), int(c[1] + v[1] * scale))
-        rr = max(2, int(inc["r"] * scale))
-        if inc["k"] == "silk":
-            ax = to_view((0.0, 0.0, 1.0))
-            for k in range(3):                              # шёлк: иглы поперёк оси кристалла
-                a = math.atan2(ax[1], ax[0]) + math.pi / 2 + (k - 1) * 0.5
-                d = (math.cos(a) * rr * 0.5, math.sin(a) * rr * 0.5)
-                AA.line(surf, (200, 200, 220), (c[0] - d[0], c[1] - d[1]), (c[0] + d[0], c[1] + d[1]), 1)
-            continue
-        col = (255, 90, 80) if inside else (120, 116, 120)
-        if inc["k"] == "feather":
-            n = to_view(inc["n"])
-            t_ = (-n[1], n[0])
-            ln = math.hypot(*t_) or 1.0
-            a = (pos[0] - t_[0] / ln * rr, pos[1] - t_[1] / ln * rr)
-            b = (pos[0] + t_[0] / ln * rr, pos[1] + t_[1] / ln * rr)
-            AA.line(surf, col, a, b, 3)
-        elif inc["k"] == "bubble":
-            AA.circle(surf, col, pos, rr, 1)
-        elif inc["k"] == "cloud":
-            for k in range(5):
-                AA.circle(surf, col, (pos[0] + int(rr * 0.6 * math.cos(k * 1.3)),
-                                               pos[1] + int(rr * 0.6 * math.sin(k * 1.7))), max(1, rr // 3))
-        else:
-            AA.circle(surf, col, pos, rr)
-    if g.cut.get("dome") and pl.silk() > 0:                 # ось кристалла: для звезды — вверх
+    # Метки игрока — его собственный прогноз; правды о включениях тут нет.
+    # Яркие метки — внутри контура (останутся в камне), тусклые — уйдут в отход.
+    from workshop import marks as MK
+    for mk, _, inside in MK.plan_marks(pl, g.rough, s_):
+        label, short, mcol = MK.KIND.get(mk["k"], (mk["k"], "?", (200, 200, 200)))
+        a, b = to_view(mk["a"]), to_view(mk["b"])
+        pa = (c[0] + a[0] * scale, c[1] + a[1] * scale)
+        pb = (c[0] + b[0] * scale, c[1] + b[1] * scale)
+        col = mcol if inside else tuple(v // 2 for v in mcol)
+        dashed(surf, pa, pb, tuple(v // 2 for v in col), 1, 10)
+        mpos = (int((pa[0] + pb[0]) / 2), int((pa[1] + pb[1]) / 2))
+        _mark_icon(surf, mpos, short, col, inside)
+    if g.cut.get("dome"):                                   # ось кристалла видна по его форме: для звезды — вверх
         ax = to_view((0.0, 0.0, 1.0))
         e = (c[0] + ax[0] * far * scale * 0.9, c[1] + ax[1] * far * scale * 0.9)
         AA.line(surf, (200, 220, 255), c, e, 2)
@@ -1230,33 +1477,33 @@ def draw_plan(g, surf, rect):
     T.text(surf, "Разметка камня", (x, y), 22, (255, 210, 120), True)
     T.text(surf, g.cut["name"], (x, y + 32), 15, T.TEXT)
     ct = pl.est_ct()
-    cl = pl.est_clarity()
-    inside = sum(1 for si, ok in pl.stone_incl(s_) if ok and si["k"] != "silk")
-    total = sum(1 for i in pl.incl if i["k"] != "silk")
     lines = [(f"сырьё {g.rough['size']:.2f} кар. → камень ≈ {ct:.2f} кар.", T.TEXT),
-             (f"форма: {GM.form_name(g.rough.get('form'))} · выход {ct / max(0.01, g.rough['size']) * 100:.0f}% · "
+             (f"форма: {GM.shape_name(g.rough)} · выход {ct / max(0.01, g.rough['size']) * 100:.0f}% · "
               f"размер {pl.frac * 100:.0f}%", T.TEXT_DIM)]
-    risk = pl.risk()
-    lines.append((f"риск скола: {risk * 100:.0f}%" if risk > 0.01 else "риск скола: низкий",
-                  (240, 130, 110) if risk > 0.25 else (150, 230, 150)))
     if xd:
-        lines += [(f"примеси: {inside} из {total} останутся", (255, 140, 120) if inside else (150, 230, 150)),
-                  (f"чистота: {GM.grade(xd, cl).lower()}", T.TEXT),
-                  (f"цвет: {GM.color_word(xd, g.rough.get('col', 0.5))}", T.TEXT)]
-        star = pl.star()
+        est = MK.plan_estimate(pl, g.rough, xd, s_)
+        lines.append(("— по вашим меткам —", (220, 200, 160)))
+        if est["total"]:
+            lines.append((f"останутся в камне: {est['inside']} из {est['total']}",
+                          (255, 160, 130) if est["inside"] else (150, 230, 150)))
+        else:
+            lines.append(("включений не отмечено", T.TEXT_DIM))
+        risk = est["risk"]
+        lines.append((f"риск скола: {risk * 100:.0f}%" if risk > 0.01 else "риск скола: не видно",
+                      (240, 130, 110) if risk > 0.25 else (150, 230, 150)))
+        lines.append((f"чистота: {GM.grade(xd, est['clarity']).lower()} · цвет {GM.color_word(xd, g.rough.get('col', 0.5))}",
+                      T.TEXT))
+        star = 0.0
         if g.cut.get("dome"):
-            lines.append((f"звезда: {star * 100:.0f}%" if pl.silk() else "звезды не будет (нет шёлка)",
-                          (200, 220, 255) if star > 0.3 else T.TEXT_DIM))
-        cz = pl.est_colors()
-        txt = GM.colors_text(g.rough["id"], cz)
-        if txt:
-            lines.append((fit_text(txt, 14, panel.w - 32), (220, 210, 250)))
-        est = GM.estimate(xd, g.rough["id"], ct, g.rough.get("col", 0.5), cl, 1.0, g.cut["id"], star, cz)
-        lines.append((f"цена при работе 100% ≈ {est}", (255, 210, 120)))
+            star = 0.6 * abs(pl.axis()[2]) ** 6 if est["silk"] else 0.0
+            lines.append(("шёлк отмечен: ось кристалла — вверх для звезды" if est["silk"]
+                          else "шёлк не отмечен — звезды не ждите", (200, 220, 255) if est["silk"] else T.TEXT_DIM))
+        price = GM.estimate(xd, g.rough["id"], ct, g.rough.get("col", 0.5), est["clarity"], 1.0, g.cut["id"], star)
+        lines.append((f"цена по вашей оценке ≈ {price}", (255, 210, 120)))
     for i, (txt, col) in enumerate(lines):
         T.text(surf, txt, (x, y + 62 + i * 22), 14, col)
     tips = ("ЛКМ — камень · ПКМ — проекция · СКМ — камера", "Q/E — крен камня · колесо — размер",
-            "WASD — сдвиг · R — сброс", "красные примеси останутся,", "серые — уйдут в отход",
+            "WASD — сдвиг · R — сброс", "яркие метки останутся в камне,", "тусклые — уйдут в отход",
             "Backspace — другая огранка")
     for i, txt in enumerate(tips):
         T.text(surf, txt, (x, panel.bottom - 186 + i * 19), 12, T.TEXT_DIM)
