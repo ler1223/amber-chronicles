@@ -1262,6 +1262,29 @@
    "tag": "Комбо",
    "once": "turn"
   },
+  "weak_point": {
+   "name": "Слабое место",
+   "icon": "gift_far_sight",
+   "rarity": "rare",
+   "about": "Карты [Клич]: +2 урона; первая [Клич] за ход накладывает 2 уязвимости.",
+   "on": "play",
+   "do": [
+    {
+     "op": "vulnerable",
+     "n": 2
+    }
+   ],
+   "hero": "hunter",
+   "tag": "Клич",
+   "once": "turn",
+   "aim": "target",
+   "tag_bonus": [
+    {
+     "tag": "Клич",
+     "damage": 2
+    }
+   ]
+  },
   "chain_quiver": {
    "name": "Колчан эха",
    "icon": "arrow_storm",

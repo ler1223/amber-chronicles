@@ -255,6 +255,37 @@ def test_tressa_curse_support_and_multi_hit():
     assert b.energy == 2 and any(c.cid == "arrow_blood" for c in b.hand)
 
 
+def test_hunter_damage_amplifiers_and_debuffs():
+    data = M.load()
+    run = M.Run(data=data, seed=34, hero="hunter", variant="mark")
+    b = Battle(ED, run, run.fights[0], seed=34)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (3, 2))
+    foe.hp = foe.max_hp = 99
+    b.energy = 9
+
+    expose = M.Card("h_dmg_expose", run.defs)
+    b.hand = [expose]
+    finish(b.play(expose, "main", foe))
+    assert foe.ds["vulnerable"] >= 2
+
+    execute = M.Card("h_dmg_execute", run.defs)
+    b.hand = [execute]
+    hp = foe.hp
+    finish(b.play(execute, "main", foe))
+    assert hp - foe.hp > 8
+
+    predator = M.Card("h_dmg_predator", run.defs)
+    b.hand = [predator]
+    finish(b.play(predator, "main", h))
+    shot = M.Card("h_shot", run.defs)
+    b.hand = [shot]
+    finish(b.play(shot, "main", foe))
+    assert h.ds["ranged_bonus"] >= 1
+
+
 def test_area_and_hunt_tag_items():
     data = M.load()
     rel = data["relics"]["relics"]
