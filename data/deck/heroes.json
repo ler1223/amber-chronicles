@@ -81,7 +81,15 @@
     "m_ring",
     "m_grapple",
     "m_break",
-    "m_quake"
+    "m_quake",
+    "m_czn_shelter_kick",
+    "m_czn_shelter_mk2",
+    "m_czn_wolves_dome",
+    "m_czn_shelter_strike",
+    "m_czn_overpower",
+    "m_czn_rally",
+    "m_czn_frost_charge",
+    "m_czn_ice_wall"
    ],
    "hand": 6,
    "passives": {
@@ -243,7 +251,15 @@
     "h_scout",
     "h_smoke_screen",
     "h_snare_net",
-    "h_patient_shot"
+    "h_patient_shot",
+    "h_czn_multishot",
+    "h_czn_quiver_reload",
+    "h_czn_plasma_rain",
+    "h_czn_draw_release",
+    "h_czn_high_scope",
+    "h_czn_target_spotted",
+    "h_czn_drone_bomb",
+    "h_czn_sniper_domain"
    ],
    "hand": 6,
    "starter_by_variant": {
@@ -475,7 +491,16 @@
     "p_geyser",
     "p_flame_armor",
     "p_burnout",
-    "p_fireball"
+    "p_fireball",
+    "p_czn_soulfire",
+    "p_czn_soliloquy",
+    "p_czn_black_hole",
+    "p_czn_brand",
+    "p_czn_echo_abyss",
+    "p_czn_rising_dragon",
+    "p_czn_unity",
+    "p_czn_call_response",
+    "p_czn_encore"
    ],
    "hand": 6,
    "passives": {

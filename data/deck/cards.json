@@ -34019,6 +34019,5552 @@
    "retain": true,
    "category": "hero",
    "rarity": 1
+  },
+  "h_czn_multishot": {
+   "ill": [
+    "wisp_lead",
+    0.527,
+    0.51,
+    0.5
+   ],
+   "art": "gift_leech_arrows",
+   "name": "Мультивыстрел",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     }
+    ],
+    "ranged": true,
+    "vfx": "rain_of_arrows"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Область"
+   ],
+   "owner": "hunter",
+   "source": {
+    "character": "Hilde",
+    "name": "Multishot",
+    "effect": "60% Damage to all enemies",
+    "game": "CZN"
+   }
+  },
+  "h_czn_quiver_reload": {
+   "ill": [
+    "smith_cart",
+    0.564,
+    0.54,
+    0.5
+   ],
+   "art": "arrow_piercing",
+   "name": "Перезарядка колчана",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "add_card",
+      "n": 3,
+      "card": "arrow"
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Создание",
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 3,
+          "card": "arrow"
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 3,
+          "card": "arrow"
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 3,
+          "card": "arrow"
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 3,
+          "card": "arrow"
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 3,
+          "card": "arrow"
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "owner": "hunter",
+   "source": {
+    "character": "Hilde",
+    "name": "Quiver Reload",
+    "effect": "Create 3 Homing Arrow in Draw Pile",
+    "game": "CZN"
+   }
+  },
+  "h_czn_plasma_rain": {
+   "ill": [
+    "market_night",
+    0.541,
+    0.51,
+    0.7
+   ],
+   "art": "arrow_storm",
+   "name": "Плазменный дождь",
+   "cost": 2,
+   "type": "attack",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "burn",
+      "n": 2
+     }
+    ],
+    "ranged": true,
+    "vfx": "rain_of_arrows"
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "burn",
+          "n": 3
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "burn",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "burn",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "burn",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "burn",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "rain_of_arrows"
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Область",
+    "Огонь"
+   ],
+   "owner": "hunter",
+   "source": {
+    "character": "Hilde",
+    "name": "Plasma Rain",
+    "effect": "60% Damage and 2 Ionization to all enemies",
+    "game": "CZN"
+   }
+  },
+  "h_czn_draw_release": {
+   "ill": [
+    "mirror_pool",
+    0.548,
+    0.51,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Натянуть и отпустить",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 2
+     },
+     {
+      "op": "ranged_bonus",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         },
+         {
+          "op": "ranged_bonus",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "ranged_bonus",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "ranged_bonus",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "ranged_bonus",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "ranged_bonus",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Комбо",
+    "Выстрел"
+   ],
+   "owner": "hunter",
+   "source": {
+    "character": "Hilde",
+    "name": "Draw & Release",
+    "effect": "Draw 2 Attack Cards; +50% Damage",
+    "game": "CZN"
+   }
+  },
+  "h_czn_high_scope": {
+   "ill": [
+    "magpie_nest",
+    0.555,
+    0.51,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Мощная оптика",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "do": [
+     {
+      "op": "mark",
+      "n": 3
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": false,
+    "do": [
+     {
+      "op": "mark",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "do": [
+         {
+          "op": "mark",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "do": [
+         {
+          "op": "mark",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "do": [
+         {
+          "op": "mark",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "do": [
+         {
+          "op": "mark",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "do": [
+         {
+          "op": "mark",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Метка",
+    "Выстрел"
+   ],
+   "owner": "hunter",
+   "source": {
+    "character": "Selena",
+    "name": "High-Power Scope",
+    "effect": "2 Mark",
+    "game": "CZN"
+   }
+  },
+  "h_czn_target_spotted": {
+   "ill": [
+    "archer_ambush",
+    0.612,
+    0.51,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Цель замечена",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     },
+     {
+      "op": "mark",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "mark",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "basic_role": "attack",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Метка"
+   ],
+   "owner": "hunter",
+   "source": {
+    "character": "Selena",
+    "name": "Target Spotted",
+    "effect": "150% Damage; 1 Mark",
+    "game": "CZN"
+   }
+  },
+  "h_czn_drone_bomb": {
+   "ill": [
+    "wisp_lead",
+    0.569,
+    0.51,
+    0.5
+   ],
+   "art": "gift_leech_arrows",
+   "name": "Бомбардировка дронами",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "weak",
+      "n": 2
+     }
+    ],
+    "ranged": true,
+    "vfx": "grenade"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "weak",
+          "n": 3
+         }
+        ],
+        "ranged": true,
+        "vfx": "grenade"
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "grenade"
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "ranged": true,
+        "vfx": "grenade"
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "grenade"
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "ranged": true,
+        "vfx": "grenade"
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Область",
+    "Клич"
+   ],
+   "owner": "hunter",
+   "source": {
+    "character": "Selena",
+    "name": "Drone Bombing",
+    "effect": "120% Damage to all enemies, 1 Weakness",
+    "game": "CZN"
+   }
+  },
+  "h_czn_sniper_domain": {
+   "ill": [
+    "ferryman",
+    0.506,
+    0.53,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Владения снайпера",
+   "cost": 2,
+   "type": "power",
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "play",
+     "tag": "Метка",
+     "aim": "nearest",
+     "do": [
+      {
+       "op": "damage",
+       "n": 3
+      }
+     ]
+    }
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Метка",
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 4
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 3
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 3
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 3
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "damage",
+           "n": 3
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "owner": "hunter",
+   "source": {
+    "character": "Selena",
+    "name": "Sniper's Domain",
+    "effect": "+80% Mark Damage",
+    "game": "CZN"
+   }
+  },
+  "m_czn_shelter_kick": {
+   "ill": [
+    "training",
+    0.583,
+    0.51,
+    0.5
+   ],
+   "art": "item_blade",
+   "name": "Удар из укрытия",
+   "cost": 1,
+   "type": "attack",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     },
+     {
+      "op": "block",
+      "n": 4
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "block",
+          "n": 5
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Удар",
+    "Защита"
+   ],
+   "owner": "merc",
+   "source": {
+    "character": "Maribell",
+    "name": "Shelter Kick",
+    "effect": "Defense-based damage",
+    "game": "CZN"
+   }
+  },
+  "m_czn_shelter_mk2": {
+   "ill": [
+    "training",
+    0.59,
+    0.51,
+    0.5
+   ],
+   "art": "item_blade",
+   "name": "Укрытие MK.II",
+   "cost": 2,
+   "type": "attack",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 6
+     },
+     {
+      "op": "block",
+      "n": 6
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "block",
+          "n": 8
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Удар",
+    "Защита"
+   ],
+   "owner": "merc",
+   "source": {
+    "character": "Maribell",
+    "name": "Shelter MK.II",
+    "effect": "120% Defense Damage; 100% Shield",
+    "game": "CZN"
+   }
+  },
+  "m_czn_wolves_dome": {
+   "name": "Волчий купол",
+   "type": "power",
+   "cost": 1,
+   "art": "gift_iron_will",
+   "ill": [
+    "guard_bridge",
+    0.747,
+    0.61,
+    0.65
+   ],
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "turn",
+     "do": [
+      {
+       "op": "counter",
+       "n": 1
+      },
+      {
+       "op": "block",
+       "n": 4
+      }
+     ]
+    }
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "counter",
+           "n": 1
+          },
+          {
+           "op": "block",
+           "n": 5
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "counter",
+           "n": 1
+          },
+          {
+           "op": "block",
+           "n": 4
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "counter",
+           "n": 1
+          },
+          {
+           "op": "block",
+           "n": 4
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "counter",
+           "n": 1
+          },
+          {
+           "op": "block",
+           "n": 4
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "counter",
+           "n": 1
+          },
+          {
+           "op": "block",
+           "n": 4
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Защита",
+    "Шипы"
+   ],
+   "owner": "merc",
+   "source": {
+    "character": "Maribell",
+    "name": "Wolves' Dome",
+    "effect": "Counterattack each turn",
+    "game": "CZN"
+   }
+  },
+  "m_czn_shelter_strike": {
+   "ill": [
+    "golem_core",
+    0.454,
+    0.56,
+    0.5
+   ],
+   "art": "gift_steel_shell",
+   "name": "Удар щитом",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "body_slam"
+     },
+     {
+      "op": "block",
+      "n": 3
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "body_slam"
+         },
+         {
+          "op": "block",
+          "n": 4
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "body_slam"
+         },
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "body_slam"
+         },
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "body_slam"
+         },
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "body_slam"
+         },
+         {
+          "op": "block",
+          "n": 3
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Защита"
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "owner": "merc",
+   "source": {
+    "character": "Maribell",
+    "name": "Shelter Strike",
+    "effect": "Fixed Damage equal to Shield",
+    "game": "CZN"
+   }
+  },
+  "m_czn_overpower": {
+   "ill": [
+    "village_mob",
+    0.69,
+    0.661,
+    0.5
+   ],
+   "art": "item_axe",
+   "name": "Пересилить",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 8
+     },
+     {
+      "op": "aoe_adjacent",
+      "do": [
+       {
+        "op": "push",
+        "n": 1
+       }
+      ]
+     }
+    ]
+   },
+   "alt": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "push",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 11
+         },
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "aoe_adjacent",
+          "do": [
+           {
+            "op": "push",
+            "n": 1
+           }
+          ]
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Защита",
+    "Толчок",
+    "Область"
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "owner": "merc",
+   "source": {
+    "character": "Khalipe",
+    "name": "Overpower",
+    "effect": "250% Shield; Tenacity damage",
+    "game": "CZN"
+   }
+  },
+  "m_czn_rally": {
+   "ill": [
+    "training",
+    0.527,
+    0.521,
+    0.5
+   ],
+   "art": "item_blade",
+   "name": "Сплочение",
+   "cost": 1,
+   "type": "skill",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 6
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Защита",
+    "Комбо"
+   ],
+   "owner": "merc",
+   "source": {
+    "character": "Khalipe",
+    "name": "Rally",
+    "effect": "120% Shield; Draw highest-cost",
+    "game": "CZN"
+   }
+  },
+  "m_czn_frost_charge": {
+   "ill": [
+    "village_mob",
+    0.704,
+    0.661,
+    0.5
+   ],
+   "art": "item_axe",
+   "name": "Морозный заряд",
+   "cost": 2,
+   "type": "skill",
+   "main": {
+    "target": "area",
+    "range": 4,
+    "radius": 1,
+    "do": [
+     {
+      "op": "block",
+      "n": 7
+     },
+     {
+      "op": "vulnerable",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "push",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "block",
+          "n": 9
+         },
+         {
+          "op": "vulnerable",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Защита",
+    "Область",
+    "Клич"
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "owner": "merc",
+   "source": {
+    "character": "Magna",
+    "name": "Frost Charge",
+    "effect": "140% Shield; 3 Vulnerable",
+    "game": "CZN"
+   }
+  },
+  "m_czn_ice_wall": {
+   "name": "Ледяная стена",
+   "type": "skill",
+   "cost": 2,
+   "art": "gift_iron_will",
+   "ill": [
+    "guard_bridge",
+    0.691,
+    0.621,
+    0.65
+   ],
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 8
+     },
+     {
+      "op": "counter",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 11
+         },
+         {
+          "op": "counter",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Защита",
+    "Шипы"
+   ],
+   "owner": "merc",
+   "source": {
+    "character": "Magna",
+    "name": "Ice Wall",
+    "effect": "200% Shield; 2 Counterattack",
+    "game": "CZN"
+   }
+  },
+  "p_czn_soulfire": {
+   "ill": [
+    "salamander_nest",
+    0.548,
+    0.521,
+    0.5
+   ],
+   "art": "gift_spellsurge",
+   "name": "Танец души",
+   "type": "attack",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "cost": 1,
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Огонь",
+    "Комбо"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Fei",
+    "name": "Soulfire Dance",
+    "effect": "100% Damage x X+1; Draw X",
+    "game": "CZN"
+   }
+  },
+  "p_czn_soliloquy": {
+   "ill": [
+    "mirror_pool",
+    0.555,
+    0.521,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Монолог",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Комбо"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Fei",
+    "name": "Soliloquy",
+    "effect": "Draw 2; discard high-cost",
+    "game": "CZN"
+   }
+  },
+  "p_czn_black_hole": {
+   "ill": [
+    "volcano_whisper",
+    0.562,
+    0.521,
+    0.5
+   ],
+   "art": "fx_meteor",
+   "name": "Чёрная дыра",
+   "type": "attack",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 11,
+          "per": {
+           "what": "exhausted",
+           "k": 1
+          }
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8,
+          "per": {
+           "what": "exhausted",
+           "k": 1
+          }
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8,
+          "per": {
+           "what": "exhausted",
+           "k": 1
+          }
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8,
+          "per": {
+           "what": "exhausted",
+           "k": 1
+          }
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8,
+          "per": {
+           "what": "exhausted",
+           "k": 1
+          }
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "cost": 2,
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 8,
+      "per": {
+       "what": "exhausted",
+       "k": 1
+      }
+     }
+    ]
+   },
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Огонь",
+    "Комбо"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Kayron",
+    "name": "Black Hole",
+    "effect": "240% Damage; +40% per Futility",
+    "game": "CZN"
+   }
+  },
+  "p_czn_brand": {
+   "ill": [
+    "volcano_whisper",
+    0.569,
+    0.521,
+    0.5
+   ],
+   "art": "fx_meteor",
+   "name": "Клеймо уничтожения",
+   "type": "attack",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 9
+         }
+        ],
+        "vfx": "e_meteor"
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "vfx": "e_meteor"
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "vfx": "e_meteor"
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "vfx": "e_meteor"
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "vfx": "e_meteor"
+       }
+      }
+     ]
+    }
+   ],
+   "cost": 3,
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 7
+     }
+    ],
+    "vfx": "e_meteor"
+   },
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Огонь",
+    "Область"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Kayron",
+    "name": "Brand of Annihilation",
+    "effect": "400% Damage to all enemies",
+    "game": "CZN"
+   }
+  },
+  "p_czn_echo_abyss": {
+   "ill": [
+    "crypt_act_2",
+    0.576,
+    0.521,
+    0.7
+   ],
+   "art": "fx_fire_wall",
+   "name": "Эхо бездны",
+   "cost": 2,
+   "type": "attack",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "main": {
+    "target": "area",
+    "range": 4,
+    "radius": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 6
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ],
+    "vfx": "geyser"
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ],
+        "vfx": "geyser"
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "vfx": "geyser"
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "vfx": "geyser"
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "vfx": "geyser"
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "area",
+        "range": 4,
+        "radius": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "vfx": "geyser"
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Огонь",
+    "Область"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Kayron",
+    "name": "Echoes of True Abyss",
+    "effect": "240% Damage; create Futility",
+    "game": "CZN"
+   }
+  },
+  "p_czn_rising_dragon": {
+   "ill": [
+    "crypt_act_2",
+    0.583,
+    0.521,
+    0.7
+   ],
+   "art": "fx_fire_wall",
+   "name": "Восходящий дракон",
+   "cost": 1,
+   "type": "attack",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "main": {
+    "target": "enemy",
+    "range": 4,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "damage",
+      "n": 3
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Огонь",
+    "Комбо"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Mei Lin",
+    "name": "Rising Dragon Spire",
+    "effect": "100% Damage; Streak: +1 Hit",
+    "game": "CZN"
+   }
+  },
+  "p_czn_unity": {
+   "ill": [
+    "ash_nest",
+    0.59,
+    0.521,
+    0.5
+   ],
+   "art": "fx_phoenix_shield",
+   "name": "Единство атаки и защиты",
+   "cost": 0,
+   "type": "skill",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 2
+     },
+     {
+      "op": "energy",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         },
+         {
+          "op": "energy",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Комбо"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Mei Lin",
+    "name": "Unity of Attack and Defense",
+    "effect": "Draw 2; reduce cost",
+    "game": "CZN"
+   }
+  },
+  "p_czn_call_response": {
+   "ill": [
+    "salamander_nest",
+    0.597,
+    0.521,
+    0.5
+   ],
+   "art": "gift_spellsurge",
+   "name": "Зов и ответ",
+   "type": "attack",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "cost": 1,
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Огонь",
+    "Комбо"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Tenebria",
+    "name": "Call & Response",
+    "effect": "200% Damage; draw Rhythm",
+    "game": "CZN"
+   }
+  },
+  "p_czn_encore": {
+   "ill": [
+    "crypt_act_2",
+    0.604,
+    0.521,
+    0.7
+   ],
+   "art": "fx_fire_wall",
+   "name": "На бис",
+   "cost": 1,
+   "type": "attack",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heat",
+      "n": 1
+     }
+    ]
+   },
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "series",
+       "n": 2
+      },
+      "repeat": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "series",
+           "n": 2
+          },
+          "repeat": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Огонь",
+    "Комбо"
+   ],
+   "owner": "pyro",
+   "source": {
+    "character": "Tenebria",
+    "name": "Encore",
+    "effect": "120% Damage; repeat Rhythm",
+    "game": "CZN"
+   }
+  },
+  "n_czn_quick_shell": {
+   "ill": [
+    "archer_ambush",
+    0.83,
+    0.542,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Быстрый обстрел",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 5,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 5,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "basic_role": "attack",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Комбо"
+   ],
+   "source": {
+    "character": "Neutral",
+    "name": "Quick Shelling",
+    "effect": "80% Damage; Draw 1",
+    "game": "CZN"
+   },
+   "exhaust": null
+  },
+  "n_czn_reorganize": {
+   "ill": [
+    "mirror_pool",
+    0.797,
+    0.542,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Реорганизация",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 3
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 4
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "rarity": 2,
+   "tags": [
+    "Комбо",
+    "Изгнание"
+   ],
+   "source": {
+    "character": "Neutral",
+    "name": "Reorganize",
+    "effect": "Draw 3; Exhaust",
+    "game": "CZN"
+   },
+   "exhaust": true
+  },
+  "n_czn_rally": {
+   "ill": [
+    "mirror_pool",
+    0.814,
+    0.542,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Сплочение",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 1
+     },
+     {
+      "op": "energy",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "rarity": 2,
+   "tags": [
+    "Комбо"
+   ],
+   "source": {
+    "character": "Neutral",
+    "name": "Rally",
+    "effect": "Draw 1; +Action Count",
+    "game": "CZN"
+   },
+   "exhaust": null
+  },
+  "n_czn_protective": {
+   "ill": [
+    "mirror_pool",
+    0.831,
+    0.542,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Защитный клич",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 7
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 9
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "rarity": 2,
+   "tags": [
+    "Защита"
+   ],
+   "source": {
+    "character": "Neutral",
+    "name": "Protective Shout",
+    "effect": "130% Shield",
+    "game": "CZN"
+   },
+   "exhaust": null
+  },
+  "n_czn_precision": {
+   "ill": [
+    "archer_ambush",
+    0.898,
+    0.542,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Точный прицел",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "basic_role": "attack",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Комбо"
+   ],
+   "source": {
+    "character": "Neutral",
+    "name": "Precision Aim",
+    "effect": "120% Damage; top of Draw Pile",
+    "game": "CZN"
+   },
+   "exhaust": null
+  },
+  "n_czn_pulverize": {
+   "ill": [
+    "archer_ambush",
+    0.915,
+    0.542,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Дробить",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 4,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 4,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "basic_role": "attack",
+   "rarity": 2,
+   "tags": [
+    "Удар",
+    "Комбо"
+   ],
+   "source": {
+    "character": "Neutral",
+    "name": "Pulverize",
+    "effect": "150% Damage x2; Draw 1",
+    "game": "CZN"
+   },
+   "exhaust": null
+  },
+  "n_czn_pierce": {
+   "ill": [
+    "archer_ambush",
+    0.932,
+    0.542,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Пронизать",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 8
+     },
+     {
+      "op": "vulnerable",
+      "n": 1
+     },
+     {
+      "op": "weak",
+      "n": 1
+     },
+     {
+      "op": "bleed",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 11
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         },
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "bleed",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "weak",
+          "n": 1
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "weak",
+          "n": 1
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "weak",
+          "n": 1
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "weak",
+          "n": 1
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "basic_role": "attack",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Клич",
+    "Кровь"
+   ],
+   "source": {
+    "character": "Neutral",
+    "name": "Pierce",
+    "effect": "200% Damage; Vulnerable, Weaken, Agony",
+    "game": "CZN"
+   },
+   "exhaust": null
+  },
+  "n_czn_adagio": {
+   "ill": [
+    "mirror_pool",
+    0.899,
+    0.542,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Адажио",
+   "cost": 0,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "rarity": 2,
+   "tags": [
+    "Комбо",
+    "Изгнание"
+   ],
+   "source": {
+    "character": "Nia",
+    "name": "Adagio",
+    "effect": "Draw 1; Discard 1",
+    "game": "CZN"
+   },
+   "exhaust": true
+  },
+  "n_czn_soul_riff": {
+   "ill": [
+    "mirror_pool",
+    0.916,
+    0.542,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Душевный рифф",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "heal",
+      "n": 5
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "heal",
+          "n": 7
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "heal",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "heal",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "heal",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "heal",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "neutral",
+   "rarity": 2,
+   "tags": [
+    "Комбо"
+   ],
+   "source": {
+    "character": "Nia",
+    "name": "Soul Riff",
+    "effect": "Heal 150%; Retain",
+    "game": "CZN"
+   },
+   "exhaust": null
   }
  },
  "neutral": [
@@ -34030,6 +39576,15 @@
   "hook",
   "lunge",
   "lunge_rush",
+  "n_czn_adagio",
+  "n_czn_pierce",
+  "n_czn_precision",
+  "n_czn_protective",
+  "n_czn_pulverize",
+  "n_czn_quick_shell",
+  "n_czn_rally",
+  "n_czn_reorganize",
+  "n_czn_soul_riff",
   "riposte",
   "shield_ram",
   "sweep",

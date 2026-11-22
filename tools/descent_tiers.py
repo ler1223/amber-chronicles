@@ -89,6 +89,8 @@ def has_area(c):
 
 
 def assign(cid, c, heroes):
+    if (c.get("source") or {}).get("game") == "CZN":
+        return
     if c.get("token") or c.get("status") or c.get("meaning") and cid.startswith("slime_"):
         c["category"] = "token"
         c["rarity"] = 0
@@ -136,7 +138,7 @@ def main():
     heroes = json.load(open(P_HEROES, encoding="utf-8"))
     for cid, c in cards.items():
         assign(cid, c, heroes)
-    cards_data["neutral"] = sorted(NEUTRAL)
+    cards_data["neutral"] = sorted(set(cards_data.get("neutral", [])) | set(NEUTRAL))
     for hid, h in heroes["heroes"].items():
         if hid in BASIC_BY_HERO:
             h["basic"] = dict(BASIC_BY_HERO[hid])
