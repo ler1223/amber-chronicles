@@ -333,6 +333,10 @@ class SettingsScene(CampBackdrop):
         for i, (key, name, _, _) in enumerate(opts):
             col, row = divmod(i, per)
             self.rows.append((pygame.Rect(x0 + col * (w + 20), 210 + row * 54, w, 46), key, name))
+        self.slider = None
+        for r, key, _ in self.rows:
+            if key == "music_volume":
+                self.slider = pygame.Rect(r.right - 224, r.centery - 9, 132, 18)
         y = 210 + per * 54
         self.box = pygame.Rect(x0 - 30, 190, w * cols + 20 * (cols - 1) + 60, y - 190 + 80)
         self.back = pygame.Rect(T.SCREEN_W // 2 - 110, y + 16, 220, 46)
@@ -347,8 +351,12 @@ class SettingsScene(CampBackdrop):
                 return
             for r, key, _ in self.rows:
                 if r.collidepoint(ev.pos):
-                    S.cycle(key)
-                    S.save()
+                    if key == "music_volume" and self.slider is not None and self.slider.collidepoint(ev.pos):
+                        rel = max(0.0, min(1.0, (ev.pos[0] - self.slider.x) / max(1, self.slider.w)))
+                        audio.set_index(round(rel * 100))
+                    else:
+                        S.cycle(key)
+                        S.save()
                     if key in ("music_volume", "music_muted"):
                         audio.start()
                         audio.apply()
@@ -372,7 +380,17 @@ class SettingsScene(CampBackdrop):
             pygame.draw.rect(surf, (70, 52, 34) if hot else (46, 35, 26), r, border_radius=8)
             pygame.draw.rect(surf, GOLD if hot else T.PANEL_EDGE, r, 2, border_radius=8)
             T.text(surf, name, (r.x + 16, r.y + 12), 18, T.TEXT, True)
-            val = S.label(key)
+            if key == "music_volume" and self.slider is not None:
+                sl = self.slider
+                pygame.draw.rect(surf, (31, 24, 18), sl, border_radius=8)
+                pygame.draw.rect(surf, T.PANEL_EDGE, sl, 1, border_radius=8)
+                fill = sl.copy()
+                fill.w = max(2, round(sl.w * audio.index() / 100))
+                pygame.draw.rect(surf, T.AMBER_DIM, fill, border_radius=8)
+                pygame.draw.circle(surf, T.AMBER, (sl.x + fill.w, sl.centery), 6)
+                val = f"{audio.percent()}%"
+            else:
+                val = S.label(key)
             T.text(surf, val, (r.right - 16 - T.font(18, True).size(val)[0], r.y + 12), 18, GOLD, True)
         W.button(surf, self.back, "Готово (Esc)", self.mouse, accent=GOLD)
         T.text(surf, "Клик по строке меняет значение. Сохраняется сразу.", (T.SCREEN_W // 2, T.SCREEN_H - 30), 14,

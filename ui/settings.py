@@ -10,10 +10,9 @@ import os
 PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "save", "settings.json")
 
 # (ключ, название, варианты, подписи)
+VOLUME_VALUES = [i / 100 for i in range(101)]
+
 OPTIONS = [
-    ("music_volume", "Громкость музыки", [0.0, 0.1, 0.2, 0.35, 0.5, 0.7, 0.85, 1.0],
-     ["выкл", "10%", "20%", "35%", "50%", "70%", "85%", "100%"]),
-    ("music_muted", "Фоновая музыка", [False, True], ["включена", "выключена"]),
     ("bloom", "Свечение эффектов", [0.0, 0.5, 1.0, 1.4], ["выкл", "слабое", "обычное", "сильное"]),
     ("shake", "Тряска экрана", [0.0, 0.5, 1.0], ["выкл", "слабая", "обычная"]),
     ("hitstop", "Стоп-кадр на ударах", [False, True], ["выкл", "вкл"]),
@@ -33,6 +32,8 @@ OPTIONS = [
     ("battle_rounds", "Бой раундами (прототип)", [False, True], ["выкл", "вкл"]),
     ("fx_style", "Стиль огня и льда (F9)", ["old", "pixel", "flipbook", "shader", "mesh", "fluid"],
      ["старые", "пиксельные", "флипбуки Blender", "шейдеры", "меш-эффекты", "симуляция"]),
+    ("music_volume", "Громкость музыки", VOLUME_VALUES, [f"{i}%" for i in range(101)]),
+    ("music_muted", "Фоновая музыка", [False, True], ["включена", "выключена"]),
 ]
 DEFAULTS = {"music_volume": 0.35, "music_muted": False,
             "bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "window": "auto",

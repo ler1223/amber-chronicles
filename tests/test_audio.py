@@ -11,6 +11,7 @@ from ui import settings
 def test_music_file_and_settings_exist():
     assert os.path.getsize(audio.MUSIC_PATH) > 100_000
     levels = audio.levels()
+    assert len(levels) == 101
     assert levels[0] == 0.0 and levels[-1] == 1.0
     assert settings.DEFAULTS["music_volume"] in levels
     assert any(key == "music_volume" for key, _, _, _ in settings.OPTIONS)
@@ -22,7 +23,9 @@ def test_volume_steps_and_mute(monkeypatch):
     assert audio.percent() == 0
     assert audio.volume_text() == "0%"
     audio.adjust(1)
-    assert audio.percent() == 10
+    assert audio.percent() == 1
+    audio.set_index(37, save=False)
+    assert audio.percent() == 37
     audio.toggle_mute()
     assert audio.is_muted()
     assert audio.volume_text().endswith("выкл")

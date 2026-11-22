@@ -3169,6 +3169,7 @@ class HeroSelect:
         self.hits = []
         self.go = pygame.Rect(T.SCREEN_W // 2 - 230, T.SCREEN_H - 74, 460, 56)
         self.cont = pygame.Rect(T.SCREEN_W - 300, T.SCREEN_H - 74, 270, 56)   # продолжить сохранённый забег
+        self.sound_rect = pygame.Rect(T.SCREEN_W - 250, 24, 220, 38)           # звук доступен до выбора героя
         self.clock = 0.0
         self.saved = game.has_save()
 
@@ -3179,6 +3180,10 @@ class HeroSelect:
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.sound_rect.collidepoint(ev.pos):
+                if getattr(self.game, "sound", None) is not None:
+                    self.game.sound.toggle()
+                return
             if self.go.collidepoint(ev.pos):
                 self.start()
                 return
@@ -3206,7 +3211,9 @@ class HeroSelect:
 
     def draw(self, surf):
         backdrop(surf, 185)
-        T.text(surf, "Кто спустится в подземелье?", (T.SCREEN_W // 2, 34), 30, T.AMBER, True, center=True, shadow=True)
+        T.text(surf, "Кто спустится в подземелье?", (T.SCREEN_W // 2, 34), 30, T.AMBER, True, center=True,
+               shadow=True)
+        button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
         self.hits = []
         n = len(self.order)
         gap = 18 if n < 4 else 12

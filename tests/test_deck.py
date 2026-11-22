@@ -1479,6 +1479,19 @@ def test_hero_select_variant_click():
         sc.draw(SCREEN)
 
 
+def test_hero_select_opens_sound_panel():
+    """Звук доступен ещё до выбора героя: кнопка в правом верхнем углу открывает панель."""
+    import pygame
+    from deck.game import DescentGame
+    from deck.ui import HeroSelect
+    from tests.test_expedition_ui import SCREEN
+    g = DescentGame(seed=1)
+    sc = HeroSelect(g)
+    sc.draw(SCREEN)
+    sc.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=sc.sound_rect.center))
+    assert g.sound.open
+
+
 def test_priest_combo_scrolls_and_god_levels():
     """Свитки-сочетания: хор — смысл исполняют все статуи, перекличка — второй смысл другой статуей; свитков
     по 4 на смысл; опыт бога за свитки → уровень, уровень прибавляет к числам."""
