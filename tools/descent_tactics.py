@@ -197,7 +197,7 @@ def main():
     hh = cards["h_hunt"]
     hh["tags"] = [t for t in hh.get("tags", []) if t not in ("Травля", "Преследование")] + ["Преследование"]
     pw = hh["main"].setdefault("power", {})
-    pw["do"] = list(pw.get("do", [])) + [op("hunt", 1)]
+    pw["do"] = [o for o in pw.get("do", []) if o.get("op") != "hunt"] + [op("hunt", 1)]
     out["h_hunt"] = "h_hunt"
 
     # ---------- Наёмник: сдвиг, область и столкновения ----------

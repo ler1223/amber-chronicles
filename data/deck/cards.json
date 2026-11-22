@@ -28246,18 +28246,6 @@
       {
        "op": "hunt",
        "n": 1
-      },
-      {
-       "op": "hunt",
-       "n": 1
-      },
-      {
-       "op": "hunt",
-       "n": 1
-      },
-      {
-       "op": "hunt",
-       "n": 1
       }
      ],
      "once": true
@@ -32074,6 +32062,1587 @@
     "Толчок",
     "Область"
    ]
+  },
+  "arrow_blood": {
+   "ill": [
+    "archer_ambush",
+    0.4,
+    0.53,
+    0.35
+   ],
+   "art": "arrow_piercing",
+   "name": "Кровавая стрела",
+   "cost": 0,
+   "type": "attack",
+   "token": true,
+   "exhaust": true,
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "bleed",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Кровь"
+   ]
+  },
+  "h_bloodlust": {
+   "ill": [
+    "mirror_pool",
+    0.62,
+    0.52,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Кровавый азарт",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "strength",
+      "n": 2
+     },
+     {
+      "op": "lose_hp",
+      "n": 2
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "strength",
+          "n": 3
+         },
+         {
+          "op": "lose_hp",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "strength",
+          "n": 2
+         },
+         {
+          "op": "lose_hp",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "strength",
+          "n": 2
+         },
+         {
+          "op": "lose_hp",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С кровью",
+       "name": "Кровь",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "strength",
+          "n": 2
+         },
+         {
+          "op": "lose_hp",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "strength",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "strength",
+          "n": 2
+         },
+         {
+          "op": "lose_hp",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Клич",
+    "Кровь"
+   ]
+  },
+  "h_blood_rite": {
+   "ill": [
+    "ferryman",
+    0.56,
+    0.55,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Кровавый навет",
+   "cost": 2,
+   "type": "power",
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "play",
+     "tag": "Выстрел",
+     "aim": "nearest",
+     "do": [
+      {
+       "op": "bleed",
+       "n": 1
+      }
+     ]
+    }
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Кровь",
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 2
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "Дольше",
+       "name": "Навет раз за ход",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 1
+          }
+         ],
+         "once": true
+        }
+       }
+      },
+      {
+       "label": "С меткой",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 1
+          },
+          {
+           "op": "mark",
+           "n": 1
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "По площади",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 1
+          },
+          {
+           "op": "weak",
+           "n": 1
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С добором",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Выстрел",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 1
+          },
+          {
+           "op": "draw",
+           "n": 1
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_blood_volley": {
+   "ill": [
+    "mage_gas",
+    0.64,
+    0.54,
+    0.7
+   ],
+   "art": "arrow_storm",
+   "name": "Кровавый залп",
+   "cost": 2,
+   "type": "attack",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "damage",
+      "n": 3
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "bleeding"
+      },
+      "plus": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "damage",
+          "n": 4
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "bleeding"
+          },
+          "plus": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "Четыре удара",
+       "name": "Кровавый залп",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "bleeding"
+          },
+          "plus": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Залп и дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "bleeding"
+          },
+          "plus": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "Глубже",
+       "name": "Кровавый залп",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "bleeding"
+          },
+          "plus": 4
+         }
+        ]
+       }
+      },
+      {
+       "label": "Дальше",
+       "name": "Далёкий залп",
+       "main": {
+        "target": "enemy",
+        "range": 8,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "damage",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "bleeding"
+          },
+          "plus": 2
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Выстрел",
+    "Кровь"
+   ]
+  },
+  "h_shadow_quiver": {
+   "ill": [
+    "smith_cart",
+    0.68,
+    0.58,
+    0.5
+   ],
+   "art": "arrow_piercing",
+   "name": "Теневой колчан",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "add_card",
+      "n": 2,
+      "card": "arrow_blood",
+      "cname": "Кровавая стрела"
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Создание",
+    "Выстрел"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Больше стрел",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 3,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Тень и дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 2,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Тень и дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 2,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Тень и метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 2,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         },
+         {
+          "op": "mark",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "name": "Тень и щит",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "add_card",
+          "n": 2,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         },
+         {
+          "op": "block",
+          "n": 4
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_dark_reload": {
+   "ill": [
+    "mirror_pool",
+    0.64,
+    0.59,
+    0.5
+   ],
+   "art": "arrow_piercing",
+   "name": "Перезарядка тьмы",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 2
+     },
+     {
+      "op": "energy",
+      "n": 1
+     },
+     {
+      "op": "add_card",
+      "n": 1,
+      "card": "arrow_blood",
+      "cname": "Кровавая стрела"
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Создание",
+    "Комбо"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Больше карт",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "add_card",
+          "n": 1,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         }
+        ]
+       }
+      },
+      {
+       "label": "Больше энергии",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 2
+         },
+         {
+          "op": "add_card",
+          "n": 1,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         }
+        ]
+       }
+      },
+      {
+       "label": "Две стрелы",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "add_card",
+          "n": 2,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "add_card",
+          "n": 1,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         },
+         {
+          "op": "add_card",
+          "n": 1,
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_second_wind": {
+   "ill": [
+    "mirror_pool",
+    0.67,
+    0.57,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Второе дыхание",
+   "cost": 0,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "energy",
+      "n": 1
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С кровью",
+       "name": "Кровь",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "strength",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Комбо"
+   ],
+   "exhaust": true
+  },
+  "h_scout": {
+   "ill": [
+    "mirror_pool",
+    0.68,
+    0.58,
+    0.5
+   ],
+   "art": "gift_deep_focus",
+   "name": "Разведка",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Больше карт",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Разведка и дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "name": "Разведка и щит",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Разведка и метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С кровью",
+       "name": "Разведка и кровь",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Комбо"
+   ]
+  },
+  "h_smoke_screen": {
+   "ill": [
+    "slag_merchant",
+    0.69,
+    0.59,
+    0.7
+   ],
+   "art": "gift_ghoul_kiss",
+   "name": "Дымовая завеса",
+   "cost": 1,
+   "type": "skill",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "weak",
+      "n": 2
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ],
+    "vfx": "poison_cloud"
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Шире",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 2,
+        "do": [
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "vfx": "poison_cloud"
+       }
+      },
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "weak",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "vfx": "poison_cloud"
+       }
+      },
+      {
+       "label": "С меткой",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "vfx": "poison_cloud"
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "poison_cloud"
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "weak",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "vfx": "poison_cloud"
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Область",
+    "Клич"
+   ]
+  },
+  "h_snare_net": {
+   "ill": [
+    "obsidian_mirror",
+    0.72,
+    0.58,
+    0.7
+   ],
+   "art": "gift_prey",
+   "name": "Облава",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "area",
+    "range": 5,
+    "radius": 1,
+    "do": [
+     {
+      "op": "root",
+      "n": 1
+     },
+     {
+      "op": "mark",
+      "n": 1
+     }
+    ],
+    "vfx": "hunter_mark"
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Область",
+    "Ловушка",
+    "Метка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Шире",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 2,
+        "do": [
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "Дольше",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "root",
+          "n": 2
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "С добором",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "С уязвимостью",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      },
+      {
+       "label": "С кровью",
+       "main": {
+        "target": "area",
+        "range": 5,
+        "radius": 1,
+        "do": [
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         }
+        ],
+        "vfx": "hunter_mark"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "h_patient_shot": {
+   "ill": [
+    "archer_ambush",
+    0.76,
+    0.61,
+    0.45
+   ],
+   "art": "item_bow",
+   "name": "Терпеливый выстрел",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 6
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С кровью",
+       "name": "Кровь",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "bleed",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 6
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Выстрел",
+    "Сохранение"
+   ],
+   "retain": true
   }
  }
 }

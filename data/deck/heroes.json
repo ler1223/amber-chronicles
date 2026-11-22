@@ -229,7 +229,17 @@
     "h_stalk",
     "h_mark_hunt",
     "h_area_hunt",
-    "h_hunt_final"
+    "h_hunt_final",
+    "h_second_wind",
+    "h_bloodlust",
+    "h_blood_rite",
+    "h_blood_volley",
+    "h_shadow_quiver",
+    "h_dark_reload",
+    "h_scout",
+    "h_smoke_screen",
+    "h_snare_net",
+    "h_patient_shot"
    ],
    "hand": 6,
    "starter_by_variant": {
@@ -299,7 +309,11 @@
      "h_trail",
      "h_scope",
      "h_snipe",
-     "h_steady"
+     "h_steady",
+     "h_bloodlust",
+     "h_smoke_screen",
+     "h_snare_net",
+     "h_scout"
     ],
     "mark": [
      "h_marking",
@@ -318,7 +332,12 @@
      "h_stalk",
      "h_mark_hunt",
      "h_area_hunt",
-     "h_hunt_final"
+     "h_hunt_final",
+     "h_bloodlust",
+     "h_blood_rite",
+     "h_blood_volley",
+     "h_shadow_quiver",
+     "h_patient_shot"
     ],
     "quiver": [
      "h_fill",
@@ -333,7 +352,15 @@
      "h_knife",
      "h_shoot_roll",
      "h_evade",
-     "h_rain"
+     "h_rain",
+     "h_shadow_quiver",
+     "h_dark_reload",
+     "h_second_wind",
+     "h_scout",
+     "h_smoke_screen",
+     "h_snare_net",
+     "h_blood_volley",
+     "h_patient_shot"
     ],
     "chain": [
      "h_chain_1",
@@ -354,7 +381,11 @@
      "h_evade",
      "h_volley",
      "h_barrage",
-     "h_trail"
+     "h_trail",
+     "h_second_wind",
+     "h_dark_reload",
+     "h_scout",
+     "h_smoke_screen"
     ]
    },
    "reward_guarantee": {
@@ -362,7 +393,8 @@
      "h_fill",
      "h_full_quiver",
      "h_master_quiver",
-     "h_arrow_well"
+     "h_arrow_well",
+     "h_shadow_quiver"
     ],
     "chain": [
      "h_chain_1",

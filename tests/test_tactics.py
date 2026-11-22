@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from deck import model as M  # noqa: E402
 from deck.battle import Battle, finish  # noqa: E402
+from sim.grid import cheb  # noqa: E402
 from test_expedition import ED  # noqa: E402
 
 
@@ -170,6 +171,88 @@ def test_all_tactics_cards_can_be_played():
         assert targets, cid
         finish(b.play(card, "main", targets[0]))
         assert card not in b.hand, cid
+
+
+def test_tressa_style_blood_arrows_and_curse():
+    data = M.load()
+    run = M.Run(data=data, seed=31, hero="hunter", variant="quiver")
+    b = Battle(ED, run, run.fights[0], seed=31)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    foe.hp = foe.max_hp = 99
+    quiver = M.Card("h_shadow_quiver", run.defs)
+    b.hand = [quiver]
+    b.energy = 9
+    finish(b.play(quiver, "main", h))
+    arrows = [c for c in b.hand if c.cid == "arrow_blood"]
+    assert arrows and "Кровь" in arrows[0].tags
+    arrow = arrows[0]
+    hp = foe.hp
+    finish(b.play(arrow, "main", foe))
+    assert hp - foe.hp >= 3 and foe.ds["bleed"] >= 2
+
+
+def test_bloodlust_and_area_utility_cards():
+    data = M.load()
+    run = M.Run(data=data, seed=32, hero="hunter", variant="mark")
+    b = Battle(ED, run, run.fights[0], seed=32)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    foe.hp = foe.max_hp = 99
+    lust = M.Card("h_bloodlust", run.defs)
+    b.hand = [lust]
+    b.energy = 9
+    finish(b.play(lust, "main", h))
+    assert h.ds["strength"] >= 2
+
+    smoke = M.Card("h_smoke_screen", run.defs)
+    b.hand = [smoke]
+    target = min(b.targets(smoke, "main"), key=lambda p: cheb(p, foe.cell))
+    finish(b.play(smoke, "main", target))
+    assert foe.ds["weak"] >= 1 or not foe.alive
+
+
+def test_tressa_curse_support_and_multi_hit():
+    data = M.load()
+    run = M.Run(data=data, seed=33, hero="hunter", variant="mark")
+    b = Battle(ED, run, run.fights[0], seed=33)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    foe.hp = foe.max_hp = 99
+
+    curse = M.Card("h_blood_rite", run.defs)
+    b.hand = [curse]
+    b.energy = 9
+    finish(b.play(curse, "main", h))
+    shot = M.Card("h_shot", run.defs)
+    b.hand = [shot]
+    finish(b.play(shot, "main", foe))
+    assert foe.ds["bleed"] >= 1
+
+    foe.ds["bleed"] = 3
+    volley = M.Card("h_blood_volley", run.defs)
+    b.hand = [volley]
+    hp = foe.hp
+    finish(b.play(volley, "main", foe))
+    assert hp - foe.hp == 15                              # 3 удара по 3 + 2 за кровь
+
+    wind = M.Card("h_second_wind", run.defs)
+    b.hand = [wind]
+    b.energy = 2
+    finish(b.play(wind, "main", h))
+    assert b.energy == 3 and wind in b.exhaust
+
+    reload = M.Card("h_dark_reload", run.defs)
+    b.hand = [reload]
+    b.energy = 2
+    finish(b.play(reload, "main", h))
+    assert b.energy == 2 and any(c.cid == "arrow_blood" for c in b.hand)
 
 
 def test_area_and_hunt_tag_items():
