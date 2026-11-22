@@ -66,6 +66,32 @@ def test_hunt_stack_card_and_hunt_per():
     assert h.shield >= 3
 
 
+def test_non_attack_chain_waits_for_player_target():
+    data = M.load()
+    run = M.Run(data=data, seed=28, hero="hunter", variant="mark")
+    b = Battle(ED, run, run.fights[0], seed=28)
+    h, foe = b.hero, b.foes()[0]
+    b.prey = None
+    put(h, (2, 2))
+    put(foe, (4, 2))
+    card = M.Card("h_trail", run.defs)
+    b.hand = [card]
+    b.turn_tags = [{"Выстрел"}, {"Выстрел"}]
+    b.played = 2
+    gen = b.echoes()
+    first = next(gen)
+    assert first[0] == "chain_card" and first[2].cid == "h_trail"
+    choice = next(gen)
+    assert choice[0] == "chain_choice" and choice[1].cid == "h_trail"
+    target = b.targets(card, "main")[0]
+    try:
+        gen.send(target)
+    except StopIteration:
+        pass
+    finish(gen)
+    assert card not in b.hand and card in b.used
+
+
 def test_merc_press_and_pyro_ash_decks():
     data = M.load()
     merc = M.Run(data=data, seed=23, hero="merc")

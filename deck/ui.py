@@ -585,6 +585,9 @@ class BattleScreen:
         self.chain_show = None             # карта, которую Цепочка играет сама: крупный показ
         self.chain_t = 0.0
         self.chain_dur = 0.0
+        self.chain_pick = None             # (карта, режим): Цепочка ждёт выбора цели игроком
+        self.chain_send = None
+        self.chain_send_ready = False
         self.sel = None                    # (карта, режим): выбрана кликом или тянется
         self.press = None                  # (карта, кнопка, точка) — нажали на карту, ещё не ясно: клик или тяга
         self.press_t = 0.0                 # сколько держат нажатой без движения
@@ -673,14 +676,23 @@ class BattleScreen:
                     over[u.id] = (nt - 1.0) * u.move_dur
                 u.move_t = min(1.0, nt)
         moving = any(u.move_t < 1.0 for u in self.combat.units if u.alive)
-        if self.job is not None and not moving:
+        if self.job is not None and not moving and self.chain_pick is None:
             self.wait -= dt
             if self.wait <= 0:
                 try:
-                    act = next(self.job)
+                    if self.chain_send_ready:
+                        act = self.job.send(self.chain_send)
+                        self.chain_send_ready = False
+                    else:
+                        act = next(self.job)
                     if act and act[0] == "chain_card":      # Цепочка: сначала показать карту, потом эффект
                         self.chain_show, self.chain_t, self.chain_dur = act[2], 0.0, max(0.35, act[1])
                         self.wait = max(0.45, act[1]) + 0.06
+                    elif act and act[0] == "chain_choice":  # не-атака: игрок сам выбирает цель
+                        self.chain_pick = (act[1], act[2])
+                        self.chain_show = None
+                        self.sel = (act[1], act[2])
+                        self.wait = 0.0
                     elif act and act[0] == "impact":        # эффект выпущен — ждём попадания, потом урон
                         self.wait = min(1.4, self.pump()) + 0.02
                     elif act and act[0] == "move":          # шаг пути — сразу следующий, с остатком кадра
@@ -691,6 +703,8 @@ class BattleScreen:
                         self.wait = (act[1] if act else 0.0) + 0.06
                 except StopIteration:
                     self.job = None
+                    self.chain_pick = None
+                    self.chain_send_ready = False
         if self.b.zone_fx:
             self.zone_t = 0.6
             self._zone_cells = self.b.zone_fx[0]
@@ -990,6 +1004,16 @@ class BattleScreen:
             return
         self.sel = (card, mode)
 
+    def chain_choose(self, target):
+        """Игрок выбрал цель для не-атаки, которую разыграла Цепочка."""
+        if self.chain_pick is None:
+            return
+        self.chain_pick = None
+        self.chain_send = target
+        self.chain_send_ready = True
+        self.sel = None
+        self.wait = 0.0
+
     def fire(self, card, mode, target):
         """Сыграть: карта летит к цели и гаснет, бой отыгрывает её."""
         self.sel = None
@@ -1011,6 +1035,18 @@ class BattleScreen:
         if not self.ready():
             if hasattr(ev, "pos"):
                 self.mouse = ev.pos
+            return
+        if self.chain_pick is not None:                       # Цепочка ждёт выбора цели для не-атаки
+            if ev.type == pygame.MOUSEMOTION:
+                self.mouse = ev.pos
+                self.hover_cell = self.cell_at(ev.pos)
+            elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                card, mode = self.chain_pick
+                target = self.target_at(ev.pos, (card, mode))
+                if target is not None:
+                    self.chain_choose(target)
+                elif ev.pos[1] < self.hand_area.y:
+                    self.toast = (f"«{card.name}»: выберите подсвеченную цель", 1.2)
             return
         if self.ui_event(ev):
             return
@@ -1872,6 +1908,12 @@ class BattleScreen:
         b = self.b
         if b.result:
             return None
+        if self.chain_pick:
+            card, mode = self.chain_pick
+            tg = card.d[mode]["target"]
+            what = "клетку" if tg in ("cell_step", "cell_dash", "cell_any") else \
+                "область" if tg == "area" else "цель"
+            return f"Цепочка: выберите {what} для «{card.name}»"
         if self.busy:
             return "Ход врагов…" if b.enemy_phase else None
         if self.prayer:

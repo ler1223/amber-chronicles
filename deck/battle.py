@@ -1029,12 +1029,26 @@ class Battle:
                 ch = c.d.get("chain")
                 if not ch or c.uid in self.echoed or not self.met(ch["when"]):
                     continue
-                target = self.chain_target(c)
-                if target is None:
-                    continue
+                choice = self.chain_needs_choice(c)
+                if choice:
+                    if not self.targets(c, "main"):
+                        continue
+                    target = None
+                else:
+                    target = self.chain_target(c)
+                    if target is None:
+                        continue
                 self.echoed.add(c.uid)
                 # Экран: показать карту крупно и дать игроку прочитать, что играет само.
                 yield ("chain_card", 0.8, c)
+                if choice:
+                    # Не-атаку с выбором цели игрок ведёт сам: шаг, область, метка и т.п.
+                    target = yield ("chain_choice", c, "main")
+                    if target is None:                         # тесты/бот: запасной автовыбор
+                        target = self.chain_target(c)
+                    if target is None:
+                        self.echoed.discard(c.uid)
+                        continue
                 self.say(f"Цепочка: {c.name}", (170, 255, 170))
                 self.fx("chain", unit=self.hero, uid=c.uid, target=target)
                 old = self._free_cast
@@ -1054,6 +1068,11 @@ class Battle:
                 break
             if not acted:
                 return
+
+    def chain_needs_choice(self, c):
+        """Не-атака с целью пусть выбирает игрок: шаг, область, метка и т.п."""
+        t = c.d["main"].get("target")
+        return t not in ("self", "none", "statue") and not self.is_attack(c, "main")
 
     def chain_target(self, c):
         """Куда сама сыграет карта Цепочки: атака — лучшая цель, шаг — первая доступная клетка."""
