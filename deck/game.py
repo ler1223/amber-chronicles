@@ -236,7 +236,8 @@ class DescentGame:
         card = ready[0]
         opts = card.options()                              # 3 случайных из 5 вариантов (как эпифании)
         self.scene = ChoiceScreen(self, f"Прозрение: {card.name}",
-                                  f"Сыграна основным {card.uses} раз — какой она станет? (цена не меняется)",
+                                  f"Прозрение сработало за {card.uses} основных применений — какой она станет? "
+                                  "(цена не меняется)",
                                   [(label, c, k) for k, (label, c) in enumerate(opts)],
                                   lambda k: (card.choose(k), self._next_insight()), back=self.frame)
 

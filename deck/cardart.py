@@ -333,7 +333,7 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
             s.blit(pen, (cx - pen.get_width() // 2, cy + rr + 8))
     g = card.growth_next()
     if g:
-        k = min(1.0, card.uses / g["uses"])
+        k = card.insight_progress()
         bar = pygame.Rect(text.x + 24, m["groove_y"] - 3, text.w - 48, 6)
         if k:
             fill = img("ui", "fill.png")
@@ -378,7 +378,7 @@ def level_pips(card):
 def word_boxes(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Где на лице 512×768 стоят выделенные слова: [(rect, слово, стиль)] — для наведения в режиме чтения."""
     lit = frozenset(lit or ())
-    ck = (card.cid, tuple(card.picks), card.uses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    ck = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
           card.divine["id"] if card.divine else None, repr(card.alt_up))
     return _content(card, ck, main_ok, alt_ok, hot, heat, lit)[1]
 
@@ -390,7 +390,7 @@ def compose(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=
     tx, ty = tilt or (0.0, 0.0)
     ox, oy = round(tx * 6) / 6, round(ty * 6) / 6                 # шаг наклона — для кэша
     S = round(width / FW, 3) if width and abs(width - FW) > 2 else 1.0
-    key = (card.cid, tuple(card.picks), card.uses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), ox, oy, S)
     if key in _faces:
         return _faces[key]

@@ -51,7 +51,7 @@ def test_cards_have_main_and_free_alt_and_insights():
                 assert L1["heat"] == L2["heat"], cid
     s = M.Card("strike", run.defs)
     assert not s.insight_ready()
-    s.uses = 4
+    s.ready = True
     assert s.insight_ready()
     opts = s.options()
     assert len(opts) == 3 and s.options() == opts or [x[0] for x in s.options()] == [x[0] for x in opts]
@@ -59,6 +59,14 @@ def test_cards_have_main_and_free_alt_and_insights():
     s.choose(0)
     assert s.tier == 1 and s.text("main") == after.text("main") and not s.insight_ready()
     assert s.cost == 1                                                         # цена та же
+
+
+def test_insight_is_probabilistic_with_pity():
+    b, run = battle()
+    card = M.Card("strike", run.defs)
+    card.insight_misses = M.INSIGHT_PITY - 1
+    b.try_insight(card)
+    assert card.insight_ready() and card.insight_misses >= M.INSIGHT_PITY
 
 
 def test_turn_start_energy_hand_intents():

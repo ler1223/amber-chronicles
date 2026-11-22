@@ -154,8 +154,12 @@ class Inspector:
         g = c.growth_next()
         if g:
             opts = ", ".join(label for label, _ in c.options())
-            out.append(("Рост карты", f"Прозрение: {min(c.uses, g['uses'])}/{g['uses']} основных применений." +
-                        (f" Варианты: {opts}." if opts else ""), (255, 214, 120)))
+            if c.insight_ready():
+                state = "Прозрение готово — выберите ветку после боя."
+            else:
+                state = (f"Шанс {int(M.INSIGHT_CHANCE * 100)}% за основное применение; "
+                         f"гарантия через {max(0, M.INSIGHT_PITY - c.insight_misses)} применений.")
+            out.append(("Рост карты", state + (f" Варианты: {opts}." if opts else ""), (255, 214, 120)))
         if c.divine:
             gd = c.divine
             out.append((f"Дар: {gd['name']}", f"{gd['title'].capitalize()}. {gd['about']}",
@@ -2643,10 +2647,12 @@ class MapScreen:
         run = self.game.run
         T.text(surf, f"Убито врагов: {run.kills} · выиграно боёв: {run.fight}", (44, 576), 15, T.TEXT_DIM, True)
         ready = [c for c in run.deck if c.growth_next()]
-        near = sorted(ready, key=lambda c: c.growth_next()["uses"] - c.uses)[:4]
+        near = sorted(ready, key=lambda c: c.insight_progress(), reverse=True)[:4]
         if near:
-            T.text(surf, "Ближе всего к прозрению: " + ", ".join(
-                f"{c.name} {c.uses}/{c.growth_next()['uses']}" for c in near), (44, 600), 14, (255, 220, 140))
+            T.text(surf, f"Прозрение: {int(M.INSIGHT_CHANCE * 100)}% за применение, "
+                         f"гарантия на {M.INSIGHT_PITY}-м. Ближе всего: " + ", ".join(
+                f"{c.name} {('готово' if c.insight_ready() else str(c.insight_misses) + '/' + str(M.INSIGHT_PITY))}"
+                for c in near), (44, 600), 14, (255, 220, 140))
 
     def tip(self, surf, n):
         run = self.game.run

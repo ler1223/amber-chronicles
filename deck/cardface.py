@@ -255,7 +255,7 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Лицо карты OW×OH (кэш по состоянию). heat — жар героя: тусклые уровни, на которые не хватает;
     lit — выполненные сейчас условия (подсвечиваются зелёным)."""
     lit = frozenset(lit or ())
-    key = (card.cid, tuple(card.picks), card.uses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up))
     if key in _cache:
         return _cache[key]
@@ -323,7 +323,7 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     g = card.growth_next()
     py = OH - ALT_H - 16
     if g:
-        k = min(1.0, card.uses / g["uses"])
+        k = card.insight_progress()
         bar = pygame.Rect(40, py, OW - 80, 6)
         pygame.draw.rect(s, (14, 10, 8), bar.inflate(4, 4), border_radius=4)
         pygame.draw.rect(s, (60, 48, 34), bar, border_radius=3)
@@ -354,7 +354,7 @@ def face(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=Non
     if cardart.available():
         return cardart.compose(card, main_ok, alt_ok, hot, heat, lit, tilt, width)
     lit = frozenset(lit or ())
-    key = ("old", card.cid, tuple(card.picks), card.uses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    key = ("old", card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up))
     if key not in _cache:
         _cache[key] = pygame.transform.smoothscale(_face_old(card, main_ok, alt_ok, hot, heat, lit), (FW, FH))

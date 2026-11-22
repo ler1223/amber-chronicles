@@ -1231,6 +1231,7 @@ class Battle:
             tgt = min(foes, key=lambda f: (cheb(f.cell, h.cell), f.hp))
         self.echoed.add(c.uid)
         c.uses += 1                                         # отклик тоже копит прозрение
+        self.try_insight(c)
         self.say(f"Отклик: {c.name}", (170, 255, 170))
         self.fx("echo", unit=h, uid=c.uid, target=tgt)
         if c.d.get("react") and c in self.hand:
@@ -1292,6 +1293,7 @@ class Battle:
                 else:
                     self.energy -= card.cost
             card.uses += 1
+            self.try_insight(card)
             before = self.played
             self.played += 1
             self.say(f"{card.name}: {card.text('main')}", (255, 230, 160))
@@ -1401,6 +1403,15 @@ class Battle:
             yield from self.react()
         self.sync_levels()
 
+    def try_insight(self, card):
+        """Прозрение: 5% за основное применение, с гарантией после 20 неудач."""
+        if card.growth_next() is None or card.ready:
+            return
+        card.insight_misses += 1
+        if card.insight_misses >= M.INSIGHT_PITY or self.rng.random() < M.INSIGHT_CHANCE:
+            card.ready = True
+            self.say(f"Прозрение: {card.name}", (255, 230, 150))
+
     def hunt_followup(self, card, tgt):
         """Преследование: после одноцелевой атаки с тегом [Преследование] — дополнительный выстрел за стаки."""
         if tgt is None or not getattr(tgt, "alive", False) or "Преследование" not in card.tags:
@@ -1424,6 +1435,7 @@ class Battle:
             return
         self.hand.remove(card)
         card.uses += 1
+        self.try_insight(card)
         self.played += 1
         yield from idols.cast_card(target.statue, card, target.tgt)
         self.items.scrolls[id(target.statue)] = self.items.scrolls.get(id(target.statue), 0) + 1

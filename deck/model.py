@@ -639,6 +639,8 @@ def plain(s):
 # ---------- карта ----------
 
 OFFER = 3          # сколько вариантов прозрения предлагается
+INSIGHT_CHANCE = 0.05   # шанс прозрения за основное применение карты
+INSIGHT_PITY = 20       # после стольких неудач — гарантированное прозрение
 
 
 def _bless_use(u, god):
@@ -782,13 +784,15 @@ def alt_options(d, hero=None):
 class Card:
     _n = 0
 
-    def __init__(self, cid, defs, tier=0, uses=0, picks=None):
+    def __init__(self, cid, defs, tier=0, uses=0, picks=None, insight_ready=False, insight_misses=0):
         Card._n += 1
         self.uid = Card._n
         self.cid = cid
         self.base = defs[cid]
-        self.uses = uses                 # основные применения за забег — копят прозрение
+        self.uses = uses                 # основные применения за забег (история карты)
         self.picks = list(picks or [])   # выбранные ветки прозрений по ступеням
+        self.ready = bool(insight_ready) # прозрение выпало и ждёт выбора
+        self.insight_misses = int(insight_misses)  # неудачи после прошлого прозрения
         self._lvl = None                 # Пиромантка: выбранный уровень карты (за сколько жара); None — сам
         self._d = None
         self.divine = None               # дар бога (data/deck/gods.json) — поверх прозрения
@@ -858,8 +862,13 @@ class Card:
         return g[self.tier] if self.tier < len(g) else None
 
     def insight_ready(self):
-        g = self.growth_next()
-        return g is not None and self.uses >= g["uses"]
+        return self.growth_next() is not None and self.ready
+
+    def insight_progress(self):
+        """Заполнение полоски до гарантии (сам шанс — 5% за использование)."""
+        if self.insight_ready():
+            return 1.0
+        return min(1.0, self.insight_misses / INSIGHT_PITY)
 
     def offer(self):
         """Какие варианты прозрения предложены: 3 случайных из 5 (как эпифании CZN), один раз на карту."""
@@ -907,6 +916,8 @@ class Card:
 
     def pick(self, k):
         self.picks.append(k)
+        self.ready = False
+        self.insight_misses = 0
         self._offer = None
         self._d = None
 

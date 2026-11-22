@@ -226,7 +226,8 @@ class HandView:
         for sp in items:
             st = state_of(sp.card)
             zoom = self.zoom if sp.s > 1.15 else 1.0                       # лицо — под размер: в покое или крупно
-            key = (sp.card.uid, sp.card.tier, sp.card.uses, sp.card.lvl, st, zoom)   # уровень жара — тоже
+            key = (sp.card.uid, sp.card.tier, sp.card.uses, sp.card.ready, sp.card.insight_misses,
+                   sp.card.lvl, st, zoom)   # уровень жара и полоска прозрения — тоже
             face = self.cache.get(key)
             tilted = self.face_tilt is not None and abs(sp.tilt[0]) + abs(sp.tilt[1]) > 0.05
             if self.back is not None and sp.age < 0.22 and not sp.fly:          # только что из колоды — рубашкой

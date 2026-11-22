@@ -14,7 +14,8 @@ VERSION = 1
 
 
 def card_to(c):
-    d = {"cid": c.cid, "picks": list(c.picks), "uses": c.uses}
+    d = {"cid": c.cid, "picks": list(c.picks), "uses": c.uses,
+         "insight_ready": bool(c.ready), "insight_misses": c.insight_misses}
     if c.alt_up is not None:
         d["alt_up"] = c.alt_up
     if c.divine:
@@ -23,7 +24,8 @@ def card_to(c):
 
 
 def card_from(d, defs, gods):
-    c = M.Card(d["cid"], defs, uses=d.get("uses", 0), picks=d.get("picks", []))
+    c = M.Card(d["cid"], defs, uses=d.get("uses", 0), picks=d.get("picks", []),
+               insight_ready=d.get("insight_ready", False), insight_misses=d.get("insight_misses", 0))
     if d.get("alt_up") is not None:
         c.alt_up = d["alt_up"]
     if d.get("divine") and d["divine"] in gods:
