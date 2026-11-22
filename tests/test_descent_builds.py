@@ -129,13 +129,18 @@ def test_chain_variant_cascades_from_two_shots():
     for cid in ("h_shot", "h_shot"):
         c = next(c for c in b.hand if c.cid == cid)
         actions.extend(b.play(c, "main", foe))
-    assert sum(1 for a in actions if a and a[0] == "chain_card") >= 4   # карты показываются по одной
+    shown = [a[2] for a in actions if a and a[0] == "chain_card"]
+    assert len(shown) >= 4                                 # карты показываются по одной
     assert any(a and a[0] == "wait" and a[1] >= 0.4 for a in actions)  # пауза между цепочками
     assert b.played >= 8
     assert b.chain_drawn == 2                              # пассивка Цепной реакции
-    assert len(b.hand) >= 8                                # большая рука после каскада
+    assert len(b.hand) >= 6                                # большая рука после каскада
     assert h.shield > 0                                   # защитная цепочка сыграла сама
     assert any(c.cid == "h_chain_mark" for c in b.discard + b.hand)  # мост тоже сработал
+    hand_uids = {c.uid for c in b.hand}
+    discard_uids = {c.uid for c in b.discard}
+    assert shown and all(c.uid not in hand_uids for c in shown)     # разыгранные не остаются в руке
+    assert all(c.uid in discard_uids for c in shown)                # и лежат в сбросе
     assert foe.hp < 999
 
 

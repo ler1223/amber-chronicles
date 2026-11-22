@@ -699,8 +699,14 @@ class Battle:
             if not self.draw_pile:
                 if not self.discard:
                     return
-                self.draw_pile = self.discard
-                self.discard = []
+                # Сработавшие Цепочкой карты уже ушли в сброс и не возвращаются в руку до конца хода:
+                # цепочка активирует их как обычный розыгрыш, а не оставляет в игре.
+                keep = [c for c in self.discard if c.uid in self.echoed]
+                fresh = [c for c in self.discard if c.uid not in self.echoed]
+                if not fresh:
+                    return
+                self.discard = keep
+                self.draw_pile = fresh
                 self.rng.shuffle(self.draw_pile)
                 self.queue.append(("shuffle", None))
             if len(self.hand) >= (PRIEST_HAND if self.idols is not None else HAND_MAX):
