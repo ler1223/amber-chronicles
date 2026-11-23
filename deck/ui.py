@@ -606,6 +606,8 @@ class BattleScreen:
         self.drag = False                  # карту тянут мышью
         self.end_rect = pygame.Rect(T.SCREEN_W - 200, T.SCREEN_H - 70, 180, 50)
         self.hand_area = pygame.Rect(150, T.SCREEN_H - CH - 26, T.SCREEN_W - 150 - 230, CH + 26)
+        self.deck_pile_rect = None
+        self.discard_pile_rect = None
         self.hv = HandView((CW, CH), (60, T.SCREEN_H - 30), (T.SCREEN_W - 240, T.SCREEN_H - 40))
         self.hv.face = self.card_face
         self.hv.face_tilt = lambda c, st, tilt, zoom=1.0: CF.face(c, *st, tilt=tilt, width=self.face_w(zoom))
@@ -1040,6 +1042,11 @@ class BattleScreen:
         """Бой показан: земля построена (или рисуем на обычной поверхности — тесты, снимки)."""
         return self.ground.img is not None or not getattr(self, "_canvas_seen", False)
 
+    def open_pile(self, key):
+        """Открыть стопку боя: deck / used / discard / exhaust."""
+        from .piles import PileScreen
+        self.game.scene = PileScreen(self.game, self, key)
+
     def handle(self, ev):
         if not self.ready():
             if hasattr(ev, "pos"):
@@ -1105,6 +1112,13 @@ class BattleScreen:
             return
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button in (1, 3):
             self.mouse = ev.pos
+            if not self.ui_hidden and ev.button == 1:
+                if self.deck_pile_rect is not None and self.deck_pile_rect.collidepoint(ev.pos):
+                    self.open_pile("deck")
+                    return
+                if self.discard_pile_rect is not None and self.discard_pile_rect.collidepoint(ev.pos):
+                    self.open_pile("discard")
+                    return
             if self.end_rect.collidepoint(ev.pos) and ev.button == 1:
                 self.end_turn()
                 return
@@ -1975,12 +1989,14 @@ class BattleScreen:
         else:
             sk.orb(surf, (ex, ey), 36, b.energy, b.max_energy, self.hv.t)
         if self.ui_hidden:                                    # скрыт интерфейс: только карты и энергия
+            self.deck_pile_rect = self.discard_pile_rect = None
             self.hv.draw(surf, self.state_of)
             return
         top = self.draw_mechanic(surf, 14, ey - 168)
         self.draw_turn(surf, 14, (top if top is not None else ey - 118) - 36)
-        self.pile(surf, (60, T.SCREEN_H - 34), len(b.draw_pile), "колода")
-        self.pile(surf, (T.SCREEN_W - 240, T.SCREEN_H - 40), len(b.discard), "сброс", side=-1)
+        self.deck_pile_rect = self.pile(surf, (60, T.SCREEN_H - 34), len(b.draw_pile), "колода")
+        self.discard_pile_rect = self.pile(surf, (T.SCREEN_W - 240, T.SCREEN_H - 40), len(b.discard),
+                                           "сброс", side=-1)
         tip = self.hint_text()
         if tip:
             w = sk.size(tip, 15)[0] + 90
@@ -2096,6 +2112,7 @@ class BattleScreen:
 
     def pile(self, surf, pos, n, label, side=1):
         x, y = pos
+        hit = pygame.Rect(x - 26, y - 52, 84, 76)
         bk = self.hv.back
         for k in range(min(3, max(1, n))):
             r = pygame.Rect(x - 16 + k * 2, y - 22 - k * 2, 32, 48)
@@ -2110,6 +2127,9 @@ class BattleScreen:
         self.skin.badge(surf, (x + 24 * side, y - 6), 11, "", self.skin.p["accent"])
         self.skin.text(surf, str(n), (x + 24 * side, y - 6), 13, (255, 246, 230), center=True, title=True)
         self.skin.text(surf, label, (x + 2, y + 13), 11, self.skin.p["dim"], center=True)
+        if hit.collidepoint(self.mouse):
+            pygame.draw.rect(surf, T.SELECT, hit, 1, border_radius=6)
+        return hit
 
     def tip_box(self, surf, lines, anchor, width=320):
         """Подсказка в панели героя: [(текст, цвет, заголовок?)] у точки anchor."""
