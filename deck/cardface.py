@@ -300,7 +300,7 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     react = bool(d.get("react"))
     if react:                                              # реакция: не играется — не тусклая
         main_ok = True
-    _gem(s, (34, 34), "—" if react else card.cost, main_ok, heat=bool(card.levels))
+    _gem(s, (34, 34), "—" if react else card.cost_label, main_ok, heat=bool(card.levels))
     if card.divine:                                                             # дар бога — флажок под ценой
         col = tuple(card.divine.get("color", (200, 180, 255)))
         flag = [(18, 58), (50, 58), (50, 92), (34, 82), (18, 92)]

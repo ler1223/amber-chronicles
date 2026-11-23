@@ -77,7 +77,8 @@ def main():
         "arrow", "arrow_blood", "t_knife", "t_spark",       # created tokens
         "m_ambush", "m_counter", "m_trophy",                  # rare reactions
         "h_backstep", "h_knife", "h_second_wind", "p_cool", "p_czn_unity",
-        "p_stoke", "m_battle_plan", "n_czn_adagio",           # approved exceptions
+        "p_stoke", "m_battle_plan", "n_czn_adagio",
+        "h_sniper_allin",                                     # X-cost card
     }
     for cid, c in cards.items():
         if cid.startswith("sc_"):

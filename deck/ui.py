@@ -1878,6 +1878,8 @@ class BattleScreen:
         y = r.y + 96
         self._state_tips = []
         states = self.state_badges(h) + [("s_power", (200, 150, 255), "", f"Сила: {c.name}") for c in b.powers]
+        if b.double_attacks:
+            states.insert(0, ("s_power", (255, 220, 120), b.double_attacks, "Двойной залп"))
         if not states:
             sk.text(surf, "без состояний", (r.x + 18, y - 9), 13, sk.p["dim"], outline=False)
         for icon, col, n, word in states[:8]:

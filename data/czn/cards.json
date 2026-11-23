@@ -449,7 +449,9 @@
    "cost": "1",
    "traits": "Lead",
    "effect": "100% Shield · +120% Damage Amount to the next Bullet card activated",
-   "adapted_as": []
+   "adapted_as": [
+    "h_sniper_double"
+   ]
   },
   {
    "character": "Luke",

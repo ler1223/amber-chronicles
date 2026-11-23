@@ -17,7 +17,7 @@ def test_zero_cost_policy_and_alt_allowlist():
         if c.get("cost") == 0:
             assert (c.get("token") or cid.startswith("sc_") or c.get("rarity", 0) >= 3 or
                     cid in {"h_backstep", "h_knife", "h_second_wind", "p_cool", "p_czn_unity",
-                            "p_stoke", "m_battle_plan", "n_czn_adagio"}), cid
+                            "p_stoke", "m_battle_plan", "n_czn_adagio", "h_sniper_allin"}), cid
         if (c.get("alt") or {}).get("target") not in (None, "none"):
             assert cid in allowed_alt, cid
     assert cards["h_rng_guilty"]["cost"] == 1

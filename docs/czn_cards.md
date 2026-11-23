@@ -28,8 +28,9 @@
 которых в «Спуске» нет. В `tools/descent_czn_pack.py` добавлены **34 базовые карты**, а
 `tools/descent_hunter_ranger.py` расширяет Охотницу ещё **30 картами** CZN Ranger/Hunter
 (Хильда, Селена, Люк, Диана, Реноа, Серениэль, Берил, Хайдемари, Вероника, Лукас), а
-`tools/descent_hunter_upgrade.py` добавляет улучшение Lucas «Extended Magazine». Всего
-**65 игровых карт** с источником CZN. Каждая игровая карта хранит `source`:
+`tools/descent_hunter_upgrade.py` добавляет улучшение Lucas «Extended Magazine»,
+`tools/descent_hunter_sniper.py` — линейные карты и усилители по мотивам Luke/Lucas. Всего
+**67 игровых карт** с источником CZN. Каждая игровая карта хранит `source`:
 
 ```json
 "source": {
@@ -50,6 +51,7 @@ python tools/descent_tiers.py           # тиры/базовые/нейтрал
 python tools/descent_czn_pack.py        # 34 базовые карты + adapted_as
 python tools/descent_hunter_ranger.py   # +30 Ranger/Hunter карт + adapted_as
 python tools/descent_hunter_upgrade.py  # +улучшение колчана + auto-стрела
+python tools/descent_hunter_sniper.py   # линейные выстрелы и заряжающиеся стрелы
 ```
 
 ## Что перенесено

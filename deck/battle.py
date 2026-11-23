@@ -119,6 +119,7 @@ class Battle:
         self.double_next = False                              # предмет: следующая атака — двойной урон
         self.next_energy = self.next_draw = 0                 # предмет: прибавка к следующему ходу
         self.pending_discard = 0                              # Адажио: сколько карт игрок должен выбрать для сброса
+        self.double_attacks = 0                               # улучшение: сколько атак ещё удвоить
         self.powers = []                                      # сыгранные карты-Силы: действуют до конца боя
         self.powered = set()                                  # (uid Силы, ход, событие) — у Сил «раз за ход»
         self.idols = Idols(self) if self.mech == "idols" else None    # Жрец: статуи богов падают на поле
@@ -787,6 +788,8 @@ class Battle:
     def can_afford(self, card):
         if self._free_cast:
             return True
+        if card.d.get("x_cost"):
+            return self.energy >= 1
         if card.levels:
             return self.hero.ds["heat"] >= card.cost
         return self.energy >= card.cost
@@ -828,9 +831,12 @@ class Battle:
             return [h]
         if t == "enemy":                                  # в тумане — только вплотную
             r = u.get("range", 1)
-            return [f for f in self.foes() if cheb(h.cell, f.cell) <= r and (r <= 1 or not u.get("los", r > 1)
+            out = [f for f in self.foes() if cheb(h.cell, f.cell) <= r and (r <= 1 or not u.get("los", r > 1)
                                                                             or self.los(h.cell, f.cell))
                     and not (f.ds.get("veil") and cheb(h.cell, f.cell) > 1)]
+            if u.get("line"):                             # только горизонталь/вертикаль
+                out = [f for f in out if h.cell[0] == f.cell[0] or h.cell[1] == f.cell[1]]
+            return out
         if t == "reach":
             reach = self.paths(h, u.get("reach", 1))
             return [f for f in self.foes() if any(cheb(p, f.cell) <= 1 for p in reach)]
@@ -888,8 +894,11 @@ class Battle:
         if t == "enemy":
             r = u.get("range", 1)
             need = r > 1 and u.get("los", r > 1)
-            return [p for p, c in cells.items() if 0 < cheb(p, h.cell) <= r and c.passable
-                    and (not need or self.los(h.cell, p))]
+            out = [p for p, c in cells.items() if 0 < cheb(p, h.cell) <= r and c.passable
+                   and (not need or self.los(h.cell, p))]
+            if u.get("line"):
+                out = [p for p in out if p[0] == h.cell[0] or p[1] == h.cell[1]]
+            return out
         if t == "reach":
             reach = self.paths(h, u.get("reach", 1))
             out = set(reach)
@@ -1247,6 +1256,25 @@ class Battle:
             yield IMPACT
         yield from self.apply(h, e["do"], tgt, {"vfx": bool(e.get("vfx")), "temper": self.temper.get(c.uid, 0)})
 
+    def line_enemies(self, target, rng):
+        """Враги на горизонтальной/вертикальной линии от героя до цели (и дальше в том же направлении)."""
+        h = self.hero
+        dx = sign(target.cell[0] - h.cell[0])
+        dy = sign(target.cell[1] - h.cell[1])
+        if dx and dy:                                      # диагональ не считается «по прямой»
+            return [target]
+        out = []
+        p = h.cell
+        for _ in range(max(1, rng)):
+            p = (p[0] + dx, p[1] + dy)
+            cell = self.c.grid.get(p)
+            if cell is None or not cell.passable:
+                break
+            f = next((u for u in self.foes() if u.cell == p), None)
+            if f is not None:
+                out.append(f)
+        return out
+
     def is_attack(self, card, mode):
         """Сторона карты бьёт врага (для автоприменения): цель — враг, подход или область, и есть урон."""
         u = card.d[mode]
@@ -1293,9 +1321,14 @@ class Battle:
         u = card.d[mode]
         self.hand.remove(card)
         paid, mom0 = card.cost, self.hero.ds["momentum"]
+        x_paid = 0
         if mode == "main":
             if not free:
-                if card.levels:
+                if card.d.get("x_cost"):
+                    x_paid = self.energy
+                    paid = x_paid
+                    self.energy = 0
+                elif card.levels:
                     self.hero.ds["heat"] -= card.cost
                 else:
                     self.energy -= card.cost
@@ -1327,7 +1360,8 @@ class Battle:
             yield from self.walk(h, path)
         tgt = target if hasattr(target, "cell") and target is not h else None
         ctx = {"ranged": u.get("ranged", False), "center": target if isinstance(target, tuple) else None,
-               "push_bonus": 0, "tag": u.get("tag"), "card": card if mode == "main" else None}
+               "push_bonus": 0, "tag": u.get("tag"), "card": card if mode == "main" else None,
+               "x": x_paid}
         if mode == "main":
             conds = list(u.get("if", []))
             echo = card.d.get("echo") or {}
@@ -1362,7 +1396,12 @@ class Battle:
                 self.vfx(h, u["vfx"], card.name, target=tgt, center=ctx["center"],
                          radius=u.get("radius", 0) if t == "area" else 0, tag=u.get("tag"))
                 yield IMPACT
-            if t == "area":                                   # область: каждому врагу в радиусе, остальное — раз
+            if u.get("pierce") and tgt is not None:           # линия: пробивает всех на пути
+                for f in self.line_enemies(tgt, u.get("range", 6)):
+                    yield from self.apply(h, [o for o in ops if o["op"] not in ONCE], f, ctx)
+                    yield from self.cond_extras(ctx, f, area=True)
+                yield from self.apply(h, [o for o in ops if o["op"] in ONCE], None, ctx)
+            elif t == "area":                                # область: каждому врагу в радиусе
                 r = u.get("radius", 1)
                 for f in [f for f in self.foes() if cheb(f.cell, target) <= r]:
                     yield from self.apply(h, [o for o in ops if o["op"] not in ONCE], f, ctx)
@@ -1493,7 +1532,8 @@ class Battle:
         h, ds = self.hero, self.hero.ds
         ctx = {"ranged": u.get("ranged", False), "tag": u.get("tag"),
                "card": card if mode == "main" else None, "before": self.played,
-               "temper": 0, "emp": 0}
+               "temper": 0, "emp": 0,
+               "x": self.energy if card.d.get("x_cost") and mode == "main" else 0}
         if mode == "main":
             ctx["temper"] = self.temper.get(card.uid, 0)
             ctx["emp"] = sum(self.empower.get(tag, 0) for tag in card.tags)
@@ -1509,6 +1549,7 @@ class Battle:
                 n += op["per"].get("k", 1) * self.per_count(op["per"], None, ctx)
             if kind == "damage" and mode == "main":
                 n += ctx["temper"] + emp
+                n += op.get("x", 0) * ctx.get("x", 0)
                 emp = 0
             if mom:
                 n += mom * op.get("mom_k", 1)
@@ -1533,6 +1574,9 @@ class Battle:
             if kind == "damage" and dbl:
                 n *= 2
                 dbl = False
+            if kind in ("damage", "body_slam") and mode == "main" and card.d.get("type") == "attack" \
+                    and self.double_attacks > 0:
+                n *= 2
             out.append(max(0, int(n)))
         return out
 
@@ -1592,8 +1636,16 @@ class Battle:
                 n += op["per"].get("k", 1) * self.per_count(op["per"], tgt, ctx)
             if k == "damage" and tgt is not None:
                 dbl = 1
+                if src is h and ctx.get("card") is not None and ctx["card"].d.get("type") == "attack":
+                    if not ctx.get("double_done") and self.double_attacks > 0:
+                        ctx["double_done"] = True
+                        self.double_attacks -= 1
+                        self.say("Двойной залп!", (255, 220, 120))
+                    if ctx.get("double_done"):
+                        dbl = 2
                 if src is h:
                     n += ctx.get("temper", 0) + emp
+                    n += op.get("x", 0) * ctx.get("x", 0)
                     emp = 0
                     n = self.hero_bonus(tgt, n, op, ctx)
                     for c in ctx.get("conds", []):            # Усиление: «ещё +N», «урон ×N»
@@ -1614,7 +1666,15 @@ class Battle:
                 n = self.hero_bonus(tgt, src.shield, op, ctx) if src is h else src.shield
                 if src is h:
                     n += self.items.card_bonus(ctx.get("card"), "damage")
-                yield from self.strike(src, tgt, n, anim=not ctx.get("vfx"))
+                dbl = 1
+                if src is h and ctx.get("card") is not None and ctx["card"].d.get("type") == "attack":
+                    if not ctx.get("double_done") and self.double_attacks > 0:
+                        ctx["double_done"] = True
+                        self.double_attacks -= 1
+                        self.say("Двойной залп!", (255, 220, 120))
+                    if ctx.get("double_done"):
+                        dbl = 2
+                yield from self.strike(src, tgt, n, anim=not ctx.get("vfx"), mult=dbl)
             elif k == "double_next":
                 self.double_next = True
             elif k == "resource":                                          # энергия / жар / свиток — по герою
@@ -1770,6 +1830,9 @@ class Battle:
                 self.hurt(src, n, None, "hp_cost")
             elif k == "strength":
                 src.ds["strength"] += n
+            elif k == "double_attacks":
+                self.double_attacks += n
+                self.say(f"Следующие {self.double_attacks} атак — двойной урон", (255, 220, 120))
             elif k == "collide_x2":
                 self.collide_k = max(self.collide_k, op.get("n") or 2)
             elif k == "thorns":
@@ -1833,6 +1896,12 @@ class Battle:
         yield from self.items.fire("end")
         if self.result:
             return
+        for c in list(self.hand):                         # заряжающиеся стрелы растут в руке
+            g = c.d.get("grow_end")
+            if g:
+                n = int(g.get("n", 1))
+                self.temper[c.uid] = self.temper.get(c.uid, 0) + n
+                self.say(f"«{c.name}»: +{n} урона", (255, 220, 120))
         yield from self.auto_end_turn()
         if self.result:
             return

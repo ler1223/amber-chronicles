@@ -318,7 +318,7 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
         s.blit(ic, ic.get_rect(center=(cx, cy)))
     if not react:
         # Цена: белая цифра с толстым тёмным контуром — читается и на светлом, и на тёмном гнезде.
-        _lab(s, lambda z: font(z, True), 50, str(card.cost), (255, 255, 255) if main_ok else (215, 205, 190),
+        _lab(s, lambda z: font(z, True), 50, str(card.cost_label), (255, 255, 255) if main_ok else (215, 205, 190),
              center=(cx, cy + 2), shadow=(8, 5, 3),
              offs=((-3, 0), (3, 0), (0, -3), (0, 3), (-2, -2), (2, -2), (-2, 2), (2, 2)))
     if d["main"].get("seal") and "seal" not in lit:                        # Печать: закрыта

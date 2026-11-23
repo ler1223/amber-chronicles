@@ -324,7 +324,14 @@
     "h_venom_tip",
     "h_blood_moon",
     "h_beacon",
-    "h_upgrade_quiver"
+    "h_upgrade_quiver",
+    "h_sniper_line",
+    "h_sniper_pierce",
+    "h_sniper_expose",
+    "h_sniper_grow",
+    "h_sniper_fate",
+    "h_sniper_double",
+    "h_sniper_allin"
    ],
    "hand": 6,
    "starter_by_variant": {
@@ -440,7 +447,11 @@
      "h_rng_full_burst",
      "h_kneel",
      "h_shadow_step",
-     "h_upgrade_quiver"
+     "h_upgrade_quiver",
+     "h_sniper_line",
+     "h_sniper_pierce",
+     "h_sniper_expose",
+     "h_sniper_allin"
     ],
     "mark": [
      "h_marking",
@@ -507,7 +518,10 @@
      "h_kneel",
      "h_blood_moon",
      "h_beacon",
-     "h_upgrade_quiver"
+     "h_upgrade_quiver",
+     "h_sniper_expose",
+     "h_sniper_pierce",
+     "h_sniper_allin"
     ],
     "quiver": [
      "h_fill",
@@ -572,7 +586,10 @@
      "h_rng_full_burst",
      "h_venom_tip",
      "h_beacon",
-     "h_upgrade_quiver"
+     "h_upgrade_quiver",
+     "h_sniper_grow",
+     "h_sniper_fate",
+     "h_sniper_double"
     ],
     "chain": [
      "h_chain_1",
@@ -639,7 +656,10 @@
      "h_rng_full_burst",
      "h_shadow_step",
      "h_beacon",
-     "h_upgrade_quiver"
+     "h_upgrade_quiver",
+     "h_sniper_grow",
+     "h_sniper_fate",
+     "h_sniper_double"
     ]
    },
    "reward_guarantee": {

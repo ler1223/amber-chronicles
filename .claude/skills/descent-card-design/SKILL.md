@@ -134,6 +134,7 @@ python tools/descent_hunter_ranger.py   # CZN Ranger/Hunter pack
 python tools/descent_merc_more.py       # Mercenary: standstill + collision
 python tools/descent_merc_hunter_more.py # extra Mercenary/Hunter cards
 python tools/descent_hunter_upgrade.py  # CZN Hunter permanent upgrades
+python tools/descent_hunter_sniper.py   # line shots / growing arrows / X-cost
 python tools/descent_items.py
 python tools/descent_tiers.py          # preserves CZN source cards
 python tools/card_balance_policy.py    # always last: cost/alt policy

@@ -117,6 +117,8 @@ def _op_phrase(op, dmg=None):
     if t == "damage":
         shown = _dmg(dmg) if dmg is not None else _n(n)
         s = f"Нанести {shown} урона"
+        if op.get("x"):
+            s += f" +{_n(op['x'])}×X"
         if op.get("mom_k"):
             s += f" {_n('+' + str(op['mom_k']))}×*разгон*"
         if op.get("far"):
@@ -165,6 +167,7 @@ def _op_phrase(op, dmg=None):
         "counter": lambda: f"*Контратака* {_n(n)}.",
         "burn_card": lambda: f"*Изгнать* {_n(n)} " + ("случайную карту из руки." if n == 1 else "случайные карты из руки."),
         "strength_x2": lambda: "Удвоить *мощь*.",
+        "double_attacks": lambda: f"Следующие {_n(n)} карты атаки: урон ×2.",
         "body_slam": lambda: (f"Нанести {_dmg(dmg)} урона, равный вашей *защите*." if dmg is not None
                                else "Нанести урон, равный вашей *защите*."),
         "collide_x2": lambda: f"*Столкновения* в этот ход {_n('×' + str(n or 2))}.",
@@ -328,6 +331,10 @@ def phrase(u, exhaust=False, lit=(), preview=None):
         parts.append(f"Область радиус {_n(u.get('radius', 1))}, дальность {_n(u.get('range', 5))}:")
     elif t == "cell_any":
         parts.append(f"Клетка в {_n(u.get('range', 4))}:")
+    if u.get("line"):
+        parts.append("*Только по прямой*.")
+    if u.get("pierce"):
+        parts.append("*Пробивает всех на линии*.")
     parts += _ops_phrases(do, preview)
     for i, c in enumerate(u.get("if", [])):
         parts.append(_if_phrase(c, ("if", i) in lit))
@@ -343,6 +350,8 @@ def card_extras(d, lit=()):
     out = []
     if d.get("auto_end"):
         out.append("*Авто в конце хода*: не играется вручную.")
+    if d.get("grow_end"):
+        out.append(f"*Растёт в руке*: +{_n(d['grow_end'].get('n', 1))} урона в конце хода.")
     if d.get("unique"):
         out.append("*Единственная*.")
     if d.get("retain"):
@@ -884,6 +893,10 @@ class Card:
     @property
     def cost(self):
         return self.d["cost"]
+
+    @property
+    def cost_label(self):
+        return "X" if self.d.get("x_cost") else self.cost
 
     @property
     def rarity(self):
