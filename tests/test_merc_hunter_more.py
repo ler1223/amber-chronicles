@@ -47,13 +47,13 @@ def test_new_hunter_cards_play():
     finish(b.play(card, "main", foe))
     assert foe.ds["mark"] == 1 and foe.hp <= 99 - 12
 
-    b, h, foe, card, _ = battle("hunter", "h_venom_tip")
+    b, h, foe, card, _ = battle("hunter", "h_poison")
     finish(b.play(card, "main", foe))
-    assert foe.ds["poison"] == 3 and card not in b.hand
+    assert foe.ds["poison"] == 4 and card not in b.hand
 
-    b, h, foe, card, _ = battle("hunter", "h_beacon")
+    b, h, foe, card, _ = battle("hunter", "h_marking")
     finish(b.play(card, "main", foe))
-    assert foe.ds["mark"] == 2 and card not in b.hand
+    assert foe.ds["mark"] == 4 and card not in b.hand
 
     b, h, foe, card, _ = battle("hunter", "h_shadow_step")
     target = b.targets(card, "main")[0]

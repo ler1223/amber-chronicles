@@ -182,7 +182,7 @@ def test_tressa_style_blood_arrows_and_curse():
     put(h, (2, 2))
     put(foe, (4, 2))
     foe.hp = foe.max_hp = 99
-    quiver = M.Card("h_shadow_quiver", run.defs)
+    quiver = M.Card("h_arrow_well", run.defs, picks=[3])       # прозрение «Теневой колчан»
     b.hand = [quiver]
     b.energy = 9
     finish(b.play(quiver, "main", h))

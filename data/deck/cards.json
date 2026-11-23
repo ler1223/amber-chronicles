@@ -4013,15 +4013,27 @@
        }
       },
       {
-       "label": "Отклик",
-       "chain": {
-        "when": {
-         "k": "resonance",
-         "tag": "Выстрел",
-         "n": 2
-        },
-        "once": "turn",
-        "repeat": 1
+       "label": "Ядовитый наконечник",
+       "name": "Ядовитый наконечник",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "poison",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
        }
       }
      ]
@@ -4481,15 +4493,27 @@
        }
       },
       {
-       "label": "Отклик",
-       "chain": {
-        "when": {
-         "k": "resonance",
-         "tag": "Выстрел",
-         "n": 2
-        },
-        "once": "turn",
-        "repeat": 1
+       "label": "Стрела-маяк",
+       "name": "Стрела-маяк",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
        }
       }
      ]
@@ -5130,7 +5154,25 @@
        }
       },
       {
-       "label": "С защитой",
+       "label": "Твёрдая рука",
+       "name": "Твёрдая рука",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "focus"
+         },
+         {
+          "op": "block",
+          "n": 4
+         }
+        ],
+        "vfx": "focus"
+       }
+      },
+      {
+       "label": "Засада",
+       "name": "Засада",
        "main": {
         "target": "self",
         "do": [
@@ -5139,21 +5181,10 @@
          },
          {
           "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "block",
-          "n": 3
+          "n": 2
          }
         ],
-        "vfx": "focus"
-       }
-      },
-      {
-       "label": "Задел",
-       "keep": {
-        "k": "series",
-        "n": 3
+        "vfx": "hunter_ambush"
        }
       }
      ]
@@ -17665,32 +17696,27 @@
        }
       },
       {
-       "label": "По уязвимому",
-       "name": "Точная зазубрина",
+       "label": "Разрывная стрела",
+       "name": "Разрывная стрела",
        "main": {
         "target": "enemy",
-        "range": 5,
+        "range": 6,
+        "los": true,
+        "ranged": true,
         "do": [
          {
           "op": "damage",
-          "n": 5
+          "n": 6
          },
          {
           "op": "bleed",
           "n": 3
-         }
-        ],
-        "los": true,
-        "ranged": true,
-        "if": [
+         },
          {
-          "when": {
-           "k": "vulnerable"
-          },
-          "plus": 5
+          "op": "vulnerable",
+          "n": 1
          }
-        ],
-        "vfx": "mirror_arrow"
+        ]
        }
       }
      ]
@@ -17839,28 +17865,27 @@
        }
       },
       {
-       "label": "Добрать",
-       "name": "Быстрый подрез",
+       "label": "Подрезать",
+       "name": "Подрезать",
        "main": {
         "target": "enemy",
         "range": 5,
+        "los": true,
+        "ranged": true,
         "do": [
          {
           "op": "damage",
-          "n": 4
+          "n": 3
          },
          {
           "op": "weak",
           "n": 2
          },
          {
-          "op": "draw",
+          "op": "root",
           "n": 1
          }
-        ],
-        "los": true,
-        "ranged": true,
-        "vfx": "shackle_shot"
+        ]
        }
       }
      ]
@@ -18189,134 +18214,6 @@
         "los": true,
         "ranged": true,
         "vfx": "barrage"
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "rarity": 1
-  },
-  "h_full_quiver": {
-   "ill": [
-    "market_gems",
-    0.5,
-    0.5,
-    0.7
-   ],
-   "art": "arrow_piercing",
-   "name": "Полный колчан",
-   "cost": 1,
-   "type": "skill",
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "main": {
-    "target": "self",
-    "do": [
-     {
-      "op": "add_card",
-      "n": 3,
-      "card": "arrow",
-      "cname": "Стрела"
-     }
-    ],
-    "vfx": "fletching"
-   },
-   "growth": [
-    {
-     "uses": 3,
-     "options": [
-      {
-       "label": "Больше",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 4,
-          "card": "arrow",
-          "cname": "Стрела"
-         }
-        ],
-        "vfx": "fletching"
-       }
-      },
-      {
-       "label": "Дальше",
-       "name": "Колчан и тетива",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 2,
-          "card": "arrow",
-          "cname": "Стрела"
-         },
-         {
-          "op": "ranged_bonus",
-          "n": 1
-         }
-        ],
-        "vfx": "fletching"
-       }
-      },
-      {
-       "label": "Шаг",
-       "name": "Колчан на бегу",
-       "main": {
-        "target": "cell_step",
-        "step": 2,
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow",
-          "cname": "Стрела"
-         }
-        ],
-        "vfx": "fletching"
-       }
-      },
-      {
-       "label": "Фокус",
-       "name": "Колчан и прицел",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 2,
-          "card": "arrow",
-          "cname": "Стрела"
-         },
-         {
-          "op": "focus"
-         }
-        ],
-        "vfx": "fletching"
-       }
-      },
-      {
-       "label": "Защита",
-       "name": "Колчан за щитом",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow",
-          "cname": "Стрела"
-         },
-         {
-          "op": "block",
-          "n": 4
-         }
-        ],
-        "vfx": "fletching"
        }
       }
      ]
@@ -19751,135 +19648,6 @@
    ],
    "category": "hero",
    "rarity": 2
-  },
-  "h_ambush2": {
-   "ill": [
-    "smith_debt",
-    0.5,
-    0.5,
-    0.7
-   ],
-   "art": "gift_reed_shadow",
-   "name": "Засада",
-   "cost": 1,
-   "type": "skill",
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "main": {
-    "target": "self",
-    "do": [
-     {
-      "op": "focus"
-     },
-     {
-      "op": "draw",
-      "n": 2
-     }
-    ],
-    "vfx": "hunter_ambush"
-   },
-   "growth": [
-    {
-     "uses": 3,
-     "options": [
-      {
-       "label": "Больше",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "draw",
-          "n": 3
-         }
-        ],
-        "vfx": "hunter_ambush"
-       }
-      },
-      {
-       "label": "Защита",
-       "name": "Засада в камышах",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "block",
-          "n": 6
-         }
-        ],
-        "vfx": "hunter_ambush"
-       }
-      },
-      {
-       "label": "Стрелы",
-       "name": "Засада с колчаном",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "add_card",
-          "n": 2,
-          "card": "arrow",
-          "cname": "Стрела"
-         }
-        ],
-        "vfx": "hunter_ambush"
-       }
-      },
-      {
-       "label": "Энергия",
-       "name": "Внезапная засада",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ],
-        "vfx": "hunter_ambush"
-       }
-      },
-      {
-       "label": "Сохранение",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "draw",
-          "n": 2
-         }
-        ],
-        "vfx": "hunter_ambush"
-       },
-       "retain": true
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "rarity": 1
   },
   "h_lure": {
    "ill": [
@@ -27776,139 +27544,6 @@
    "category": "hero",
    "rarity": 2
   },
-  "h_steady": {
-   "ill": [
-    "mirror_pool",
-    0.53,
-    0.51,
-    0.5
-   ],
-   "art": "item_bow",
-   "name": "Твёрдая рука",
-   "cost": 1,
-   "type": "skill",
-   "main": {
-    "target": "self",
-    "do": [
-     {
-      "op": "focus"
-     },
-     {
-      "op": "block",
-      "n": 4
-     }
-    ],
-    "vfx": "focus"
-   },
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "tags": [
-    "Выстрел"
-   ],
-   "growth": [
-    {
-     "uses": 3,
-     "options": [
-      {
-       "label": "Крепче",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "block",
-          "n": 6
-         }
-        ]
-       }
-      },
-      {
-       "label": "С добором",
-       "name": "Дыхание и выстрел",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "block",
-          "n": 4
-         },
-         {
-          "op": "draw",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С прицелом",
-       "name": "Твёрдый прицел",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "block",
-          "n": 4
-         },
-         {
-          "op": "ranged_bonus",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С шагом",
-       "name": "Шаг и прицел",
-       "main": {
-        "target": "cell_step",
-        "step": 1,
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "block",
-          "n": 3
-         }
-        ]
-       }
-      },
-      {
-       "label": "С энергией",
-       "name": "Второе дыхание",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "focus"
-         },
-         {
-          "op": "block",
-          "n": 4
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ]
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "rarity": 1
-  },
   "h_mark_burst": {
    "ill": [
     "magpie_nest",
@@ -28953,46 +28588,37 @@
        }
       },
       {
-       "label": "С резонансом",
-       "name": "Резонанс колчана",
+       "label": "Теневой колчан",
+       "name": "Теневой колчан",
        "main": {
         "target": "self",
         "do": [
          {
           "op": "add_card",
           "n": 2,
-          "card": "arrow"
+          "card": "arrow_blood",
+          "cname": "Кровавая стрела"
          },
          {
           "op": "draw",
           "n": 1
          }
-        ],
-        "if": [
-         {
-          "when": {
-           "k": "resonance",
-           "tag": "Выстрел",
-           "n": 2
-          },
-          "repeat": 1
-         }
         ]
        }
       },
       {
-       "label": "С энергией",
-       "name": "Стрелы и дыхание",
+       "label": "Перезарядка колчана",
+       "name": "Перезарядка колчана",
        "main": {
         "target": "self",
         "do": [
          {
           "op": "add_card",
-          "n": 2,
+          "n": 3,
           "card": "arrow"
          },
          {
-          "op": "energy",
+          "op": "draw",
           "n": 1
          }
         ]
@@ -32622,144 +32248,6 @@
    "category": "hero",
    "rarity": 4
   },
-  "h_shadow_quiver": {
-   "ill": [
-    "smith_cart",
-    0.68,
-    0.58,
-    0.5
-   ],
-   "art": "arrow_piercing",
-   "name": "Теневой колчан",
-   "cost": 1,
-   "type": "skill",
-   "main": {
-    "target": "self",
-    "do": [
-     {
-      "op": "add_card",
-      "n": 2,
-      "card": "arrow_blood",
-      "cname": "Кровавая стрела"
-     },
-     {
-      "op": "draw",
-      "n": 1
-     }
-    ]
-   },
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "tags": [
-    "Создание",
-    "Выстрел"
-   ],
-   "growth": [
-    {
-     "uses": 3,
-     "options": [
-      {
-       "label": "Больше стрел",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow_blood",
-          "cname": "Кровавая стрела"
-         },
-         {
-          "op": "draw",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С добором",
-       "name": "Тень и дыхание",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 2,
-          "card": "arrow_blood",
-          "cname": "Кровавая стрела"
-         },
-         {
-          "op": "draw",
-          "n": 2
-         }
-        ]
-       }
-      },
-      {
-       "label": "С энергией",
-       "name": "Тень и дыхание",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 2,
-          "card": "arrow_blood",
-          "cname": "Кровавая стрела"
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С меткой",
-       "name": "Тень и метка",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 2,
-          "card": "arrow_blood",
-          "cname": "Кровавая стрела"
-         },
-         {
-          "op": "mark",
-          "n": 2
-         }
-        ]
-       }
-      },
-      {
-       "label": "С защитой",
-       "name": "Тень и щит",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 2,
-          "card": "arrow_blood",
-          "cname": "Кровавая стрела"
-         },
-         {
-          "op": "block",
-          "n": 4
-         }
-        ]
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "rarity": 1
-  },
   "h_dark_reload": {
    "ill": [
     "mirror_pool",
@@ -33770,160 +33258,6 @@
     "character": "Hilde",
     "name": "Multishot",
     "effect": "60% Damage to all enemies",
-    "game": "CZN"
-   }
-  },
-  "h_czn_quiver_reload": {
-   "ill": [
-    "smith_cart",
-    0.564,
-    0.54,
-    0.5
-   ],
-   "art": "arrow_piercing",
-   "name": "Перезарядка колчана",
-   "cost": 1,
-   "type": "skill",
-   "main": {
-    "target": "self",
-    "do": [
-     {
-      "op": "add_card",
-      "n": 3,
-      "card": "arrow"
-     },
-     {
-      "op": "draw",
-      "n": 1
-     }
-    ]
-   },
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "tags": [
-    "Создание",
-    "Выстрел"
-   ],
-   "growth": [
-    {
-     "uses": 3,
-     "options": [
-      {
-       "label": "Сильнее",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow"
-         },
-         {
-          "op": "draw",
-          "n": 2
-         }
-        ]
-       }
-      },
-      {
-       "label": "С добором",
-       "name": "Дыхание",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow"
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "draw",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С защитой",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow"
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "block",
-          "n": 3
-         }
-        ]
-       }
-      },
-      {
-       "label": "С меткой",
-       "name": "Метка",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow"
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "mark",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С энергией",
-       "name": "Второе дыхание",
-       "main": {
-        "target": "self",
-        "do": [
-         {
-          "op": "add_card",
-          "n": 3,
-          "card": "arrow"
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ]
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "rarity": 2,
-   "owner": "hunter",
-   "source": {
-    "character": "Hilde",
-    "name": "Quiver Reload",
-    "effect": "Create 3 Homing Arrow in Draw Pile",
     "game": "CZN"
    }
   },
@@ -39233,192 +38567,6 @@
    ],
    "owner": "hunter"
   },
-  "h_dmg_cripple": {
-   "ill": [
-    "archer_ambush",
-    0.602,
-    0.52,
-    0.45
-   ],
-   "art": "item_bow",
-   "name": "Подрезать",
-   "cost": 1,
-   "type": "attack",
-   "main": {
-    "target": "enemy",
-    "range": 5,
-    "los": true,
-    "ranged": true,
-    "do": [
-     {
-      "op": "damage",
-      "n": 3
-     },
-     {
-      "op": "weak",
-      "n": 2
-     },
-     {
-      "op": "root",
-      "n": 1
-     }
-    ]
-   },
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "growth": [
-    {
-     "uses": 4,
-     "options": [
-      {
-       "label": "Сильнее",
-       "main": {
-        "target": "enemy",
-        "range": 5,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 4
-         },
-         {
-          "op": "weak",
-          "n": 3
-         },
-         {
-          "op": "root",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С добором",
-       "name": "Дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 5,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "weak",
-          "n": 2
-         },
-         {
-          "op": "root",
-          "n": 1
-         },
-         {
-          "op": "draw",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С защитой",
-       "main": {
-        "target": "enemy",
-        "range": 5,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "weak",
-          "n": 2
-         },
-         {
-          "op": "root",
-          "n": 1
-         },
-         {
-          "op": "block",
-          "n": 3
-         }
-        ]
-       }
-      },
-      {
-       "label": "С меткой",
-       "name": "Метка",
-       "main": {
-        "target": "enemy",
-        "range": 5,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "weak",
-          "n": 2
-         },
-         {
-          "op": "root",
-          "n": 1
-         },
-         {
-          "op": "mark",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С энергией",
-       "name": "Второе дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 5,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "weak",
-          "n": 2
-         },
-         {
-          "op": "root",
-          "n": 1
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ]
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "basic_role": "attack",
-   "rarity": 2,
-   "tags": [
-    "Выстрел",
-    "Клич",
-    "Ловушка"
-   ],
-   "owner": "hunter"
-  },
   "h_dmg_pack_mark": {
    "ill": [
     "obsidian_mirror",
@@ -39767,192 +38915,6 @@
    "tags": [
     "Выстрел",
     "Область",
-    "Клич"
-   ],
-   "owner": "hunter"
-  },
-  "h_dmg_rupture": {
-   "ill": [
-    "archer_ambush",
-    0.62,
-    0.52,
-    0.45
-   ],
-   "art": "item_bow",
-   "name": "Разрывная стрела",
-   "cost": 2,
-   "type": "attack",
-   "main": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": true,
-    "do": [
-     {
-      "op": "damage",
-      "n": 6
-     },
-     {
-      "op": "bleed",
-      "n": 3
-     },
-     {
-      "op": "vulnerable",
-      "n": 1
-     }
-    ]
-   },
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "growth": [
-    {
-     "uses": 4,
-     "options": [
-      {
-       "label": "Сильнее",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 8
-         },
-         {
-          "op": "bleed",
-          "n": 4
-         },
-         {
-          "op": "vulnerable",
-          "n": 2
-         }
-        ]
-       }
-      },
-      {
-       "label": "С добором",
-       "name": "Дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 6
-         },
-         {
-          "op": "bleed",
-          "n": 3
-         },
-         {
-          "op": "vulnerable",
-          "n": 1
-         },
-         {
-          "op": "draw",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С защитой",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 6
-         },
-         {
-          "op": "bleed",
-          "n": 3
-         },
-         {
-          "op": "vulnerable",
-          "n": 1
-         },
-         {
-          "op": "block",
-          "n": 3
-         }
-        ]
-       }
-      },
-      {
-       "label": "С меткой",
-       "name": "Метка",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 6
-         },
-         {
-          "op": "bleed",
-          "n": 3
-         },
-         {
-          "op": "vulnerable",
-          "n": 1
-         },
-         {
-          "op": "mark",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С энергией",
-       "name": "Второе дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 6
-         },
-         {
-          "op": "bleed",
-          "n": 3
-         },
-         {
-          "op": "vulnerable",
-          "n": 1
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ]
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "basic_role": "attack",
-   "rarity": 3,
-   "tags": [
-    "Выстрел",
-    "Кровь",
     "Клич"
    ],
    "owner": "hunter"
@@ -47616,191 +46578,6 @@
    ],
    "owner": "hunter"
   },
-  "h_venom_tip": {
-   "ill": [
-    "leeches",
-    0.54,
-    0.58,
-    0.5
-   ],
-   "art": "gift_ghoul_kiss",
-   "name": "Ядовитый наконечник",
-   "cost": 1,
-   "type": "attack",
-   "main": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": true,
-    "do": [
-     {
-      "op": "damage",
-      "n": 3
-     },
-     {
-      "op": "poison",
-      "n": 3
-     },
-     {
-      "op": "draw",
-      "n": 1
-     }
-    ]
-   },
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "growth": [
-    {
-     "uses": 3,
-     "options": [
-      {
-       "label": "Сильнее",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 4
-         },
-         {
-          "op": "poison",
-          "n": 4
-         },
-         {
-          "op": "draw",
-          "n": 2
-         }
-        ]
-       }
-      },
-      {
-       "label": "С добором",
-       "name": "Дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "poison",
-          "n": 3
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "draw",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С защитой",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "poison",
-          "n": 3
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "block",
-          "n": 3
-         }
-        ]
-       }
-      },
-      {
-       "label": "С меткой",
-       "name": "Метка",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "poison",
-          "n": 3
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "mark",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С энергией",
-       "name": "Второе дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 3
-         },
-         {
-          "op": "poison",
-          "n": 3
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ]
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "rarity": 2,
-   "tags": [
-    "Выстрел",
-    "Яд",
-    "Комбо"
-   ],
-   "owner": "hunter"
-  },
   "h_blood_moon": {
    "ill": [
     "ferryman",
@@ -47957,191 +46734,6 @@
    ],
    "category": "hero",
    "rarity": 3,
-   "owner": "hunter"
-  },
-  "h_beacon": {
-   "ill": [
-    "magpie_nest",
-    0.611,
-    0.54,
-    0.5
-   ],
-   "art": "gift_prey",
-   "name": "Стрела-маяк",
-   "cost": 1,
-   "type": "attack",
-   "main": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": true,
-    "do": [
-     {
-      "op": "damage",
-      "n": 4
-     },
-     {
-      "op": "mark",
-      "n": 2
-     },
-     {
-      "op": "draw",
-      "n": 1
-     }
-    ]
-   },
-   "alt": {
-    "target": "none",
-    "do": []
-   },
-   "growth": [
-    {
-     "uses": 3,
-     "options": [
-      {
-       "label": "Сильнее",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 5
-         },
-         {
-          "op": "mark",
-          "n": 3
-         },
-         {
-          "op": "draw",
-          "n": 2
-         }
-        ]
-       }
-      },
-      {
-       "label": "С добором",
-       "name": "Дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 4
-         },
-         {
-          "op": "mark",
-          "n": 2
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "draw",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С защитой",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 4
-         },
-         {
-          "op": "mark",
-          "n": 2
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "block",
-          "n": 3
-         }
-        ]
-       }
-      },
-      {
-       "label": "С меткой",
-       "name": "Метка",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 4
-         },
-         {
-          "op": "mark",
-          "n": 2
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "mark",
-          "n": 1
-         }
-        ]
-       }
-      },
-      {
-       "label": "С энергией",
-       "name": "Второе дыхание",
-       "main": {
-        "target": "enemy",
-        "range": 6,
-        "los": true,
-        "ranged": true,
-        "do": [
-         {
-          "op": "damage",
-          "n": 4
-         },
-         {
-          "op": "mark",
-          "n": 2
-         },
-         {
-          "op": "draw",
-          "n": 1
-         },
-         {
-          "op": "energy",
-          "n": 1
-         }
-        ]
-       }
-      }
-     ]
-    }
-   ],
-   "category": "hero",
-   "rarity": 2,
-   "tags": [
-    "Выстрел",
-    "Метка",
-    "Комбо"
-   ],
    "owner": "hunter"
   },
   "arrow_auto": {

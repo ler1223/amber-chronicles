@@ -60,15 +60,15 @@ def test_new_school_tags_are_derived():
 
 def test_all_new_hunter_cards_can_be_played():
     data = M.load()
-    new = ("h_scope", "h_snipe", "h_steady", "h_mark_burst", "h_mark_web", "h_hunt",
+    new = ("h_scope", "h_snipe", "h_mark_burst", "h_mark_web", "h_hunt",
            "h_echo_shot", "h_rapid", "h_arrow_well", "h_quiver_echo",
            "h_chain_1", "h_chain_2", "h_chain_3", "h_chain_finish", "h_chain_draw",
            "h_chain_guard", "h_chain_mark", "h_chain_song",
            "h_beat", "h_stalk", "h_mark_hunt", "h_area_hunt", "h_hunt_final",
-           "arrow_blood", "h_bloodlust", "h_blood_rite", "h_blood_volley", "h_shadow_quiver",
+           "arrow_blood", "h_bloodlust", "h_blood_rite", "h_blood_volley",
            "h_dark_reload", "h_second_wind", "h_scout", "h_smoke_screen", "h_snare_net",
-           "h_patient_shot", "h_dmg_expose", "h_dmg_cripple", "h_dmg_pack_mark",
-           "h_dmg_black_volley", "h_dmg_rupture", "h_dmg_predator", "h_dmg_trophy",
+           "h_patient_shot", "h_dmg_expose", "h_dmg_pack_mark",
+           "h_dmg_black_volley", "h_dmg_predator", "h_dmg_trophy",
            "h_dmg_ritual", "h_dmg_execute")
     new += tuple(cid for cid in data["cards"]["cards"] if cid.startswith("h_rng_"))
     for cid in new:
@@ -111,7 +111,7 @@ def test_chain_auto_plays_resonance_card():
 def test_quiver_rewards_guarantee_arrow_cards():
     data = M.load()
     run = M.Run(data=data, seed=7, hero="hunter", variant="quiver")
-    creators = {"h_fill", "h_full_quiver", "h_master_quiver", "h_arrow_well"}
+    creators = {"h_fill", "h_master_quiver", "h_arrow_well"}
     for _ in range(12):
         offers = {c.cid for c in run.reward_offer()}
         assert offers & creators, offers

@@ -21,7 +21,7 @@ def test_czn_adapted_cards_are_marked_and_playable_defs():
     data = M.load()
     cards = data["cards"]["cards"]
     adapted = [c for c in cards.values() if (c.get("source") or {}).get("game") == "CZN"]
-    assert len(adapted) == 67
+    assert len(adapted) == 66
     assert all(c.get("category") in ("hero", "neutral") for c in adapted)
     assert all(1 <= c.get("rarity", 0) <= 4 for c in adapted)
     neutral = set(data["cards"]["neutral"])
