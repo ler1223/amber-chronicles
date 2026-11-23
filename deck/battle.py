@@ -929,6 +929,8 @@ class Battle:
             return (h.ds["heat"] if self.mech == "heat" else self.energy) == 0
         if k == "run":
             return self.walked >= c["n"]
+        if k == "not_walked":
+            return self.walked == 0
         if k == "momentum":
             return (self._mom if self._mom is not None else h.ds["momentum"]) >= c["n"]
         if k == "shielded":

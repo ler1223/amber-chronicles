@@ -234,7 +234,8 @@ def power_text(pw):
 
 
 COND_NAMES = {"series": "Серия", "after": "Вслед за", "resonance": "Резонанс", "first": "Первая",
-              "allin": "Ва-банк", "adjacent": "Вплотную", "far": "Издалека", "run": "С разбега", "wall": "У стены",
+              "allin": "Ва-банк", "adjacent": "Вплотную", "far": "Издалека", "run": "С разбега",
+              "not_walked": "Без шага", "wall": "У стены",
               "surrounded": "В окружении", "cover": "Из укрытия", "burning": "По горящему", "wet": "По мокрому",
               "poisoned": "По отравленному", "marked": "По помеченному", "wounded": "По раненому",
               "momentum": "Разгон", "shielded": "Под щитом", "hurt": "Сам ранен", "duel": "Один на один",

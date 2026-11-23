@@ -45911,6 +45911,1161 @@
     "effect": "Draw 2; 250% Damage to all enemies",
     "game": "CZN"
    }
+  },
+  "m_stand": {
+   "ill": [
+    "abandoned_camp",
+    0.557,
+    0.52,
+    0.5
+   ],
+   "art": "fx_phoenix_shield",
+   "name": "Осадная стойка",
+   "cost": 1,
+   "type": "skill",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 6
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "not_walked"
+      },
+      "do": [
+       {
+        "op": "empower",
+        "n": 5,
+        "tag": "Удар"
+       }
+      ]
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "empower",
+            "n": 7,
+            "tag": "Удар"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "empower",
+            "n": 5,
+            "tag": "Удар"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "empower",
+            "n": 5,
+            "tag": "Удар"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С толчком",
+       "name": "Сдвиг",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "empower",
+            "n": 5,
+            "tag": "Удар"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Разгон",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 6
+         },
+         {
+          "op": "momentum",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "empower",
+            "n": 5,
+            "tag": "Удар"
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Защита",
+    "Комбо"
+   ],
+   "owner": "merc"
+  },
+  "m_hammer": {
+   "ill": [
+    "cold_anvil",
+    0.564,
+    0.52,
+    0.7
+   ],
+   "art": "item_hammer",
+   "name": "Молот судьбы",
+   "cost": 2,
+   "type": "attack",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 8
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "not_walked"
+      },
+      "plus": 4,
+      "do": [
+       {
+        "op": "stun"
+       }
+      ]
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 11
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 5,
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С толчком",
+       "name": "Сдвиг",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Разгон",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "momentum",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "stun"
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 3,
+   "tags": [
+    "Удар"
+   ],
+   "owner": "merc"
+  },
+  "m_receive": {
+   "ill": [
+    "bellows_hall",
+    0.571,
+    0.52,
+    0.7
+   ],
+   "art": "gift_duel_honor",
+   "name": "Принять удар",
+   "cost": 1,
+   "type": "skill",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 5
+     },
+     {
+      "op": "counter",
+      "n": 2
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "not_walked"
+      },
+      "do": [
+       {
+        "op": "block",
+        "n": 4
+       }
+      ]
+     }
+    ]
+   },
+   "retain": true,
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         },
+         {
+          "op": "counter",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 5
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С толчком",
+       "name": "Сдвиг",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Разгон",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "counter",
+          "n": 2
+         },
+         {
+          "op": "momentum",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Защита",
+    "Шипы"
+   ],
+   "owner": "merc"
+  },
+  "m_kegel": {
+   "ill": [
+    "training",
+    0.578,
+    0.52,
+    0.5
+   ],
+   "art": "item_blade",
+   "name": "Кегельбан",
+   "cost": 2,
+   "type": "attack",
+   "alt": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "push",
+      "n": 1
+     }
+    ]
+   },
+   "main": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     },
+     {
+      "op": "collide_x2"
+     },
+     {
+      "op": "push",
+      "n": 2
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 7
+         },
+         {
+          "op": "collide_x2"
+         },
+         {
+          "op": "push",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "collide_x2"
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "collide_x2"
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С толчком",
+       "name": "Сдвиг",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "collide_x2"
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Разгон",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "collide_x2"
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "momentum",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 3,
+   "tags": [
+    "Удар",
+    "Толчок"
+   ],
+   "owner": "merc"
+  },
+  "m_pin": {
+   "ill": [
+    "drowning",
+    0.665,
+    0.67,
+    0.45
+   ],
+   "art": "gift_spear_wall",
+   "name": "Прижать",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "push",
+      "n": 2
+     },
+     {
+      "op": "root",
+      "n": 1
+     },
+     {
+      "op": "vulnerable",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "push",
+          "n": 3
+         },
+         {
+          "op": "root",
+          "n": 2
+         },
+         {
+          "op": "vulnerable",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С толчком",
+       "name": "Сдвиг",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Разгон",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "push",
+          "n": 2
+         },
+         {
+          "op": "root",
+          "n": 1
+         },
+         {
+          "op": "vulnerable",
+          "n": 1
+         },
+         {
+          "op": "momentum",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Толчок",
+    "Клич"
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "owner": "merc"
+  },
+  "m_blood_rush": {
+   "ill": [
+    "croc_legend",
+    0.642,
+    0.68,
+    0.55
+   ],
+   "art": "gift_giant_slayer",
+   "name": "Кровавый натиск",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "reach",
+    "reach": 3,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "bleed",
+      "n": 2
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "bleed",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С толчком",
+       "name": "Сдвиг",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "push",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С разгоном",
+       "name": "Разгон",
+       "main": {
+        "target": "reach",
+        "reach": 3,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "momentum",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "tags": [
+    "Удар",
+    "Кровь",
+    "Шаг"
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "owner": "merc"
   }
  },
  "neutral": [

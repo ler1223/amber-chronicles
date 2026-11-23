@@ -89,7 +89,13 @@
     "m_czn_overpower",
     "m_czn_rally",
     "m_czn_frost_charge",
-    "m_czn_ice_wall"
+    "m_czn_ice_wall",
+    "m_stand",
+    "m_hammer",
+    "m_receive",
+    "m_kegel",
+    "m_pin",
+    "m_blood_rush"
    ],
    "hand": 6,
    "passives": {
@@ -130,7 +136,13 @@
      "m_ring",
      "m_grapple",
      "m_break",
-     "m_quake"
+     "m_quake",
+     "m_stand",
+     "m_hammer",
+     "m_receive",
+     "m_kegel",
+     "m_pin",
+     "m_blood_rush"
     ]
    },
    "reward_guarantee": {
