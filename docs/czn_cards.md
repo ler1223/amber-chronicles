@@ -27,8 +27,9 @@
 Перенесены не все 979 строк: CZN использует AP, Ego, Bullet, Futility, Archetype и другие системы,
 которых в «Спуске» нет. В `tools/descent_czn_pack.py` добавлены **34 базовые карты**, а
 `tools/descent_hunter_ranger.py` расширяет Охотницу ещё **30 картами** CZN Ranger/Hunter
-(Хильда, Селена, Люк, Диана, Реноа, Серениэль, Берил, Хайдемари, Вероника, Лукас). Всего
-**64 игровые карты** с источником CZN. Каждая игровая карта хранит `source`:
+(Хильда, Селена, Люк, Диана, Реноа, Серениэль, Берил, Хайдемари, Вероника, Лукас), а
+`tools/descent_hunter_upgrade.py` добавляет улучшение Lucas «Extended Magazine». Всего
+**65 игровых карт** с источником CZN. Каждая игровая карта хранит `source`:
 
 ```json
 "source": {
@@ -48,6 +49,7 @@ python tools/import_czn_catalog.py      # скачать полный катал
 python tools/descent_tiers.py           # тиры/базовые/нейтральные
 python tools/descent_czn_pack.py        # 34 базовые карты + adapted_as
 python tools/descent_hunter_ranger.py   # +30 Ranger/Hunter карт + adapted_as
+python tools/descent_hunter_upgrade.py  # +улучшение колчана + auto-стрела
 ```
 
 ## Что перенесено

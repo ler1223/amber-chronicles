@@ -83,7 +83,7 @@ def main():
         if cid.startswith("sc_"):
             allowed_zero.add(cid)                             # priest scrolls
         if c.get("cost") == 0:
-            assert cid in allowed_zero, f"непроверенная 0-стоимость: {cid}"
+            assert cid in allowed_zero or c.get("token"), f"непроверенная 0-стоимость: {cid}"
         if cid not in KEEP_ALT:
             assert c["alt"].get("target") == "none", f"alt остался у {cid}"
 

@@ -48143,6 +48143,213 @@
     "Комбо"
    ],
    "owner": "hunter"
+  },
+  "arrow_auto": {
+   "ill": [
+    "archer_ambush",
+    0.3,
+    0.45,
+    0.35
+   ],
+   "art": "arrow_piercing",
+   "name": "Стрела охоты",
+   "cost": 0,
+   "type": "attack",
+   "token": true,
+   "exhaust": true,
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 5
+     }
+    ]
+   },
+   "alt": {
+    "target": "none",
+    "do": []
+   },
+   "category": "token",
+   "rarity": 0,
+   "auto_end": true,
+   "tags": [
+    "Выстрел"
+   ]
+  },
+  "h_upgrade_quiver": {
+   "ill": [
+    "quench_bath",
+    0.54,
+    0.52,
+    0.7
+   ],
+   "art": "item_bow",
+   "name": "Улучшение: колчан охоты",
+   "cost": 2,
+   "type": "power",
+   "alt": {
+    "target": "none",
+    "do": []
+   },
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "turn",
+     "do": [
+      {
+       "op": "add_card",
+       "n": 1,
+       "card": "arrow_auto",
+       "cname": "Стрела охоты",
+       "force": true
+      }
+     ]
+    }
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Больше стрел",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "add_card",
+           "n": 2,
+           "card": "arrow_auto",
+           "cname": "Стрела охоты",
+           "force": true
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "Тугая тетива",
+       "name": "Тугая тетива",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "ranged_bonus",
+          "n": 2
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "add_card",
+           "n": 1,
+           "card": "arrow_auto",
+           "cname": "Стрела охоты",
+           "force": true
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Взгляд вперёд",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "add_card",
+           "n": 1,
+           "card": "arrow_auto",
+           "cname": "Стрела охоты",
+           "force": true
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С защитой",
+       "name": "Стрела в укрытии",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 4
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "add_card",
+           "n": 1,
+           "card": "arrow_auto",
+           "cname": "Стрела охоты",
+           "force": true
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка на тетиве",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "turn",
+         "do": [
+          {
+           "op": "add_card",
+           "n": 1,
+           "card": "arrow_auto",
+           "cname": "Стрела охоты",
+           "force": true
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 4,
+   "tags": [
+    "Создание",
+    "Выстрел"
+   ],
+   "owner": "hunter",
+   "source": {
+    "game": "CZN",
+    "character": "Lucas",
+    "name": "Extended Magazine",
+    "effect": "At the start of the turn, create 1 Launcher Bullet"
+   }
   }
  },
  "neutral": [

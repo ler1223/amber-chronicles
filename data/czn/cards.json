@@ -5415,7 +5415,9 @@
    "cost": "1",
    "traits": "Lead",
    "effect": "At the start of the turn, create 1 Launcher Bullet",
-   "adapted_as": []
+   "adapted_as": [
+    "h_upgrade_quiver"
+   ]
   },
   {
    "character": "Lucas",

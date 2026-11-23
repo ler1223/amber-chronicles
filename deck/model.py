@@ -341,6 +341,8 @@ def phrase(u, exhaust=False, lit=(), preview=None):
 def card_extras(d, lit=()):
     """Свойства карты целиком (не применения): Отклик и Задел — строкой под основным текстом."""
     out = []
+    if d.get("auto_end"):
+        out.append("*Авто в конце хода*: не играется вручную.")
     if d.get("unique"):
         out.append("*Единственная*.")
     if d.get("retain"):

@@ -323,7 +323,8 @@
     "h_shadow_step",
     "h_venom_tip",
     "h_blood_moon",
-    "h_beacon"
+    "h_beacon",
+    "h_upgrade_quiver"
    ],
    "hand": 6,
    "starter_by_variant": {
@@ -438,7 +439,8 @@
      "h_rng_flashbang",
      "h_rng_full_burst",
      "h_kneel",
-     "h_shadow_step"
+     "h_shadow_step",
+     "h_upgrade_quiver"
     ],
     "mark": [
      "h_marking",
@@ -504,7 +506,8 @@
      "h_rng_full_burst",
      "h_kneel",
      "h_blood_moon",
-     "h_beacon"
+     "h_beacon",
+     "h_upgrade_quiver"
     ],
     "quiver": [
      "h_fill",
@@ -568,7 +571,8 @@
      "h_rng_flashbang",
      "h_rng_full_burst",
      "h_venom_tip",
-     "h_beacon"
+     "h_beacon",
+     "h_upgrade_quiver"
     ],
     "chain": [
      "h_chain_1",
@@ -634,7 +638,8 @@
      "h_rng_flashbang",
      "h_rng_full_burst",
      "h_shadow_step",
-     "h_beacon"
+     "h_beacon",
+     "h_upgrade_quiver"
     ]
    },
    "reward_guarantee": {

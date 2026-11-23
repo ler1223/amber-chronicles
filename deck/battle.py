@@ -768,10 +768,10 @@ class Battle:
 
     # ---------- цели карт ----------
 
-    def add_tokens(self, cid, n):
+    def add_tokens(self, cid, n, force=False):
         """Создать карту: временные карты в руку (после розыгрыша — Изгнание)."""
         for _ in range(n):
-            if len(self.hand) < HAND_MAX:
+            if force or len(self.hand) < HAND_MAX:
                 c = M.Card(cid, self.run.defs)
                 if c.d.get("unique") and self.has_unique():
                     continue
@@ -800,9 +800,11 @@ class Battle:
                 ok = [i for i, L in enumerate(lv) if L["heat"] <= heat]
                 c.lvl = ok[-1] if ok else 0
 
-    def targets(self, card, mode):
+    def targets(self, card, mode, auto=False):
         """Куда можно сыграть: список юнитов или клеток (для self — [герой]). Пусто — нельзя."""
         if self.result:
+            return []
+        if card.d.get("auto_end") and not auto:               # авто-стрела не играется вручную
             return []
         if mode == "main" and not self.can_afford(card):
             return []
@@ -1253,12 +1255,12 @@ class Battle:
         ops = [o["op"] for o in u.get("do", [])] + [x["op"] for o in u.get("do", []) for x in o.get("do", [])]
         return bool({"damage", "body_slam"} & set(ops))
 
-    def auto_target(self, card, mode):
+    def auto_target(self, card, mode, auto=False):
         """Куда ударит атака, если её просто разыграли: ближайший враг в досягаемости (при равенстве — слабее);
         область — туда, где заденет больше врагов (при равенстве — ближе). Не атака / некого — None."""
         if not self.is_attack(card, mode):
             return None
-        ts = self.targets(card, mode)
+        ts = self.targets(card, mode, auto=auto)
         if not ts:
             return None
         h = self.hero
@@ -1272,10 +1274,12 @@ class Battle:
     def can_play(self, card, mode):
         return bool(self.targets(card, mode))
 
-    def play(self, card, mode, target, free=False):
+    def play(self, card, mode, target, free=False, auto=False):
         """Сыграть карту из руки: mode "main" (энергия, копит прозрение) или "alt" (бесплатно).
-        free — Цепочка: полный розыгрыш без оплаты."""
+        free — Цепочка: полный розыгрыш без оплаты; auto — автоматическая карта в конце хода."""
         if card not in self.hand:
+            return
+        if card.d.get("auto_end") and not auto:
             return
         if card.d[mode].get("target") == "statue":            # свиток Жреца: через статую бога
             yield from self.play_scroll(card, target)
@@ -1284,7 +1288,7 @@ class Battle:
             spot, foe = target
             if foe not in self.reach_spots(card, mode).get(spot, []):
                 return
-        elif target not in self.targets(card, mode):
+        elif target not in self.targets(card, mode, auto=auto):
             return
         u = card.d[mode]
         self.hand.remove(card)
@@ -1692,7 +1696,7 @@ class Battle:
                 tgt.ds["root"] = max(tgt.ds["root"], n)
                 self.say(f"{tgt.name}: корни — не двигается", (180, 230, 140))
             elif k == "add_card":
-                self.add_tokens(op.get("card", "arrow"), n)
+                self.add_tokens(op.get("card", "arrow"), n, force=bool(op.get("force")))
             elif k == "ranged_bonus":
                 src.ds["ranged_bonus"] += n
             elif k == "focus":
@@ -1787,6 +1791,21 @@ class Battle:
 
     # ---------- ход врагов ----------
 
+    def auto_end_turn(self):
+        """Автоматические карты в руке (например, «Стрела охоты») играются сами."""
+        for c in list(self.hand):
+            if not c.d.get("auto_end"):
+                continue
+            target = self.auto_target(c, "main", auto=True)
+            if target is None:
+                if c in self.hand:
+                    self.hand.remove(c)
+                    self.discard.append(c)
+                continue
+            yield from self.play(c, "main", target, free=True, auto=True)
+            if self.result:
+                return
+
     def end_turn(self):
         """Конец хода игрока: рука в сброс, враги исполняют намерения, начинается новый ход."""
         if self.result:
@@ -1812,6 +1831,9 @@ class Battle:
             h.ds["momentum"] = 0
         yield from self.power_fire("end")
         yield from self.items.fire("end")
+        if self.result:
+            return
+        yield from self.auto_end_turn()
         if self.result:
             return
         self.discard += self.used                            # CZN: Used → Discard только в конце хода
