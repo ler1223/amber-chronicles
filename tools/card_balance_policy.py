@@ -20,7 +20,6 @@ COST = {
     "m_run": 1,
     "brace": 1,
     "h_chain_draw": 1,
-    "h_rng_guilty": 1,
     "m_bloodpact": 1,
 }
 
@@ -53,12 +52,6 @@ def main():
 
     for cid, cost in COST.items():
         cards[cid]["cost"] = cost
-
-    guilty = cards["h_rng_guilty"]
-    draw = find_op(guilty["main"], "draw")
-    if draw:
-        draw["n"] = 2
-    guilty["cost"] = 1
 
     adagio = cards["n_czn_adagio"]
     adagio["main"] = ensure_adagio(adagio["main"])

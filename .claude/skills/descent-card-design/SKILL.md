@@ -138,7 +138,8 @@ python tools/descent_hunter_sniper.py   # line shots / growing arrows / X-cost
 python tools/descent_items.py
 python tools/descent_tiers.py          # preserves CZN source cards
 python tools/card_balance_policy.py    # cost/alt policy
-python tools/consolidate_hunter.py     # merge similar Hunter cards, last
+python tools/consolidate_hunter.py     # merge similar Hunter cards
+python tools/consolidate_hunter2.py    # area/movement/exact duplicate wave
 ```
 
 - Update docs (`docs/descent_damage_model.md`, `docs/descent_builds.md`, `docs/czn_cards.md`).

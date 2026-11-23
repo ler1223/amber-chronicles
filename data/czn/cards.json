@@ -383,7 +383,7 @@
    "traits": "",
    "effect": "Create 3 Handgun Bullets",
    "adapted_as": [
-    "h_rng_stealth_reload"
+    "h_arrow_well"
    ]
   },
   {
@@ -984,7 +984,7 @@
    "traits": "",
    "effect": "150% Damage · Attunement: 1 Mark to a random enemy",
    "adapted_as": [
-    "h_czn_target_spotted"
+    "h_marking"
    ]
   },
   {
@@ -3909,7 +3909,7 @@
    "traits": "",
    "effect": "400% Damage · +80% Damage Amount for each card Discarded this battle (max 20 cards)",
    "adapted_as": [
-    "h_rng_elysium"
+    "h_rng_hunting_time"
    ]
   },
   {
@@ -6608,7 +6608,7 @@
    "traits": "Unique",
    "effect": "Draw 3 · 120% Damage to all enemies · +60% Damage Amount for each Attack Card Drawn through an ability this turn (max 8 cards)",
    "adapted_as": [
-    "h_rng_vortex"
+    "h_volley"
    ]
   },
   {
@@ -7880,7 +7880,7 @@
    "traits": "Exhaust",
    "effect": "Draw 3",
    "adapted_as": [
-    "h_rng_guilty"
+    "h_chain_draw"
    ]
   },
   {
@@ -8007,7 +8007,7 @@
    "traits": "",
    "effect": "350% Damage to all enemies​",
    "adapted_as": [
-    "h_rng_max_output"
+    "h_rng_hunting_time"
    ]
   },
   {
@@ -8167,7 +8167,7 @@
    "traits": "",
    "effect": "60% Damage × 3 · +20% base Damage Amount for each Dirge Bullet in hand",
    "adapted_as": [
-    "h_rng_ballad"
+    "h_blood_volley"
    ]
   },
   {

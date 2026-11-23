@@ -20,8 +20,8 @@ def test_zero_cost_policy_and_alt_allowlist():
                             "p_stoke", "m_battle_plan", "n_czn_adagio", "h_sniper_allin"}), cid
         if (c.get("alt") or {}).get("target") not in (None, "none"):
             assert cid in allowed_alt, cid
-    assert cards["h_rng_guilty"]["cost"] == 1
-    assert next(o for o in cards["h_rng_guilty"]["main"]["do"] if o["op"] == "draw")["n"] == 2
+    assert cards["h_chain_draw"]["cost"] == 1
+    assert next(o for o in cards["h_chain_draw"]["main"]["do"] if o["op"] == "draw")["n"] == 2
     assert cards["m_run"]["cost"] == 1
 
 

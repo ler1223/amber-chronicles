@@ -29,8 +29,8 @@
 `tools/descent_hunter_ranger.py` расширяет Охотницу ещё **30 картами** CZN Ranger/Hunter
 (Хильда, Селена, Люк, Диана, Реноа, Серениэль, Берил, Хайдемари, Вероника, Лукас), а
 `tools/descent_hunter_upgrade.py` добавляет улучшение Lucas «Extended Magazine»,
-`tools/descent_hunter_sniper.py` — линейные карты и усилители по мотивам Luke/Lucas. Всего
-**66 игровых карт** с источником CZN. Каждая игровая карта хранит `source`:
+`tools/descent_hunter_sniper.py` — линейные карты и усилители по мотивам Luke/Lucas. После
+слияния похожих карт осталось **59 игровых карт** с источником CZN. Каждая игровая карта хранит `source`:
 
 ```json
 "source": {
@@ -52,7 +52,8 @@ python tools/descent_czn_pack.py        # 34 базовые карты + adapted
 python tools/descent_hunter_ranger.py   # +30 Ranger/Hunter карт + adapted_as
 python tools/descent_hunter_upgrade.py  # +улучшение колчана + auto-стрела
 python tools/descent_hunter_sniper.py   # линейные выстрелы и заряжающиеся стрелы
-python tools/consolidate_hunter.py       # слияние похожих карт в прозрения
+python tools/consolidate_hunter.py       # первая волна слияния
+python tools/consolidate_hunter2.py      # area/движение/точные дубли
 ```
 
 ## Что перенесено

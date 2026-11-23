@@ -55,10 +55,10 @@ def test_new_hunter_cards_play():
     finish(b.play(card, "main", foe))
     assert foe.ds["mark"] == 4 and card not in b.hand
 
-    b, h, foe, card, _ = battle("hunter", "h_shadow_step")
+    b, h, foe, card, _ = battle("hunter", "h_trail")
     target = b.targets(card, "main")[0]
     finish(b.play(card, "main", target))
-    assert h.shield == 4 and card not in b.hand
+    assert h.shield == 3 and card not in b.hand
 
 
 def test_blood_moon_triggers_on_mark():

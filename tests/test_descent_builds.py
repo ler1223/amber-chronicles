@@ -64,11 +64,11 @@ def test_all_new_hunter_cards_can_be_played():
            "h_echo_shot", "h_rapid", "h_arrow_well", "h_quiver_echo",
            "h_chain_1", "h_chain_2", "h_chain_3", "h_chain_finish", "h_chain_draw",
            "h_chain_guard", "h_chain_mark", "h_chain_song",
-           "h_beat", "h_stalk", "h_mark_hunt", "h_area_hunt", "h_hunt_final",
+           "h_beat", "h_stalk", "h_mark_hunt", "h_hunt_final",
            "arrow_blood", "h_bloodlust", "h_blood_rite", "h_blood_volley",
-           "h_dark_reload", "h_second_wind", "h_scout", "h_smoke_screen", "h_snare_net",
+           "h_dark_reload", "h_second_wind", "h_smoke_screen", "h_snare_net",
            "h_patient_shot", "h_dmg_expose", "h_dmg_pack_mark",
-           "h_dmg_black_volley", "h_dmg_predator", "h_dmg_trophy",
+           "h_dmg_predator", "h_dmg_trophy",
            "h_dmg_ritual", "h_dmg_execute")
     new += tuple(cid for cid in data["cards"]["cards"] if cid.startswith("h_rng_"))
     for cid in new:

@@ -21,7 +21,7 @@ def test_czn_adapted_cards_are_marked_and_playable_defs():
     data = M.load()
     cards = data["cards"]["cards"]
     adapted = [c for c in cards.values() if (c.get("source") or {}).get("game") == "CZN"]
-    assert len(adapted) == 66
+    assert len(adapted) == 59
     assert all(c.get("category") in ("hero", "neutral") for c in adapted)
     assert all(1 <= c.get("rarity", 0) <= 4 for c in adapted)
     neutral = set(data["cards"]["neutral"])
@@ -36,9 +36,9 @@ def test_czn_catalog_marks_hunter_ranger_pack():
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "czn", "cards.json")
     catalog = json.load(open(path, encoding="utf-8"))["cards"]
     marked = {cid for card in catalog for cid in card.get("adapted_as", [])}
-    assert "h_rng_vortex" in marked
+    assert "h_volley" in marked
     assert "h_rng_full_burst" in marked
-    assert len([cid for cid in marked if cid.startswith("h_rng_")]) == 30
+    assert len([cid for cid in marked if cid.startswith("h_rng_")]) == 24
 
 
 def test_adapted_czn_cards_can_be_played():

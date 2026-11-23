@@ -153,7 +153,7 @@ def test_all_tactics_cards_can_be_played():
     data = M.load()
     cards = {
         "h_beat": "hunter", "h_stalk": "hunter", "h_mark_hunt": "hunter",
-        "h_area_hunt": "hunter", "h_hunt_final": "hunter",
+        "h_volley": "hunter", "h_hunt_final": "hunter",
         "m_bulldoze": "merc", "m_ring": "merc", "m_grapple": "merc",
         "m_break": "merc", "m_quake": "merc",
     }
