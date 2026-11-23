@@ -46,6 +46,10 @@ class CardAtlasScreen:
         self.card_rects = []
         self.back_rect = pygame.Rect(T.SCREEN_W - 250, T.SCREEN_H - 54, 220, 38)
 
+    def update(self, dt):
+        """Атлас статичен; метод нужен общему игровому циклу."""
+        pass
+
     def _owner(self, card):
         c = card.d
         if c.get("category") == "neutral":

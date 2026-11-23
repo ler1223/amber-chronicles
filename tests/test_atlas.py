@@ -15,6 +15,7 @@ def test_atlas_opens_from_hero_select_and_shows_all_cards():
     sc.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=sc.atlas_rect.center))
     assert isinstance(g.scene, CardAtlasScreen)
     atlas = g.scene
+    g.update(1 / 60)                                           # общий цикл игры не должен падать
     g.draw(SCREEN)
     assert len(atlas.filtered()) == len(atlas.data["cards"]["cards"])
     assert atlas.card_rects                                   # на экране есть карты
