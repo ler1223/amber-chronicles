@@ -2541,6 +2541,7 @@ class MapScreen:
         self.bag_rect = pygame.Rect(T.SCREEN_W - 520 - 12 - 220, T.SCREEN_H - 66, 220, 44)
         self.res_rect = pygame.Rect(T.SCREEN_W - 520, T.SCREEN_H - 66, 248, 44)
         self.sound_rect = pygame.Rect(24, 76, 214, 28)
+        self.atlas_rect = pygame.Rect(248, 76, 166, 28)
         self.toast = None
         fl = game.run.floor
         layers = max(n["layer"] for n in fl.nodes.values()) + 1
@@ -2572,6 +2573,9 @@ class MapScreen:
                 if getattr(self.game, "sound", None) is not None:
                     self.game.sound.toggle()
                 return
+            if self.atlas_rect.collidepoint(ev.pos):
+                self.game.open_atlas()
+                return
             if self.deck_rect.collidepoint(ev.pos):
                 self.game.show_deck()
                 return
@@ -2587,6 +2591,8 @@ class MapScreen:
         elif ev.type == pygame.KEYDOWN:
             if ev.key == pygame.K_d:
                 self.game.show_deck()
+            elif ev.key == pygame.K_a:
+                self.game.open_atlas()
             elif ev.key == pygame.K_m:
                 self.toggle_res()
             elif pygame.K_1 <= ev.key <= pygame.K_9:
@@ -2606,6 +2612,7 @@ class MapScreen:
                    f"Выберите путь: клик или 1–3 · враги этажа: HP ×{hk:.2f}, урон ×{dk:.2f} · D — колода")
         self.bag.bar(surf, run, (T.SCREEN_W - 40, 74), self.mouse, right=True)
         button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
+        button(surf, self.atlas_rect, "Атлас · A", self.mouse)
         board = pygame.Rect(40, 110, T.SCREEN_W - 80, 450)
         T.frame(surf, board, 150, accent=T.AMBER_DIM)
         avail = set(fl.available())
@@ -3179,6 +3186,7 @@ class HeroSelect:
         self.go = pygame.Rect(T.SCREEN_W // 2 - 230, T.SCREEN_H - 74, 460, 56)
         self.cont = pygame.Rect(T.SCREEN_W - 300, T.SCREEN_H - 74, 270, 56)   # продолжить сохранённый забег
         self.sound_rect = pygame.Rect(T.SCREEN_W - 250, 24, 220, 38)           # звук доступен до выбора героя
+        self.atlas_rect = pygame.Rect(24, T.SCREEN_H - 74, 250, 56)             # все карты до старта
         self.clock = 0.0
         self.saved = game.has_save()
 
@@ -3189,6 +3197,9 @@ class HeroSelect:
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.atlas_rect.collidepoint(ev.pos):
+                self.game.open_atlas()
+                return
             if self.sound_rect.collidepoint(ev.pos):
                 if getattr(self.game, "sound", None) is not None:
                     self.game.sound.toggle()
@@ -3223,6 +3234,7 @@ class HeroSelect:
         T.text(surf, "Кто спустится в подземелье?", (T.SCREEN_W // 2, 34), 30, T.AMBER, True, center=True,
                shadow=True)
         button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
+        button(surf, self.atlas_rect, "Атлас карт · F2", self.mouse)
         self.hits = []
         n = len(self.order)
         gap = 18 if n < 4 else 12

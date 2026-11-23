@@ -1,5 +1,7 @@
 """Забег «Спуска»: карта этажа → узел (бой, элита, костёр, торговец, страж) → награда, прозрения → карта →
 … страж лестницы → следующий этаж (враги сильнее). Конец — гибель героя: итог — глубина."""
+import pygame
+
 from sim import expedition as X
 from sim.data import GameData
 
@@ -208,6 +210,13 @@ class DescentGame:
                                 lambda: setattr(self, "scene", back),
                                 sub="Полоска внизу карты — путь к прозрению (основные применения)")
 
+    def open_atlas(self):
+        """Открыть атлас всех карт; Esc вернёт на прежний экран."""
+        from .atlas import CardAtlasScreen
+        if isinstance(self.scene, CardAtlasScreen):
+            return
+        self.scene = CardAtlasScreen(self, self.scene)
+
     # ---------- после боя ----------
 
     def battle_over(self, b):
@@ -337,6 +346,9 @@ class DescentGame:
 
     def handle(self, ev):
         if self.sound.handle(ev):                         # F10 / панель звука поверх сцены
+            return
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F2:
+            self.open_atlas()
             return
         self.scene.handle(ev)
 
