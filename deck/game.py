@@ -38,7 +38,14 @@ class DescentGame:
         self.to_map()
 
     def open_starter(self, hero, variant=None):
-        """Выбор стартовой колоды: 6 базовых + 4 карты первого тира."""
+        """Выбор стартовой колоды: 6 базовых + 4 карты первого тира.
+
+        Жрец — исключение: у него своя колода свитков и своя механика статуй,
+        поэтому экран сборки ему не показывается.
+        """
+        if (self.data["heroes"]["heroes"].get(hero) or {}).get("mechanic") == "idols":
+            self.start_run(hero, variant)
+            return
         from .ui import StarterDeckScreen
         audio.set_context("menu")
         self.scene = StarterDeckScreen(self, hero, variant)

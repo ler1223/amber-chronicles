@@ -1397,6 +1397,30 @@ def _priest(variant="storm", seed=5):
     return g, g.scene, g.scene.b
 
 
+def test_priest_starts_without_starter_deck_screen():
+    """Жрец не собирает обычную колоду: сразу в подземелье со своими свитками."""
+    from deck.game import DescentGame
+    from deck.ui import MapScreen
+    g = DescentGame(seed=7)
+    sc = g.scene
+    sc.pick = "priest"
+    sc.start()
+    assert isinstance(g.scene, MapScreen)
+    assert len(g.run.deck) == 10
+    assert all(c.d.get("meaning") for c in g.run.deck)
+
+
+def test_priest_rewards_and_shop_are_scrolls_only():
+    """По ходу забега Жрецу не выпадают обычные карты — только свитки."""
+    from deck import model as M
+    data = M.load()
+    run = M.Run(data=data, seed=8, hero="priest")
+    for _ in range(12):
+        offer = run.reward_offer()
+        assert offer and all(c.d.get("meaning") for c in offer)
+    assert all(c.d.get("meaning") for c, _ in run.shop_stock())
+
+
 def test_priest_statues_scroll_and_walk():
     """Жрец: статуи пантеона на поле, рука 4, шаги 2; свиток — на статую, цель в её досягаемости; ходьба;
     в конце хода рука остаётся, статуи играют свои свитки."""

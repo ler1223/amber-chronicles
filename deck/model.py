@@ -1137,18 +1137,10 @@ class Run:
         from .items import mod
         count = max(1, n - mod(self, "fewer_rewards"))
         neutral = list(self.data["cards"].get("neutral", []))
-        if self.hero.get("mechanic") == "idols":           # Жрец: свитки + нейтральная карта
+        if self.hero.get("mechanic") == "idols":           # Жрец: только свитки, без обычных карт
             from .idols import offer_scrolls
             scrolls = [cid for cid in offer_scrolls(self, count) if self.rewardable(cid)]
-            ids = scrolls[:max(1, count - 1)]
-            free = [cid for cid in neutral if self.rewardable(cid)]
-            while len(ids) < count and free:
-                pick = self.weighted_pick(free)
-                if pick is None:
-                    break
-                ids.append(pick)
-                free.remove(pick)
-            return [Card(cid, self.defs) for cid in ids]
+            return [Card(cid, self.defs) for cid in scrolls]
         core = [cid for cid in ((self.hero.get("rewards_by_variant") or {}).get(self.variant) or [])
                 if self.rewardable(cid)]
         if core:                                      # школа: 2 карты направления + 1 свобода
