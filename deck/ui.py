@@ -601,6 +601,7 @@ class BattleScreen:
         self.press = None                  # (карта, кнопка, точка) — нажали на карту, ещё не ясно: клик или тяга
         self.press_t = 0.0                 # сколько держат нажатой без движения
         self.inspect = None                # Inspector: удержание или закреплённое чтение (Shift)
+        self.discard_pick = []             # Адажио: выбранные в руке карты для сброса
         self.pick = None                   # подошли на клетку, а рядом несколько врагов: (карта, сторона, клетка, враги)
         self.prayer = None                 # Жрец: свиток на статуе, ждём цель — (карта, статуя, варианты)
         self.drag = False                  # карту тянут мышью
@@ -661,7 +662,7 @@ class BattleScreen:
 
     @property
     def busy(self):
-        return self.job is not None
+        return self.job is not None or self.b.pending_discard > 0
 
     def run_job(self, gen):
         self.job = gen
@@ -673,6 +674,8 @@ class BattleScreen:
         self.intro_t += dt
         if not self.ready():                           # заставка: земля ещё строится — бой стоит
             return
+        if not self.b.pending_discard and self.discard_pick:
+            self.discard_pick = []
         real = dt
         dt = dt * self.ANIM
         if self.chain_show is not None:
@@ -1051,6 +1054,22 @@ class BattleScreen:
         if not self.ready():
             if hasattr(ev, "pos"):
                 self.mouse = ev.pos
+            return
+        if self.b.pending_discard:                            # Адажио: выбор карт для сброса
+            if ev.type == pygame.MOUSEMOTION:
+                self.mouse = ev.pos
+            elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                uid = self.hv.hit(ev.pos)
+                card = next((c for c in self.b.hand if c.uid == uid), None)
+                if card is not None:
+                    if card in self.discard_pick:
+                        self.discard_pick.remove(card)
+                    elif len(self.discard_pick) < self.b.pending_discard:
+                        self.discard_pick.append(card)
+                    need = min(self.b.pending_discard, len(self.b.hand))
+                    if len(self.discard_pick) >= need:
+                        self.b.resolve_discard(self.discard_pick)
+                        self.discard_pick = []
             return
         if self.chain_pick is not None:                       # Цепочка ждёт выбора цели для не-атаки
             if ev.type == pygame.MOUSEMOTION:
@@ -1547,6 +1566,8 @@ class BattleScreen:
             self.draw_top(surf)
             self.draw_side(surf)
         self.draw_hand(surf)
+        if self.b.pending_discard:
+            self.draw_discard_choice(surf)
         self.draw_chain_show(surf)
         self.draw_eye(surf)
         if not self.ui_hidden:
@@ -2016,6 +2037,19 @@ class BattleScreen:
         sk.button(surf, self.end_rect, "Конец хода", self.end_rect.collidepoint(self.mouse),
                   on=not self.busy and not b.result, primary=not self.hint_text() or "Space" in (self.hint_text() or ""),
                   t=self.hv.t, size=19)
+
+    def draw_discard_choice(self, surf):
+        """Подсказка и подсветка выбранных карт для сброса (Адажио)."""
+        need = min(self.b.pending_discard, len(self.b.hand))
+        for c in self.discard_pick:
+            sp = self.hv.sprites.get(c.uid)
+            if sp is not None:
+                pygame.draw.rect(surf, T.SELECT, self.hv.rect_of(sp).inflate(7, 7), 3, border_radius=8)
+        text = f"Сбросьте карты: {len(self.discard_pick)}/{need} · клик по карте — выбрать"
+        w = T.font(15, True).size(text)[0] + 38
+        r = pygame.Rect((T.SCREEN_W - w) // 2, 82, w, 36)
+        T.frame(surf, r, 245, accent=T.SELECT)
+        T.text(surf, text, r.center, 15, T.TEXT, True, center=True)
 
     def draw_chain_show(self, surf):
         """Крупный показ карты, которую только что сыграла Цепочка: игрок должен увидеть, кто играет."""

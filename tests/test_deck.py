@@ -101,7 +101,7 @@ def test_main_costs_energy_alt_is_free_and_not_a_play():
 def test_step_reach_and_push_collision():
     b, _ = battle()
     h = b.hero
-    st = card(b, "lunge_rush")
+    st = card(b, "defend")                                      # базовая карта сохраняет alt-шаг
     cells = b.targets(st, "alt")
     assert cells and all(cheb(p, h.cell) <= 2 for p in cells)
     goal = max(cells, key=lambda p: p[0])
@@ -397,7 +397,7 @@ def test_card_faces_differ_and_have_art():
     assert CF.chips(s.d["main"]) == [("damage", "6")]
     assert CF.phrase(s.d["main"]) == "Нанести {6} урона."                      # текст как в StS: число крупно
     assert CF.phrase(M.Card("shield_ram", run.defs).d["main"]) == "Нанести {8} урона. *Толчок* {2}."
-    assert CF.chips(M.Card("lunge_rush", run.defs).d["alt"]) == [("step", "2")]
+    assert CF.chips(M.Card("defend", run.defs).d["alt"]) == [("step", "2")]
 
 
 def hero_battle(hero, variant=None, fight=0, seed=1):
@@ -408,7 +408,7 @@ def hero_battle(hero, variant=None, fight=0, seed=1):
 def test_merc_momentum_steps_add_damage_and_reset():
     b, _ = hero_battle("merc")
     h = b.hero
-    st = card(b, "lunge_rush")
+    st = card(b, "defend")
     cells = b.targets(st, "alt")
     goal = max(cells, key=lambda p: (cheb(p, h.cell), p[0]))
     finish(b.play(st, "alt", goal))
@@ -496,9 +496,9 @@ def test_battle_screen_wheel_level_and_drag_flip_plays_only_on_release():
     lv = c.lvl
     sc.handle(pygame.event.Event(pygame.MOUSEWHEEL, x=0, y=-1))
     assert c.manual and c.lvl == max(0, lv - 1)                                # колесо — уровень ниже
-    g.draw(SCREEN)
+    c = next(c for c in sc.b.hand if sc.b.targets(c, "alt"))                  # базовая карта с простым
     sp = sc.hv.sprites[c.uid]
-    st = (int(sp.x), int(sp.y) - 40)
+    st = (int(sp.x), int(sp.y))
     sc.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=st, button=1))
     p = (st[0], st[1] - 300)
     sc.handle(pygame.event.Event(pygame.MOUSEMOTION, pos=p, rel=(0, 0), buttons=(1, 0, 0)))
@@ -576,7 +576,7 @@ def test_cards_and_mechanics_emit_effects():
     b, _ = hero_battle("merc")
     h = b.hero
     b.c.events.clear()
-    st = card(b, "lunge_rush")
+    st = card(b, "defend")
     goal = max(b.targets(st, "alt"), key=lambda p: cheb(p, h.cell))
     finish(b.play(st, "alt", goal))
     sk, kinds = fx_of(b)
@@ -677,7 +677,7 @@ def test_tags_and_conditions_seal_bonus_echo_keep_twin():
     put(b, foe, (h.cell[0] + 1, h.cell[1]))
     b.energy = 9
     fl = card(b, "m_flurry")
-    assert not b.can_play(fl, "main") and b.can_play(fl, "alt")                 # Печать (Серия 2): закрыта
+    assert not b.can_play(fl, "main") and not b.can_play(fl, "alt")             # Печать (Серия 2): закрыта, alt убран
     finish(b.play(card(b, "defend"), "main", h))
     assert not b.can_play(fl, "main")
     finish(b.play(card(b, "defend"), "main", h))

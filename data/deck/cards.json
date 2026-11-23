@@ -287,8 +287,7 @@
     "vfx": "rush"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 2,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -420,8 +419,7 @@
     "vfx": "lunge"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 2,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -551,14 +549,8 @@
     "vfx": "shield_charge"
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -722,14 +714,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -936,8 +922,7 @@
     "vfx": "inspire"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -1639,7 +1624,11 @@
     }
    ],
    "category": "neutral",
-   "rarity": 3
+   "rarity": 3,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "battle_rage": {
    "ill": [
@@ -1757,7 +1746,11 @@
     }
    ],
    "category": "neutral",
-   "rarity": 3
+   "rarity": 3,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "charge": {
    "ill": [
@@ -1992,7 +1985,7 @@
    ],
    "art": "gift_iron_will",
    "name": "Упереться",
-   "cost": 0,
+   "cost": 1,
    "type": "skill",
    "main": {
     "target": "self",
@@ -2021,8 +2014,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -2232,15 +2224,8 @@
     "vfx": "hook"
    },
    "alt": {
-    "target": "enemy",
-    "range": 2,
-    "los": true,
-    "do": [
-     {
-      "op": "pull",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -2540,7 +2525,11 @@
     }
    ],
    "category": "neutral",
-   "rarity": 2
+   "rarity": 2,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "m_ram": {
    "ill": [
@@ -2570,8 +2559,7 @@
     "vfx": "shield_charge"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -2809,7 +2797,11 @@
     }
    ],
    "category": "hero",
-   "rarity": 3
+   "rarity": 3,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "m_halt": {
    "ill": [
@@ -2834,13 +2826,8 @@
     "vfx": "mountain_hold"
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -2965,7 +2952,7 @@
    ],
    "art": "gift_elusive_step",
    "name": "Разбег",
-   "cost": 0,
+   "cost": 1,
    "type": "skill",
    "main": {
     "target": "cell_step",
@@ -2974,8 +2961,7 @@
     "vfx": "rush"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -3368,8 +3354,7 @@
     "vfx": "kick"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 2,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -3522,8 +3507,7 @@
     "vfx": "leap_back"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -3638,16 +3622,8 @@
     "vfx": "headshot"
    },
    "alt": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": false,
-    "do": [
-     {
-      "op": "mark",
-      "n": 3
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -3782,8 +3758,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -3924,16 +3899,8 @@
     "vfx": "_d_poison_arrow"
    },
    "alt": {
-    "target": "enemy",
-    "range": 4,
-    "los": true,
-    "ranged": false,
-    "do": [
-     {
-      "op": "poison",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -4092,8 +4059,7 @@
     "vfx": "shackle_shot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -4249,16 +4215,8 @@
     "vfx": "mirror_arrow"
    },
    "alt": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": false,
-    "do": [
-     {
-      "op": "mark",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -4413,16 +4371,8 @@
     "vfx": "hunter_mark"
    },
    "alt": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": false,
-    "do": [
-     {
-      "op": "mark",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -4571,14 +4521,8 @@
     "vfx": "fletching"
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "add_card",
-      "n": 1,
-      "card": "arrow"
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -4711,13 +4655,8 @@
     "vfx": "hunting_horn"
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -4842,8 +4781,7 @@
     "vfx": "bear_trap"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -4973,8 +4911,7 @@
     "vfx": "leap_back"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -5106,13 +5043,8 @@
     "vfx": "focus"
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -5257,8 +5189,7 @@
     "vfx": "_d_quick_arrow"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "category": "token",
@@ -6509,13 +6440,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -6919,13 +6845,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -7304,13 +7225,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -7671,13 +7587,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -7858,13 +7769,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -8068,13 +7974,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -8444,13 +8345,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -8689,13 +8585,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -9103,13 +8994,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -9469,14 +9355,8 @@
     "vfx": "cleave"
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "damage",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -9662,14 +9542,8 @@
     "vfx": "shield_bash"
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -9864,8 +9738,7 @@
     "vfx": "aimed_shot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -10019,8 +9892,7 @@
     "vfx": "leap_back"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -10201,13 +10073,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -10603,13 +10470,8 @@
     }
    ],
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "enemy",
@@ -10988,7 +10850,11 @@
     }
    ],
    "category": "hero",
-   "rarity": 3
+   "rarity": 3,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "m_ambush": {
    "name": "Настороже",
@@ -11126,7 +10992,11 @@
     }
    ],
    "category": "hero",
-   "rarity": 3
+   "rarity": 3,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "m_trophy": {
    "name": "Трофей",
@@ -11254,7 +11124,11 @@
     }
    ],
    "category": "hero",
-   "rarity": 3
+   "rarity": 3,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "m_duel": {
    "name": "Поединок",
@@ -11287,8 +11161,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -11466,14 +11339,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "damage",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -11652,14 +11519,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -11837,14 +11698,8 @@
     "n": 2
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "damage",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -11953,8 +11808,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -12096,8 +11950,7 @@
     "vfx": "inspire"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -12206,7 +12059,7 @@
   "m_bloodpact": {
    "name": "Кровавая клятва",
    "type": "skill",
-   "cost": 0,
+   "cost": 1,
    "art": "gift_berserk_blood",
    "ill": [
     "cult_ascension",
@@ -12392,7 +12245,11 @@
     }
    ],
    "category": "hero",
-   "rarity": 2
+   "rarity": 2,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "m_shieldwall": {
    "name": "Стена щитов",
@@ -12430,13 +12287,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -12615,7 +12467,11 @@
    "growth": [],
    "about": "Мусор от врагов: занимает руку. Основное (1 энергия) — отскрести, карта сгорает.",
    "category": "token",
-   "rarity": 0
+   "rarity": 0,
+   "alt": {
+    "target": "none",
+    "do": []
+   }
   },
   "sc_attack": {
    "ill": [
@@ -12723,7 +12579,8 @@
     "say": "*Проклятие*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "category": "hero",
    "rarity": 3
@@ -12750,7 +12607,8 @@
     "say": "*Дар*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "category": "hero",
    "rarity": 3
@@ -12777,7 +12635,8 @@
     "say": "*Призыв*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "category": "hero",
    "rarity": 3
@@ -12804,7 +12663,8 @@
     "say": "*Хор*: *Атака* всеми статуями."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "chorus": true,
    "category": "hero",
@@ -12832,7 +12692,8 @@
     "say": "*Хор*: *Проклятие* всеми статуями."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "chorus": true,
    "category": "hero",
@@ -12860,7 +12721,8 @@
     "say": "*Защита*, и другая статуя — *Атака*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "then": [
     {
@@ -12893,7 +12755,8 @@
     "say": "*Движение*, и другая статуя — *Проклятие*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "then": [
     {
@@ -12926,7 +12789,8 @@
     "say": "*Проклятие*, и другая статуя — *Атака*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "then": [
     {
@@ -12959,7 +12823,8 @@
     "say": "*Дар*, и другая статуя — *Защита*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "then": [
     {
@@ -12992,7 +12857,8 @@
     "say": "*Призыв*, и другая статуя — тоже *Призыв*."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "then": [
     {
@@ -13026,7 +12892,8 @@
     "say": "*Защита* ×2."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "category": "hero",
    "rarity": 1
@@ -13054,7 +12921,8 @@
     "say": "*Дар* ×2."
    },
    "alt": {
-    "target": "none"
+    "target": "none",
+    "do": []
    },
    "category": "hero",
    "rarity": 3
@@ -13071,8 +12939,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -13218,13 +13085,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -13359,14 +13221,8 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "damage",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "enemy",
@@ -13515,8 +13371,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -13674,8 +13529,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -13807,13 +13661,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -13943,13 +13792,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -14421,13 +14265,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -14789,13 +14628,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -15178,8 +15012,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -15333,8 +15166,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -15485,13 +15317,8 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -15658,13 +15485,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -15800,8 +15622,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -15947,13 +15768,8 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -16073,13 +15889,8 @@
    "cost": 3,
    "type": "power",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -16221,14 +16032,8 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "damage",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "enemy",
@@ -16374,13 +16179,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -16537,13 +16337,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -16667,8 +16462,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -16799,8 +16593,7 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -16934,8 +16727,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -17077,8 +16869,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -17240,14 +17031,8 @@
    "cost": 3,
    "type": "attack",
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "damage",
-      "n": 3
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "enemy",
@@ -17427,13 +17212,8 @@
    "cost": 2,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 3
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -17589,13 +17369,8 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -17759,7 +17534,10 @@
     "ranged": true,
     "vfx": "_d_quick_arrow"
    },
-   "alt": null,
+   "alt": {
+    "target": "none",
+    "do": []
+   },
    "category": "token",
    "rarity": 0
   },
@@ -17775,8 +17553,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -17934,8 +17711,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -18105,8 +17881,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -18275,8 +18050,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -18435,8 +18209,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -18564,8 +18337,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -18708,8 +18480,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -18827,8 +18598,7 @@
    "cost": 2,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -18944,8 +18714,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -19100,8 +18869,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -19262,8 +19030,7 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -19386,8 +19153,7 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -19532,8 +19298,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -19661,8 +19426,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -19842,8 +19606,7 @@
    "cost": 0,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -20001,8 +19764,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -20131,8 +19893,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -20270,13 +20031,8 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -20728,13 +20484,8 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -21189,13 +20940,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -21645,13 +21391,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -22066,13 +21807,8 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -22238,13 +21974,8 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -22435,13 +22166,8 @@
    "cost": 2,
    "type": "power",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -22774,13 +22500,8 @@
    "cost": 1,
    "type": "power",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -23073,13 +22794,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -23568,13 +23284,8 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -24024,13 +23735,8 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -24475,13 +24181,8 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -24778,13 +24479,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -25283,13 +24979,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -25826,13 +25517,8 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -26288,13 +25974,8 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -26803,13 +26484,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -27260,13 +26936,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "levels": [
     {
@@ -27789,7 +27460,10 @@
     ],
     "vfx": "_d_quick_arrow"
    },
-   "alt": null,
+   "alt": {
+    "target": "none",
+    "do": []
+   },
    "category": "token",
    "rarity": 0
   },
@@ -27815,8 +27489,7 @@
     "vfx": "focus"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -27942,8 +27615,7 @@
     "vfx": "headshot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -28129,8 +27801,7 @@
     "vfx": "focus"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -28267,8 +27938,7 @@
     "vfx": "headshot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -28424,8 +28094,7 @@
     "vfx": "hunter_mark"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -28560,8 +28229,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -28714,8 +28382,7 @@
     "vfx": "aimed_shot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -28872,8 +28539,7 @@
     "vfx": "barrage"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -29067,8 +28733,7 @@
     "vfx": "barrage"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -29218,8 +28883,7 @@
     "vfx": "fletching"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -29369,8 +29033,7 @@
     "vfx": "aimed_shot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -29530,8 +29193,7 @@
     "vfx": "aimed_shot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -29691,8 +29353,7 @@
     "vfx": "aimed_shot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -29852,8 +29513,7 @@
     "vfx": "headshot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -30000,7 +29660,7 @@
    ],
    "art": "arrow_piercing",
    "name": "Раскрыть колчан",
-   "cost": 0,
+   "cost": 1,
    "type": "skill",
    "main": {
     "target": "self",
@@ -30013,8 +29673,7 @@
     "vfx": "fletching"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -30138,8 +29797,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -30275,8 +29933,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -30426,8 +30083,7 @@
     "vfx": "aimed_shot"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -30609,8 +30265,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -30804,8 +30459,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -30977,16 +30631,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": false,
-    "do": [
-     {
-      "op": "mark",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -31148,8 +30794,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -31305,8 +30950,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -31474,8 +31118,7 @@
     ]
    },
    "alt": {
-    "target": "cell_dash",
-    "dash": 3,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -31675,14 +31318,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -31894,15 +31531,8 @@
     "vfx": "hook"
    },
    "alt": {
-    "target": "enemy",
-    "range": 2,
-    "los": true,
-    "do": [
-     {
-      "op": "pull",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -32083,8 +31713,7 @@
     ]
    },
    "alt": {
-    "target": "cell_dash",
-    "dash": 3,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -32294,8 +31923,7 @@
     "vfx": "quake"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -32447,8 +32075,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -32487,13 +32114,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -32655,8 +32277,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -32789,8 +32410,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -33029,8 +32649,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -33172,8 +32791,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -33333,13 +32951,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -33475,13 +33088,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -33588,8 +33196,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -33757,8 +33364,7 @@
     "vfx": "hunter_mark"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -33907,8 +33513,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -34045,8 +33650,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -34195,8 +33799,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -34336,8 +33939,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -34523,13 +34125,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -34678,16 +34275,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 6,
-    "los": true,
-    "ranged": false,
-    "do": [
-     {
-      "op": "mark",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -34847,8 +34436,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -35016,8 +34604,7 @@
     "vfx": "grenade"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -35188,8 +34775,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -35338,8 +34924,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -35493,8 +35078,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -35665,13 +35249,8 @@
     }
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -35842,13 +35421,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -36000,14 +35574,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -36167,8 +35735,7 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -36331,14 +35898,8 @@
     ]
    },
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -36496,13 +36057,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -36635,13 +36191,8 @@
    "name": "Танец души",
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -36816,13 +36367,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -36934,13 +36480,8 @@
    "name": "Чёрная дыра",
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -37105,13 +36646,8 @@
    "name": "Клеймо уничтожения",
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -37253,13 +36789,8 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "area",
@@ -37424,13 +36955,8 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "enemy",
@@ -37619,13 +37145,8 @@
    "cost": 0,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -37770,13 +37291,8 @@
    "name": "Зов и ответ",
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -37942,13 +37458,8 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "heat",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "enemy",
@@ -38159,8 +37670,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -38320,13 +37830,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -38453,13 +37958,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -38601,13 +38101,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -38736,8 +38231,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -38908,8 +38402,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -39104,8 +38597,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -39302,17 +38794,16 @@
      {
       "op": "draw",
       "n": 2
+     },
+     {
+      "op": "discard_choose",
+      "n": 2
      }
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -39326,6 +38817,10 @@
          {
           "op": "draw",
           "n": 3
+         },
+         {
+          "op": "discard_choose",
+          "n": 2
          }
         ]
        }
@@ -39343,6 +38838,10 @@
          {
           "op": "draw",
           "n": 1
+         },
+         {
+          "op": "discard_choose",
+          "n": 2
          }
         ]
        }
@@ -39359,6 +38858,10 @@
          {
           "op": "block",
           "n": 3
+         },
+         {
+          "op": "discard_choose",
+          "n": 2
          }
         ]
        }
@@ -39376,6 +38879,10 @@
          {
           "op": "mark",
           "n": 1
+         },
+         {
+          "op": "discard_choose",
+          "n": 2
          }
         ]
        }
@@ -39393,6 +38900,10 @@
          {
           "op": "energy",
           "n": 1
+         },
+         {
+          "op": "discard_choose",
+          "n": 2
          }
         ]
        }
@@ -39439,13 +38950,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -39594,8 +39100,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -39760,8 +39265,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -39943,8 +39447,7 @@
     "vfx": "hunter_mark"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -40110,8 +39613,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -40301,8 +39803,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -40483,8 +39984,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -40640,8 +40140,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -40774,8 +40273,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -40974,8 +40472,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -41121,8 +40618,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -41277,8 +40773,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -41448,8 +40943,7 @@
    "cost": 2,
    "type": "skill",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -41629,13 +41123,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -41770,8 +41259,7 @@
    "cost": 3,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -41953,8 +41441,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -42094,8 +41581,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -42285,8 +41771,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -42452,8 +41937,7 @@
    "cost": 3,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -42609,13 +42093,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -42764,8 +42243,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -42932,8 +42410,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -43084,8 +42561,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -43287,8 +42763,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -43434,8 +42909,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -43603,8 +43077,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -43775,8 +43248,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -43939,8 +43411,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -44069,25 +43540,20 @@
    ],
    "art": "gift_deep_focus",
    "name": "Порочное удовольствие",
-   "cost": 0,
+   "cost": 1,
    "type": "skill",
    "main": {
     "target": "self",
     "do": [
      {
       "op": "draw",
-      "n": 3
+      "n": 2
      }
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -44215,8 +43681,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -44365,8 +43830,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -44510,13 +43974,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -44645,8 +44104,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -44797,8 +44255,7 @@
    "cost": 3,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -44959,13 +44416,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -45113,13 +44565,8 @@
     ]
    },
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "growth": [
     {
@@ -45253,8 +44700,7 @@
    "cost": 3,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -45402,8 +44848,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -45593,8 +45038,7 @@
     "vfx": "rain_of_arrows"
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -45750,8 +45194,7 @@
    "cost": 3,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -45924,13 +45367,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -46131,8 +45569,7 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -46333,13 +45770,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -46559,14 +45991,8 @@
    "cost": 2,
    "type": "attack",
    "alt": {
-    "target": "enemy",
-    "range": 1,
-    "do": [
-     {
-      "op": "push",
-      "n": 1
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "enemy",
@@ -46753,8 +46179,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -46943,8 +46368,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -47079,13 +46503,8 @@
    "cost": 1,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 2
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -47305,13 +46724,8 @@
    "cost": 2,
    "type": "skill",
    "alt": {
-    "target": "self",
-    "do": [
-     {
-      "op": "block",
-      "n": 3
-     }
-    ]
+    "target": "none",
+    "do": []
    },
    "main": {
     "target": "self",
@@ -47538,8 +46952,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -47673,8 +47086,7 @@
    "cost": 1,
    "type": "attack",
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "main": {
@@ -47873,8 +47285,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -48082,8 +47493,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -48238,8 +47648,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [
@@ -48419,8 +47828,7 @@
     }
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "tags": [
@@ -48583,8 +47991,7 @@
     ]
    },
    "alt": {
-    "target": "cell_step",
-    "step": 1,
+    "target": "none",
     "do": []
    },
    "growth": [

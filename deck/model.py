@@ -156,6 +156,7 @@ def _op_phrase(op, dmg=None):
         "stun": lambda: "*Оглушение*.",
         "mark": lambda: f"*Метка* {_n(n)}.",
         "draw": lambda: f"Взять {_n(n)} " + ("карту." if n == 1 else "карты."),
+        "discard_choose": lambda: f"Сбросить {_n(n)} " + ("карту (выберите)." if n == 1 else "карты (выберите)."),
         "energy": lambda: f"Получить {_n(n)} *энергию*.",
         "heal": lambda: f"*Лечение* {_n(n)}.",
         "lose_hp": lambda: f"Потерять {_n(n)} HP.",

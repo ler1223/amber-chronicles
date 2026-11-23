@@ -118,6 +118,7 @@ class Battle:
         self.items = Items(self)                              # предметы забега (data/deck/relics.json, deck/items.py)
         self.double_next = False                              # предмет: следующая атака — двойной урон
         self.next_energy = self.next_draw = 0                 # предмет: прибавка к следующему ходу
+        self.pending_discard = 0                              # Адажио: сколько карт игрок должен выбрать для сброса
         self.powers = []                                      # сыгранные карты-Силы: действуют до конца боя
         self.powered = set()                                  # (uid Силы, ход, событие) — у Сил «раз за ход»
         self.idols = Idols(self) if self.mech == "idols" else None    # Жрец: статуи богов падают на поле
@@ -1557,6 +1558,23 @@ class Battle:
             n += 3
         return n
 
+    def resolve_discard(self, cards):
+        """Игрок выбрал карты для сброса (Адажио/подобные эффекты)."""
+        n = 0
+        for c in list(cards):
+            if self.pending_discard <= 0:
+                break
+            if c in self.hand:
+                self.hand.remove(c)
+                self.discard.append(c)
+                self.pending_discard -= 1
+                n += 1
+        if n:
+            self.say(f"Сброшено карт: {n}", (220, 210, 180))
+        if not self.hand:
+            self.pending_discard = 0
+        self.sync_levels()
+
     def apply(self, src, ops, tgt, ctx=None):
         ctx = ctx if ctx is not None else {}
         h = self.hero
@@ -1736,6 +1754,9 @@ class Battle:
                 self.say(f"Преследование +{n}", (255, 220, 120))
             elif k == "draw":
                 self.draw(n)
+            elif k == "discard_choose":
+                self.pending_discard += max(0, n)
+                self.say(f"Выберите {self.pending_discard} карт(ы) для сброса", (220, 210, 180))
             elif k == "energy":
                 self.energy += n
             elif k == "heal":

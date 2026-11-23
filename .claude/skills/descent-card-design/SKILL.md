@@ -72,13 +72,25 @@ Before implementing a card, answer:
 
 ### Balance budgets
 
-- Cost 0: cantrip/setup; should not out-damage a 1-cost attack by itself.
+- Cost 0: only created cards, priest scrolls, rare reactions, or explicitly approved exceptions.
+  Normal cards cost at least 1.
 - Cost 1: one solid effect, or two small ones.
 - Cost 2: payoff/area/power; should need setup for high value.
 - Cost 3+: signature/legendary; needs a clear deck constraint.
 - Basic cards: only standard attack/defense/movement; no rare engine.
 - Neutral cards: simple, useful to all, no class-only resource.
 - Tier 1: common, simple; Tier 2: conditional/utility; Tier 3: powers/area/payoff; Tier 4: build-defining.
+
+### Alternative use is an exception
+
+Do **not** add `alt` by default. Alternative use is a designed feature and must be
+approved during the card audit. Current allowed alt cards are listed in
+`docs/card_balance.md`; if a generator reruns, finish with
+`python tools/card_balance_policy.py` to re-apply the policy.
+
+Every new card needs an audit with the user first: role, unique effect, cost,
+rarity, tags, interactions, alt decision, five epiphany options, and impact on
+starter/reward pools. Do not batch-add cards without that audit.
 
 ## CZN porting rules
 
@@ -122,7 +134,8 @@ python tools/descent_hunter_ranger.py   # CZN Ranger/Hunter pack
 python tools/descent_merc_more.py       # Mercenary: standstill + collision
 python tools/descent_merc_hunter_more.py # extra Mercenary/Hunter cards
 python tools/descent_items.py
-python tools/descent_tiers.py          # last; preserves CZN source cards
+python tools/descent_tiers.py          # preserves CZN source cards
+python tools/card_balance_policy.py    # always last: cost/alt policy
 ```
 
 - Update docs (`docs/descent_damage_model.md`, `docs/descent_builds.md`, `docs/czn_cards.md`).
