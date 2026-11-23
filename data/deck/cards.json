@@ -47066,6 +47066,1676 @@
    "category": "hero",
    "rarity": 2,
    "owner": "merc"
+  },
+  "m_brace": {
+   "ill": [
+    "bellows_hall",
+    0.619,
+    0.54,
+    0.7
+   ],
+   "art": "gift_duel_honor",
+   "name": "Упереться",
+   "cost": 1,
+   "type": "skill",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 2
+     }
+    ]
+   },
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 5
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "not_walked"
+      },
+      "do": [
+       {
+        "op": "block",
+        "n": 4
+       },
+       {
+        "op": "counter",
+        "n": 2
+       }
+      ]
+     }
+    ]
+   },
+   "retain": true,
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 7
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 5
+           },
+           {
+            "op": "counter",
+            "n": 3
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           },
+           {
+            "op": "counter",
+            "n": 2
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           },
+           {
+            "op": "counter",
+            "n": 2
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           },
+           {
+            "op": "counter",
+            "n": 2
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "block",
+            "n": 4
+           },
+           {
+            "op": "counter",
+            "n": 2
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Защита",
+    "Шипы"
+   ],
+   "owner": "merc"
+  },
+  "m_rampart": {
+   "ill": [
+    "guild_toll",
+    0.556,
+    0.52,
+    0.7
+   ],
+   "art": "gift_steel_shell",
+   "name": "Осадный вал",
+   "cost": 2,
+   "type": "skill",
+   "alt": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 3
+     }
+    ]
+   },
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "block",
+      "n": 8
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "not_walked"
+      },
+      "do": [
+       {
+        "op": "thorns",
+        "n": 3
+       },
+       {
+        "op": "fort"
+       }
+      ]
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 11
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "thorns",
+            "n": 4
+           },
+           {
+            "op": "fort"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "thorns",
+            "n": 3
+           },
+           {
+            "op": "fort"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "thorns",
+            "n": 3
+           },
+           {
+            "op": "fort"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "thorns",
+            "n": 3
+           },
+           {
+            "op": "fort"
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 8
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "do": [
+           {
+            "op": "thorns",
+            "n": 3
+           },
+           {
+            "op": "fort"
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 3,
+   "tags": [
+    "Защита",
+    "Шипы"
+   ],
+   "owner": "merc"
+  },
+  "m_battle_plan": {
+   "name": "План боя",
+   "type": "skill",
+   "cost": 0,
+   "art": "gift_marshal",
+   "ill": [
+    "flame_preacher",
+    0.634,
+    0.57,
+    0.57
+   ],
+   "main": {
+    "target": "self",
+    "do": [
+     {
+      "op": "draw",
+      "n": 1
+     },
+     {
+      "op": "empower",
+      "n": 4,
+      "tag": "Толчок"
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 2
+         },
+         {
+          "op": "empower",
+          "n": 5,
+          "tag": "Толчок"
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "empower",
+          "n": 4,
+          "tag": "Толчок"
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "empower",
+          "n": 4,
+          "tag": "Толчок"
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "empower",
+          "n": 4,
+          "tag": "Толчок"
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "empower",
+          "n": 4,
+          "tag": "Толчок"
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 1,
+   "tags": [
+    "Комбо",
+    "Толчок"
+   ],
+   "owner": "merc"
+  },
+  "m_blood_exchange": {
+   "ill": [
+    "deserter",
+    0.572,
+    0.52,
+    0.7
+   ],
+   "art": "item_dagger",
+   "name": "Кровавый обмен",
+   "cost": 1,
+   "type": "attack",
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "main": {
+    "target": "enemy",
+    "range": 1,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "bleed",
+      "n": 2
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "bleed",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 1,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "bleed",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Удар",
+    "Кровь",
+    "Комбо"
+   ],
+   "owner": "merc"
+  },
+  "h_kneel": {
+   "ill": [
+    "cryo_pond",
+    0.56,
+    0.56,
+    0.5
+   ],
+   "art": "item_bow",
+   "name": "Выстрел с колена",
+   "cost": 2,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 8
+     }
+    ],
+    "if": [
+     {
+      "when": {
+       "k": "not_walked"
+      },
+      "plus": 4,
+      "do": [
+       {
+        "op": "mark",
+        "n": 1
+       }
+      ]
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Выстрел",
+    "Метка"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 11
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 5,
+          "do": [
+           {
+            "op": "mark",
+            "n": 2
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "mark",
+            "n": 1
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "mark",
+            "n": 1
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "mark",
+            "n": 1
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 8
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "if": [
+         {
+          "when": {
+           "k": "not_walked"
+          },
+          "plus": 4,
+          "do": [
+           {
+            "op": "mark",
+            "n": 1
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 3,
+   "owner": "hunter"
+  },
+  "h_shadow_step": {
+   "ill": [
+    "grotto_entrance",
+    0.588,
+    0.57,
+    0.5
+   ],
+   "art": "gift_reed_shadow",
+   "name": "Тень охотника",
+   "cost": 1,
+   "type": "skill",
+   "main": {
+    "target": "cell_step",
+    "step": 2,
+    "do": [
+     {
+      "op": "block",
+      "n": 4
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 4,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 5
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "cell_step",
+        "step": 2,
+        "do": [
+         {
+          "op": "block",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Шаг",
+    "Комбо",
+    "Защита"
+   ],
+   "owner": "hunter"
+  },
+  "h_venom_tip": {
+   "ill": [
+    "leeches",
+    0.54,
+    0.58,
+    0.5
+   ],
+   "art": "gift_ghoul_kiss",
+   "name": "Ядовитый наконечник",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 3
+     },
+     {
+      "op": "poison",
+      "n": 3
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "poison",
+          "n": 4
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "poison",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "poison",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "poison",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 3
+         },
+         {
+          "op": "poison",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Яд",
+    "Комбо"
+   ],
+   "owner": "hunter"
+  },
+  "h_blood_moon": {
+   "ill": [
+    "ferryman",
+    0.608,
+    0.58,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Кровавая луна",
+   "cost": 2,
+   "type": "power",
+   "main": {
+    "target": "self",
+    "do": [],
+    "power": {
+     "on": "play",
+     "tag": "Метка",
+     "aim": "nearest",
+     "do": [
+      {
+       "op": "bleed",
+       "n": 2
+      }
+     ]
+    }
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "tags": [
+    "Метка",
+    "Кровь"
+   ],
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "self",
+        "do": [],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 3
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 2
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "block",
+          "n": 3
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 2
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 2
+          }
+         ]
+        }
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "self",
+        "do": [
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ],
+        "power": {
+         "on": "play",
+         "tag": "Метка",
+         "aim": "nearest",
+         "do": [
+          {
+           "op": "bleed",
+           "n": 2
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 3,
+   "owner": "hunter"
+  },
+  "h_beacon": {
+   "ill": [
+    "magpie_nest",
+    0.611,
+    0.54,
+    0.5
+   ],
+   "art": "gift_prey",
+   "name": "Стрела-маяк",
+   "cost": 1,
+   "type": "attack",
+   "main": {
+    "target": "enemy",
+    "range": 6,
+    "los": true,
+    "ranged": true,
+    "do": [
+     {
+      "op": "damage",
+      "n": 4
+     },
+     {
+      "op": "mark",
+      "n": 2
+     },
+     {
+      "op": "draw",
+      "n": 1
+     }
+    ]
+   },
+   "alt": {
+    "target": "cell_step",
+    "step": 1,
+    "do": []
+   },
+   "growth": [
+    {
+     "uses": 3,
+     "options": [
+      {
+       "label": "Сильнее",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 5
+         },
+         {
+          "op": "mark",
+          "n": 3
+         },
+         {
+          "op": "draw",
+          "n": 2
+         }
+        ]
+       }
+      },
+      {
+       "label": "С добором",
+       "name": "Дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "draw",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С защитой",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "block",
+          "n": 3
+         }
+        ]
+       }
+      },
+      {
+       "label": "С меткой",
+       "name": "Метка",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "mark",
+          "n": 1
+         }
+        ]
+       }
+      },
+      {
+       "label": "С энергией",
+       "name": "Второе дыхание",
+       "main": {
+        "target": "enemy",
+        "range": 6,
+        "los": true,
+        "ranged": true,
+        "do": [
+         {
+          "op": "damage",
+          "n": 4
+         },
+         {
+          "op": "mark",
+          "n": 2
+         },
+         {
+          "op": "draw",
+          "n": 1
+         },
+         {
+          "op": "energy",
+          "n": 1
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ],
+   "category": "hero",
+   "rarity": 2,
+   "tags": [
+    "Выстрел",
+    "Метка",
+    "Комбо"
+   ],
+   "owner": "hunter"
   }
  },
  "neutral": [

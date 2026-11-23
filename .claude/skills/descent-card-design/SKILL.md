@@ -120,6 +120,7 @@ python tools/descent_hunter_more.py
 python tools/descent_hunter_damage.py
 python tools/descent_hunter_ranger.py   # CZN Ranger/Hunter pack
 python tools/descent_merc_more.py       # Mercenary: standstill + collision
+python tools/descent_merc_hunter_more.py # extra Mercenary/Hunter cards
 python tools/descent_items.py
 python tools/descent_tiers.py          # last; preserves CZN source cards
 ```
