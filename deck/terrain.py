@@ -22,7 +22,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pygame
-from scipy import ndimage
+
+try:                                   # scipy может быть собран под другую ABI numpy (частый Mac/Anaconda)
+    from scipy import ndimage
+except Exception:                      # noqa: BLE001 — игра должна запускаться и без scipy
+    ndimage = None
 
 from ui import projection as P
 
@@ -60,6 +64,90 @@ THEMES = {
         "low": np.array([(60, 10, 4), (110, 24, 6), (168, 44, 8), (214, 74, 12), (244, 118, 24), (255, 170, 60),
                          (255, 228, 150)], F), "glow": True},
 }
+
+
+# --- запасные операции рельефа без scipy ---------------------------------
+# На некоторых Mac/Anaconda scipy собран под несовместимую ABI numpy и падает
+# ещё на импорте. Для земли достаточно этих трёх операций; ниже — их версии
+# на чистом numpy, чтобы игра запускалась в любом окружении.
+
+def _distance(mask):
+    """Расстояние от True-точек до ближайшей False (аналог distance_transform_edt)."""
+    if ndimage is not None:
+        try:
+            return ndimage.distance_transform_edt(mask)
+        except Exception:              # noqa: BLE001 — сломанная сборка scipy
+            pass
+    a = np.asarray(mask, dtype=bool)
+    if not a.any():
+        return np.zeros(a.shape, dtype=F)
+    if a.all():                        # до внешней границы массива
+        yy, xx = np.indices(a.shape)
+        return np.minimum(np.minimum(xx + 1, a.shape[1] - xx),
+                          np.minimum(yy + 1, a.shape[0] - yy)).astype(F)
+    # two-pass chamfer: 8 соседей, диагональ √2 — визуально неотличимо от EDT
+    d = np.where(a, np.inf, 0.0).astype(F)
+    h, w = a.shape
+    diag = F(2 ** 0.5)
+    for y in range(h):
+        row, prev = d[y], (d[y - 1] if y else None)
+        for x in range(w):
+            if not a[y, x]:
+                continue
+            best = row[x]
+            if x:
+                best = min(best, row[x - 1] + 1)
+            if prev is not None:
+                best = min(best, prev[x] + 1)
+                if x:
+                    best = min(best, prev[x - 1] + diag)
+                if x + 1 < w:
+                    best = min(best, prev[x + 1] + diag)
+            row[x] = best
+    for y in range(h - 1, -1, -1):
+        row, nxt = d[y], (d[y + 1] if y + 1 < h else None)
+        for x in range(w - 1, -1, -1):
+            if not a[y, x]:
+                continue
+            best = row[x]
+            if x + 1 < w:
+                best = min(best, row[x + 1] + 1)
+            if nxt is not None:
+                best = min(best, nxt[x] + 1)
+                if x + 1 < w:
+                    best = min(best, nxt[x + 1] + diag)
+                if x:
+                    best = min(best, nxt[x - 1] + diag)
+            row[x] = best
+    return d
+
+
+def _zoom(a, k):
+    """Увеличение целым коэффициентом (аналог ndimage.zoom(order=1) для k=4)."""
+    if ndimage is not None:
+        try:
+            return ndimage.zoom(a.astype(F), k, order=1)
+        except Exception:              # noqa: BLE001
+            pass
+    n = int(round(k))
+    if n <= 1:
+        return a.astype(F)
+    return np.repeat(np.repeat(a.astype(F), n, axis=0), n, axis=1)
+
+
+def _uniform(a, size=5):
+    """Скользящее среднее (аналог ndimage.uniform_filter)."""
+    if ndimage is not None:
+        try:
+            return ndimage.uniform_filter(a, size)
+        except Exception:              # noqa: BLE001
+            pass
+    p = size // 2
+    padded = np.pad(a, ((p, p), (p, p)), mode="edge")
+    cs = padded.cumsum(0).cumsum(1)
+    cs = np.pad(cs, ((1, 0), (1, 0)))
+    out = cs[size:, size:] - cs[:-size, size:] - cs[size:, :-size] + cs[:-size, :-size]
+    return out / (size * size)
 
 
 def mirror(i, n):
@@ -278,7 +366,7 @@ class Ground:
         humm = smooth(0.6, 0.8, noise(gx * 1.7, gy * 1.7, seed + 31)) * np.clip(d / 1.2, 0.2, 1) * 0.12
         h = hills + humm
         if low.any():
-            dw = ndimage.distance_transform_edt(~low) / R              # до воды, в клетках
+            dw = _distance(~low) / R                                   # до воды, в клетках
             h = h * np.clip(dw / 0.8, 0.25, 1) - 0.03 * np.clip(1 - dw / 0.25, 0, 1)
             h = np.where(low, -0.13, h)
         self.relief = (key, h.astype(F), low, seed)
@@ -370,7 +458,7 @@ class Ground:
         k = A // self.R
 
         def up(a):
-            z = ndimage.zoom(a.astype(F), k, order=1)
+            z = _zoom(a, k)
             return z[:H, :W]
         macro = up(relief)
         # веса материалов — плавные пятна (на сетке рельефа, затем растянуть)
@@ -385,7 +473,7 @@ class Ground:
              "sedge": smooth(0.58, 0.74, fbm(gx, gy, 0.38, 3, seed + 5)) * 0.85 * (1 - wet),
              "gravel": smooth(0.68, 0.8, fbm(gx, gy, 0.55, 2, seed + 7)) * 0.8 * (1 - wet)}
         if low_r.any():                                       # у воды — грязь
-            dw = ndimage.distance_transform_edt(~low_r) / self.R
+            dw = _distance(~low_r) / self.R
             rag = noise(gx * 3.1, gy * 3.1, seed + 40)                # рваная кромка, не по клеткам
             w["mud"] = np.maximum(w["mud"], np.clip(1 - dw / (0.08 + 0.3 * rag), 0, 1) * 0.7)
         Y, X = np.mgrid[0:H, 0:W]
@@ -423,7 +511,7 @@ class Ground:
             return np.roll(hgt, (-oy, -ox), axis=(0, 1)) > hgt + st * rise + 0.004
         shadow = np.logical_or.reduce(pmap(shade, range(1, 15)))
         band[shadow] = np.minimum(band[shadow], 0) - 1
-        cav = hgt - ndimage.uniform_filter(hgt, 5) < -0.006           # впадины
+        cav = hgt - _uniform(hgt, 5) < -0.006                         # впадины
         band[cav] -= 1
         # доска: шов клеток на пиксель темнее, край доски — темнее
         gw, gh = combat.grid.w, combat.grid.h
@@ -439,7 +527,7 @@ class Ground:
         col = ramps[mat, idx]
         # вода: глубина от берега, рябь, пена у кромки
         if water.any():
-            dist = ndimage.distance_transform_edt(water)
+            dist = _distance(water)
             wy, wx = np.nonzero(water)
             gxw, gyw = (wx / A - P.MARGIN_L).astype(F), (wy / A - P.MARGIN_T).astype(F)
             d = dist[water]
