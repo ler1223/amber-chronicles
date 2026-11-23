@@ -2515,6 +2515,22 @@ NODE_GLYPH = {"altar": "thread", "chest": "event", "workshop": "anvil"}       # 
 GOLD = (240, 200, 80)
 
 
+_SHADES = {}
+
+
+def _shade(size, dim):
+    """Затемняющая накладка — одна на размер и прозрачность, а не новый Surface каждый кадр."""
+    key = (size, int(dim))
+    s = _SHADES.get(key)
+    if s is None:
+        s = pygame.Surface(size, pygame.SRCALPHA)
+        s.fill((6, 8, 10, int(dim)))
+        if len(_SHADES) > 4:
+            _SHADES.clear()
+        _SHADES[key] = s
+    return s
+
+
 def backdrop(surf, dim=190):
     """Фон: иллюстрация болота (как у карты похода), притушенная."""
     try:
@@ -2529,13 +2545,10 @@ def backdrop(surf, dim=190):
     except Exception:                                  # нет картинки — просто тёмный фон
         surf.fill(T.BG)
     if G.is_canvas(surf):                                   # притушить — на всё окно (без светлых полос по бокам)
-        shade = pygame.Surface(surf.native.get_size(), pygame.SRCALPHA)
-        shade.fill((6, 8, 10, dim))
-        surf.native.blit(shade, (0, 0))
+        size = surf.native.get_size()
+        surf.native.blit(_shade(size, dim), (0, 0))
         return
-    shade = pygame.Surface((T.SCREEN_W, T.SCREEN_H), pygame.SRCALPHA)
-    shade.fill((6, 8, 10, dim))
-    surf.blit(shade, (0, 0))
+    surf.blit(_shade((T.SCREEN_W, T.SCREEN_H), dim), (0, 0))
 
 
 def run_header(surf, run, title, sub=None):

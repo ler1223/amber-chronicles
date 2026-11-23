@@ -8,6 +8,7 @@ import pygame
 from ui import theme as T
 
 from . import cardface as CF
+from . import gfx as G
 from . import model as M
 from .ui import Inspector, backdrop, button
 
@@ -39,16 +40,33 @@ class CardAtlasScreen:
                       for cid in self.data["cards"]["cards"]]
         self.filter = "all"
         self.mouse = (0, 0)
-        self.scroll = 0
+        self.scroll = 0.0
+        self.scroll_target = 0.0
         self.max_scroll = 0
         self.reading = None
         self.filter_rects = []
         self.card_rects = []
         self.back_rect = pygame.Rect(T.SCREEN_W - 250, T.SCREEN_H - 54, 220, 38)
+        self._filter_cache = {}
+        self._thumbs = {}
 
     def update(self, dt):
-        """Атлас статичен; метод нужен общему игровому циклу."""
-        pass
+        """Плавная прокрутка: колесо задаёт цель, кадры догоняют её с easing."""
+        if abs(self.scroll_target - self.scroll) < 0.35:
+            self.scroll = self.scroll_target
+        else:
+            self.scroll += (self.scroll_target - self.scroll) * min(1.0, dt * 18)
+
+    def _thumb(self, card, hot, S):
+        """Готовая миниатюра в родном разрешении — без повторного compose/blit_hd каждый кадр."""
+        key = (card.uid, bool(hot), round(S, 3))
+        img = self._thumbs.get(key)
+        if img is None:
+            img = CF.face(card, True, True, hot, width=round(CW * S))
+            if len(self._thumbs) > 500:
+                self._thumbs.clear()
+            self._thumbs[key] = img
+        return img
 
     def _owner(self, card):
         c = card.d
@@ -65,6 +83,9 @@ class CardAtlasScreen:
         return c.get("owner") or "other"
 
     def filtered(self):
+        got = self._filter_cache.get(self.filter)
+        if got is not None:
+            return got
         cards = self.cards
         if self.filter == "basic":
             cards = [c for c in cards if c.d.get("category") == "basic"]
@@ -72,8 +93,10 @@ class CardAtlasScreen:
             cards = [c for c in cards if c.d.get("meaning")]
         elif self.filter != "all":
             cards = [c for c in cards if self._owner(c) == self.filter]
-        return sorted(cards, key=lambda c: (HERO_ORDER.get(self._owner(c), 9), c.category != "basic",
-                                            -c.rarity, c.name))
+        cards = sorted(cards, key=lambda c: (HERO_ORDER.get(self._owner(c), 9), c.category != "basic",
+                                             -c.rarity, c.name))
+        self._filter_cache[self.filter] = cards
+        return cards
 
     def _layout_filters(self):
         gap = 6
@@ -89,11 +112,12 @@ class CardAtlasScreen:
         total = rows * (card_h + GAP)
         view_h = T.SCREEN_H - GRID_TOP - GRID_BOTTOM
         self.max_scroll = max(0, total - view_h)
-        self.scroll = max(0, min(self.scroll, self.max_scroll))
+        self.scroll_target = max(0.0, min(self.scroll_target, float(self.max_scroll)))
+        self.scroll = max(0.0, min(self.scroll, float(self.max_scroll)))
         x0 = (T.SCREEN_W - (COLS * CW + (COLS - 1) * GAP)) // 2
         out = []
         for i, card in enumerate(cards):
-            y = GRID_TOP + (i // COLS) * (card_h + GAP) - self.scroll
+            y = GRID_TOP + (i // COLS) * (card_h + GAP) - round(self.scroll)
             if y + card_h < GRID_TOP - 1 or y > T.SCREEN_H - GRID_BOTTOM:
                 continue
             r = pygame.Rect(x0 + (i % COLS) * (CW + GAP), y, CW, card_h)
@@ -121,7 +145,7 @@ class CardAtlasScreen:
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEWHEEL:
-            self.scroll -= ev.y * 120
+            self.scroll_target -= ev.y * 110
         elif ev.type == pygame.KEYDOWN:
             if ev.key == pygame.K_ESCAPE:
                 self.game.scene = self.back or self.game.scene
@@ -131,9 +155,9 @@ class CardAtlasScreen:
                     self.reading = Inspector(c, pinned=True)
                     self.reading.mouse = self.mouse
             elif ev.key == pygame.K_HOME:
-                self.scroll = 0
+                self.scroll_target = 0
             elif ev.key == pygame.K_END:
-                self.scroll = self.max_scroll
+                self.scroll_target = self.max_scroll
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
             self.mouse = ev.pos
             if self.back_rect.collidepoint(ev.pos):
@@ -142,7 +166,7 @@ class CardAtlasScreen:
             for r, key, _ in self.filter_rects:
                 if r.collidepoint(ev.pos):
                     self.filter = key
-                    self.scroll = 0
+                    self.scroll = self.scroll_target = 0
                     return
             c = self.card_at(ev.pos)
             if c is not None:
@@ -166,7 +190,12 @@ class CardAtlasScreen:
         surf.set_clip(clip)
         for r, card in self.card_rects:
             hot = r.collidepoint(self.mouse)
-            CF.blit_card(surf, r, card, hot=hot)
+            if G.is_canvas(surf):
+                img = self._thumb(card, hot, surf.S)
+                x, y = surf.pt(r.topleft)
+                surf.native.blit(img, (round(x), round(y)))
+            else:
+                CF.blit_card(surf, r, card, hot=hot)
             if hot:
                 pygame.draw.rect(surf, T.SELECT, r.inflate(6, 6), 2, border_radius=8)
         surf.set_clip(None)

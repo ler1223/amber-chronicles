@@ -19,6 +19,9 @@ def test_atlas_opens_from_hero_select_and_shows_all_cards():
     g.draw(SCREEN)
     assert len(atlas.filtered()) == len(atlas.data["cards"]["cards"])
     assert atlas.card_rects                                   # на экране есть карты
+    atlas.scroll_target = 200
+    g.update(1 / 60)
+    assert 0 < atlas.scroll < 200                              # прокрутка плавная, а не прыжком
 
 
 def test_atlas_filters_and_esc_returns():
