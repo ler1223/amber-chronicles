@@ -16,6 +16,9 @@ def danger_cells(b):
         it = u.intent or {}
         if it.get("kind") in ("zone", "charge"):                 # зоны и линии рывка
             out |= set(it["cells"])
+    e = getattr(b, "env_now", None)
+    if e and e.get("kind") == "lava_rain":                       # лава с потолка
+        out |= set(e["cells"])
     return out
 
 

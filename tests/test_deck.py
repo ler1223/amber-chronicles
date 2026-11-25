@@ -150,7 +150,8 @@ def test_enemy_intents_melee_zone_shot_los():
     hp, was = h.hp, archer.cell
     finish(b.act(archer))
     assert h.hp == hp and archer.cell != was                                   # вне зоны — только перебежал
-    assert b.edefs["bog_archer"]["cycle"][0]["kind"] == "aim"                 # первый ход — прицел, не выстрел
+    first = b.edefs["bog_archer"]["cycle"][0]                                 # первый ход — выстрел в клетку героя
+    assert first["kind"] == "zone" and first["shape"] == "cell"               # (уйди — промахнётся)
 
 
 def test_elements_and_deaths():
@@ -1966,3 +1967,79 @@ def test_run_save_and_continue(tmp_path):
     g2.end_run()
     assert not g2.has_save()
     assert DescentGame(seed=1).save_path is None                               # по умолчанию (тесты) — без файла
+
+
+def test_field_surfaces_and_enemy_pressure():
+    """Поле (docs/descent_field.md): зоны-формы (клетка, ряд, крест, луч), масло вспыхивает, скольжение, трещины,
+    туман, тернии; природа — ветер сдувает, лава падает; герой не падает в пропасть от ветра."""
+    b, run = hero_battle("merc")
+    h = b.hero
+    for f in b.foes():
+        f.alive = False
+    sn = _foe(b, "bog_archer", (h.cell[0] + 4, h.cell[1]))
+    sn.intent = dict(b.edefs["bog_archer"]["cycle"][0])
+    sn.intent["cells"] = b.zone_cells(sn, sn.intent)
+    assert sn.intent["cells"] == [h.cell] and b.intent_damage(sn) > 0           # метка на клетку героя
+    put(b, h, (h.cell[0], h.cell[1] + 1) if b.free((h.cell[0], h.cell[1] + 1)) else (h.cell[0], h.cell[1] - 1))
+    assert b.intent_damage(sn) == 0                                            # ушёл — промах
+    cross = b.zone_cells(sn, {"shape": "cross"})
+    assert all(p[0] == h.cell[0] or p[1] == h.cell[1] for p in cross) and len(cross) > 6
+    beam = b.zone_cells(sn, {"shape": "beam"})
+    assert beam and beam[0] != sn.cell
+    # масло вспыхивает от огня
+    p0 = next(p for p in b.c.grid.in_radius(h.cell, 2) if b.free(p) and b.c.grid.get(p).terrain != "water")
+    b.set_surface(p0, "oil")
+    sn2 = _foe(b, "beetle", p0)
+    b.set_surface(p0, "fire")
+    assert b.c.grid.get(p0).hazard == "fire" and b.c.grid.get(p0).blaze and sn2.ds["burn"] >= 3
+    # трещины копятся и лопаются под врагом
+    q = next(p for p in b.c.grid.in_radius(h.cell, 3) if b.free(p) and p != p0)
+    b.set_surface(q, "cracks", 2)
+    b.set_surface(q, "cracks", 1)
+    assert b.cracks_at(q) == 3
+    hp = sn2.hp
+    put(b, sn2, q)
+    b._enter(sn2, q)
+    assert hp - sn2.hp >= 6 and b.cracks_at(q) == 0
+    # туман: выстрел вполсилы
+    b.set_surface(h.cell, "fog")
+    hp = h.hp
+    b.hurt(h, 10, sn, "shot")
+    assert hp - h.hp <= 5 + h.shield
+    # природа: лава на клетку героя
+    b.env = {"kind": "lava_rain", "every": 1, "start": 1, "n": 2, "dmg": 6}
+    b.env_plan()
+    assert b.env_now and h.cell in b.env_now["cells"]
+    hp = h.hp
+    finish(b.env_resolve())
+    assert h.hp < hp and b.c.grid.get(h.cell).hazard == "fire"
+    # ветер сдувает на открытом месте, у пропасти герой цепляется за край
+    b.env = {"kind": "gust", "every": 1, "start": 1, "n": 2}
+    b.env_plan()
+    assert b.env_now["kind"] == "gust" and b.env_now["dir"] in ((1, 0), (-1, 0), (0, 1), (0, -1))
+    run_data = M.load()["enemies"]
+    assert any(p.get("env") for ch in run_data["chapters"] for fl in ch["floors"] for ps in fl["pools"].values()
+               for p in ps)
+
+
+def test_field_slide_and_gust():
+    """Толчок по маслу/льду — цель скользит дальше; ветер сдувает героя на открытом месте."""
+    b, run = hero_battle("merc")
+    for f in b.foes():
+        f.alive = False
+    g = b.c.grid
+    row = next(y for y in range(g.h) if all(g.get((x, y)) is not None and g.get((x, y)).passable and
+                                           g.get((x, y)).terrain not in ("water", "chasm") for x in range(1, 8)))
+    h = b.hero
+    put(b, h, (1, row))
+    foe = _foe(b, "slime", (2, row))
+    for x in range(3, 6):
+        b.set_surface((x, row), "oil")
+    finish(b.push(h, foe, 1))
+    assert foe.cell[0] >= 4                                                    # 1 клетка толчка + скольжение
+    b.env_now = {"kind": "gust", "dir": (1, 0), "n": 2, "cells": [], "name": "Порыв ветра"}
+    put(b, foe, (7, row if row + 3 >= g.h else row + 3))
+    cover = any(not g.get(p).passable or g.get(p).cover for p in g.in_radius(h.cell, 1) if g.get(p) and p != h.cell)
+    x0 = h.cell[0]
+    finish(b.env_resolve())
+    assert h.cell[0] >= x0 + 2 or cover                                       # сдуло (по маслу — дальше)

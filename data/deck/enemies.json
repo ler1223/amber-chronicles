@@ -58,10 +58,11 @@
    "keep_range": 4,
    "cycle": [
     {
-     "kind": "aim",
-     "name": "Прицел",
-     "mult": 2,
-     "vfx": "hunter_mark"
+     "kind": "zone",
+     "name": "Выстрел в клетку",
+     "dmg": 12,
+     "shape": "cell",
+     "vfx": "aimed_shot"
     },
     {
      "kind": "shot",
@@ -76,7 +77,7 @@
      "range": 5
     }
    ],
-   "about": "Стоит и стреляет на 5 клеток по линии обзора. Начинает с прицела.",
+   "about": "Стоит и стреляет на 5 клеток по линии обзора. Начинает с прицела. Метит в клетку героя: уйди — промахнётся.",
    "about_base": "Стоит и стреляет на 5 клеток по линии обзора. Начинает с прицела.",
    "hp_x2": true
   },
@@ -335,10 +336,11 @@
    "keep_range": 3,
    "cycle": [
     {
-     "kind": "shot",
-     "name": "Выстрел из камышей",
-     "dmg": 5,
-     "range": 5
+     "kind": "zone",
+     "name": "Залп вдоль ряда",
+     "dmg": 6,
+     "shape": "row",
+     "vfx": "volley"
     },
     {
      "kind": "veil",
@@ -351,7 +353,7 @@
      "range": 5
     }
    ],
-   "about": "Стреляет и прячется в камышах: в тумане его не достать картами издали — только вплотную.",
+   "about": "Стреляет и прячется в камышах: в тумане его не достать картами издали — только вплотную. Бьёт по всему ряду героя.",
    "about_base": "Стреляет и прячется в камышах: в тумане его не достать картами издали — только вплотную.",
    "hp_x2": true
   },
@@ -726,9 +728,16 @@
      "kind": "melee",
      "name": "Клинок капитана",
      "dmg": 11
+    },
+    {
+     "kind": "zone",
+     "name": "Прицельный приказ",
+     "dmg": 10,
+     "shape": "cell",
+     "vfx": "ambush_order"
     }
    ],
-   "about": "Элита. Командует отрядом: сила и щиты всем своим. Начни с наёмников или с него?",
+   "about": "Элита. Командует отрядом: сила и щиты всем своим. Начни с наёмников или с него? Метит в клетку героя: уйди — промахнётся.",
    "about_base": "Элита. Командует отрядом: сила и щиты всем своим. Начни с наёмников или с него?",
    "hp_x2": true
   },
@@ -848,9 +857,16 @@
      "kind": "drown",
      "name": "Утащить на дно",
      "n": 2
+    },
+    {
+     "kind": "zone",
+     "name": "Звон по линиям",
+     "dmg": 8,
+     "shape": "cross",
+     "vfx": "e_wail"
     }
    ],
-   "about": "Элита. Звон — сглаз и слабость, цепь утягивает, «на дно» уносит карты из колоды.",
+   "about": "Элита. Звон — сглаз и слабость, цепь утягивает, «на дно» уносит карты из колоды. Бьёт крестом — по ряду и столбцу героя.",
    "about_base": "Элита. Звон — сглаз и слабость, цепь утягивает, «на дно» уносит карты из колоды.",
    "hp_x2": true
   },
@@ -1155,27 +1171,23 @@
      "kind": "shot",
      "name": "Бросок молота",
      "dmg": 7,
-     "range": 5,
-     "add": [
-      {
-       "op": "push",
-       "n": 1
-      }
-     ]
+     "range": 5
     },
     {
-     "kind": "aim",
-     "name": "Замах",
-     "mult": 2
+     "kind": "zone",
+     "name": "Молот навылет",
+     "dmg": 9,
+     "shape": "beam",
+     "vfx": "toss"
     },
     {
      "kind": "shot",
-     "name": "Тяжёлый бросок",
+     "name": "Бросок молота",
      "dmg": 8,
      "range": 5
     }
    ],
-   "about": "Стоит и мечет молоты на 5 клеток: толчок, после замаха — вдвое.",
+   "about": "Стоит и мечет молоты на 5 клеток: толчок, после замаха — вдвое. Бьёт лучом через героя до края.",
    "about_base": "Стоит и мечет молоты на 5 клеток: толчок, после замаха — вдвое.",
    "hp_x2": true
   },
@@ -1300,28 +1312,20 @@
    "cycle": [
     {
      "kind": "zone",
-     "name": "Плеск расплава",
+     "name": "Пепельная волна",
      "dmg": 7,
-     "r": 1,
-     "shape": "target",
+     "shape": "row",
      "hazard": "fire",
-     "range": 6,
-     "vfx": "fire_bomb"
+     "vfx": "cinder_field"
     },
     {
      "kind": "shot",
-     "name": "Капля металла",
+     "name": "Пепельный выстрел",
      "dmg": 6,
-     "range": 5,
-     "add": [
-      {
-       "op": "burn",
-       "n": 2
-      }
-     ]
+     "range": 5
     }
    ],
-   "about": "Плещет расплав по зоне — клетки горят; капли металла жгут.",
+   "about": "Плещет расплав по зоне — клетки горят; капли металла жгут. Бьёт по всему ряду героя.",
    "about_base": "Плещет расплав по зоне — клетки горят; капли металла жгут.",
    "hp_x2": true
   },
@@ -1541,21 +1545,19 @@
     },
     {
      "kind": "zone",
-     "name": "Огненный круг",
+     "name": "Огненный крест",
      "dmg": 7,
-     "r": 1,
-     "shape": "target",
+     "shape": "cross",
      "hazard": "fire",
-     "range": 6,
-     "vfx": "flame_wall"
+     "vfx": "e_fireball"
     },
     {
      "kind": "hex",
-     "name": "Клеймо культа",
+     "name": "Сглаз пламени",
      "n": 1
     }
    ],
-   "about": "Лечит своих, ставит огненный круг, клеймом отнимает карту на ход. Лечит соседей на 4 в начале хода.",
+   "about": "Лечит своих, ставит огненный круг, клеймом отнимает карту на ход. Лечит соседей на 4 в начале хода. Бьёт крестом — по ряду и столбцу героя.",
    "mend": 4,
    "about_base": "Лечит своих, ставит огненный круг, клеймом отнимает карту на ход.",
    "hp_x2": true
@@ -3281,7 +3283,13 @@
          "toad_spearman",
          "frog_shaman",
          "toad_guard"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        },
        {
         "name": "Грибная роща",
@@ -3319,7 +3327,13 @@
          "elder_leech",
          "frog_shaman",
          "leechling"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        },
        {
         "name": "Крокодилий брод",
@@ -3356,7 +3370,13 @@
          "frog_shaman",
          "toxic_slime",
          "toad_guard"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        },
        {
         "name": "Ведьмин круг",
@@ -3395,7 +3415,13 @@
          "old_tooth",
          "mosquito_swarm",
          "mosquito_swarm"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        },
        {
         "name": "Гнездо матки",
@@ -3455,7 +3481,13 @@
          "drowned",
          "will_wisp",
          "elder_leech"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        },
        {
         "name": "Двойники",
@@ -3493,7 +3525,13 @@
          "spore_shroom",
          "toxic_slime",
          "mosquito_swarm"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        },
        {
         "name": "Серебряные клинки",
@@ -3531,7 +3569,13 @@
          "elder_leech",
          "spore_shroom",
          "will_wisp"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        }
       ],
       "elite": [
@@ -3550,7 +3594,13 @@
          "bell_ringer",
          "drowned",
          "drowned"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        },
        {
         "name": "Логово Старого Зуба",
@@ -3586,7 +3636,13 @@
          "rust_merc",
          "poacher",
          "rust_merc"
-        ]
+        ],
+        "env": {
+         "kind": "gust",
+         "every": 4,
+         "start": 3,
+         "n": 2
+        }
        }
       ],
       "boss": [
@@ -3635,7 +3691,14 @@
          "slag_slave",
          "hammer_thrower",
          "ember_hound"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Бунт рабов",
@@ -3671,7 +3734,14 @@
          "chain_smith",
          "hammer_thrower",
          "fire_imp"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Зал мехов",
@@ -3708,7 +3778,14 @@
          "ember_hound",
          "ember_hound",
          "hammer_thrower"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        }
       ],
       "elite": [
@@ -3727,7 +3804,14 @@
          "chain_smith",
          "chain_smith",
          "slag_slave"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Вольный голем",
@@ -3788,7 +3872,14 @@
          "cinder_caster",
          "cinder_caster",
          "ember_hound"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Мост над расплавом",
@@ -3823,7 +3914,14 @@
          "obsidian_guard",
          "magma_golem",
          "hammer_thrower"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Литейный пролёт",
@@ -3859,7 +3957,14 @@
          "bellows_keeper",
          "magma_golem",
          "ember_hound"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        }
       ],
       "elite": [
@@ -3878,7 +3983,14 @@
          "crucible_golem",
          "obsidian_guard",
          "cinder_caster"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Вольные големы",
@@ -3939,7 +4051,14 @@
          "ash_wraith",
          "cult_zealot",
          "cult_zealot"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Алтарь культа",
@@ -3977,7 +4096,14 @@
          "flame_priest",
          "cult_zealot",
          "living_lava"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Лавовые протоки",
@@ -4013,7 +4139,14 @@
          "ash_wraith",
          "cinder_caster",
          "cult_zealot"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        }
       ],
       "elite": [
@@ -4032,7 +4165,14 @@
          "smith_ghost",
          "hammer_thrower",
          "hammer_thrower"
-        ]
+        ],
+        "env": {
+         "kind": "lava_rain",
+         "every": 3,
+         "start": 2,
+         "n": 4,
+         "dmg": 6
+        }
        },
        {
         "name": "Пепельное гнездо",

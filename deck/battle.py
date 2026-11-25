@@ -115,6 +115,8 @@ class Battle:
         self.temper = {}                                  # Закалка: uid карты → прибавка до конца боя
         self._mom = None                                  # разгон на момент розыгрыша (для условия «Разгон N»)
         self.zone_fx = None
+        self.env = dict(fight.get("env") or {})              # природа боя: ветер / лавовый дождь (умеренно)
+        self.env_now = None                                   # что природа сделает в этот ход врагов
         self.items = Items(self)                              # предметы забега (data/deck/relics.json, deck/items.py)
         self.double_next = False                              # предмет: следующая атака — двойной урон
         self.next_energy = self.next_draw = 0                 # предмет: прибавка к следующему ходу
@@ -304,11 +306,82 @@ class Battle:
                 self.queue.append(("trap", u))
                 return
 
+    SURFACES = ("fire", "poison", "oil", "fog", "briar", "cracks")
+
+    def set_surface(self, p, kind, n=1):
+        """Покрытие клетки (docs/descent_field.md 1.2): огонь, яд, масло, туман, тернии, трещины (заряд копится).
+        Огонь на масле — вспышка радиус 1; огонь на воде — пар (туман); вода гасит огонь."""
+        cell = self.c.grid.get(p)
+        if cell is None or not cell.passable:
+            return
+        if kind == "fire" and cell.terrain == "water":
+            kind = "fog"                                            # пар
+        if kind == "fire" and cell.hazard == "oil":                 # масло вспыхивает
+            cell.hazard, cell.hazard_time, cell.blaze = "fire", -1.0, True
+            self.say("Масло вспыхнуло!", (255, 170, 80))
+            self.fx("react", unit=self.unit_at(p) or self.hero, what="flare")
+            for q in self.c.grid.in_radius(p, 1):
+                v = self.unit_at(q)
+                if v is not None and not self.fireproof(v):
+                    self.add_burn(v, 3)
+                qc = self.c.grid.get(q)
+                if q != p and qc is not None and qc.hazard == "oil":
+                    self.set_surface(q, "fire")
+            return
+        if kind == "cracks":                                        # трещины копят заряд (до 5)
+            have = cell.charge.get("cracks", 0) if cell.hazard == "cracks" and isinstance(cell.charge, dict) else 0
+            cell.hazard, cell.hazard_time = "cracks", -1.0
+            cell.charge = {"cracks": min(5, have + max(1, n))}
+            return
+        if kind == "fire" and cell.terrain == "ice_floor":
+            return
+        cell.hazard, cell.hazard_time = kind, -1.0
+        cell.blaze = False
+        if kind != "cracks":
+            cell.charge = None
+
+    def unit_at(self, p):
+        return next((v for v in self.c.units if v.alive and not v.obj and v.cell == tuple(p)), None)
+
+    def cracks_at(self, p):
+        cell = self.c.grid.get(p)
+        if cell is None or cell.hazard != "cracks" or not isinstance(cell.charge, dict):
+            return 0
+        return cell.charge.get("cracks", 0)
+
+    def detonate_cracks(self, p, k=2, src=None):
+        """Трещина взрывается: урон = заряд ×k тому, кто на клетке; трещина исчезает."""
+        n = self.cracks_at(p)
+        if not n:
+            return 0
+        cell = self.c.grid.get(p)
+        cell.hazard, cell.charge = None, None
+        v = self.unit_at(p)
+        self.zone_fx = ([tuple(p)], 0.5)
+        if v is not None:
+            self.say(f"Трещина взрывается под {v.name}: −{n * k}", (230, 190, 140))
+            self.fx("react", unit=v, what="flare")
+            self.hurt(v, n * k, src, "spell")
+        return n
+
+    def slippery(self, p):
+        cell = self.c.grid.get(p)
+        return cell is not None and (cell.terrain == "ice_floor" or cell.hazard == "oil")
+
+    def hidden_in_fog(self, u):
+        cell = self.c.grid.get(u.cell)
+        return cell is not None and cell.hazard == "fog"
+
     def fireproof(self, u):
         return u is self.hero and self.mech == "heat"                    # Пиромантка не горит на своём огне
 
     def _enter(self, u, p):
         cell = self.c.grid.get(p)
+        if cell.hazard == "cracks" and u.team == ENEMY and u.alive:  # враг ступил на трещину — она лопается
+            self.detonate_cracks(p, 2, self.hero)
+        if cell.hazard == "briar" and u.alive:                       # тернии: колют и держат
+            self.hurt(u, 2, None, "spell")
+            u.ds["root"] = max(u.ds["root"], 1)
         if cell.terrain == "water":
             self.wet(u)
         if cell.hazard == "fire" and not self.fireproof(u):
@@ -422,6 +495,8 @@ class Battle:
                     self.say(f"Нить: удар ушёл в {bound[0].name}", (210, 180, 240))
                     self.hurt(bound[0], v, None, "spell")
                     return
+        if kind == "shot" and self.hidden_in_fog(u):                # в тумане: выстрел вслепую — вполсилы
+            v = max(1, v // 2)
         ed = u.edef or {}
         if ed.get("armor") and kind in ("melee", "shot", "spell", "collision", "trap"):   # броня: −N от удара
             v = max(0, v - ed["armor"])
@@ -577,8 +652,7 @@ class Battle:
                 self.choose_intent(v)
             self.say("Слизень распался!", (190, 230, 140))
         if od.get("fire_cell"):
-            cell = self.c.grid.get(u.cell)
-            cell.hazard, cell.hazard_time = "fire", -1.0
+            self.set_surface(u.cell, "fire")
         ex = od.get("explode")
         if ex:                                               # взрыв при смерти: урон, яд, лужи
             r = ex.get("r", 1)
@@ -606,26 +680,36 @@ class Battle:
         foes = self.foes()
         self.prey = min(foes, key=lambda f: (cheb(f.cell, self.hero.cell), f.hp)) if foes else None
 
-    def push(self, src, tgt, n, toward=False):
-        """Толчок (или притягивание): по клетке; упёрся — столкновение, урон обоим (стена — только цели)."""
+    def push(self, src, tgt, n, toward=False, d=None):
+        """Толчок (или притягивание): по клетке; упёрся — столкновение, урон обоим (стена — только цели).
+        По льду и маслу цель скользит дальше (до 3 клеток сверх). d — направление сразу (ветер)."""
         if not tgt.alive or tgt.obj:
             return
-        d = (sign(src.cell[0] - tgt.cell[0]), sign(src.cell[1] - tgt.cell[1])) if toward else \
-            (sign(tgt.cell[0] - src.cell[0]), sign(tgt.cell[1] - src.cell[1]))
+        if d is None:
+            d = (sign(src.cell[0] - tgt.cell[0]), sign(src.cell[1] - tgt.cell[1])) if toward else \
+                (sign(tgt.cell[0] - src.cell[0]), sign(tgt.cell[1] - src.cell[1]))
         if d == (0, 0):
             return
-        for k in range(n):
+        slid = 0
+        k = 0
+        while k < n:
+            k += 1
             nxt = (tgt.cell[0] + d[0], tgt.cell[1] + d[1])
             if toward and nxt == src.cell:
                 return
             cell = self.c.grid.get(nxt)
+            if cell is not None and cell.terrain == "chasm" and tgt is self.hero:   # герой цепляется за край
+                self.say(f"{tgt.name} едва удержался на краю пропасти: −5", (255, 200, 120))
+                self.hurt(tgt, 5, None, "collision")
+                return
             if cell is not None and cell.terrain == "chasm":
                 self.say(f"{tgt.name} падает в пропасть!", (255, 200, 120))
                 self.hurt(tgt, 15 if (tgt.edef or {}).get("elite") else 999, src, "collision")
                 return
             if not self.free(nxt, exclude=tgt):
-                left = n - k
-                dmg = COLLIDE * left * self.collide_k + (2 if self.variant == "press" and src is self.hero else 0)
+                left = n - k + 1
+                dmg = COLLIDE * left * self.collide_k + (2 if self.variant == "press" and src is self.hero
+                                                          and tgt is not self.hero else 0)
                 other = next((v for v in self.c.units if v.alive and v.cell == nxt and v is not tgt), None)
                 self.c.emit("collision", unit=tgt, amount=dmg)
                 self.say(f"Столкновение: {tgt.name} −{dmg}" + (f", {other.name} −{dmg}" if other else ""),
@@ -637,6 +721,11 @@ class Battle:
             self.c._place(tgt, nxt, STEP_T)
             yield ("wait", 0.0)
             self._enter(tgt, nxt)
+            if k == n and slid < 3 and not toward and self.slippery(nxt) and tgt.alive:   # скользит дальше
+                n += 1
+                slid += 1
+                if slid == 1:
+                    self.say(f"{tgt.name} скользит", (180, 220, 255))
 
     # ---------- ход игрока ----------
 
@@ -693,6 +782,7 @@ class Battle:
         self.next_energy = self.next_draw = 0
         yield from self.items.fire("turn")
         yield from self.react()
+        self.env_plan()
         yield from self.power_fire("turn")
         if self.mech == "hunter" and self.variant == "quiver":           # Колчан: стрела в руку
             self.add_tokens("arrow", 1)
@@ -1778,9 +1868,7 @@ class Battle:
             elif k == "ignite":                                            # поджечь клетки
                 c0 = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
                 for p in self.c.grid.in_radius(c0, n):
-                    cell = self.c.grid.get(p)
-                    if cell is not None and cell.passable and cell.terrain != "water":
-                        cell.hazard, cell.hazard_time = "fire", -1.0
+                    self.set_surface(p, "fire")
                 self.zone_fx = (list(self.c.grid.in_radius(c0, n)), 0.6)
             elif k == "detonate":                                          # вспышка горящих
                 for f in [f for f in self.foes() if f.ds["burn"] and cheb(f.cell, src.cell) <= op.get("r", 4)]:
@@ -1923,6 +2011,9 @@ class Battle:
             if self.result:
                 return
         self.enemy_phase = True
+        yield from self.env_resolve()
+        if self.result:
+            return
         for u in list(self.foes()):
             if self.result:
                 return
@@ -1983,6 +2074,68 @@ class Battle:
         self._icons(u)
         yield WAIT
 
+    ENV_NAMES = {"gust": "Порыв ветра", "lava_rain": "Лавовый дождь"}
+
+    def env_plan(self):
+        """Начало хода: природа предупреждает, что сделает в ход врагов (каждые every ходов с start)."""
+        e = self.env
+        self.env_now = None
+        if not e or self.result:
+            return
+        start, every = e.get("start", 3), e.get("every", 4)
+        if self.turn < start or (self.turn - start) % every:
+            return
+        h = self.hero
+        g = self.c.grid
+        if e["kind"] == "gust":
+            dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+            d = dirs[self.rng.randrange(4)]
+            path, p = [], h.cell
+            for _ in range(e.get("n", 2)):
+                p = (p[0] + d[0], p[1] + d[1])
+                if not g.in_bounds(p):
+                    break
+                path.append(p)
+            self.env_now = {"kind": "gust", "dir": d, "n": e.get("n", 2), "cells": path,
+                            "name": self.ENV_NAMES["gust"]}
+            arrow = {(1, 0): "→", (-1, 0): "←", (0, 1): "↓", (0, -1): "↑"}[d]
+            self.say(f"Порыв ветра: в ход врагов сдует на {e.get('n', 2)} клетки {arrow} (кто стоит на открытом)",
+                     (190, 220, 255))
+        elif e["kind"] == "lava_rain":
+            near = [p for p in g.in_radius(h.cell, 3) if g.get(p) is not None and g.get(p).passable]
+            self.rng.shuffle(near)
+            cells = [h.cell] + [p for p in near if p != h.cell][:e.get("n", 4)]
+            self.env_now = {"kind": "lava_rain", "cells": cells, "dmg": e.get("dmg", 6),
+                            "name": self.ENV_NAMES["lava_rain"]}
+            self.say(f"Лавовый дождь: отмеченные клетки обожжёт ({e.get('dmg', 6)}) в ход врагов", (255, 170, 90))
+
+    def env_resolve(self):
+        """Ход врагов начинается с природы: ветер сдувает героя, лава падает на отмеченные клетки."""
+        e = self.env_now
+        self.env_now = None
+        if not e:
+            return
+        h = self.hero
+        if e["kind"] == "gust":
+            near_cover = any(self.c.grid.get(p) is not None and (not self.c.grid.get(p).passable or
+                                                                  self.c.grid.get(p).cover)
+                             for p in self.c.grid.in_radius(h.cell, 1) if p != h.cell)
+            if near_cover or h.ds.get("root"):
+                self.say("Ветер: герой укрылся и устоял", (190, 220, 255))
+                return
+            self.say("Порыв ветра сдувает героя!", (190, 220, 255))
+            self.fx("shake", unit=h, n=6)
+            yield from self.push(h, h, e["n"], d=e["dir"])
+        elif e["kind"] == "lava_rain":
+            self.zone_fx = (list(e["cells"]), 0.7)
+            for p in e["cells"]:
+                v = self.unit_at(p)
+                if v is not None:
+                    self.hurt(v, int(round(e["dmg"] * self.dmg_k)), None, "spell")
+                self.set_surface(p, "fire")
+            self.say("Лава падает с потолка!", (255, 150, 80))
+            yield ("wait", 0.4)
+
     def choose_intent(self, u):
         d = u.edef
         if d.get("smart") == "shaman":
@@ -2008,10 +2161,36 @@ class Battle:
                 cells.append(p)
             it["cells"], it["dir"] = cells, dd
         if it["kind"] == "zone":                             # зона отмечается сразу и не двигается
-            c = self.hero.cell if it.get("shape") == "target" else u.cell
-            it["cells"] = sorted(p for p in self.c.grid.in_radius(c, it.get("r", 1))
-                                 if self.c.grid.in_bounds(p) and (it.get("shape") == "target" or p != u.cell))
+            it["cells"] = self.zone_cells(u, it)
         u.intent = it
+
+    def zone_cells(self, u, it):
+        """Клетки зоны врага по форме: target (вокруг героя), self (вокруг себя), cell (клетка героя — снайпер),
+        row / col / cross (ряд, столбец, крест через героя), beam (луч от врага через героя до края)."""
+        g = self.c.grid
+        h = self.hero.cell
+        shape = it.get("shape", "self")
+        ok = lambda p: g.in_bounds(p) and g.get(p) is not None and g.get(p).passable   # noqa: E731
+        if shape == "cell":
+            return [h]
+        if shape in ("row", "col", "cross"):
+            out = []
+            if shape in ("row", "cross"):
+                out += [(x, h[1]) for x in range(g.w)]
+            if shape in ("col", "cross"):
+                out += [(h[0], y) for y in range(g.h)]
+            return sorted({p for p in out if ok(p) and p != u.cell})
+        if shape == "beam":
+            d = (sign(h[0] - u.cell[0]), sign(h[1] - u.cell[1]))
+            out, p = [], u.cell
+            while d != (0, 0):
+                p = (p[0] + d[0], p[1] + d[1])
+                if not g.in_bounds(p) or g.get(p) is None or (not g.get(p).passable and g.get(p).cover == "full"):
+                    break
+                out.append(p)
+            return out
+        c = h if shape == "target" else u.cell
+        return sorted(p for p in g.in_radius(c, it.get("r", 1)) if g.in_bounds(p) and (shape == "target" or p != u.cell))
 
     def intent_damage(self, u):
         """Сколько получит герой, если намерение сработает (для значка)."""
@@ -2022,8 +2201,8 @@ class Battle:
             steps = max(0, cheb(u.cell, self.hero.cell) - 1)
             dmg = it["dmg"] if steps * 2 <= u.speed else max(1, it["dmg"] // 2)
             return self.hit_value(u, self.hero, dmg) if steps <= u.speed else 0
-        if it.get("kind") == "zone":
-            return self.hit_value(u, self.hero, it["dmg"])
+        if it.get("kind") == "zone":                          # зона: только если герой в её клетках
+            return self.hit_value(u, self.hero, it["dmg"]) if self.hero.cell in it.get("cells", []) else 0
         if it.get("kind") == "shot":
             return self.hit_value(u, self.hero, it["dmg"] * u.ds["aim"]) if self.in_fire_zone(u, it) else 0
         if it.get("kind") == "charge":
@@ -2175,11 +2354,9 @@ class Battle:
                 yield from self.apply(u, it.get("add", []), h)
             else:
                 self.say(f"{h.name}: ушли из зоны", (180, 230, 180))
-            if it.get("hazard") in ("poison", "fire"):       # ядовитые лужи / расплав на зоне
+            if it.get("hazard"):                             # лужи яда, расплав, масло, туман, тернии
                 for p in it["cells"]:
-                    cell = self.c.grid.get(p)
-                    if cell is not None and cell.passable and cell.terrain != "water":
-                        cell.hazard, cell.hazard_time = it["hazard"], -1.0
+                    self.set_surface(p, it["hazard"])
         elif k == "block":
             if self.vfx(u, it.get("vfx"), it["name"]):
                 yield IMPACT

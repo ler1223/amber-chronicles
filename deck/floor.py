@@ -9,8 +9,11 @@
 def make_fight(cfg, kind, rng):
     pool = cfg["pools"][kind]
     p = rng.choice(pool)
-    return {"name": p["name"], "map": rng.choice(p["maps"]), "enemies": list(p["enemies"]),
-            "elite": kind == "elite", "boss": kind == "boss"}
+    out = {"name": p["name"], "map": rng.choice(p["maps"]), "enemies": list(p["enemies"]),
+           "elite": kind == "elite", "boss": kind == "boss"}
+    if p.get("env"):                                    # природа боя (ветер, лавовый дождь) — docs/descent_field.md
+        out["env"] = dict(p["env"])
+    return out
 
 
 def generate(cfg, rng):

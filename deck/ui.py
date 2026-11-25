@@ -1395,13 +1395,24 @@ class BattleScreen:
         self.life.collect(h)                              # тени облаков и птиц, круги на воде
         if b.idols is not None:
             self.collect_idols(h, pulse)
-        for pos, cell in self.combat.grid.cells.items():  # опасные клетки: яд — зелёным, огонь — оранжевым
+        SURF = {"poison": (120, 220, 80), "fire": (255, 130, 50), "oil": (150, 110, 50), "fog": (190, 200, 210),
+                "briar": (110, 160, 70), "cracks": (210, 170, 120)}
+        for pos, cell in self.combat.grid.cells.items():  # покрытия поля (docs/descent_field.md)
+            col = SURF.get(cell.hazard)
+            if col is None:
+                continue
+            h.zone([pos], col, int((50 if cell.hazard in ("poison", "fire") else 38) + 25 * pulse), 0, glow=False)
             if cell.hazard in ("poison", "fire"):
-                col = (120, 220, 80) if cell.hazard == "poison" else (255, 130, 50)
-                h.zone([pos], col, int(50 + 25 * pulse), 0, glow=False)
                 for i in range(3):                        # пузыри / угли
                     q = (pos[0] + 0.2 + 0.3 * ((pos[0] * 7 + i * 5) % 3), pos[1] + 0.25 + 0.25 * i)
                     h.ring(q, 0.05 + 0.02 * math.sin(pygame.time.get_ticks() / 300 + i), col, 200, 1.2, glow=False)
+            elif cell.hazard == "cracks":                 # трещина: кольца по заряду
+                for i in range(b.cracks_at(pos)):
+                    h.ring((pos[0] + 0.5, pos[1] + 0.5), 0.12 + 0.07 * i, col, 210, 1.4, glow=False)
+        if b.env_now:                                     # природа: что случится в ход врагов
+            e = b.env_now
+            col = (150, 200, 255) if e["kind"] == "gust" else (255, 110, 40)
+            h.zone(e["cells"], col, int(40 + 40 * pulse), 230, 2.0)
         for p, _n in b.traps.items():                    # капканы Охотницы: кольцо с зубьями
             cc = c(p)
             h.ring(cc, 0.26, (235, 205, 140), 240, 2.0, glow=False, fill=90, squash=0.9)
@@ -1693,6 +1704,12 @@ class BattleScreen:
         """Намерения — медальоны над головами: значок, число; название — над медальоном при наведении."""
         v = self.view
         sk = self.skin
+        e = self.b.env_now
+        if e:                                                  # природа: подпись над героем
+            fx, fy = v.cam(v.feet_pos(self.b.hero))
+            arrow = {(1, 0): " →", (-1, 0): " ←", (0, 1): " ↓", (0, -1): " ↑"}.get(e.get("dir"), "")
+            col = (170, 215, 255) if e["kind"] == "gust" else (255, 160, 90)
+            sk.text(surf, e["name"] + arrow, (fx, fy - v.unit_h(self.b.hero) - 40), 15, col, center=True, title=True)
         hov = v.pick_unit(self.mouse) if self.mouse[1] < self.hand_area.y else None
         t = self.hv.t
         for u in self.b.foes():
