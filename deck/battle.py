@@ -304,7 +304,7 @@ class Battle:
         if total > 10:
             self.gain_shield(h, total - 10)
         self.say(f"Феи: {h.ds['fae']}/10", (180, 235, 190))
-        self.fx("status", unit=h, what="fae")
+        self.fx("status", unit=h, el="fae")
         return h.ds["fae"] - before
 
     def spend_fae(self, n, tgt=None):
@@ -315,7 +315,7 @@ class Battle:
         h.ds["fae"] = before - spent
         if spent:
             self.say(f"Феи: {h.ds['fae']}/10 (−{spent})", (200, 230, 170))
-            self.fx("status", unit=h, what="fae")
+            self.fx("status", unit=h, el="fae")
             if self.garden is not None:
                 self.garden.on_spend(spent, tgt, before=before)
         return spent

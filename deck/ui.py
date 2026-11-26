@@ -809,13 +809,13 @@ class BattleScreen:
 
     STATUS_FX = {"fire": "status_fire", "poison": "status_poison", "ice": "status_ice", "water": "status_water",
                  "weak": "curse_hit", "vulnerable": "curse_hit", "hex": "curse_hit", "rally": "buff_good",
-                 "veil": "reveal_fx", "bleed": "slash_hit", "counter": "parry_stance"}
+                 "veil": "reveal_fx", "bleed": "slash_hit", "counter": "parry_stance", "fae": "buff_good"}
     STATUS_WORD = {"fire": ("Горит!", (255, 150, 70)), "poison": ("Отравлен", (150, 230, 90)),
                    "ice": ("Мороз", (170, 220, 255)), "water": ("Мокрый", (120, 180, 255)),
                    "weak": ("Слабость", (200, 160, 255)), "vulnerable": ("Уязвимость", (255, 140, 200)),
                    "hex": ("Сглаз", (200, 150, 255)), "rally": ("Сила!", (255, 170, 90)),
                    "veil": ("Туман", (200, 200, 230)), "bleed": ("Кровь!", (235, 70, 70)),
-                   "counter": ("Контратака", (255, 210, 150))}
+                   "counter": ("Контратака", (255, 210, 150)), "fae": ("Феи!", (160, 240, 180))}
 
     def shake(self, amount, stop=0.0):
         sc = self.view.vfx.screen
@@ -910,7 +910,7 @@ class BattleScreen:
                 vx.emit("poison_bubbles", x, y, count=6 + min(8, e.get("n", 1)))
                 vx.emit("toxic_puff", x, y - 6, count=3)
         elif k == "status":                                # наложили состояние — короткий эффект и слово
-            el = e["el"]
+            el = e.get("el")
             if el in self.STATUS_FX:
                 vx.play(self.STATUS_FX[el], v._ctx(target=u))
             word = self.STATUS_WORD.get(el)

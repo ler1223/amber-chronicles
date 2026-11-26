@@ -1,7 +1,10 @@
 """Эльф: феи, пороги, растения, прививки, звери и сборка оружия."""
 from deck import model as M
 from deck.battle import finish
+from deck.game import DescentGame
+from deck.ui import BattleScreen
 from test_deck import card, hero_battle, put
+from tests.test_expedition import ED
 
 
 def test_elf_starts_with_fae_starter_and_mechanic():
@@ -14,6 +17,15 @@ def test_elf_starts_with_fae_starter_and_mechanic():
         "e_moon_shield", "e_astral_step",
     ]
     assert b.hero.ds["fae"] == 0
+
+
+def test_fae_gain_event_is_drawn_by_battle_screen_without_crashing():
+    game = DescentGame(seed=1, gd=ED)
+    battle, game.run = hero_battle("elf")
+    screen = BattleScreen(game, battle)
+    battle.gain_fae(2)
+    screen.update(1 / 60)
+    assert battle.hero.ds["fae"] == 2
 
 
 def test_fae_are_capped_and_excess_becomes_shield():
