@@ -159,7 +159,7 @@ def merc_base(cards):
         "defend": {"alt": step(2)},                   # больше движения на стартовых: простое — шаг
         "lunge": {"alt": step(2)},
         "sweep": {"main": me(adj(D(4), op("push", 1)), vfx="whirlwind", **ifs(IF(W("surrounded"), plus=3)))},
-        "body_slam": {"main": enemy(op("body_slam"), vfx="shield_bash",
+        "body_slam": {"main": enemy(op("body_slam", 4), vfx="shield_bash",
                                     **ifs(IF(W("shielded", n=10), do=[op("push", 1)]))), "tags": ["Защита"]},
         "blood_sweep": {"main": me(op("lose_hp", 3), adj(D(9)), vfx="bloodlet", **ifs(IF(W("hurt"), plus=4))),
                         "alt": None},
@@ -236,11 +236,11 @@ MERC = {
         V("Ответить на удар", None, "Ответ", echo=echo("hit", D(4), vfx="riposte")),
     ],
     "body_slam": [
-        V("Сильнее", enemy(B(3), op("body_slam"))),
-        V("С подходом", reach(2, op("body_slam")), "Бросок телом"),
-        V("Добить", enemy(op("body_slam"), **ifs(IF(W("wounded"), mult=2))), "Раздавить"),
-        V("Дважды в серии", enemy(op("body_slam"), **ifs(IF(W("series", n=2), repeat=1))), "Град ударов"),
-        V("Сквозь щит", enemy(op("body_slam"), **ifs(IF(W("guarded"), plus=5))), "Пробой"),
+        V("Сильнее", enemy(B(3), op("body_slam", 4))),
+        V("С подходом", reach(2, op("body_slam", 4)), "Бросок телом"),
+        V("Добить", enemy(op("body_slam", 4), **ifs(IF(W("wounded"), mult=2))), "Раздавить"),
+        V("Дважды в серии", enemy(op("body_slam", 4), **ifs(IF(W("series", n=2), repeat=1))), "Град ударов"),
+        V("Сквозь щит", enemy(op("body_slam", 4), **ifs(IF(W("guarded"), plus=5))), "Пробой"),
     ],
     "blood_sweep": [
         V("Острее", me(op("lose_hp", 3), adj(D(13)))),

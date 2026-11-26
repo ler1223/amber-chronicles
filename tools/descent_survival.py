@@ -1,6 +1,6 @@
 """Выживаемость Наёмника, Охотницы и Пиромантки (квиз 2026-11-21, балансировка): карты «ударить и не получить в
 ответ» — удар с отходом, оборона (половина защиты на следующий ход), лечение; у каждой 5 прозрений. Плюс ресурс:
-+10 HP, рука 6 (лечение 10% после боя — в deck/game.py).
++10 HP, базовый добор 5 (лечение 10% после боя — в deck/game.py).
 
 Пишет в data/deck/cards.json и data/deck/heroes.json. Запуск: python tools/descent_survival.py
 (после tools/descent_epiphanies.py, если он перезапускался).
@@ -180,7 +180,7 @@ def main():
         if starter not in hd["starter"]:
             hd["starter"].append(starter)
         hd["hp"] = hp
-        hd["hand"] = 6
+        hd["hand"] = 5
         hd.update(EXTRA.get(hid, {}))
     json.dump(h, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print("ok:", len(CARDS), "карт выживания")

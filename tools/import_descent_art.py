@@ -27,6 +27,13 @@ ITEMS = os.path.join(ROOT, "assets", "ui", "items")
 
 # сетка (колонки, ряды) и id по порядку: слева направо, сверху вниз
 SETS = {
+    "dc7_tag_relics": (5, 1, ["pathfinder_chalk", "ember_clasp", "trapper_bracket", "ash_case", "duelist_braid"]),
+    "dc6_retain": (3, 2, ["p_stoke_embers", "p_ash_cover", "p_forge_patience"]),
+    "dc7_retain": (3, 2, ["retain_quilt", "retain_bookmark", "retain_bellows"]),
+    "dc6_spirit_ranks": (3, 3, [f"t_spirit_{spirit}_{rank}"
+                               for spirit in ("ember", "draft", "ash") for rank in ("i", "ii", "iii")]),
+    "dc6_stances_ballista": (3, 2, ["m_stance_ready", "m_stance_knight", "m_stance_guard",
+                                    "h_ballista", "h_ballista_load", "h_ballista_fire"]),
     "dc6_m1": (4, 3, ["m_rend", "m_open", "m_blade_storm", "m_duelist", "m_riposte", "m_meet", "m_rising",
                       "m_crush", "m_leader_cry", "m_limit", "m_knives", "m_blood_trail"]),
     "dc6_m2": (3, 2, ["m_frenzy", "m_runner", "m_last_word", "m_unbreak", "m_butcher", "t_knife"]),
@@ -76,17 +83,17 @@ def cut_cards(path, cols, rows, ids):
     return out
 
 
-def cut_items(path, cols, rows, ids, size=128):
+def cut_items(path, cols, rows, ids, size=128, offset=0, inset=0):
     """Пурпурный лист значков: каждый — по своему краю, вписан в size×size."""
     arr = load_rgba(path)
     H, W = arr.shape[:2]
     os.makedirs(ITEMS, exist_ok=True)
     out = []
-    for k, iid in enumerate(ids):
+    for k, iid in enumerate(ids, offset):
         c, r = k % cols, k // cols
         x0, x1 = round(c * W / cols), round((c + 1) * W / cols)
         y0, y1 = round(r * H / rows), round((r + 1) * H / rows)
-        cell = arr[y0:y1, x0:x1]
+        cell = arr[y0 + inset:y1 - inset, x0 + inset:x1 - inset]
         ys, xs = np.where(cell[..., 3] > 40)
         if not len(ys):
             print("пусто:", iid)
@@ -112,7 +119,13 @@ def main():
     pygame.init()
     pygame.display.set_mode((1, 1))
     cols, rows, ids = SETS[a.set]
-    done = cut_items(a.sheet, cols, rows, ids) if a.set.startswith("dc7") else cut_cards(a.sheet, cols, rows, ids)
+    if a.set.startswith("dc7"):
+        if a.set == "dc7_retain":
+            done = cut_items(a.sheet, cols, rows, ids, offset=cols, inset=4)
+        else:
+            done = cut_items(a.sheet, cols, rows, ids)
+    else:
+        done = cut_cards(a.sheet, cols, rows, ids)
     print(f"{a.set}: {len(done)} из {len(ids)}")
     if a.preview and done:
         tw = 160

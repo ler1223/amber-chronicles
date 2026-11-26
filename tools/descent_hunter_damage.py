@@ -143,7 +143,7 @@ def main():
         me(power={"on": "turn", "do": [op("strength", 1)]}),
         ["Кровь", "Клич"], typ="power", cost=2, rarity=4)
     add(cards, "h_dmg_execute", "h_deadeye", "Казнь",
-        shot(6, D(8), **{"if": [{"when": {"k": "vulnerable"}, "mult": 2}]}),
+        shot(6, D(12), **{"if": [{"when": {"k": "wounded"}, "mult": 2}]}),
         ["Выстрел", "Клич"], cost=2, rarity=4)
 
     added = ["h_dmg_expose", "h_dmg_cripple", "h_dmg_pack_mark", "h_dmg_black_volley",

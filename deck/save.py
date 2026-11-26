@@ -20,6 +20,8 @@ def card_to(c):
         d["alt_up"] = c.alt_up
     if c.divine:
         d["divine"] = c.divine.get("id")
+    if getattr(c, "relic_key", None):
+        d["relic_key"] = c.relic_key
     return d
 
 
@@ -30,6 +32,8 @@ def card_from(d, defs, gods):
         c.alt_up = d["alt_up"]
     if d.get("divine") and d["divine"] in gods:
         c.divine = gods[d["divine"]]
+    if d.get("relic_key"):
+        c.relic_key = d["relic_key"]
     return c
 
 
@@ -71,6 +75,7 @@ def run_from(data, d):
     run.max_hp, run.hp = d["max_hp"], d["hp"]
     gods = data["gods"]["gods"]
     run.deck = [card_from(c, run.defs, gods) for c in d["deck"] if c["cid"] in run.defs]
+    run.normalize_ballista_deck()
     run.fight, run.result = d.get("fight", 0), None
     run.gold, run.depth, run.kills = d["gold"], d["depth"], d.get("kills", 0)
     run.remove_price = d.get("remove_price", data["enemies"]["shop"]["remove_price"])

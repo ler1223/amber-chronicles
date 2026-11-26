@@ -38,6 +38,9 @@ BASIC = {
     "sc_attack": ("attack", "priest"),
     "sc_defense": ("defense", "priest"),
     "sc_move": ("movement", "priest"),
+    "e_basic_attack": ("attack", "elf"),
+    "e_basic_defense": ("defense", "elf"),
+    "e_basic_move": ("movement", "elf"),
 }
 
 BASIC_BY_HERO = {
@@ -45,10 +48,11 @@ BASIC_BY_HERO = {
     "hunter": {"attack": "h_shot", "defense": "h_dodge", "movement": "h_backstep"},
     "pyro": {"attack": "p_bolt", "defense": "p_ward", "movement": "p_stride"},
     "priest": {"attack": "sc_attack", "defense": "sc_defense", "movement": "sc_move"},
+    "elf": {"attack": "e_basic_attack", "defense": "e_basic_defense", "movement": "e_basic_move"},
 }
 
 NEUTRAL = {
-    "lunge": 1, "lunge_rush": 1, "brace": 1, "hook": 1,
+    "lunge": 1, "lunge_rush": 1, "brace": 1, "hook": 1, "n_hand_copy": 1,
     "shield_ram": 2, "sweep": 2, "wall_smash": 2, "riposte": 2,
     "body_slam": 2, "war_cry": 2,
     "blood_sweep": 3, "battle_rage": 3, "charge": 3,
@@ -91,7 +95,7 @@ def has_area(c):
 def assign(cid, c, heroes):
     if (c.get("source") or {}).get("game") == "CZN":
         return
-    if c.get("token") or c.get("status") or c.get("meaning") and cid.startswith("slime_"):
+    if c.get("token") or c.get("battle_only") or c.get("status") or c.get("meaning") and cid.startswith("slime_"):
         c["category"] = "token"
         c["rarity"] = 0
         return
@@ -104,6 +108,10 @@ def assign(cid, c, heroes):
     if cid in NEUTRAL:
         c["category"] = "neutral"
         c["rarity"] = NEUTRAL[cid]
+        return
+    if cid == "h_ballista":
+        c["category"] = "hero"
+        c["rarity"] = 1
         return
     if cid in T4:
         c["category"] = "hero"
@@ -162,7 +170,7 @@ def main():
             continue
         ids = [cid for cid, c in cards.items()
                if c.get("category") == "hero" and c.get("rarity") == 1 and cid.startswith(
-                   {"merc": "m_", "hunter": "h_", "pyro": "p_", "priest": "sc_"}[hid])]
+                   {"merc": "m_", "hunter": "h_", "pyro": "p_", "priest": "sc_", "elf": "e_"}[hid])]
         print(hid, "тир1 для старта:", len(ids))
 
 

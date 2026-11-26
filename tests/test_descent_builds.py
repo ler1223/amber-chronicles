@@ -98,7 +98,7 @@ def test_chain_auto_plays_resonance_card():
     put(foe, (4, 2))
     foe.hp = foe.max_hp = 99
     # два выстрела уже сыграны — резонанс [Выстрел] 2 выполнен
-    b.turn_tags = [{"Выстрел"}, {"Выстрел"}]
+    b.turn_tags = [{"shot"}, {"shot"}]
     b.played = 2
     card = M.Card("h_echo_shot", run.defs)
     b.hand.append(card)

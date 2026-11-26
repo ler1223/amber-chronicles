@@ -72,12 +72,13 @@ def main():
         "h_backstep", "h_knife", "h_second_wind", "p_cool", "p_czn_unity",
         "p_stoke", "m_battle_plan", "n_czn_adagio",
         "h_sniper_allin",                                     # X-cost card
+        "n_hand_copy",                                        # превращение в другую карту
     }
     for cid, c in cards.items():
         if cid.startswith("sc_"):
             allowed_zero.add(cid)                             # priest scrolls
         if c.get("cost") == 0:
-            assert cid in allowed_zero or c.get("token"), f"непроверенная 0-стоимость: {cid}"
+            assert cid in allowed_zero or c.get("token") or c.get("battle_only"), f"непроверенная 0-стоимость: {cid}"
         if cid not in KEEP_ALT:
             assert c["alt"].get("target") == "none", f"alt остался у {cid}"
 

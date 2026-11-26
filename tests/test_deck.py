@@ -42,7 +42,7 @@ def test_cards_have_main_and_free_alt_and_insights():
         c = M.Card(cid, run.defs)
         assert c.text("main") or d.get("react"), cid                         # реакция — только откликом
         assert c.text("alt") or c.d["alt"]["target"] == "none", cid           # простое — не у всех
-        if d.get("token") or d.get("status") or d.get("meaning"):          # свитки Жреца: растут боги, не карты                                 # стрелы, «Тина» — не растут
+        if d.get("token") or d.get("battle_only") or d.get("status") or d.get("meaning"):
             continue
         assert len(d["growth"]) == 1 and len(d["growth"][0]["options"]) == 5, cid   # прозрение: 5 вариантов
         for v in d["growth"][0]["options"]:
@@ -71,7 +71,7 @@ def test_insight_is_probabilistic_with_pity():
 
 def test_turn_start_energy_hand_intents():
     b, _ = battle()
-    assert b.energy == 4 and len(b.hand) == 6 and b.turn == 1                   # Наёмник: 4 энергии, рука 6
+    assert b.energy == 4 and len(b.hand) == 5 and b.turn == 1                   # Наёмник: 4 энергии, рука 5
     assert all(u.intent and u.intent["kind"] for u in b.foes())
     foe = next(u for u in b.foes() if u.intent["kind"] == "melee")
     put(b, foe, (b.hero.cell[0] + 1, b.hero.cell[1]))
@@ -428,6 +428,7 @@ def test_merc_momentum_steps_add_damage_and_reset():
 
 def test_hunter_passives_range_mark_quiver():
     b, _ = hero_battle("hunter", "range")
+    assert len(b.hand) == 5
     h = b.hero
     foe = b.foes()[0]
     put(b, foe, (h.cell[0] + 6, h.cell[1]))
@@ -445,6 +446,7 @@ def test_hunter_passives_range_mark_quiver():
     b2.hurt(prey, 999, b2.hero)
     assert b2.prey is not prey and b2.energy == e + 1                          # метка перешла, +энергия
     b3, _ = hero_battle("hunter", "quiver")
+    assert len(b3.hand) == 6
     assert any(c.cid == "arrow" for c in b3.hand)                              # стрела в руке с первого хода
     arrow = next(c for c in b3.hand if c.cid == "arrow")
     assert arrow.cost == 0 and arrow.d.get("token")
@@ -459,6 +461,7 @@ def test_hunter_passives_range_mark_quiver():
 
 def test_pyro_heat_levels_alt_and_overheat():
     b, _ = hero_battle("pyro")
+    assert len(b.hand) == 5
     h = b.hero
     assert b.max_energy == 0 and h.ds["heat"] == 4                             # 2 на старте + 2 за ход
     bolt = card(b, "p_bolt")
@@ -739,10 +742,11 @@ def test_tags_and_conditions_seal_bonus_echo_keep_twin():
     assert hp - foe.hp == 12
 
 
-def test_chest_offers_items_and_bag_opens():
+def test_chest_offers_items_and_bag_opens(monkeypatch):
     """Сундук (вместо алтаря): предмет 1 из 3 — общий или своего класса; сумка открывается на карте по I."""
     import pygame
     from deck.game import DescentGame
+    from deck import ui
     from deck.ui import ChoiceScreen, MapScreen
     from tests.test_expedition_ui import SCREEN
     g = DescentGame(seed=3)
@@ -753,7 +757,16 @@ def test_chest_offers_items_and_bag_opens():
     assert isinstance(g.scene, ChoiceScreen) and len(g.scene.options) == 3
     assert all(o[2].get("hero") in (None, "pyro") and o[2]["rarity"] in ("common", "uncommon", "rare")
                for o in g.scene.options)
+    displayed = []
+    draw_icon = ui.draw_item_icon
+
+    def record_icon(surf, item, center, size):
+        displayed.append(item["id"])
+        draw_icon(surf, item, center, size)
+
+    monkeypatch.setattr(ui, "draw_item_icon", record_icon)
     g.draw(SCREEN)
+    assert displayed == [option[2]["id"] for option in g.scene.options]
     it = g.scene.options[0][2]
     g.scene.on_pick(it)
     assert g.run.relics == [it] and isinstance(g.scene, MapScreen)
@@ -1577,6 +1590,23 @@ def test_priest_branches_after_battle_and_cast_preview():
     assert val in g.run.god_picks["perun"] and isinstance(g.scene, ChoiceScreen) and "Победа" in g.scene.title
 
 
+def test_morana_ice_guard_gives_eight_shield_and_freezes_next_steps():
+    from deck.idols import IdolCast
+    from deck import model as M
+
+    _, _, b = _priest(variant="winter")
+    morana = next(st for st in b.idols.statues if st.statue == "morana")
+    card = M.Card("sc_defense", b.run.defs)
+    b.hand.append(card)
+    b.hero.shield = 0
+    finish(b.play(card, "main", IdolCast(morana, None)))
+    assert b.hero.shield == 8
+
+    finish(b.start_player_turn())
+    assert b.walk_left == 0
+    assert not b.hero.ds["iced"]
+
+
 def test_priest_tiers_and_fat_rewards():
     """Ступени действий: на карте — список действий с качеством I–IV; ступень — новый эффект бога (Атака II
     Перуна — цепная молния, бьёт и соседей цели); все действия — одной статуей; награды толще с глубиной."""
@@ -1780,7 +1810,7 @@ def test_items_build_conditions_and_boss_downsides():
     assert len(hb.hand) == hand + 2 and hb.energy == 1                         # капкан: 2 карты и ресурс
     b, run = with_items("merc", "rune_pyramid", "black_crown")
     assert sum(c.cid == "slime_rot" for c in b.draw_pile + b.hand) == 2         # корона: 2 «Тины»
-    assert len(b.hand) == 5                                                    # пирамида: на карту меньше
+    assert len(b.hand) == 4                                                    # пирамида: на карту меньше базовых пяти
     kept = list(b.hand)
     b.foes()[0].intent = None
     finish(b.end_turn())
@@ -1925,6 +1955,21 @@ def test_pyro_level_changes_in_reading_and_choice():
     pos = (round(r.centerx - CF.FW * k / 2 + cx * k), round(r.centery - CF.FH * k / 2 + cy * k))
     g.scene.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=pos, button=1))
     assert card.lvl == 0 and not picked                                       # клик по кружку — тоже не выбор
+
+
+def test_save_migrates_old_ballista_commands():
+    from deck import save
+
+    run = M.Run(seed=3, hero="hunter", starter=["h_shot"])
+    before = save.run_to(run)
+    before["deck"] += [{"cid": cid, "picks": [0]} for cid in M.BALLISTA_COMMANDS]
+    restored = save.run_from(run.data, before)
+    assert [card.cid for card in restored.deck] == ["h_shot", M.BALLISTA_CARD]
+
+    before["deck"].append({"cid": M.BALLISTA_CARD, "picks": [1]})
+    restored = save.run_from(run.data, before)
+    assert [card.cid for card in restored.deck] == ["h_shot", M.BALLISTA_CARD]
+    assert restored.deck[-1].picks == [1]
 
 
 def test_run_save_and_continue(tmp_path):

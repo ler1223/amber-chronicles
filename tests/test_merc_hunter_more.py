@@ -31,15 +31,52 @@ def test_new_merc_cards_play_and_standstill():
 
     b, h, foe, card, _ = battle("merc", "m_rampart")
     finish(b.play(card, "main", h))
-    assert h.shield == 8 and h.ds["thorns"] == 3 and h.ds["fort"]
+    assert h.shield == 13 and h.ds["thorns"] == 4 and h.ds["fort"]
+
+    b, h, foe, card, _ = battle("merc", "m_rampart", walked=1)
+    finish(b.play(card, "main", h))
+    assert h.shield == 9 and h.ds["thorns"] == 0 and not h.ds["fort"]
 
     b, h, foe, card, _ = battle("merc", "m_battle_plan")
     finish(b.play(card, "main", h))
-    assert b.empower["Толчок"] == 4
+    assert b.hero.ds["card_damage_buffs"][(b.turn, "push", "")] == 4
 
     b, h, foe, card, _ = battle("merc", "m_blood_exchange")
     finish(b.play(card, "main", foe))
     assert foe.ds["bleed"] == 2 and card not in b.hand
+
+
+def test_body_slam_adds_damage_at_every_shield_amount():
+    for shield, expected in ((0, 4), (5, 9), (10, 14)):
+        b, h, foe, card, _ = battle("merc", "body_slam")
+        h.shield = shield
+        foe.edef = {"armor": 0}
+        assert b.damage_preview(card, "main") == [expected]
+        target_cell = foe.cell
+        finish(b.play(card, "main", foe))
+        assert foe.hp == 99 - expected
+        assert (foe.cell != target_cell) == (shield >= 10)
+
+
+def test_execute_doubles_damage_only_below_half_hp():
+    for hp, expected in ((50, 12), (49, 24)):
+        b, h, foe, card, _ = battle("hunter", "h_dmg_execute")
+        foe.max_hp = 100
+        foe.hp = hp
+        foe.edef = {"armor": 0}
+        finish(b.play(card, "main", foe))
+        assert foe.hp == hp - expected
+
+
+def test_trap_places_eight_damage_at_range_six():
+    from sim.grid import Grid
+
+    b, h, foe, card, _ = battle("hunter", "h_trap")
+    b.c.grid = Grid(["." * 9 for _ in range(5)], {".": {}})
+    cell = (8, 2)
+    assert cell in b.targets(card, "main")
+    finish(b.play(card, "main", cell))
+    assert b.traps[cell] == 8
 
 
 def test_new_hunter_cards_play():

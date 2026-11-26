@@ -84,7 +84,7 @@ def test_non_attack_chain_waits_for_player_target():
     put(foe, (4, 2))
     card = M.Card("h_trail", run.defs)
     b.hand = [card]
-    b.turn_tags = [{"Выстрел"}, {"Выстрел"}]
+    b.turn_tags = [{"shot"}, {"shot"}]
     b.played = 2
     gen = b.echoes()
     first = next(gen)

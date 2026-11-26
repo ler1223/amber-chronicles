@@ -1,10 +1,11 @@
 {
- "_doc": "Герои «Спуска» (docs/descent.md). У каждого своя механика, без общего шаблона: Наёмник — Разгон; Охотница — пассивка на выбор (дистанция / метка добычи / колчан); Пиромантка — жар вместо энергии, карты с уровнями за 1–3 жара.",
+ "_doc": "Герои «Спуска» (docs/descent.md). У каждого своя механика, без общего шаблона: Наёмник — Разгон; Охотница — пассивка на выбор (дистанция / метка добычи / колчан); Пиромантка — жар вместо энергии, карты с уровнями за 1–3 жара; Жрец — статуи и свитки; Эльф — феи, растения, звери и прививки.",
  "order": [
   "merc",
   "hunter",
   "pyro",
-  "priest"
+  "priest",
+  "elf"
  ],
  "heroes": {
   "merc": {
@@ -99,9 +100,12 @@
     "m_brace",
     "m_rampart",
     "m_battle_plan",
-    "m_blood_exchange"
+    "m_blood_exchange",
+    "m_stance_ready",
+    "m_stance_knight",
+    "m_stance_guard"
    ],
-   "hand": 6,
+   "hand": 5,
    "passives": {
     "press": {
      "name": "Натиск",
@@ -150,7 +154,10 @@
      "m_brace",
      "m_rampart",
      "m_battle_plan",
-     "m_blood_exchange"
+     "m_blood_exchange",
+     "m_stance_ready",
+     "m_stance_knight",
+     "m_stance_guard"
     ]
    },
    "reward_guarantee": {
@@ -309,9 +316,10 @@
     "h_sniper_grow",
     "h_sniper_fate",
     "h_sniper_double",
-    "h_sniper_allin"
+    "h_sniper_allin",
+    "h_ballista"
    ],
-   "hand": 6,
+   "hand": 5,
    "starter_by_variant": {
     "range": [
      "h_shot",
@@ -416,7 +424,8 @@
      "h_sniper_line",
      "h_sniper_pierce",
      "h_sniper_expose",
-     "h_sniper_allin"
+     "h_sniper_allin",
+     "h_ballista"
     ],
     "mark": [
      "h_marking",
@@ -526,7 +535,8 @@
      "h_upgrade_quiver",
      "h_sniper_grow",
      "h_sniper_fate",
-     "h_sniper_double"
+     "h_sniper_double",
+     "h_ballista"
     ],
     "chain": [
      "h_chain_1",
@@ -675,9 +685,15 @@
     "p_czn_rising_dragon",
     "p_czn_unity",
     "p_czn_call_response",
-    "p_czn_encore"
+    "p_czn_encore",
+    "p_living_embers",
+    "p_spirit_circle",
+    "p_furnace_draft",
+    "p_stoke_embers",
+    "p_ash_cover",
+    "p_forge_patience"
    ],
-   "hand": 6,
+   "hand": 5,
    "passives": {
     "ash": {
      "name": "Пепел",
@@ -712,7 +728,13 @@
      "p_smoke",
      "p_barrier",
      "p_lance",
-     "p_chain"
+     "p_chain",
+     "p_living_embers",
+     "p_spirit_circle",
+     "p_furnace_draft",
+     "p_stoke_embers",
+     "p_ash_cover",
+     "p_forge_patience"
     ]
    },
    "reward_guarantee": {
@@ -800,6 +822,90 @@
     "attack": "sc_attack",
     "defense": "sc_defense",
     "movement": "sc_move"
+   },
+   "reward_guarantee": {}
+  },
+  "elf": {
+   "name": "Эльф",
+   "sprite": "archer",
+   "hp": 62,
+   "energy": 3,
+   "mechanic": "fae",
+   "about": "Маг-садовник: феи, растения и звери. Слаб без фей, силён в саду.",
+   "rule": "Феи: 0–10, не гаснут. Карты получают бонус за каждую фею и один порог. Избыток сверх 10 даёт 1 защиту за каждую лишнюю фею.",
+   "starter": [
+    "e_basic_attack",
+    "e_basic_attack",
+    "e_basic_defense",
+    "e_basic_defense",
+    "e_basic_move",
+    "e_basic_move",
+    "e_call_fae",
+    "e_moon_arrow",
+    "e_moon_shield",
+    "e_astral_step"
+   ],
+   "rewards": [
+    "e_call_fae",
+    "e_fae_ring",
+    "e_firefly",
+    "e_pollen",
+    "e_fae_crown",
+    "e_moon_arrow",
+    "e_sleep",
+    "e_moon_shield",
+    "e_thorn_court",
+    "e_fate_thread",
+    "e_fae_roar",
+    "e_eclipse",
+    "e_astral_step",
+    "e_thorn_seed",
+    "e_moon_flower",
+    "e_world_tree",
+    "e_thorn_garden",
+    "e_hunting_vine",
+    "e_living_hedge",
+    "e_glowing_moss",
+    "e_mushroom_web",
+    "e_moon_wolf",
+    "e_owl_herald",
+    "e_snake_guard",
+    "e_deer_guide",
+    "e_moon_scythe",
+    "e_light_shadow",
+    "e_dawn_blade",
+    "e_storm_spear",
+    "e_star_rain",
+    "e_forest_pact",
+    "e_star_well",
+    "e_ariadne_thread",
+    "e_twin_stars",
+    "e_moon_bridge",
+    "e_constellation",
+    "e_link_break",
+    "e_guiding_star",
+    "e_grove_compass",
+    "e_morning_star",
+    "e_dew",
+    "e_fallen_leaf",
+    "e_star_ash",
+    "e_crusher_root",
+    "e_mirage",
+    "e_sleep_mist",
+    "e_last_star",
+    "e_grove_gift",
+    "e_twoleaf",
+    "e_sleeping_bud",
+    "e_symbiosis",
+    "e_ivy_graft",
+    "e_thorn_graft",
+    "e_moon_moss",
+    "e_parasite_flower"
+   ],
+   "basic": {
+    "attack": "e_basic_attack",
+    "defense": "e_basic_defense",
+    "movement": "e_basic_move"
    },
    "reward_guarantee": {}
   }

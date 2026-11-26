@@ -260,7 +260,8 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Лицо карты OW×OH (кэш по состоянию). heat — жар героя: тусклые уровни, на которые не хватает;
     lit — выполненные сейчас условия (подсвечиваются зелёным)."""
     lit = frozenset(lit or ())
-    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+           card.spirit_rank, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     if key in _cache:
         return _cache[key]
@@ -300,7 +301,7 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     react = bool(d.get("react"))
     if react:                                              # реакция: не играется — не тусклая
         main_ok = True
-    _gem(s, (34, 34), "—" if react else card.cost_label, main_ok, heat=bool(card.levels))
+    _gem(s, (34, 34), "—" if react else card.cost_label, main_ok, heat=card.uses_heat)
     if card.divine:                                                             # дар бога — флажок под ценой
         col = tuple(card.divine.get("color", (200, 180, 255)))
         flag = [(18, 58), (50, 58), (50, 92), (34, 82), (18, 92)]
@@ -365,7 +366,8 @@ def face(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=Non
     if cardart.available():
         return cardart.compose(card, main_ok, alt_ok, hot, heat, lit, tilt, width)
     lit = frozenset(lit or ())
-    key = ("old", card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    key = ("old", card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+           card.spirit_rank, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     if key not in _cache:
         _cache[key] = pygame.transform.smoothscale(_face_old(card, main_ok, alt_ok, hot, heat, lit), (FW, FH))

@@ -197,11 +197,11 @@ class HandView:
         w, h = self.cw * sp.s, self.ch * sp.s
         return pygame.Rect(int(sp.x - w / 2), int(sp.y - h / 2), int(w), int(h))
 
-    def hit(self, mouse):
+    def hit(self, mouse, exclude=None):
         """Карта под мышью — верхняя по порядку отрисовки."""
         best = None
         for uid, sp in self.sprites.items():
-            if self.rect_of(sp).collidepoint(mouse) and (best is None or sp.order >= best[1]):
+            if uid != exclude and self.rect_of(sp).collidepoint(mouse) and (best is None or sp.order >= best[1]):
                 best = (uid, sp.order)
         return best[0] if best else None
 
@@ -227,7 +227,7 @@ class HandView:
             st = state_of(sp.card)
             zoom = self.zoom if sp.s > 1.15 else 1.0                       # лицо — под размер: в покое или крупно
             key = (sp.card.uid, sp.card.tier, sp.card.uses, sp.card.ready, sp.card.insight_misses,
-                   sp.card.lvl, st, zoom, sp.card.preview_key())   # уровень жара, прозрение и живой урон
+                   sp.card.lvl, sp.card.spirit_rank, st, zoom, sp.card.preview_key())
             face = self.cache.get(key)
             tilted = self.face_tilt is not None and abs(sp.tilt[0]) + abs(sp.tilt[1]) > 0.05
             if self.back is not None and sp.age < 0.22 and not sp.fly:          # только что из колоды — рубашкой

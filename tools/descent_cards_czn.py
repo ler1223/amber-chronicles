@@ -503,9 +503,9 @@ def pyro():
         LV("Искры", "Пепел в искры", pluslv(sac, make("t_spark", 1, "Искра"))),
         LV("Горение", "Жертва пламени", pluslv(sac, op("burn_all", 2))),
         LV("Лечение", "Очищающий огонь", pluslv(sac, op("heal", 3)))])
-    wh = lv((1, enemy(D(2, per=per("foes_burning", 2)), rng=3, vfx="fan_flames")),
-            (2, enemy(D(3, per=per("foes_burning", 3)), rng=4, vfx="fan_flames")),
-            (3, enemy(D(4, per=per("foes_burning", 4)), op("burn_all", 1), rng=4, vfx="e_flame_breath")))
+    wh = lv((1, enemy(D(3, per=per("foes_burning", 4)), rng=3, vfx="fan_flames")),
+            (2, enemy(D(5, per=per("foes_burning", 5)), rng=4, vfx="fan_flames")),
+            (3, enemy(D(7, per=per("foes_burning", 7)), op("burn_all", 1), rng=4, vfx="e_flame_breath")))
     C["p_whip"] = card("Огненная плеть", "attack", "fx_fire_wall", levels=wh, alt=heat1, variants=[
         LV("Сильнее", None, uplv(wh)),
         LV("По горению", "Плеть-жало", [dict(L, main=enemy(D(2, per=per("burn", i + 2)), rng=4, vfx="fan_flames"))

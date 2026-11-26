@@ -39,6 +39,7 @@ ENV2 = ["dry_block", "dry_log", "dry_bush", "dry_rock",
         "marble_block", "marble_log", "marble_column", "marble_rock"]
 SETS = {
     "ch12": ORDER,
+    "field_stances": ["ballista", "ballista_loaded", "ballista_load", "stance_ready", "stance_knight", "stance_guard"],
     "totems_shaman": ["totem_rage", "totem_spirit", "totem_stone", "totem_rod", "totem_idol"],
     "heroes2": ["shaman", "bard", "alchemist", "ram", "trapper", "necro", "chrono",
                 "gravity", "geomancer", "brewer", "bloodrager", "tactician", "binder",
@@ -184,6 +185,7 @@ ENV_SIZE = {"tree": (32, 46), "pine": (28, 48), "deadtree": (28, 40), "column": 
             "log": (34, 18), "bush": (24, 16), "rock": (24, 18), "tombstone": (16, 20), "mushroom": (22, 26)}
 MATERIALS = ("grass", "ash", "dirt", "snow", "dry", "sand", "moss", "wet", "marble")
 FIT = {"druid_bear"}            # растянуть до холста (облик медведя — крупный зверь)
+FIT.update(SETS["field_stances"])
 MAGENTA = np.array([245, 5, 245])
 ICON_KINDS = ("item", "unique", "gift", "map", "mat", "art", "gem", "tab", "disc", "book", "necro", "relic", "rune")
 OBJ_SIZE = {"obj_board": (128, 120), "obj_chest": (80, 60), "obj_ws_forge": (128, 128), "obj_ws_jewel": (112, 104),

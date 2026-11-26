@@ -310,7 +310,7 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
         boxes.append((pygame.Rect(alt.x + alt.w - r.right, alt.y + alt.h - r.bottom, r.w, r.h), w, st))
     # цена — в гнезде
     cx, cy, rr = m["socket"]
-    ic = icon("react" if react else "heat" if card.levels else "energy", int(rr * 2.1))
+    ic = icon("react" if react else "heat" if card.uses_heat else "energy", int(rr * 2.1))
     if ic is not None:
         if not main_ok and not react:
             ic = ic.copy()
@@ -388,7 +388,8 @@ def level_pips(card):
 def word_boxes(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Где на лице 512×768 стоят выделенные слова: [(rect, слово, стиль)] — для наведения в режиме чтения."""
     lit = frozenset(lit or ())
-    ck = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    ck = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+          card.spirit_rank, heat, lit,
           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     return _content(card, ck, main_ok, alt_ok, hot, heat, lit)[1]
 
@@ -400,7 +401,8 @@ def compose(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=
     tx, ty = tilt or (0.0, 0.0)
     ox, oy = round(tx * 6) / 6, round(ty * 6) / 6                 # шаг наклона — для кэша
     S = round(width / FW, 3) if width and abs(width - FW) > 2 else 1.0
-    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl, heat, lit,
+    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+           card.spirit_rank, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key(), ox, oy, S)
     if key in _faces:
         return _faces[key]

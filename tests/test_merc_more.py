@@ -26,7 +26,7 @@ def battle(cid, *, walked=0):
 def test_not_walked_stand_and_hammer():
     b, h, foe, card = battle("m_stand")
     finish(b.play(card, "main", h))
-    assert b.empower.get("Удар") == 5
+    assert b.hero.ds["card_damage_buffs"][(b.turn, "strike", "")] == 5
     assert h.shield == 6
 
     b2, h2, foe2, card2 = battle("m_hammer")

@@ -8,6 +8,7 @@
 """
 import json
 import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -268,18 +269,62 @@ ITEMS = {
                        "Карты [Сохранение]: +3 защиты; первая [Сохранение] за ход берёт карту.",
                        "play", op("draw", 1), tag="Сохранение", once="turn",
                        tag_bonus=[{"tag": "Сохранение", "block": 3}]),
+    "retain_quilt": item("Стёганый чехол", "art_belt_common", "common",
+                         "Первое [Сохранение] в конце хода даёт 2 защиты.",
+                         "retained", op("block", 2), once="turn"),
+    "retain_bookmark": item("Закладка с насечками", "gift_word_power", "uncommon",
+                            "Когда одна карта сохраняется второй ход подряд, в начале следующего хода "
+                            "добери 1 карту. Один раз за ход.",
+                            "retained", op("next_draw", 1), when=[W("retain_streak", 2)], once="turn"),
+    "retain_bellows": item("Карманные мехи", "mat_ember", "uncommon",
+                           "Первый платный розыгрыш за ход карты, сохранённой в прошлом ходу, дешевле на 1.",
+                           retained_discount=1),
+    "pathfinder_chalk": item("Мел следопыта", "mat_ember", "common",
+                             "Первый [Шаг] за ход, закончившийся на воде или льду, даёт 4 защиты.",
+                             "play", op("block", 4), tag="step", once="turn",
+                             when=[{"k": "moved_to_terrain", "terrain": ["water", "ice"]}]),
+    "ember_clasp": item("Угольная застёжка", "mat_ember", "uncommon",
+                        "Первое сохранение карты [Огонь] за ход даёт 1 дополнительный жар в начале следующего хода.",
+                        "retained", op("next_heat", 1), hero="pyro", tag="fire", once="turn"),
+    "trapper_bracket": item("Скоба капканщика", "art_belt_common", "uncommon",
+                            "После розыгрыша [Ловушка] первое принудительное смещение от карты [Толчок] "
+                            "в этом ходу увеличивается на 1 клетку.",
+                            "play", tag="trap", once="turn", arm={"kind": "displace", "tag": "push", "n": 1}),
+    "ash_case": item("Пепельный футляр", "gift_word_power", "uncommon",
+                     "После первого изгнания обычной карты за ход следующая карта [Защита] "
+                     "в этом ходу даёт ещё 3 защиты.",
+                     "exhaust", once="turn", arm={"kind": "block", "tag": "block", "n": 3}),
+    "duelist_braid": item("Тесьма дуэлянта", "art_belt_common", "common",
+                          "Первый [Удар], сыгранный сразу после карты [Защита] в этом ходу, даёт добор 1 карты.",
+                          "play", op("draw", 1), tag="strike", once="turn",
+                          when=[{"k": "previous_tag", "tag": "block"}]),
 }
 
 
 def main():
+    sys.path.insert(0, ROOT)
+    from deck.relic_board import RELICS as board_relics
+    from deck.relic_hand import RELICS as hand_relics
+    from deck.relic_run import RELICS as run_relics
+
+    items = {**ITEMS, **hand_relics, **board_relics, **run_relics}
+    needed_tags = {
+        "link_spool": "linked", "wax_pocket": "ephemeral", "empty_binding": "unactivatable",
+        "edge_coin": "lead", "black_sealing_wax": "quietus", "last_word_book": "finale",
+        "split_seal": "exhaust_2", "cracked_clock": "finale", "tin_bandolier": "bullet",
+        "empty_pedestal": "pulverize", "debtor_receipt": "blessing", "void_pact": "finale",
+    }
+    for iid, tag in needed_tags.items():
+        items[iid] = dict(items[iid], needs_tag=tag)
+    items["wax_pocket"]["alternative_relic"] = "two_fates_binding"
     p = os.path.join(ROOT, "data", "deck", "relics.json")
     data = {"_doc": "Предметы забега (как реликвии StS): срабатывают только при редком условии. Формат — "
                     "deck/items.py; пишет tools/descent_items.py.",
-            "relics": ITEMS}
+            "relics": items}
     json.dump(data, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     from collections import Counter
-    print("предметов:", len(ITEMS), dict(Counter(r["rarity"] for r in ITEMS.values())),
-          dict(Counter(r.get("hero", "все") for r in ITEMS.values())))
+    print("предметов:", len(items), dict(Counter(r["rarity"] for r in items.values())),
+          dict(Counter(r.get("hero", "все") for r in items.values())))
 
 
 if __name__ == "__main__":

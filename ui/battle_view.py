@@ -292,7 +292,10 @@ class BattleView:
 
     def sprite_of(self, u, flip=False, flash=False):
         if u.obj:                      # объект поля: своя моделька (assets/sprites/<id>.png или заглушка)
-            return self.sprites.get([u.proto_id], "object", u.color, False, flip, flash, {"object": u.obj.get("art")})
+            names = [u.proto_id]
+            if u.proto_id == "ballista" and getattr(u, "charge", 0):
+                names.insert(0, "ballista_loaded")
+            return self.sprites.get(names, "object", u.color, False, flip, flash, {"object": u.obj.get("art")})
         if u.form:                     # облик друида: свой спрайт (druid_bear.png / bear.png) или заглушка зверя
             return self.sprites.get([f"{u.proto_id}_{u.form}", u.form], u.form, u.color, u.boss, flip, flash)
         names = [u.proto.get("path"), u.proto_id, SPRITE_ALIAS.get(u.proto_id), u.proto.get("sprite_fallback")]

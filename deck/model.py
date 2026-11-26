@@ -6,6 +6,58 @@ import random
 import re
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "deck")
+BALLISTA_HP = 12
+BALLISTA_CHARGES = 10
+BALLISTA_CARD = "h_ballista"
+BALLISTA_COMMANDS = ("h_ballista_load", "h_ballista_fire")
+HAND_COPY_CARD = "n_hand_copy"
+SPIRIT_ROMAN = ("I", "II", "III")
+BALLISTA_DAMAGE_BUFFS = {"strength", "strength_x2", "ranged_bonus", "focus", "empower", "double_next", "double_attacks"}
+FIELD_STANCES = {
+    "ready": ("Боевая стойка", "Первое получение защиты за ход даёт ещё 2.", (235, 198, 126)),
+    "knight": ("Стойка коня", "Добровольное движение становится прыжком на две клетки по одной оси и на одну "
+               "по другой. Первый прыжок за ход даёт 3 защиты.", (165, 211, 255)),
+    "guard": ("Глухая оборона", "Получаемая защита ×1.5, с округлением вверх. Карты атаки недоступны.",
+              (138, 191, 245)),
+}
+STANCE_SWITCH = "Тот же приём выводит из стойки. Другая стойка сменяет текущую."
+
+
+def ballista_buff_op(op):
+    kind = op.get("op")
+    return kind in BALLISTA_DAMAGE_BUFFS and (kind != "empower" or tag_id(op.get("tag")) == "shot")
+
+
+def can_buff_ballista(use):
+    if use.get("target") != "self":
+        return False
+    groups = [use, use.get("power") or {}, *use.get("if", [])]
+    return any(ballista_buff_op(op) for group in groups for op in group.get("do", []))
+
+
+def card_ranks(d):
+    return d.get("ranks") or d.get("spirit_ranks") or ()
+
+
+def card_rules(d):
+    rules = set(d.get("rules", ()))
+    rules.update(rule for rule in ("retain", "exhaust", "unique") if d.get(rule))
+    if d.get("deck_unique"):
+        rules.add("unique")
+    if d.get("spirit_ranks"):
+        rules.add("merge")
+    return frozenset(rules)
+
+
+def card_reactions(d, event):
+    declared = d.get("reactions", {})
+    if event in declared:
+        return tuple(declared[event])
+    if event == "retained":
+        return tuple(d.get("retain_do", ()))
+    if event == "hand_turn_end" and d.get("grow_end"):
+        return ({"op": "temper_card", "n": int(d["grow_end"].get("n", 1))},)
+    return ()
 
 
 def load():
@@ -18,6 +70,10 @@ def load():
     for cid, d in out["cards"]["cards"].items():          # своя иллюстрация карты (DC6) — вместо фрагмента события
         if f"card_{cid}.png" in have:
             d["ill"] = [f"card_{cid}", 0.5, 0.5, 1.0]
+        if card_ranks(d):
+            rank_art = [f"card_{cid}_{rank.lower()}" for rank in SPIRIT_ROMAN]
+            d["spirit_ill"] = {i: [name, 0.5, 0.5, 1.0] for i, name in enumerate(rank_art, 1)
+                               if f"{name}.png" in have}
     return out
 
 
@@ -26,6 +82,9 @@ def load():
 def _op_text(op):
     t = op["op"]
     n = op.get("n")
+    if t in ("temper_card", "temper_spirit", "next_fire_damage", "card_damage_buff", "reduce_burn", "spirit_ignite") or (
+            t == "pull" and op.get("burn_on_move")):
+        return plain(_op_phrase(op)).rstrip(".")
     return {
         "damage": lambda: f"{n} урона",
         "block": lambda: f"{n} защиты",
@@ -47,10 +106,11 @@ def _op_text(op):
         "strength": lambda: f"+{n} мощи",
         "bleed": lambda: f"кровотечение {n}",
         "counter": lambda: f"контратака {n}",
+        "copy_hand": lambda: "копия другой карты из руки до конца боя",
         "burn_card": lambda: f"изгнать {n} карт из руки",
         "strength_x2": lambda: "мощь ×2",
         "chain": lambda: f"молния {n} перескакивает",
-        "body_slam": lambda: "урон = вашей защите",
+        "body_slam": lambda: f"урон = ваша защита + {n}" if n else "урон = вашей защите",
         "collide_x2": lambda: "столкновения ×2 в этот ход",
         "thorns": lambda: f"шипы {n} (в ответ на удар)",
         "cleanse": lambda: "снять слабость и уязвимость",
@@ -106,11 +166,92 @@ def _low(s):
 def _op_phrase(op, dmg=None):
     t = op["op"]
     n = op.get("n")
+    if t == "body_slam":
+        if n:
+            if dmg is not None:
+                return f"Нанести {_dmg(dmg)} урона (*защита* + {_n(n)})."
+            return f"Нанести урон в размере вашей *защиты* + {_n(n)}."
+        if dmg is not None:
+            return f"Нанести {_dmg(dmg)} урона, равного вашей *защите*."
+        return "Нанести урон, равный вашей *защите*."
+    if t == "stance":
+        name, effect, _ = FIELD_STANCES[op["id"]]
+        return f"*{name}*. {effect} Повтор карты снимает стойку."
+    if t == "ballista_place":
+        return (f"Поставить *баллисту* с {_n(op.get('hp', BALLISTA_HP))} прочности."
+                + (f" Начальный заряд {_n(op['charge'])}." if op.get("charge") else "")
+                + " Положить зарядку и залп наверх колоды.")
+    if t == "ballista_load":
+        return f"При выборе *баллисты* дать ей {_n(n)} заряда."
+    if t == "ballista_fire":
+        return (f"*Баллиста* стреляет по первому врагу на линии. {_n(n or 5)} урона, ещё "
+                f"{_n(op.get('per_charge', 3))} за каждый заряд сверх первого. Тратит все заряды.")
+    if t == "copy_hand":
+        return "Превратиться в *копию* другой карты из руки до конца боя."
+    if t == "trigger_retain":
+        return ("Дважды активировать эффект *сохранения* выбранной карты." if n == 2
+                else "Активировать эффект *сохранения* выбранных карт.")
+    if t == "grant_retain":
+        return ("Дать выбранным картам *сохранение* до конца хода."
+                + (f" Если карта сохранится, её первый розыгрыш в следующем ходу дешевле на {_n(n)}." if n else ""))
+    if t == "retain_rewards":
+        rewards = []
+        if n:
+            rewards.append(f"{_n('+' + str(n))} урона к первой огненной атаке следующего хода")
+        if op.get("block"):
+            rewards.append(f"{_n(op['block'])} защиты перед ходом врагов")
+        return "За каждую карту, сохранённую в конце хода: " + " и ".join(rewards) + "."
+    if t == "create_retain":
+        return (f"*Создать* {_n(n)} случайную карту с *Сохранением*. Карты с рангами создаются на I ранге. "
+                "У Пиромантки созданные карты за энергию стоят столько же *жара*.")
+    if t in ("temper_card", "temper_spirit"):
+        return f"Урон этой карты {_n('+' + str(n))} до конца боя."
+    if t == "next_fire_damage":
+        return f"Первая атака [Огонь] в следующий ход получает {_n('+' + str(n))} к урону."
+    if t == "card_damage_buff":
+        kind = "атака" if op.get("type") == "attack" else "карта"
+        tag = f" [{tag_label(op['tag'])}]" if op.get("tag") else ""
+        delay = op.get("delay", 1)
+        when = "в этот ход" if delay == 0 else "в следующий ход" if delay == 1 else f"через {delay} хода"
+        return f"Первая {kind}{tag} {when} получает {_n('+' + str(n))} к урону."
+    if t == "reduce_burn":
+        return f"Снять {_n(n)} *горения* с героя."
+    if t == "spirit_ignite":
+        return ("*Поджечь* клетку цели и четыре соседние по сторонам."
+                if n else "*Поджечь* клетку цели.")
+    if t == "pull" and op.get("burn_on_move"):
+        return f"*Притянуть* {_n(n)}. При сдвиге наложить {_n(op['burn_on_move'])} *горения*."
+    if t == "note":
+        return op.get("text", "")
+    if t == "plant":
+        name = op.get("plant_name", "растение")
+        grow = op.get("grow_text")
+        return f"Посадить «{name}»" + (f" (рост {_n(grow)})." if grow else ".")
+    if t == "beast":
+        return f"Призвать «{op.get('beast_name', 'зверя')}»."
+    if t == "attach":
+        return f"Привить к карте в руке: «{op.get('attach_name', 'прививка')}»."
+    if t == "fae_ring":
+        return f"Создать *фейное кольцо* на {_n(n or 3)} хода."
+    if t == "blueprint":
+        return f"*Чертёж*: создать {_n(3)} части оружия в руке."
+    if t == "execute_below":
+        return f"*Казнь*: цель ниже {_n(n)}% HP погибает."
+    if t == "discard_hand":
+        return "Сбросить выбранную карту."
+    if t == "damage_nearest":
+        return f"Нанести {_n(n)} урона ближайшему врагу."
+    if t in ("aoe_target", "aoe_center"):
+        return f"Врагам в {_n(op.get('r', 1))} кл.: " + _low(" ".join(_op_phrase(o) for o in op["do"]))
     if op.get("per"):                                       # «за каждую…»
         per = op["per"]
+        if t == "pull":
+            return f"*Притянуть* на {_n(n)}, ещё {_n(per.get('k', 1))} {per_text(per)}."
         word = {"damage": "урона", "block": "*защиты*", "bleed": "*кровотечения*", "burn": "*горения*",
-                "poison": "*яда*", "mark": "*метки*", "heal": "*лечения*", "counter": "*контратаки*"}.get(t, t)
-        verb = {"damage": "Нанести", "block": "Получить", "heal": "Восстановить", "counter": "Получить"}.get(t, "Наложить")
+                "poison": "*яда*", "mark": "*метки*", "heal": "*лечения*", "counter": "*контратаки*",
+                "fae": "*фей*"}.get(t, t)
+        verb = {"damage": "Нанести", "block": "Получить", "heal": "Восстановить", "counter": "Получить",
+                "fae": "Получить"}.get(t, "Наложить")
         shown = _dmg(dmg) if t == "damage" and dmg is not None else _n(n)
         head = f"{verb} {shown} {word}" if n else f"{verb} {word}"
         return f"{head}: {_n('+' + str(per.get('k', 1)))} {per_text(per)}."
@@ -123,6 +264,8 @@ def _op_phrase(op, dmg=None):
             s += f" {_n('+' + str(op['mom_k']))}×*разгон*"
         if op.get("far"):
             s += f"; цель дальше {_n(op['far']['d'])} — ещё {_n('+' + str(op['far']['bonus']))}"
+        if op.get("ignore_shield"):
+            s += " (*щит* цели не спасает)"
         return s + "."
     if t == "block":
         s = f"Получить {_n(n)} *защиты*"
@@ -138,11 +281,20 @@ def _op_phrase(op, dmg=None):
         s = f"Горящие враги в {_n(op.get('r', 4))} кл. получают урон = *горение* ×{_n(n)}."
         return s + (" *Горение* гаснет." if op.get("clear") else "")
     if t == "add_card":
+        if op.get("pool"):
+            if op.get("same"):
+                return f"*Создать* {_n(n)} копии одной случайной карты из набора «{op['pool_name']}»."
+            if op.get("distinct"):
+                first = f" «{op['cname']}» среди них." if op.get("cname") else ""
+                return f"*Создать* {_n(n)} разные карты из набора «{op['pool_name']}»." + first
+            return f"*Создать* {_n(n)} из набора «{op.get('pool_name', 'Случайные карты')}»."
         nm = op.get("cname")
         if nm:
             return f"*Создать* {_n(n)} «{nm}»."
         return f"В руку {_n(n)} " + ("*Стрелу*." if n == 1 else "*Стрелы*.")
     if t == "chain":
+        if not n and op.get("stun"):
+            return f"*Оглушение* {_n(op.get('jumps', 2))} соседних врагов."
         return f"*Молния*: ещё {_n(op.get('jumps', 2))} врагам рядом по {_n(n)} урона."
     if t == "hunt":
         return f"Получить {_n(n)} *преследования*."
@@ -168,8 +320,6 @@ def _op_phrase(op, dmg=None):
         "burn_card": lambda: f"*Изгнать* {_n(n)} " + ("случайную карту из руки." if n == 1 else "случайные карты из руки."),
         "strength_x2": lambda: "Удвоить *мощь*.",
         "double_attacks": lambda: f"Следующие {_n(n)} карты атаки: урон ×2.",
-        "body_slam": lambda: (f"Нанести {_dmg(dmg)} урона, равный вашей *защите*." if dmg is not None
-                               else "Нанести урон, равный вашей *защите*."),
         "collide_x2": lambda: f"*Столкновения* в этот ход {_n('×' + str(n or 2))}.",
         "thorns": lambda: f"*Шипы* {_n(n)} до конца хода.",
         "cleanse": lambda: "Снять *слабость* и *уязвимость*.",
@@ -182,12 +332,18 @@ def _op_phrase(op, dmg=None):
         "focus": lambda: "Следующая дальняя атака {×2}.",
         "burn_all": lambda: f"Всем горящим врагам: ещё {_n('+' + str(n))} *горения*.",
         "scrape": lambda: "Отскрести *тину* — мусор от врагов.",
-        "empower": lambda: f"Следующая карта [{op['tag']}] в этот ход: ещё {_n('+' + str(n))} урона.",
+        "empower": lambda: f"Следующая карта [{tag_label(op['tag'])}] в этот ход: ещё {_n('+' + str(n))} урона.",
         "heat_regen": lambda: f"В начале хода {_n('+' + str(n))} *жар*.",
         "keep_momentum": lambda: "*Разгон* больше не гаснет в конце хода.",
         "momentum": lambda: f"{_n('+' + str(n))} *разгона*.",
+        "fae": lambda: f"{_n('+' + str(n))} *феи*.",
+        "spend_fae": lambda: f"Потратить {_n(n)} *фей*.",
+        "plant": lambda: "*Посадить растение*.",
+        "attach": lambda: "*Привить* к карте.",
         "aoe_adjacent": lambda: "Всем соседним врагам: " + _low(" ".join(_op_phrase(o) for o in op["do"])),
-        "aoe_radius": lambda: f"Врагам в {_n(op['r'])} клетках: " + _low(" ".join(_op_phrase(o) for o in op["do"])),
+        "aoe_radius": lambda: (f"Врагам в {_n(op['r'])} клетках"
+                               + (f" (с порогом — в {_n(op['r_fae']['r'])})" if op.get("r_fae") else "")
+                               + ": " + _low(" ".join(_op_phrase(o) for o in op["do"]))),
     }.get(t, lambda: t)()
 
 
@@ -202,13 +358,16 @@ PER_TEXT = {
     "walked": "за каждую клетку, пройденную в этот ход", "foes_burning": "за каждого горящего врага",
     "foes_bleeding": "за каждого кровоточащего врага", "foes": "за каждого врага",
     "powers": "за каждую сыгранную *Силу*",
+    "fae": "за каждую *фею*",
 }
 
 
 def per_text(per):
     w = per["what"]
     if w.startswith("tag:"):
-        return f"за каждую карту [{w[4:]}], сыгранную до неё в этот ход"
+        return f"за каждую карту [{tag_label(w[4:])}], сыгранную до неё в этот ход"
+    if per.get("div"):
+        return f"за каждые {_n(per['div'])} " + {"fae": "фей"}.get(w, PER_TEXT.get(w, w))
     return PER_TEXT.get(w, w)
 
 
@@ -231,7 +390,7 @@ def power_text(pw):
     if pw.get("on"):
         head = POWER_ON[pw["on"]]
         if pw.get("tag"):
-            head += f" [{pw['tag']}]"
+            head += f" [{tag_label(pw['tag'])}]"
         ops = _low(" ".join(_ops_phrases(pw.get("do", []))))
         out.append(f"{head}: {POWER_AIM.get(pw.get('aim'), '')}{ops}" + (" Раз за ход." if pw.get("once") else ""))
     return " ".join(out)
@@ -244,7 +403,9 @@ COND_NAMES = {"series": "Серия", "after": "Вслед за", "resonance": "
               "poisoned": "По отравленному", "marked": "По помеченному", "wounded": "По раненому",
               "momentum": "Разгон", "shielded": "Под щитом", "hurt": "Сам ранен", "duel": "Один на один",
               "back_wall": "Спиной к стене", "stunned": "По оглушённому", "weakened": "По ослабленному",
-              "guarded": "Цель со щитом", "vulnerable": "По уязвимому", "bleeding": "По кровоточащему"}
+              "guarded": "Цель со щитом", "vulnerable": "По уязвимому", "bleeding": "По кровоточащему",
+              "fae": "Феи", "fae_min": "Феи", "linked_hand": "Связь в руке", "had_lead": "Была скидка",
+              "fae_before": "Феи до карты", "second_fae": "Второе применение"}
 # условия, которым нужна цель (проверяются по цели удара)
 TARGET_CONDS = {"adjacent", "far", "wall", "burning", "wet", "poisoned", "marked", "wounded", "stunned", "weakened",
                 "guarded", "vulnerable", "bleeding"}
@@ -259,10 +420,11 @@ def cond_text(c, lit=False):
     mark = "~" if lit else "*"
     name = " ".join(f"{mark}{w}{mark}" for w in COND_NAMES[k].split())
     if k == "after":
-        return f"{name} [{c['tag']}]"
+        return f"{name} [{tag_label(c['tag'])}]"
     if k == "resonance":
-        return f"{name} {c['tag']} {_n(c['n'])}"
-    if k in ("series", "far", "run", "momentum", "shielded"):
+        return f"{name} {tag_label(c['tag'])} {_n(c['n'])}"
+    if k in ("series", "far", "run", "momentum", "shielded", "fae", "fae_min", "fae_before", "second_fae",
+             "linked_hand"):
         return f"{name} {_n(c['n'])}"
     return name
 
@@ -309,18 +471,23 @@ def phrase(u, exhaust=False, lit=(), preview=None):
         return u.get("say", "")
     do = u.get("do", [])
     preview = list(preview or ())
+    buff_choice = "Усиление герою или *баллисте*. " if can_buff_ballista(u) else ""
     if u.get("power"):                                    # Сила: правило до конца боя
-        return (" ".join(_ops_phrases(do)) + " " if do else "") + power_text(u["power"])
+        return buff_choice + (" ".join(_ops_phrases(do)) + " " if do else "") + power_text(u["power"])
     if [o["op"] for o in do] == ["heat"] and do[0].get("n", 0) > 0 and u["target"] == "self" and not u.get("if"):
         return f"*Раздуть*: {_n(_signed(do[0]['n']))} *жар*."
-    parts = []
+    parts = [buff_choice.strip()] if buff_choice else []
     if u.get("seal"):
         parts.append(f"*Печать* ({cond_text(u['seal'], 'seal' in lit)}).")
     t = u["target"]
     if t == "none" and not do:
         return ""
     if t == "cell_step":
-        parts.append(f"*Шаг* {_n(u.get('step', 1))}.")
+        extra = (f" (+1 за каждые {_n(u['step_fae'])} фей)" if u.get("step_fae") else "")
+        if u.get("step_thr"):
+            extra += f"; с порогом — {_n(u['step_thr'].get('n', 1))}"
+        parts.append((f"Можете сделать *шаг* {_n(u.get('step', 1))}{extra}." if u.get("allow_stay")
+                      else f"*Шаг* {_n(u.get('step', 1))}{extra}."))
     elif t == "cell_dash":
         parts.append(f"*Рывок* по прямой {_n(u.get('dash', 1))}.")
     elif t == "reach":
@@ -328,9 +495,25 @@ def phrase(u, exhaust=False, lit=(), preview=None):
     elif t == "enemy" and u.get("range", 1) > 1:
         parts.append(f"*Дальность* {_n(u['range'])}.")
     elif t == "area":
-        parts.append(f"Область радиус {_n(u.get('radius', 1))}, дальность {_n(u.get('range', 5))}:")
+        rad = f"Область радиус {_n(u.get('radius', 1))}"
+        if u.get("radius_fae"):
+            rad += f" (с порогом — {_n(u['radius_fae'].get('r', 1))})"
+        parts.append(f"{rad}, дальность {_n(u.get('range', 5))}:")
     elif t == "cell_any":
         parts.append(f"Клетка в {_n(u.get('range', 4))}:")
+    elif t == "plant":
+        parts.append(f"Свободная клетка в {_n(u.get('range', 4))}:")
+    elif t == "ballista_place":
+        parts.append(f"Свободная клетка в {_n(u.get('range', 2))} кл.")
+    elif t == "ballista_load":
+        parts.append(f"Герой или баллиста в {_n(u.get('range', 2))} кл.")
+    elif t == "ballista_fire":
+        parts.append(f"Дальность от баллисты {_n(u.get('range', 6))}.")
+    elif t in ("hand_retain", "hand_other", "hand_attach", "hand_link"):
+        count = u.get("count", 1)
+        cards = "другую карту" if count == 1 else f"{_n(count)} другие карты"
+        what = " с *Сохранением*" if t == "hand_retain" else " со *Связью*" if t == "hand_link" else ""
+        parts.append(f"Выберите {cards}{what} в руке.")
     if u.get("line"):
         parts.append("*Только по прямой*.")
     if u.get("pierce"):
@@ -345,6 +528,11 @@ def phrase(u, exhaust=False, lit=(), preview=None):
     return " ".join(parts) or "—"
 
 
+def retain_phrase(d):
+    """Эффект при сохранении карты в конце хода."""
+    return " ".join(_ops_phrases(card_reactions(d, "retained")))
+
+
 def card_extras(d, lit=()):
     """Свойства карты целиком (не применения): Отклик и Задел — строкой под основным текстом."""
     out = []
@@ -352,10 +540,31 @@ def card_extras(d, lit=()):
         out.append("*Авто в конце хода*: не играется вручную.")
     if d.get("grow_end"):
         out.append(f"*Растёт в руке*: +{_n(d['grow_end'].get('n', 1))} урона в конце хода.")
-    if d.get("unique"):
+    if d.get("unique") and not d.get("deck_unique"):
         out.append("*Единственная*.")
-    if d.get("retain"):
-        out.append("*Сохранение*.")
+    if "retain" in card_rules(d):
+        retained = retain_phrase(d)
+        out.append(f"*Сохранение*: {_low(retained)}" if retained else "*Сохранение*.")
+    if "attachment" in {tag_id(t) for t in d.get("tags", ())}:
+        out.append("*Прививка*: прикрепите к карте в руке — она получит *Сохранение*.")
+    if d.get("blueprint"):
+        out.append("*Сборка*: когда все части в руке, оружие собирается само.")
+    if "unactivatable" in card_rules(d):
+        out.append("*Неактивируемая*: срабатывает только по событию.")
+    if "lead" in card_rules(d):
+        out.append("*Наведение*: в начале хода 50% шанс скидки 1; при 6 феях — всегда.")
+    if "initiation" in card_rules(d):
+        out.append("*Инициация*: в начале боя лежит на верху колоды.")
+    if "quietus" in card_rules(d):
+        out.append("*Квиетус*: при сбросе срабатывает и остаётся в Used до конца хода.")
+    if "blessing" in card_rules(d):
+        out.append("*Благословение*: при сбросе даёт защиту, если она ниже 30% HP.")
+    if "ephemeral" in card_rules(d):
+        out.append("*Мимолётная*: если осталась в руке, изгоняется в конце хода.")
+    if "finale" in card_rules(d):
+        out.append("*Финал*: после розыгрыша ход заканчивается.")
+    if "exhaust_2" in card_rules(d):
+        out.append("*Изгнание 2*: после второго розыгрыша карта изгоняется.")
     if d.get("react"):
         out.append("*Реакция*: самому не сыграть.")
     if d.get("echo"):
@@ -388,9 +597,71 @@ def card_extras(d, lit=()):
 
 # ---------- теги: из того, что карта делает ----------
 
-TAG_ORDER = ["Огонь", "Удар", "Выстрел", "Область", "Шаг", "Защита", "Сохранение", "Толчок", "Шипы", "Кровь",
-             "Клич", "Метка", "Преследование", "Яд", "Ловушка", "Создание", "Изгнание", "Комбо", "Резонанс", "Повтор",
-             "Цепочка", "Свиток", "Атака", "Оборона", "Движение", "Проклятие", "Дар", "Призыв", "Хор"]
+TAG_LABELS = {
+    "quietus": "Квиетус",
+    "blessing": "Благословение",
+    "linked": "Связь",
+    "lead": "Наведение",
+    "fae": "Фея",
+    "spell": "Чары",
+    "plant": "Растение",
+    "beast": "Зверь",
+    "attachment": "Прививка",
+    "field": "Поле",
+    "assembly": "Сборка",
+    "fire": "Огонь",
+    "strike": "Удар",
+    "shot": "Выстрел",
+    "area": "Область",
+    "step": "Шаг",
+    "block": "Защита",
+    "retain": "Сохранение",
+    "merge": "Слияние",
+    "push": "Толчок",
+    "thorns": "Шипы",
+    "blood": "Кровь",
+    "shout": "Клич",
+    "mark": "Метка",
+    "pursuit": "Преследование",
+    "poison": "Яд",
+    "trap": "Ловушка",
+    "create": "Создание",
+    "spirit": "Дух",
+    "exhaust": "Изгнание",
+    "combo": "Комбо",
+    "resonance": "Резонанс",
+    "repeat": "Повтор",
+    "chain": "Цепочка",
+    "scroll": "Свиток",
+    "attack": "Атака",
+    "defense": "Оборона",
+    "move": "Движение",
+    "curse": "Проклятие",
+    "gift": "Дар",
+    "summon": "Призыв",
+    "chorus": "Хор",
+    "unique": "Уникальная",
+    "initiation": "Инициация",
+    "exhaust_2": "Изгнание 2",
+    "ephemeral": "Мимолётная",
+    "pulverize": "Дробление",
+    "bullet": "Пуля",
+    "finale": "Финал",
+    "unactivatable": "Неактивируемая",
+}
+TAG_IDS_BY_LABEL = {label: key for key, label in TAG_LABELS.items()}
+
+
+def tag_id(value):
+    """Читать стабильный ID и старую локализованную ссылку на тег."""
+    return TAG_IDS_BY_LABEL.get(value, value)
+
+
+def tag_label(value):
+    return TAG_LABELS.get(value, value)
+
+
+HAND_TARGETS = ("copy_hand", "hand_retain", "hand_other", "hand_attach", "hand_link")
 
 
 def use_tags(u):
@@ -406,54 +677,57 @@ def use_tags(u):
     tags = set()
     dmg = {"damage", "body_slam"} & set(ops)
     if dmg and u.get("ranged"):
-        tags.add("Выстрел")
+        tags.add("shot")
     elif dmg and (t in ("reach",) or (t == "enemy" and u.get("range", 1) <= 1) or "aoe_adjacent" in ops):
-        tags.add("Удар")
+        tags.add("strike")
     if t == "area" or {"aoe_adjacent", "aoe_radius", "detonate"} & set(ops):
-        tags.add("Область")
+        tags.add("area")
     if "hunt" in ops:
-        tags.add("Преследование")
-    if {"burn", "ignite", "detonate", "heat", "burn_all"} & set(ops):
-        tags.add("Огонь")
+        tags.add("pursuit")
+    if {"burn", "ignite", "detonate", "heat", "burn_all", "spirit_ignite", "reduce_burn"} & set(ops) or any(
+            o.get("burn_on_move") for o in u.get("do", [])):
+        tags.add("fire")
     if t in ("cell_step", "cell_dash", "reach") or "retreat" in ops:
-        tags.add("Шаг")
+        tags.add("step")
     if "block" in ops:
-        tags.add("Защита")
+        tags.add("block")
     if {"push", "pull", "collide_x2"} & set(ops):
-        tags.add("Толчок")
+        tags.add("push")
     if {"thorns", "counter"} & set(ops):
-        tags.add("Шипы")
+        tags.add("thorns")
     if {"lose_hp", "rage", "bleed"} & set(ops):
-        tags.add("Кровь")
-    if "add_card" in ops:
-        tags.add("Создание")
+        tags.add("blood")
+    if "add_card" in ops or "create_retain" in ops:
+        tags.add("create")
     if "burn_card" in ops:
-        tags.add("Изгнание")
+        tags.add("exhaust")
     if {"strength", "empower", "strength_x2"} & set(ops) or any(o["op"] == "aoe_radius" and {x["op"] for x in o["do"]} &
                                                   {"weak", "vulnerable"} for o in u.get("do", [])):
-        tags.add("Клич")
+        tags.add("shout")
     if "mark" in ops:
-        tags.add("Метка")
+        tags.add("mark")
     if "poison" in ops:
-        tags.add("Яд")
+        tags.add("poison")
     if {"trap", "root"} & set(ops):
-        tags.add("Ловушка")
+        tags.add("trap")
     if {"weak", "vulnerable"} & set(ops):
-        tags.add("Клич")
+        tags.add("shout")
     if {"ranged_bonus", "focus"} & set(ops):
-        tags.add("Выстрел")
+        tags.add("shot")
     if "heat_regen" in ops:
-        tags.add("Огонь")
+        tags.add("fire")
     if "summon" in ops:
-        tags.add("Призыв")
+        tags.add("summon")
     conds = [c.get("when", {}) for c in u.get("if", []) if isinstance(c, dict)]
+    if any(c.get("k") in ("fae", "fae_min") for c in conds) or {"fae", "spend_fae"} & set(ops):
+        tags.add("fae")
     if any(c.get("repeat") for c in u.get("if", []) if isinstance(c, dict)) or any(
             c.get("k") in ("series", "first", "allin") for c in conds):
-        tags.add("Комбо")
+        tags.add("combo")
     if any(c.get("k") == "resonance" for c in conds) or (u.get("seal") or {}).get("k") == "resonance":
-        tags.add("Резонанс")
+        tags.add("resonance")
     if any(c.get("repeat") for c in u.get("if", []) if isinstance(c, dict)):
-        tags.add("Повтор")
+        tags.add("repeat")
     return tags
 
 
@@ -461,42 +735,50 @@ MEANING_TAGS = {"attack": "Атака", "defense": "Оборона", "move": "Д
                 "gift": "Дар", "summon": "Призыв"}
 
 
-def card_tags(d):
+def card_tag_ids(d):
     """Теги карты: по основному применению (у карт с уровнями — по всем уровням) + заданные вручную."""
-    tags = set(d.get("tags", []))
+    tags = {tag_id(t) for t in d.get("tags", [])}
+    if d.get("deck_unique"):
+        tags.add("unique")
     if d.get("meaning"):
-        tags.add("Свиток")
-        tags.add(MEANING_TAGS.get(d["meaning"], d["meaning"]))
+        tags.add("scroll")
+        tags.add(d["meaning"])
         if d["meaning"] == "summon":
-            tags.add("Призыв")
+            tags.add("summon")
     for a in d.get("acts", []):
         if a.get("m") in MEANING_TAGS:
-            tags.add(MEANING_TAGS[a["m"]])
+            tags.add(a["m"])
     if d.get("chorus") or d.get("then") or d.get("double"):
-        tags.add("Хор")
+        tags.add("chorus")
     uses = [L["main"] for L in d.get("levels", [])] or [d["main"]]
     uses = uses + [{"target": "enemy", "range": 1, "do": u["power"].get("do", [])} for u in uses if u.get("power")]
     if (d.get("echo") or {}).get("do"):                     # реакция: теги — по тому, что делает отклик
         uses = uses + [{"target": "enemy", "range": 1, "do": d["echo"]["do"]}]
     for u in uses:
         tags |= use_tags(u)
-    if d.get("element") == "fire" or any("Огонь" in use_tags(u) for u in uses):
-        tags.add("Огонь")
-    if d.get("retain"):
-        tags.add("Сохранение")
+    if d.get("element") == "fire":
+        tags.add("fire")
+    tags.update(card_rules(d))
     if d.get("exhaust") or any(u.get("exhaust") for u in uses):
-        tags.add("Изгнание")
+        tags.add("exhaust")
     if (d.get("echo") or {}).get("when", {}).get("k") == "resonance":
-        tags.add("Резонанс")
+        tags.add("resonance")
     if d.get("chain"):
-        tags.add("Цепочка")
+        tags.add("chain")
         if (d["chain"].get("when") or {}).get("k") == "resonance":
-            tags.add("Резонанс")
-    return [t for t in TAG_ORDER if t in tags] + sorted(tags - set(TAG_ORDER))
+            tags.add("resonance")
+    return tuple(t for t in TAG_LABELS if t in tags) + tuple(sorted(tags - TAG_LABELS.keys()))
+
+
+def card_tags(d):
+    return [tag_label(t) for t in card_tag_ids(d)]
 
 
 # основа слова → (название, пояснение); порядок важен: первое совпадение по началу слова
-GLOSSARY = [
+GLOSSARY = [(name.lower(), name, effect + " " + STANCE_SWITCH) for name, effect, _ in FIELD_STANCES.values()] + [
+    ("баллист", "Баллиста", f"Получает заряд в начале каждого хода игрока, максимум {BALLISTA_CHARGES}. "
+                            "Занимает клетку и принимает урон от вражеских зон. Пока она стоит, карта установки "
+                            "ждёт в сбросе, а бесплатные зарядка и залп ходят по стопкам. При разрушении команды исчезают."),
     ("кровотеч", "Кровотечение", "В начале хода носителя: урон по числу стаков мимо защиты, затем стаков вдвое "
                                  "меньше. Копите и вскрывайте картами «за каждое кровотечение»."),
     ("контратак", "Контратака", "Стаки: враг ударил вас вплотную — вы сразу отвечаете ударом 4 (+Мощь), стак "
@@ -504,6 +786,9 @@ GLOSSARY = [
     ("мощ", "Мощь", "+N к урону каждого удара до конца боя. Копится."),
     ("изгна", "Изгнание", "После розыгрыша карта уходит до конца боя. Изгнанные карты считают некоторые Силы."),
     ("сохранени", "Сохранение", "Карта не сбрасывается в конце хода — остаётся в руке."),
+    ("уникальн", "Уникальная", "Один экземпляр в колоде забега."),
+    ("копи", "Копия карты", "Слепок принимает свойства выбранной карты из руки на весь бой, включая прозрение и дар. "
+                            "Для превращения подходят карты другого вида."),
     ("единственн", "Единственная", "В руке может быть только одна такая карта: вторая при доборе уходит под низ "
                                    "колоды."),
     ("созда", "Создать", "Временные карты в руку: играются как обычные, после розыгрыша — Изгнание; в колоду не "
@@ -599,6 +884,7 @@ TAG_INFO = {
     "Выстрел": "Дальний урон (стрелы, болты).",
     "Область": "Урон или эффект по области: несколько клеток или соседние враги.",
     "Сохранение": "Карта остаётся в руке в конце хода.",
+    "Слияние": "Два одинаковых духа одного ранга в руке сливаются в духа следующего ранга. Предел — III.",
     "Преследование": "Запас преследования: карта [Преследование] после удара делает дополнительный выстрел по той же цели.",
     "Огонь": "Горение, поджог, жар Пиромантки.",
     "Шаг": "Карта двигает героя: шаг, рывок, подход, отскок.",
@@ -607,6 +893,7 @@ TAG_INFO = {
     "Шипы": "Ответный урон тем, кто бьёт вплотную: шипы и контратака.",
     "Кровь": "Кровотечение врагов, плата здоровьем, сила от ран.",
     "Создание": "Карта создаёт временные карты в руку.",
+    "Дух": "Созданный в бою дух или элементаль. Карты Пиромантки могут учитывать разыгранных духов.",
     "Изгнание": "Карта изгоняет карты из руки (Силы «при изгнании» это ценят).",
     "Клич": "Сила себе, слабость и уязвимость врагам.",
     "Метка": "Метка: следующий удар по цели сильнее.",
@@ -744,8 +1031,10 @@ def created_ids(d):
 
     def scan(x):
         if isinstance(x, dict):
-            if x.get("op") == "add_card" and x.get("card") and x["card"] not in out:
-                out.append(x["card"])
+            if x.get("op") == "add_card":
+                for cid in x.get("pool") or (x.get("card"),):
+                    if cid and cid not in out:
+                        out.append(cid)
             for v in x.values():
                 scan(v)
         elif isinstance(x, list):
@@ -768,7 +1057,7 @@ def _bump(ops, k=1):
 def alt_options(d, hero=None):
     """Три улучшения простого применения карты: [(подпись, новое простое)]. Пусто — улучшать нечего (свитки
     Жреца, временные карты). Карте без простого Мастерская его даёт."""
-    if d.get("meaning") or d.get("token") or d.get("status"):
+    if d.get("meaning") or d.get("token") or d.get("status") or (d.get("main") or {}).get("target") == "copy_hand":
         return []
     a = d.get("alt") or NOALT
     t = a.get("target", "none")
@@ -828,16 +1117,41 @@ class Card:
         self.ready = bool(insight_ready) # прозрение выпало и ждёт выбора
         self.insight_misses = int(insight_misses)  # неудачи после прошлого прозрения
         self._lvl = None                 # Пиромантка: выбранный уровень карты (за сколько жара); None — сам
+        self._spirit_rank = 1            # духи начинают бой с ранга I
         self._d = None
         self.divine = None               # дар бога (data/deck/gods.json) — поверх прозрения
         self._offer = None               # какие 3 варианта прозрения из 5 предложены (выбираются один раз)
         self.alt_up = None               # Мастерская: улучшенное простое применение (одно на карту)
         self.preview = None              # бой: {"main": [реальный урон…], "alt": […]}; вне боя — None
+        self.preview_cost = None
+        self.heat_payment = False
+        self._linked_spent = False
+        self._temporary_rules = frozenset()
 
     def preview_key(self):
         """Хэшируемый снимок preview для кэшей лиц карт."""
         p = self.preview or {}
-        return tuple((mode, tuple(v or ())) for mode, v in sorted(p.items()))
+        return self.preview_cost, self.heat_payment, self.linked_spent, self.temporary_rules, tuple(
+            (mode, tuple(v or ())) for mode, v in sorted(p.items()))
+
+    @property
+    def temporary_rules(self):
+        return self._temporary_rules
+
+    @temporary_rules.setter
+    def temporary_rules(self, value):
+        self._temporary_rules = frozenset(value)
+        self._d = None
+
+    @property
+    def linked_spent(self):
+        return self._linked_spent
+
+    @linked_spent.setter
+    def linked_spent(self, value):
+        if self._linked_spent != value:
+            self._linked_spent = value
+            self._d = None
 
     @property
     def d(self):
@@ -846,6 +1160,13 @@ class Card:
             d = self.base
             for tier, k in enumerate(self.picks):
                 d = _merge(d, self.base["growth"][tier]["options"][k])
+            if ranks := card_ranks(d):
+                rank = ranks[self.rank - 1]
+                ill = d.get("spirit_ill", {}).get(self.spirit_rank, d.get("ill"))
+                reactions = {**d.get("reactions", {}), **rank.get("reactions", {})}
+                d = dict(d, main=rank.get("main", d["main"]), reactions=reactions, ill=ill)
+                if "retain_do" in rank:
+                    d["retain_do"] = rank["retain_do"]
             if self.divine:
                 d = bless(d, self.divine)
             if d.get("levels"):
@@ -855,12 +1176,20 @@ class Card:
                 d = dict(d, alt=NOALT)
             if self.alt_up is not None:
                 d = dict(d, alt=self.alt_up)
+            if self.linked_spent:
+                d = dict(d, rules=[rule for rule in d.get("rules", ()) if rule != "linked"])
+            if self.temporary_rules:
+                d = dict(d, rules=[*d.get("rules", ()), *sorted(self.temporary_rules)])
             self._d = d
         return self._d
 
     @property
     def tags(self):
-        return card_tags(self.d if not self.levels else dict(self.d, levels=self.levels))
+        return [tag_label(t) for t in self.tag_ids]
+
+    @property
+    def tag_ids(self):
+        return card_tag_ids(self.d)
 
     @property
     def levels(self):
@@ -883,20 +1212,46 @@ class Card:
             self._d = None
 
     @property
+    def rank(self):
+        return self._spirit_rank
+
+    @rank.setter
+    def rank(self, value):
+        rank = max(1, min(value, len(card_ranks(self.base))))
+        if rank != self._spirit_rank:
+            self._spirit_rank = rank
+            self._d = None
+
+    spirit_rank = rank
+
+    @property
+    def spirit_rank_name(self):
+        if not card_ranks(self.base):
+            return ""
+        return SPIRIT_ROMAN[self.rank - 1] if self.rank <= len(SPIRIT_ROMAN) else str(self.rank)
+
+    @property
     def tier(self):
         return len(self.picks)
 
     @property
     def name(self):
-        return self.d["name"] + ("+" * self.tier if self.d["name"] == self.base["name"] else "")
+        name = self.d["name"] + ("+" * self.tier if self.d["name"] == self.base["name"] else "")
+        return f"{name} {self.spirit_rank_name}" if self.spirit_rank_name else name
 
     @property
     def cost(self):
         return self.d["cost"]
 
     @property
+    def uses_heat(self):
+        return self.heat_payment or bool(self.levels)
+
+    @property
     def cost_label(self):
-        return "X" if self.d.get("x_cost") else self.cost
+        if self.d.get("x_cost"):
+            return "X"
+        return self.cost if self.preview_cost is None else self.preview_cost
 
     @property
     def rarity(self):
@@ -986,7 +1341,7 @@ class Card:
 # ---------- стартовая колода ----------
 
 def hero_prefix(hero_id):
-    return {"merc": "m_", "hunter": "h_", "pyro": "p_", "priest": "sc_"}.get(hero_id, "")
+    return {"merc": "m_", "hunter": "h_", "pyro": "p_", "priest": "sc_", "elf": "e_"}.get(hero_id, "")
 
 
 def basic_starter(data, hero_id):
@@ -1017,6 +1372,10 @@ def tier1_pool(data, hero_id):
     return out
 
 
+def deck_limit_reached(cid, defs, deck_ids):
+    return bool(defs.get(cid, {}).get("deck_unique") and cid in deck_ids)
+
+
 # ---------- забег ----------
 
 class Run:
@@ -1039,6 +1398,7 @@ class Run:
         if not chosen:
             chosen = (h.get("starter_by_variant") or {}).get(self.variant) or h["starter"]
         self.deck = [Card(cid, self.defs) for cid in chosen]
+        self.normalize_ballista_deck()
         self.fight = 0                   # сколько боёв выиграно
         self.result = None
         fl = self.data["enemies"]["floor"]
@@ -1052,6 +1412,23 @@ class Run:
         self.god_pending = []            # Жрец: новые уровни, ветка выбирается после боя — [(бог, уровень)]
         self.relics = []                 # реликвии (data/deck/relics.json) — словари с id
         self.next_floor()
+
+    def normalize_ballista_deck(self):
+        """Старые карты команд заменяет установка, повторные установки убирает."""
+        replace = (self.hero_id == "hunter" and BALLISTA_CARD in self.defs
+                   and not any(c.cid == BALLISTA_CARD for c in self.deck))
+        deck = []
+        seen = set()
+        for card in self.deck:
+            if card.cid in BALLISTA_COMMANDS:
+                if not replace:
+                    continue
+                card = Card(BALLISTA_CARD, self.defs)
+                replace = False
+            if not deck_limit_reached(card.cid, self.defs, seen):
+                deck.append(card)
+                seen.add(card.cid)
+        self.deck = deck
 
     @property
     def fights(self):
@@ -1111,6 +1488,12 @@ class Run:
         weights = OFFER_WEIGHTS.get(source, OFFER_WEIGHTS["chest"])
         pool = [dict(r, id=rid) for rid, r in self.data["relics"]["relics"].items()
                 if rid not in have and fits(r, self.hero_id) and r.get("rarity", "common") in weights]
+        required = {r["needs_tag"] for r in pool if r.get("needs_tag")}
+        if required:
+            available = required.intersection(tag for c in self.deck for tag in c.tag_ids)
+            available.update(required.intersection(tag for d in self.defs.values() for tag in card_tag_ids(d)))
+            pool = [r for r in pool if not r.get("needs_tag") or r["needs_tag"] in available
+                    or r.get("alternative_relic") in have]
         out = []
         while pool and len(out) < n:
             rar = self.rng.choices(list(weights), list(weights.values()))[0]
@@ -1141,7 +1524,8 @@ class Run:
 
     def rewardable(self, cid):
         d = self.defs.get(cid)
-        return bool(d) and d.get("category") not in ("basic", "token") and d.get("rarity", 1) > 0
+        return (bool(d) and d.get("category") not in ("basic", "token") and d.get("rarity", 1) > 0
+                and not deck_limit_reached(cid, self.defs, (c.cid for c in self.deck)))
 
     def weighted_pick(self, pool):
         pool = [cid for cid in pool if self.rewardable(cid)]
@@ -1194,7 +1578,10 @@ class Run:
         return [Card(cid, self.defs) for cid in picks]
 
     def take(self, card):
+        if deck_limit_reached(card.cid, self.defs, (c.cid for c in self.deck)):
+            return False
         self.deck.append(card)
+        return True
 
     def insights(self):
         return [c for c in self.deck if c.insight_ready()]

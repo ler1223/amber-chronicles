@@ -35,3 +35,33 @@ def test_atlas_filters_and_esc_returns():
     assert all(atlas._owner(c) == "priest" for c in atlas.filtered())
     atlas.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
     assert not isinstance(g.scene, CardAtlasScreen)
+
+
+def test_item_atlas_lists_all_relics_and_can_select_the_last_entry():
+    g = DescentGame(seed=2, gd=ED)
+    back = g.scene
+    g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_F2))
+    atlas = g.scene
+    g.draw(SCREEN)
+    item_tab = next(r for r, key, _ in atlas.tab_rects if key == "items")
+    g.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=item_tab.center))
+    assert atlas.tab == "items"
+    g.draw(SCREEN)
+
+    page = atlas.item_page
+    assert {item["id"] for item in page.filtered()} == set(g.data["relics"]["relics"])
+    g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_END))
+    g.update(1)
+    g.draw(SCREEN)
+    rect, last = page.entries[-1]
+    assert last is page.items[-1]
+    g.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=rect.center))
+    assert page.selected is last and last["about"]
+    g.draw(SCREEN)
+
+    rare = next(r for r, key, _ in page.filters if key == "rare")
+    g.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=rare.center))
+    assert page.filtered() and all(item["rarity"] == "rare" for item in page.filtered())
+    assert page.selected in page.filtered() and page.scroll == 0
+    g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
+    assert g.scene is back

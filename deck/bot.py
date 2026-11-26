@@ -2,7 +2,8 @@
 закрывается от ожидаемого урона, добирает простыми действиями."""
 from sim.grid import cheb
 
-from .battle import finish
+from .battle import BallistaShot, finish
+from .model import BALLISTA_CARD
 
 
 def incoming(b):
@@ -14,7 +15,9 @@ def danger_cells(b):
     out = set()
     for u in b.foes():
         it = u.intent or {}
-        if it.get("kind") in ("zone", "charge"):                 # зоны и линии рывка
+        if it.get("kind") == "zone":
+            out.update(b.zone_hit_cells(it))
+        elif it.get("kind") == "charge":                     # линии рывка
             out |= set(it["cells"])
     e = getattr(b, "env_now", None)
     if e and e.get("kind") == "lava_rain":                       # лава с потолка
@@ -27,7 +30,7 @@ def ops(card, mode):
 
 
 def deals(card, mode):
-    return any(o in ("damage", "body_slam", "aoe_adjacent") for o in ops(card, mode))
+    return any(o in ("damage", "body_slam", "aoe_adjacent", "ballista_fire") for o in ops(card, mode))
 
 
 def best_target(b, card, mode, ts):
@@ -36,12 +39,26 @@ def best_target(b, card, mode, ts):
     if u["target"] == "area":
         r = u.get("radius", 1)
         return max(ts, key=lambda p: sum(1 for f in b.foes() if cheb(f.cell, p) <= r))
+    if u["target"] == "ballista_fire":
+        op = next(op for op in u["do"] if op["op"] == "ballista_fire")
+        shots = [BallistaShot(ballista, foe) for foe in ts for ballista in b.ballista_shooters(foe, u.get("range", 6))]
+        return max(shots, key=lambda shot: min(shot.victim.hp + shot.victim.shield,
+                                                b.ballista_damage(op, shot.victim, shot.ballista)))
     return min(ts, key=lambda t: getattr(t, "hp", 0))
 
 
 def area_hits(b, card, mode, p):
     r = card.d[mode].get("radius", 1)
     return sum(1 for f in b.foes() if cheb(f.cell, p) <= r)
+
+
+def block_target(b, card):
+    if "block" not in ops(card, "main"):
+        return None
+    targets = b.targets(card, "main")
+    if card.d["main"]["target"] == "ballista_load" and targets:
+        return targets[-1]                                 # защититься и одновременно зарядить
+    return b.hero if b.hero in targets else None
 
 
 def threat(b, p):
@@ -121,6 +138,20 @@ def step_once(b):
     foes = b.foes()
     if not foes:
         return False
+    for c in hand:
+        use = c.d["main"]
+        if use["target"] == "copy_hand":
+            options = [target for target in b.targets(c, "main") if not target.d.get("status")]
+            if options:
+                target = max(options, key=lambda x: (x.cid == BALLISTA_CARD, x.cost))
+                finish(b.play(c, "main", target))
+                return True
+        elif use["target"] in ("hand_retain", "hand_other"):
+            options = b.targets(c, "main")
+            if options:
+                count = use.get("count", 1)
+                finish(b.play(c, "main", tuple(options[:count]) if count > 1 else options[0]))
+                return True
     for c in hand:                                            # 1б. Силы до конца боя — сразу
         if c.d["main"].get("power") and b.targets(c, "main"):
             finish(b.play(c, "main", h))
@@ -134,8 +165,9 @@ def step_once(b):
                 return True
     if incoming(b) - h.shield >= 6:                           # 2б. больно — сперва закрыться
         for c in hand:
-            if "block" in ops(c, "main") and c.d["main"]["target"] == "self" and b.targets(c, "main"):
-                finish(b.play(c, "main", h))
+            t = block_target(b, c)
+            if t is not None:
+                finish(b.play(c, "main", t))
                 return True
     best = None
     for c in hand:                                            # 2. урон основным применением
@@ -154,8 +186,25 @@ def step_once(b):
         return True
     if incoming(b) > h.shield:                                # 3. защита основным
         for c in hand:
-            if "block" in ops(c, "main") and b.targets(c, "main"):
-                finish(b.play(c, "main", h))
+            t = block_target(b, c)
+            if t is not None:
+                finish(b.play(c, "main", t))
+                return True
+    for c in hand:                                            # установка с прострелом, зарядка к следующему залпу
+        t = c.d["main"]["target"]
+        if t == "ballista_place":
+            positions = b.targets(c, "main")
+            shots = {p: sum(victim is not None for _, victim in b.ballista_lines(origin=p)) for p in positions}
+            if any(shots.values()):
+                pos = max((p for p in positions if shots[p]), key=lambda p: (p not in zone, shots[p], -cheb(p, h.cell)))
+                finish(b.play(c, "main", pos))
+                return True
+        elif t == "ballista_load":
+            units = b.targets(c, "main")[1:]
+            target = next((unit for unit in units if any(
+                victim is not None for _, victim in b.ballista_lines(ballista=unit))), None)
+            if target is not None:
+                finish(b.play(c, "main", target))
                 return True
     if b.energy <= 0 and any(cheb(f.cell, h.cell) <= 1 for f in foes):   # 4а. всё сыграно, враг рядом — отойти
         for c in hand:

@@ -7,27 +7,43 @@
 """
 import copy
 import random
+from dataclasses import dataclass
 
 from sim.combat import ENEMY, PLAYER, Combat
 from sim.grid import DIRS8, cheb, sign
+from sim.unit import Unit
 
 from . import model as M
+from .model import BALLISTA_CHARGES, BALLISTA_HP
 from .idols import IdolCast, Idols
+from .fae import FaeGarden
 from .items import Items
+from .relic_run import RunRelics
+from .relic_hand import HandRelics
+from .relic_board import BoardRelics
 
 
 WAIT = ("wait", 0.0)
 IMPACT = ("impact", 0.0)     # экран: проиграть выпущенный эффект и ждать попадания — урон применится после
 STEP_T = 0.2                     # длительность шага фигурки (по прямой; разгон и торможение — вдвое дольше)
 COLLIDE = 3                      # урон столкновения за каждую невыполненную клетку толчка
+BALLISTA_DIRS = ((1, 0), (0, 1), (-1, 0), (0, -1))
 ONCE = {"burn_all", "block", "heat", "draw", "energy", "heal", "lose_hp", "strength", "collide_x2", "thorns", "cleanse", "rage",
         "keep_momentum", "momentum", "ranged_bonus", "focus", "heat_regen", "add_card", "ignite", "trap", "detonate",
-        "counter", "burn_card", "strength_x2", "fort", "double_next", "next_energy", "next_draw", "add_random", "resource"}
+        "counter", "burn_card", "strength_x2", "fort", "double_next", "next_energy", "next_draw", "add_random", "resource",
+        "fae", "spend_fae", "plant", "beast", "attach", "fae_ring", "blueprint",
+        "stance"}
 HAND_MAX = 10
 COUNTER = 4                      # Контратака: ответный удар (+ Мощь)
 ADVANCE = {"block", "guard", "rally", "roar", "summon", "curse", "hex", "drown", "heal", "veil"}   # и шагают
 PRIEST_HAND = 5                  # Жрец: несыгранные свитки остаются в руке — до 5 (карты «толстые»)
 PRIEST_WALK = 3                  # Жрец: шагов за ход (сам он только ходит)
+
+
+@dataclass(frozen=True)
+class BallistaShot:
+    ballista: Unit
+    victim: Unit
 
 
 def finish(gen):
@@ -91,43 +107,59 @@ class Battle:
         self.hand_size = self.hero_def.get("hand", 5) if hasattr(self, "hero_def") else 5
         self.enemy_phase = False
         self.traps = {}                                   # клетка -> урон капкана Охотницы
+        self._ballistas = []
         self.prey = None                                  # Охотница «Метка добычи»
         if self.mech == "heat":
             self.hero.ds["heat"] = self.hero_def.get("heat_start", 2)
+        if self.mech == "fae":
+            self.hero.ds["fae"] = 0
         if self.mech == "hunter" and self.variant == "mark":
             self.mark_prey()
-        self.draw_pile = list(run.deck)
+        self.draw_pile = [card for card in run.deck if card.cid not in M.BALLISTA_COMMANDS]
         self.rng.shuffle(self.draw_pile)
         self.hand, self.used, self.discard, self.exhaust = [], [], [], []
         self.turn = 0
+        self.retained_card_discounts = {}
+        self.lead_discounts = set()
         self.result = None
         self.log = []
         self.collide_k = 1
         self.played = 0                                   # основных розыгрышей за ход (синергии)
         self.turn_tags = []                               # теги сыгранных основным за ход — по порядку
         self.walked = 0                                   # клеток героем за ход (С разбега)
+        self.stance = None
+        self.stance_uses = set()                          # сработавшие в этот ход бонусы стоек
         self.echoed = set()                               # Отклик/Цепочка: какие карты уже сработали в этот ход
         self._free_cast = False                           # Цепочка: карта играется без стоимости
         self.chain_drawn = 0                              # Цепная реакция Охотницы: добор за цепочки
         self.queue = []                                   # события для Отклика: (вид, юнит)
         self.guard = []                                   # карты, ждущие в руке ход врага (отклик на события)
-        self.empower = {}                                 # «Следующая карта [Тег]»: бонус урона
         self.temper = {}                                  # Закалка: uid карты → прибавка до конца боя
+        self.exhaust_plays = {}
+        self.finale_pending = False
         self._mom = None                                  # разгон на момент розыгрыша (для условия «Разгон N»)
         self.zone_fx = None
         self.env = dict(fight.get("env") or {})              # природа боя: ветер / лавовый дождь (умеренно)
         self.env_now = None                                   # что природа сделает в этот ход врагов
         self.items = Items(self)                              # предметы забега (data/deck/relics.json, deck/items.py)
+        self.run_relics = RunRelics(self)
+        self.hand_relics = HandRelics(self)
+        self.board_relics = BoardRelics(self)
         self.double_next = False                              # предмет: следующая атака — двойной урон
         self.next_energy = self.next_draw = 0                 # предмет: прибавка к следующему ходу
         self.pending_discard = 0                              # Адажио: сколько карт игрок должен выбрать для сброса
+        self.temporary_retain = {}
         self.double_attacks = 0                               # улучшение: сколько атак ещё удвоить
         self.powers = []                                      # сыгранные карты-Силы: действуют до конца боя
+        self.ballista_power_targets = {}                     # uid Силы → выбранная установка
         self.powered = set()                                  # (uid Силы, ход, событие) — у Сил «раз за ход»
+        self.garden = FaeGarden(self) if self.mech == "fae" else None   # Эльф: феи, растения, звери, прививки
         self.idols = Idols(self) if self.mech == "idols" else None    # Жрец: статуи богов падают на поле
         self.walk_max = PRIEST_WALK if self.idols else 0
         self.walk_left = 0
         self.battle_start_mods()
+        self.draw_pile.sort(key=lambda card: "initiation" in M.card_rules(card.d))
+        self.run_relics.prepare_pile()
         self.start_player_turn_now()
         finish(self.items.fire("battle"))
         finish(self.react())
@@ -178,7 +210,7 @@ class Battle:
         u.ds = {"burn": 0, "poison": 0, "frost": 0, "wet": 0, "weak": 0, "vulnerable": 0, "stun": False,
                 "strength": 0, "thorns": 0, "mark": 0, "aim": 1, "rage": 0, "root": 0,
                 "momentum": 0, "keep_mom": False, "heat": 0, "heat_regen": 0, "ranged_bonus": 0, "focus": False,
-                "veil": 0, "hex": 0, "fort": 0, "bleed": 0, "counter": 0, "hunt": 0}
+                "veil": 0, "hex": 0, "fort": 0, "bleed": 0, "counter": 0, "hunt": 0, "fae": 0}
         u.phase = 0                                           # фаза босса (0 — первая)
         u.eid = eid
         u.edef = d if eid else None
@@ -238,6 +270,56 @@ class Battle:
         self.log.append((text, col))
         self.log = self.log[-40:]
 
+    def set_stance(self, stance):
+        self.stance = stance
+
+    def attacks_locked(self, card):
+        return self.stance == "guard" and card.d.get("type") == "attack"
+
+    def shield_value(self, u, n):
+        """Размер следующего начисления защиты, без расходования бонусов стойки."""
+        if u is not self.hero or n <= 0:
+            return n
+        if self.stance == "guard":
+            return (3 * n + 1) // 2
+        if self.stance == "ready" and "ready" not in self.stance_uses:
+            return n + 2
+        return n
+
+    def gain_shield(self, u, n):
+        gained = self.shield_value(u, n)
+        if u is self.hero and n > 0 and self.stance == "ready":
+            self.stance_uses.add("ready")
+        u.shield += gained
+        self.c.emit("shield", unit=u, amount=gained)
+
+    def gain_fae(self, n):
+        """Феи 0–10; всё сверх десяти сразу становится защитой."""
+        if n <= 0:
+            return 0
+        h = self.hero
+        before = h.ds.get("fae", 0)
+        total = before + n
+        h.ds["fae"] = min(10, total)
+        if total > 10:
+            self.gain_shield(h, total - 10)
+        self.say(f"Феи: {h.ds['fae']}/10", (180, 235, 190))
+        self.fx("status", unit=h, what="fae")
+        return h.ds["fae"] - before
+
+    def spend_fae(self, n, tgt=None):
+        """Потратить до n фей. Порог/Корона проверяют фактическую трату."""
+        h = self.hero
+        before = h.ds.get("fae", 0)
+        spent = min(max(0, n), before)
+        h.ds["fae"] = before - spent
+        if spent:
+            self.say(f"Феи: {h.ds['fae']}/10 (−{spent})", (200, 230, 170))
+            self.fx("status", unit=h, what="fae")
+            if self.garden is not None:
+                self.garden.on_spend(spent, tgt, before=before)
+        return spent
+
     # ---------- поле ----------
 
     def free(self, p, exclude=None):
@@ -249,6 +331,8 @@ class Battle:
 
     def paths(self, u, limit):
         """Клетки, куда u дойдёт за limit шагов: {клетка: путь}."""
+        if u is self.hero and not self.enemy_phase and self.stance == "knight":
+            return {u.cell: [], **self.knight_paths(limit)}
         out = {u.cell: []}
         frontier = [u.cell]
         for _ in range(limit):
@@ -262,21 +346,187 @@ class Battle:
             frontier = nxt
         return out
 
+    def knight_paths(self, limit):
+        """Прыжок расходует одно действие движения и касается только клетки приземления."""
+        if limit <= 0:
+            return {}
+        h = self.hero
+        x, y = h.cell
+        destinations = [(x + sx * dx, y + sy * dy)
+                        for dx, dy in ((1, 2), (2, 1)) for sx, sy in ((1, 1), (-1, 1), (1, -1), (-1, -1))]
+        return {p: [p] for p in destinations if self.free(p, exclude=h)}
+
+    def dash_paths(self, limit):
+        """Траектории рывка для прицела и розыгрыша карты."""
+        h = self.hero
+        if self.stance == "knight" and not self.enemy_phase:
+            return self.knight_paths(limit)
+        out = {}
+        for dx, dy in DIRS8:
+            p = h.cell
+            path = []
+            for _ in range(limit):
+                q = (p[0] + dx, p[1] + dy)
+                if not self.free(q, exclude=h):
+                    break
+                if dx and dy and not (self.free((p[0] + dx, p[1])) and self.free((p[0], p[1] + dy))):
+                    break
+                path.append(q)
+                out[q] = list(path)
+                p = q
+        return out
+
     def los(self, a, b):
+        blockers = {u.cell for u in self.ballistas}
+        if self.garden is not None:
+            blockers |= {u.cell for u in self.garden.walls if u.alive and getattr(u, "blocks_los", False)}
         for p in bresenham(a, b)[1:-1]:
             cell = self.c.grid.get(p)
-            if cell is not None and not cell.passable and cell.cover == "full":
+            if p in blockers or (cell is not None and not cell.passable and cell.cover == "full"):
                 return False
         return True
+
+    @property
+    def ballista(self):
+        return next((unit for unit in self._ballistas if unit.alive), None)
+
+    @property
+    def ballistas(self):
+        return [unit for unit in self._ballistas if unit.alive]
+
+    def ballista_locked(self, card):
+        if card is not None and card.cid != M.BALLISTA_CARD:
+            return False
+        if getattr(card, "copied", False):
+            return any(unit.ballista_card_uid == card.uid for unit in self.ballistas)
+        return any(not unit.ballista_copied for unit in self.ballistas)
+
+    def ballista_place_cells(self, reach=2, card=None):
+        if self.ballista_locked(card):
+            return []
+        origin = self.hero.cell
+        return [p for p in self.c.grid.in_radius(origin, reach)
+                if self.free(p) and self.los(origin, p)]
+
+    def place_ballista(self, cell, reach=2, hp=BALLISTA_HP, charge=0, card=None):
+        if cell not in self.ballista_place_cells(reach, card):
+            return
+        color = (190, 156, 98)
+        proto = {"name": "Баллиста", "label": "Ба", "color": color, "role": "object", "hp": hp,
+                 "move_time": 1.0, "attack": {"damage": 0, "range": 0, "cooldown": 99.0}, "static": True,
+                 "object": {"id": "ballista", "art": "ballista", "name": "Баллиста", "hp": hp, "color": color}}
+        unit = self.c._spawn(PLAYER, "ballista", proto, cell)
+        self._setup(unit, proto)
+        unit.owner = self.hero
+        unit.charge_max = BALLISTA_CHARGES
+        unit.charge = min(unit.charge_max, charge)
+        unit.ballista_card_uid = card.uid if card is not None else None
+        unit.ballista_copied = getattr(card, "copied", False)
+        self._ballistas.append(unit)
+        for pile in (self.hand, self.draw_pile, self.used):
+            self.discard.extend(item for item in pile if self.ballista_locked(item))
+            pile[:] = [item for item in pile if not self.ballista_locked(item)]
+        for cid in reversed(M.BALLISTA_COMMANDS):
+            command = M.Card(cid, self.run.defs)
+            command.ballista_owner = unit
+            self.draw_pile.append(command)
+        self.say("Баллиста установлена. Зарядка и залп наверху колоды", (236, 205, 130))
+
+    def remove_ballista_commands(self, owner):
+        for pile in (self.hand, self.draw_pile, self.used, self.discard, self.exhaust, self.guard):
+            pile[:] = [card for card in pile if getattr(card, "ballista_owner", None) is not owner]
+        for unit in self.c.units:
+            if getattr(unit, "stolen", None):
+                unit.stolen[:] = [card for card in unit.stolen if getattr(card, "ballista_owner", None) is not owner]
+
+    def ballista_load_targets(self, reach=2):
+        ballistas = self.ballistas
+        if not ballistas:
+            return []
+        return [self.hero] + [unit for unit in ballistas if unit.charge < unit.charge_max
+                             and cheb(unit.cell, self.hero.cell) <= reach]
+
+    def ballista_lines(self, reach=6, origin=None, ballista=None):
+        """По одному лучу на сторону, до препятствия или первого врага включительно."""
+        if origin is None:
+            ballista = ballista if ballista is not None else self.ballista
+            if ballista is None or not ballista.alive:
+                return []
+            origin = ballista.cell
+        blockers = {u.cell for u in self.c.units if u.alive and u.obj and u is not ballista}
+        foes = {u.cell: u for u in self.foes()}
+        lines = []
+        for dx, dy in BALLISTA_DIRS:
+            cells = []
+            victim = None
+            for step in range(1, reach + 1):
+                p = (origin[0] + dx * step, origin[1] + dy * step)
+                cell = self.c.grid.get(p)
+                if cell is None or not cell.passable or p in blockers:
+                    break
+                cells.append(p)
+                victim = foes.get(p)
+                if victim is not None:
+                    if step > 1 and victim.ds.get("veil"):  # заслонённую цель нельзя выбрать издали
+                        victim = None
+                    break
+            lines.append((cells, victim))
+        return lines
+
+    def ballista_shooters(self, target, reach=6):
+        if target is None:
+            return []
+        return [unit for unit in self.ballistas if unit.charge and any(
+            target is victim for _, victim in self.ballista_lines(reach, ballista=unit))]
+
+    def ballista_damage(self, op=None, target=None, ballista=None):
+        """Урон из зарядов, при наведении также учитывает эффекты цели перед щитом."""
+        ballista = ballista if ballista is not None else self.ballista
+        if ballista is None or not ballista.alive or not ballista.charge:
+            return 0
+        op = op or {}
+        damage = op.get("n", 5) + (ballista.charge - 1) * op.get("per_charge", 3)
+        damage += ballista.ds["ranged_bonus"] + ballista.ds.get("shot_empower", 0)
+        if ballista.ds["focus"]:
+            damage *= 2
+        if target is None:
+            return damage
+        damage = self.hit_value(ballista, target, damage) * self.ballista_shot_multiplier(ballista)
+        if self.hidden_in_fog(target):
+            damage = max(1, damage // 2)
+        return max(0, damage - (target.edef or {}).get("armor", 0))
+
+    @staticmethod
+    def ballista_shot_multiplier(ballista):
+        return (2 if ballista.ds.get("double_next") else 1) * (2 if ballista.ds.get("double_attacks") else 1)
+
+    def buff_ballista(self, ballista, op, amount):
+        if not ballista.alive:
+            return
+        key = op["op"]
+        ds = ballista.ds
+        if key in ("focus", "double_next"):
+            ds[key] = True
+        elif key == "strength_x2":
+            ds["strength"] *= 2
+        else:
+            key = "shot_empower" if key == "empower" else key
+            ds[key] = ds.get(key, 0) + amount
+        self.fx("status", unit=ballista, el="rally")
 
     def walk(self, u, path):
         n = len(path)
         for i, p in enumerate(path):
             if not u.alive or self.result:
                 return
+            knight_jump = u is self.hero and not self.enemy_phase and self.stance == "knight" and \
+                {abs(p[0] - u.cell[0]), abs(p[1] - u.cell[1])} == {1, 2}
             near = u.team == ENEMY and cheb(u.cell, self.hero.cell) <= 1
             # путь — одним движением: разгон на первой клетке, торможение на последней, между — ровно
             ease = "inout" if n == 1 else "in" if i == 0 else "out" if i == n - 1 else "lin"
+            if u is self.hero and not self.enemy_phase:
+                self.board_relics.record_step(u.cell, p)
+            previous = u.cell
             self.c._place(u, p, STEP_T * {"inout": 1.5, "in": 2.0, "out": 2.0, "lin": 1.0}[ease])
             u.move_ease = (ease, tuple(p))
             yield ("move", 0.0, u)
@@ -292,21 +542,33 @@ class Battle:
                 yield from self.react()
             if u is self.hero and not self.enemy_phase:
                 self.walked += 1
+                yield from self.hand_relics.stepped(previous, knight_jump)
+                if knight_jump and u.alive and "knight" not in self.stance_uses:
+                    self.stance_uses.add("knight")
+                    self.gain_shield(u, 3)
                 if self.powers:
                     yield from self.power_fire("step")
                 yield from self.items.fire("step")
             if u is self.hero and self.mech == "momentum" and not self.enemy_phase:     # Разгон: шаг — +1
                 u.ds["momentum"] = min(self.hero_def.get("momentum_max", 5), u.ds["momentum"] + 1)
                 self.fx("momentum_step", unit=u, n=u.ds["momentum"])
-            if u.team == ENEMY and p in self.traps and u.alive:                            # капкан Охотницы
-                dmg = self.traps.pop(p)
-                self.say(f"{u.name} попал в капкан: −{dmg}, встал", (255, 220, 140))
-                self.hurt(u, dmg, self.hero, "trap")
-                u.ds["root"] = max(u.ds["root"], 1)
-                self.queue.append(("trap", u))
+            if (yield from self.trigger_trap(u, p)):
+                return
+            if u.team == ENEMY and u.alive and self.board_relics.enter_enemy(u, p):
                 return
 
     SURFACES = ("fire", "poison", "oil", "fog", "briar", "cracks")
+
+    def trigger_trap(self, unit, cell):
+        if unit.team != ENEMY or not unit.alive or cell not in self.traps:
+            return False
+        dmg = self.traps.pop(cell)
+        self.say(f"{unit.name} попал в капкан: −{dmg}, встал", (255, 220, 140))
+        self.hurt(unit, dmg, self.hero, "trap")
+        unit.ds["root"] = max(unit.ds["root"], 1)
+        self.queue.append(("trap", unit))
+        yield from self.board_relics.trap_trigger(unit, cell, dmg)
+        return True
 
     def set_surface(self, p, kind, n=1):
         """Покрытие клетки (docs/descent_field.md 1.2): огонь, яд, масло, туман, тернии, трещины (заряд копится).
@@ -314,7 +576,8 @@ class Battle:
         cell = self.c.grid.get(p)
         if cell is None or not cell.passable:
             return
-        if kind == "fire" and cell.terrain == "water":
+        steam = kind == "fire" and cell.terrain == "water"
+        if steam:
             kind = "fog"                                            # пар
         if kind == "fire" and cell.hazard == "oil":                 # масло вспыхивает
             cell.hazard, cell.hazard_time, cell.blaze = "fire", -1.0, True
@@ -339,6 +602,9 @@ class Battle:
         cell.blaze = False
         if kind != "cracks":
             cell.charge = None
+        card = self.board_relics.playing_card
+        if steam and self.board_relics.ready("smoke_jug") and card is not None and "fire" in card.tag_ids:
+            self.queue.append(("relic_job", self.board_relics.steam_created(tuple(p))))
 
     def unit_at(self, p):
         return next((v for v in self.c.units if v.alive and not v.obj and v.cell == tuple(p)), None)
@@ -528,9 +794,11 @@ class Battle:
             self.hurt(mate, v // 2, src, "bound")
         if u is self.hero and src is not None and src.team == ENEMY and kind in ("melee", "shot", "zone"):
             self.queue.append(("hit", src))
+            if self.garden is not None and u.hp > 0:
+                self.garden.snake_retaliate(src)
             if kind == "melee" and u.ds["counter"] > 0 and cheb(src.cell, u.cell) <= 1:   # Контратака: ответ
                 self.queue.append(("counter", src))
-        if u.hp <= 0 and u.team == ENEMY and src is self.hero:
+        if u.hp <= 0 and u.team == ENEMY and (src is self.hero or src in self._ballistas):
             self.queue.append(("kill", u))
         self.c.emit("damage", unit=u, amount=v, absorbed=absorbed,
                     kind={"burn": "dot", "poison": "dot", "bleed": "dot"}.get(
@@ -538,7 +806,7 @@ class Battle:
                         else "spell"),
                     tag={"burn": "fire", "poison": "poison", "bleed": "bleed"}.get(kind), cover=False, blocked=None)
         if u.hp <= 0:
-            self.die(u)
+            self.die(u, src)
         elif (u.edef or {}).get("phases"):
             self.check_phase(u)
 
@@ -594,7 +862,7 @@ class Battle:
             self.c.emit("shield", unit=a, amount=it.get("n", 5))
         self.say(f"{u.name}: {it['name']} — защита своим {it.get('n', 5)}", (200, 200, 230))
 
-    def die(self, u):
+    def die(self, u, attacker=None):
         if u is self.hero and self.items.mod("revive") and not self.run.relic_state.get("revived"):
             self.run.relic_state["revived"] = True                  # предмет: раз за забег — встать
             u.hp = max(1, u.max_hp // 2)
@@ -607,6 +875,27 @@ class Battle:
         if u is self.hero:
             self.result = "defeat"
             self.say(f"{self.hero.name} пал(а)", (255, 120, 100))
+            return
+        if self.garden is not None:
+            if getattr(u, "plant_id", None):
+                self.garden.plant_destroyed(u)
+                self.say(f"{u.name} уничтожено", (230, 160, 130))
+                return
+            if getattr(u, "wall_turns", None):
+                self.garden.wall_died(u)
+                return
+            if self.garden.is_beast(u):
+                self.garden.beast_died(u)
+                self.say(f"{u.name} погиб", (230, 160, 130))
+                return
+        if u in self._ballistas:
+            self.board_relics.ballista_destroyed(u, attacker)
+            self._ballistas.remove(u)
+            self.remove_ballista_commands(u)
+            self.say("Баллиста разрушена. Карта установки снова доступна из сброса", (230, 160, 130))
+            return
+        if u.obj:
+            self.say(f"{u.name} выбыла из боя", (230, 160, 130))
             return
         self.say(f"{u.name} повержен", (200, 230, 160))
         if u is self.prey and self.foes():                               # Метка добычи: дальше, +энергия, +карта
@@ -623,7 +912,10 @@ class Battle:
             self.say("Порча расползается на соседей", (170, 220, 120))
         od = (u.edef or {}).get("on_death") or {}
         for c in getattr(u, "stolen", []):                     # украденные карты — обратно в руку
-            (self.hand if len(self.hand) < HAND_MAX else self.discard).append(c)
+            if not self.ballista_locked(c) and (len(self.hand) < HAND_MAX or self.merge_partner(c) is not None):
+                self.receive_card(c)
+            else:
+                self.discard.append(c)
             self.say(f"«{c.name}» вернулась", (170, 255, 170))
         u.stolen = []
         if od.get("avenge"):                                   # мститель: соседи звереют
@@ -674,23 +966,30 @@ class Battle:
         if len(self.foes()) == 1 and u.team == ENEMY:
             self.queue.append(("last_foe", self.foes()[0]))
         if not self.foes():
+            self.run_relics.observe_victory()
             self.result = "victory"
 
     def mark_prey(self):
         foes = self.foes()
         self.prey = min(foes, key=lambda f: (cheb(f.cell, self.hero.cell), f.hp)) if foes else None
 
-    def push(self, src, tgt, n, toward=False, d=None):
+    def push(self, src, tgt, n, toward=False, d=None, card=None):
         """Толчок (или притягивание): по клетке; упёрся — столкновение, урон обоим (стена — только цели).
         По льду и маслу цель скользит дальше (до 3 клеток сверх). d — направление сразу (ветер)."""
         if not tgt.alive or tgt.obj:
             return
+        board = self.board_relics
+        if tgt is self.hero and board.anchor and n > 0:
+            board.anchor = False
+            return
+        tagged = src is self.hero and card is not None and "push" in card.tag_ids
         if d is None:
             d = (sign(src.cell[0] - tgt.cell[0]), sign(src.cell[1] - tgt.cell[1])) if toward else \
                 (sign(tgt.cell[0] - src.cell[0]), sign(tgt.cell[1] - src.cell[1]))
         if d == (0, 0):
             return
         slid = 0
+        oil_slide = False
         k = 0
         while k < n:
             k += 1
@@ -703,6 +1002,13 @@ class Battle:
                 self.hurt(tgt, 5, None, "collision")
                 return
             if cell is not None and cell.terrain == "chasm":
+                if tagged:
+                    turn = yield from board.edge_direction(tgt, d)
+                    if turn is not None:
+                        self.c._place(tgt, turn, STEP_T)
+                        yield WAIT
+                        self._enter(tgt, turn)
+                        return
                 self.say(f"{tgt.name} падает в пропасть!", (255, 200, 120))
                 self.hurt(tgt, 15 if (tgt.edef or {}).get("elite") else 999, src, "collision")
                 return
@@ -717,11 +1023,25 @@ class Battle:
                 self.hurt(tgt, dmg, src, "collision")
                 if other is not None and not other.obj:
                     self.hurt(other, dmg, src, "collision")
+                if tgt.team == ENEMY:
+                    board.break_pedestal(nxt)
                 return
             self.c._place(tgt, nxt, STEP_T)
             yield ("wait", 0.0)
             self._enter(tgt, nxt)
+            if tgt.team == ENEMY and tgt.alive and board.enter_enemy(tgt, nxt):
+                return
             if k == n and slid < 3 and not toward and self.slippery(nxt) and tgt.alive:   # скользит дальше
+                oil_slide = oil_slide or cell.hazard == "oil"
+                next_cell = (nxt[0] + d[0], nxt[1] + d[1])
+                last_slide = slid == 2 or not self.slippery(next_cell) or not self.free(next_cell, exclude=tgt)
+                if tagged and oil_slide and last_slide:
+                    turn = yield from board.oil_direction(tgt, d)
+                    if turn is not None:
+                        self.c._place(tgt, turn, STEP_T)
+                        yield WAIT
+                        self._enter(tgt, turn)
+                        return
                 n += 1
                 slid += 1
                 if slid == 1:
@@ -733,10 +1053,25 @@ class Battle:
         finish(self.start_player_turn())
 
     def start_player_turn(self):
+        self.lead_discounts.clear()
         self.turn += 1
+        self.board_relics.turn_start()
+        self.retained_card_discounts = {uid: discount for uid, discount in self.retained_card_discounts.items()
+                                        if discount[0] >= self.turn}
+        for unit in self.c.units:
+            buffs = getattr(unit, "ds", {}).get("card_damage_buffs", {})
+            for key in tuple(buffs):
+                if key[0] < self.turn:
+                    del buffs[key]
+        self.stance_uses.clear()
+        for ballista in self.ballistas:
+            if not ballista.ds.pop("skip_passive_charge", False):
+                ballista.charge = min(ballista.charge_max, ballista.charge + 1)
+            ballista.ds.pop("shot_empower", None)
         h = self.hero
         for u in self.foes():
-            self.choose_intent(u)
+            if self.board_relics.delayed.get(u) != self.turn - 1:
+                self.choose_intent(u)
         h.shield = h.shield // 2 if h.ds.get("fort") else 0          # «Оборона»: половина защиты остаётся
         h.ds["fort"] = 0
         self.collide_k = 1
@@ -745,18 +1080,18 @@ class Battle:
         self.played = 0
         self.turn_tags, self.walked, self.echoed = [], 0, set()
         self.chain_drawn = 0
-        self.empower = {}
         for c in self.guard:                                             # ждали ход врага и не сработали — в сброс
             if c in self.hand:
                 self.hand.remove(c)
-                self.discard.append(c)
+                self.place_discarded_card(c)
+                self.queue_card_event("discarded", c)
         self.guard = []
         self.items.new_turn()
         self.energy = self.max_energy + h.ds["rage"] + self.next_energy
         if self.mech == "heat":                                          # жар: +1 за ход (и от Сердца феникса)
             hd = self.hero_def
             h.ds["heat"] = min(hd.get("heat_max", 12), h.ds["heat"] + hd.get("heat_turn", 1) + h.ds["heat_regen"] +
-                               self.items.mod("energy") + self.next_energy)
+                               self.items.mod("energy") + self.next_energy + h.ds.pop("next_heat", 0))
         if h.ds["rage"]:
             self.hurt(h, 2 * h.ds["rage"], None, "hp_cost")
             self.say(f"Боевой раж: +{h.ds['rage']} энергии, −{2 * h.ds['rage']} HP", (255, 150, 120))
@@ -767,6 +1102,7 @@ class Battle:
         if hx:
             self.say(f"Сглаз: на {hx} карт меньше", (200, 160, 255))
             h.ds["hex"] = 0
+        self.hand_relics.before_draw(PRIEST_HAND if self.idols is not None else HAND_MAX)
         if self.idols is not None:                            # Жрец: 3 в начале боя, дальше +2 (рука до 5)
             self.idols.start_turn()
             pinned = any(cheb(f.cell, h.cell) <= 1 for f in self.foes())      # «Скован»: враг вплотную — шаг 1
@@ -784,32 +1120,131 @@ class Battle:
         yield from self.react()
         self.env_plan()
         yield from self.power_fire("turn")
+        if self.garden is not None:
+            self.garden.turn_start()
         if self.mech == "hunter" and self.variant == "quiver":           # Колчан: стрела в руку
             self.add_tokens("arrow", 1)
+        yield from self.react_card_events()
+        self.lead_discounts = {c.uid for c in self.hand if "lead" in M.card_rules(c.d) and self.rng.random() < 0.5}
+        if self.garden is not None:
+            self.garden.force_lead()
+        yield from self.hand_relics.turn_start()
         self.sync_levels()
 
     def draw(self, n):
         for _ in range(n):
             if not self.draw_pile:
-                if not self.discard:
+                drawable = [c for c in self.discard if not self.ballista_locked(c)]
+                drawable.extend(self.run_relics.release_held())
+                if not drawable:
                     return
-                self.draw_pile = self.discard
-                self.discard = []
+                self.draw_pile = drawable
+                self.discard = [c for c in self.discard if self.ballista_locked(c)]
                 self.rng.shuffle(self.draw_pile)
                 self.queue.append(("shuffle", None))
-            if len(self.hand) >= (PRIEST_HAND if self.idols is not None else HAND_MAX):
+            if (len(self.hand) >= (PRIEST_HAND if self.idols is not None else HAND_MAX)
+                    and self.merge_partner(self.draw_pile[-1]) is None):
                 return
             c = self.draw_pile.pop()
-            if c.d.get("unique") and self.has_unique():           # Единственная: вторая — под низ колоды
+            if self.limits_unique_hand(c) and self.has_unique():  # Единственная: вторая — под низ колоды
                 self.draw_pile.insert(0, c)
-                if all(x.d.get("unique") for x in self.draw_pile):
+                if all(self.limits_unique_hand(x) for x in self.draw_pile):
                     return
                 continue
             c.manual = False
-            self.hand.append(c)
+            self.receive_card(c)
+
+    def merge_partner(self, card):
+        if card not in self.hand_relics.fleeting and "merge" in M.card_rules(card.d) and card.rank < len(M.card_ranks(card.base)):
+            return next((held for held in self.hand
+                         if held is not card and held.cid == card.cid and held.rank == card.rank
+                         and held not in self.hand_relics.fleeting
+                         and held.uid not in self.hand_relics.deferred_merge
+                         and "merge" in M.card_rules(held.d)), None)
+        return None
+
+    def receive_card(self, card, *, relic_offer=True):
+        if relic_offer and self.hand_relics.defer_merge(card, PRIEST_HAND if self.idols is not None else HAND_MAX):
+            return
+        while (partner := self.merge_partner(card)) is not None:
+            self.hand.remove(partner)
+            for merged in (card, partner):
+                self.items.retention.pop(merged.uid, None)
+                self.retained_card_discounts.pop(merged.uid, None)
+            bonus = max(self.temper.get(card.uid, 0), self.temper.pop(partner.uid, 0))
+            if bonus:
+                self.temper[card.uid] = bonus
+            card.rank += 1
+            self.say(f"{card.name}: слияние", (255, 190, 110))
+            self.queue_card_event("merged", card)
+        self.hand.append(card)
+        self.queue_card_event("entered_hand", card)
+        if self.garden is not None:
+            self.garden.check_assembly()
+
+    def queue_card_event(self, event, card):
+        ops = self.card_event_ops(event, card)
+        if ops:
+            self.queue.append(("card_event", (card, ops)))
+
+    def card_event(self, event, card, target=None):
+        yield from self.apply(self.hero, self.card_event_ops(event, card), target, {"card": card})
+
+    @staticmethod
+    def card_event_ops(event, card):
+        ops = M.card_reactions(card.d, event)
+        if event != "discarded":
+            return ops
+        rules = M.card_rules(card.d)
+        if "quietus" in rules:
+            ops += M.card_reactions(card.d, "quietus")
+        if "blessing" in rules:
+            ops += ({"op": "discard_blessing"},)
+        return ops
+
+    def place_discarded_card(self, card):
+        self.hand_relics.untouched.discard(card.uid)
+        if self.garden is not None:
+            self.garden.drop_attachment(card)
+        pile = self.used if "quietus" in M.card_rules(card.d) else self.discard
+        pile.append(card)
+
+    def linked_play(self, card):
+        if "linked" not in M.card_rules(card.d):
+            return
+        if card.d.get("pair"):                     # эльфийская Связь: партнёры остаются в руке
+            card.linked_spent = True
+            return
+        card.linked_spent = True
+        others = [held for held in self.hand if "linked" in M.card_rules(held.d)]
+        for held in others:
+            held.linked_spent = True
+            self.hand.remove(held)
+            self.place_discarded_card(held)
+        for held in others:
+            yield from self.card_event("discarded", held)
+        yield from self.hand_relics.link(others)
+
+    def react_card_events(self):
+        # Synchronous pile changes queue their reactions for the current battle job.
+        while not self.result:
+            pending = next((i for i, (kind, _) in enumerate(self.queue)
+                            if kind in ("card_event", "relic_job")), None)
+            if pending is None:
+                return
+            kind, event = self.queue.pop(pending)
+            if kind == "relic_job":
+                yield from event
+            else:
+                card, ops = event
+                yield from self.apply(self.hero, ops, None, {"card": card})
+
+    @staticmethod
+    def limits_unique_hand(card):
+        return "unique" in M.card_rules(card.d) and not card.d.get("deck_unique") and not getattr(card, "copied", False)
 
     def has_unique(self):
-        return any(c.d.get("unique") for c in self.hand)
+        return any(self.limits_unique_hand(c) for c in self.hand)
 
     def has_mod(self, mod):
         """Сила с постоянным правилом («горение не спадает»…) — сыграна."""
@@ -859,30 +1294,68 @@ class Battle:
 
     # ---------- цели карт ----------
 
-    def add_tokens(self, cid, n, force=False):
+    def add_tokens(self, cid, n, force=False, *, heat_payment=False):
         """Создать карту: временные карты в руку (после розыгрыша — Изгнание)."""
+        if self.run.defs.get(cid, {}).get("deck_unique"):
+            return
         for _ in range(n):
-            if force or len(self.hand) < HAND_MAX:
-                c = M.Card(cid, self.run.defs)
-                if c.d.get("unique") and self.has_unique():
+            c = M.Card(cid, self.run.defs)
+            if force or len(self.hand) < HAND_MAX or self.merge_partner(c) is not None:
+                if self.limits_unique_hand(c) and self.has_unique():
                     continue
                 c.manual = False
-                self.hand.append(c)
+                c.heat_payment = heat_payment and not c.levels and (c.cost > 0 or bool(c.d.get("x_cost")))
+                self.receive_card(c)
                 self.fx("created", unit=self.hero, uid=c.uid)
                 self.queue.append(("create", c))
 
+    def copy_hand_card(self, source):
+        clone = M.Card(source.cid, {source.cid: source.base}, uses=source.uses, picks=source.picks)
+        clone.divine = source.divine
+        clone.alt_up = copy.deepcopy(source.alt_up)
+        clone.lvl = source.lvl
+        clone.rank = source.rank
+        clone.heat_payment = source.heat_payment
+        clone.linked_spent = source.linked_spent
+        clone.manual = getattr(source, "manual", False)
+        clone.copied = True
+        owner = getattr(source, "ballista_owner", None)
+        if owner is not None:
+            clone.ballista_owner = owner
+        if source.uid in self.temper:
+            self.temper[clone.uid] = self.temper[source.uid]
+        self.receive_card(clone)
+        self.fx("created", unit=self.hero, uid=clone.uid)
+        self.queue.append(("create", clone))
+        self.say(f"Слепок превращается в «{clone.name}»", (170, 225, 245))
+
     def pay_pool(self, card):
         """Чем платят за карту: жаром (карты с уровнями) или энергией."""
-        return "heat" if card.levels else "energy"
+        return "heat" if card.uses_heat else "energy"
+
+    def available_card_resource(self, card):
+        return self.hero.ds["heat"] if self.pay_pool(card) == "heat" else self.energy
+
+    def effective_cost(self, card, price=None, *, consume=False):
+        price = card.cost if price is None else price
+        if card.d.get("x_cost"):
+            return price
+        if card.uid in self.lead_discounts:
+            price = max(0, price - 1)
+        turn, discount = self.retained_card_discounts.get(card.uid, (None, 0))
+        if turn == self.turn and price > 0:
+            price = max(0, price - discount)
+            if consume:
+                del self.retained_card_discounts[card.uid]
+        price -= self.items.retained_discount(card, price, consume=consume)
+        return self.run_relics.price(card, price, consume)
 
     def can_afford(self, card):
         if self._free_cast:
             return True
         if card.d.get("x_cost"):
-            return self.energy >= 1
-        if card.levels:
-            return self.hero.ds["heat"] >= card.cost
-        return self.energy >= card.cost
+            return self.available_card_resource(card) >= 1
+        return self.available_card_resource(card) >= self.effective_cost(card)
 
     def sync_levels(self):
         """Уровень карт с жаром: сам — высший, на который хватает (если игрок не выбрал колесом)."""
@@ -890,12 +1363,12 @@ class Battle:
         for c in self.hand:
             lv = c.levels
             if lv and not getattr(c, "manual", False):
-                ok = [i for i, L in enumerate(lv) if L["heat"] <= heat]
+                ok = [i for i, L in enumerate(lv) if self.effective_cost(c, L["heat"]) <= heat]
                 c.lvl = ok[-1] if ok else 0
 
     def targets(self, card, mode, auto=False):
         """Куда можно сыграть: список юнитов или клеток (для self — [герой]). Пусто — нельзя."""
-        if self.result:
+        if self.result or self.attacks_locked(card) or "unactivatable" in M.card_rules(card.d):
             return []
         if card.d.get("auto_end") and not auto:               # авто-стрела не играется вручную
             return []
@@ -911,6 +1384,14 @@ class Battle:
             return []
         t = u["target"]
         h = self.hero
+        if t == "ballista_place":
+            return self.ballista_place_cells(u.get("range", 2), card)
+        if t == "ballista_load":
+            return self.ballista_load_targets(u.get("range", 2))
+        if t == "ballista_fire":
+            return list(dict.fromkeys(
+                victim for unit in self.ballistas if unit.charge
+                for _, victim in self.ballista_lines(u.get("range", 6), ballista=unit) if victim is not None))
         if t == "statue":                                 # свиток Жреца — на статую, где бог может исполнить смысл
             if self.idols is None:
                 return []
@@ -918,20 +1399,39 @@ class Battle:
             return [s for s in self.idols.statues if (m == "move" or not self.idols.silenced(s))
                     and self.idols.can_cast(s, m)]
         if t == "self":
-            return [h]
+            return [h, *self.ballistas] if M.can_buff_ballista(u) else [h]
+        if t == "copy_hand":
+            return [c for c in self.hand if c is not card and c.cid != M.HAND_COPY_CARD]
+        if t in ("hand_retain", "hand_other"):
+            options = [c for c in self.hand if c is not card and (
+                t == "hand_other" or "retain" in M.card_rules(c.d) or c.uid in self.temporary_retain)]
+            return options if len(options) >= u.get("count", 1) else []
+        if t == "hand_attach":
+            options = [c for c in self.hand if c is not card and not c.d.get("token")
+                       and not c.d.get("attach") and not (self.garden and self.garden.attached(c))]
+            return options if len(options) >= u.get("count", 1) else []
+        if t == "hand_link":
+            options = [c for c in self.hand if c is not card and "linked" in M.card_rules(c.d)]
+            return options if len(options) >= u.get("count", 1) else []
+        if t == "plant":
+            r = u.get("range", 4)
+            return [p for p, cell in self.c.grid.cells.items()
+                    if cell.passable and 0 < cheb(p, h.cell) <= r and self.free(p)]
         if t == "enemy":                                  # в тумане — только вплотную
             r = u.get("range", 1)
             out = [f for f in self.foes() if cheb(h.cell, f.cell) <= r and (r <= 1 or not u.get("los", r > 1)
                                                                             or self.los(h.cell, f.cell))
                     and not (f.ds.get("veil") and cheb(h.cell, f.cell) > 1)]
-            if u.get("line"):                             # только горизонталь/вертикаль
+            if self.line_only(u):                         # только горизонталь/вертикаль
                 out = [f for f in out if h.cell[0] == f.cell[0] or h.cell[1] == f.cell[1]]
+            if mode == "main":
+                out += self.board_relics.shot_targets(card, u, bresenham)
             return out
         if t == "reach":
             reach = self.paths(h, u.get("reach", 1))
             return [f for f in self.foes() if any(cheb(p, f.cell) <= 1 for p in reach)]
         if t == "cell_step":
-            return [p for p in self.paths(h, u.get("step", 1)) if p != h.cell]
+            return [p for p in self.paths(h, self.move_value(u, "step")) if p != h.cell or u.get("allow_stay")]
         if t == "area":
             r = u.get("range", 5)
             return [p for p, c in self.c.grid.cells.items() if c.passable and cheb(p, h.cell) <= r
@@ -941,19 +1441,33 @@ class Battle:
             return [p for p, c in self.c.grid.cells.items() if c.passable and 0 < cheb(p, h.cell) <= r
                     and self.free(p) and self.los(h.cell, p)]
         if t == "cell_dash":
-            out = []
-            for d in DIRS8:
-                p = h.cell
-                for _ in range(u.get("dash", 1)):
-                    q = (p[0] + d[0], p[1] + d[1])
-                    if not self.free(q, exclude=h):
-                        break
-                    if d[0] and d[1] and not (self.free((p[0] + d[0], p[1])) and self.free((p[0], p[1] + d[1]))):
-                        break
-                    out.append(q)
-                    p = q
-            return out
+            return list(self.dash_paths(self.move_value(u, "dash")))
         return []
+
+    def move_value(self, u, key):
+        """Дальность шага/рывка с феями, «Связью» и Оленем-проводником."""
+        n = u.get(key, 1)
+        fae = self.hero.ds.get("fae", 0)
+        if u.get(key + "_fae"):
+            n += fae // max(1, u[key + "_fae"])
+        if u.get(key + "_linked") and any("linked" in M.card_rules(c.d) for c in self.hand):
+            n += u[key + "_linked"]
+        if self.garden is not None:
+            n += self.garden.step_bonus
+        thr = u.get(key + "_thr")
+        if thr and fae >= thr.get("fae", 99):
+            n = max(n, thr.get("n", n))
+        return max(1, n)
+
+    def line_only(self, u):
+        return bool(u.get("line") or (u.get("line_fae") and self.hero.ds.get("fae", 0) >= u["line_fae"]))
+
+    def effect_radius(self, u):
+        r = u.get("radius", 1)
+        rf = u.get("radius_fae")
+        if rf and self.hero.ds.get("fae", 0) >= rf.get("fae", 99):
+            r = max(r, rf.get("r", r))
+        return r
 
     def reach_spots(self, card, mode):
         """«Подойти и ударить»: куда можно встать (клетка в досягаемости, рядом враг) → [враги рядом].
@@ -977,16 +1491,25 @@ class Battle:
         """Дальность применения — клетки, куда оно дотягивается, даже если целей там нет и не хватает цены:
         удар — клетки в радиусе (с обзором, если нужен), «подойти и ударить» — куда дойдёт + соседние, шаг —
         куда дойдёт, область и клетка — в дальности. Для подсветки, пока карту держат."""
+        if self.attacks_locked(card):
+            return []
         u = card.d[mode]
         t = u["target"]
         h = self.hero
         cells = self.c.grid.cells
+        if t == "ballista_place":
+            return self.ballista_place_cells(u.get("range", 2), card)
+        if t == "ballista_load":
+            return [target.cell for target in self.ballista_load_targets(u.get("range", 2))]
+        if t == "ballista_fire":
+            return list(dict.fromkeys(p for unit in self.ballistas
+                                      for ray, _ in self.ballista_lines(u.get("range", 6), ballista=unit) for p in ray))
         if t == "enemy":
             r = u.get("range", 1)
             need = r > 1 and u.get("los", r > 1)
             out = [p for p, c in cells.items() if 0 < cheb(p, h.cell) <= r and c.passable
                    and (not need or self.los(h.cell, p))]
-            if u.get("line"):
+            if self.line_only(u):
                 out = [p for p in out if p[0] == h.cell[0] or p[1] == h.cell[1]]
             return out
         if t == "reach":
@@ -997,7 +1520,10 @@ class Battle:
             out.discard(h.cell)
             return sorted(out)
         if t == "cell_step":
-            return [p for p in self.paths(h, u.get("step", 1)) if p != h.cell]
+            return [p for p in self.paths(h, self.move_value(u, "step")) if p != h.cell or u.get("allow_stay")]
+        if t == "plant":
+            r = u.get("range", 4)
+            return [p for p, cell in cells.items() if cell.passable and 0 < cheb(p, h.cell) <= r and self.free(p)]
         if t in ("area", "cell_any"):
             r = u.get("range", 5)
             return [p for p, c in cells.items() if c.passable and 0 < cheb(p, h.cell) <= r and self.los(h.cell, p)]
@@ -1012,19 +1538,29 @@ class Battle:
 
     # ---------- условия карт (docs/descent_tags.md) ----------
 
-    def met(self, c, tgt=None, before=None):
+    def met(self, c, tgt=None, before=None, ctx=None):
         """Выполнено ли условие c. tgt — цель (для условий по цели); before — сколько сыграно до этой карты
-        (во время розыгрыша; иначе — сейчас)."""
+        (во время розыгрыша; иначе — сейчас). ctx — текущая карта (для «была скидка», «второе применение»)."""
         k = c["k"]
         h = self.hero
         played = self.played if before is None else before
         log = self.turn_tags[:played]
+        if k == "linked_hand":
+            return sum("linked" in M.card_rules(card.d) for card in self.hand) >= c.get("n", 1)
+        if k == "had_lead":
+            return bool(ctx and ctx.get("had_lead"))
+        if k == "fae_before":
+            return (ctx.get("fae_before", h.ds.get("fae", 0)) if ctx else h.ds.get("fae", 0)) >= c["n"]
+        if k == "second_fae":
+            card = (ctx or {}).get("card")
+            return h.ds.get("fae", 0) >= c["n"] and card is not None and card.uses >= 2
         if k == "series":
             return played >= c["n"]
         if k == "after":
-            return bool(log) and c["tag"] in log[-1]
+            return bool(log) and M.tag_id(c["tag"]) in log[-1]
         if k == "resonance":
-            return sum(c["tag"] in t for t in log) >= c["n"]
+            tag = M.tag_id(c["tag"])
+            return sum(tag in t for t in log) >= c["n"]
         if k == "first":
             return played == 0
         if k == "allin":
@@ -1035,6 +1571,8 @@ class Battle:
             return self.walked == 0
         if k == "momentum":
             return (self._mom if self._mom is not None else h.ds["momentum"]) >= c["n"]
+        if k in ("fae", "fae_min"):
+            return h.ds.get("fae", 0) >= c["n"]
         if k == "shielded":
             return h.shield >= c["n"]
         if k == "hurt":
@@ -1131,7 +1669,7 @@ class Battle:
             acted = False
             for c in list(self.hand):
                 ch = c.d.get("chain")
-                if not ch or c.uid in self.echoed or not self.met(ch["when"]):
+                if not ch or c.uid in self.echoed or self.attacks_locked(c) or not self.met(ch["when"]):
                     continue
                 choice = self.chain_needs_choice(c)
                 if choice:
@@ -1191,6 +1729,12 @@ class Battle:
                 return self.auto_target(c, "main") or (self.targets(c, "main") or [None])[0]
             if t in ("cell_step", "cell_dash", "cell_any"):
                 return (self.targets(c, "main") or [None])[0]
+            if t == "copy_hand":
+                return next(iter(self.targets(c, "main")), None)
+            if t in ("hand_retain", "hand_other"):
+                options = self.targets(c, "main")
+                count = u.get("count", 1)
+                return (tuple(options[:count]) if count > 1 else options[0]) if options else None
             return None
         finally:
             self._free_cast = old
@@ -1199,6 +1743,13 @@ class Battle:
         """Отклик на события (убийство, получил удар, враг вплотную): разобрать очередь."""
         while self.queue and not self.result:
             kind, src = self.queue.pop(0)
+            if kind == "relic_job":
+                yield from src
+                continue
+            if kind == "card_event":
+                card, ops = src
+                yield from self.apply(self.hero, ops, None, {"card": card})
+                continue
             if kind == "counter":
                 yield from self.counter_strike(src)
                 continue
@@ -1247,7 +1798,7 @@ class Battle:
             pw = pc.d["main"].get("power") or {}
             if pw.get("on") != ev or self.result:
                 continue
-            if pw.get("tag") and (card is None or pw["tag"] not in card.tags):
+            if pw.get("tag") and (card is None or M.tag_id(pw["tag"]) not in card.tag_ids):
                 continue
             if pw.get("once"):
                 key = (pc.uid, self.turn, ev)
@@ -1272,12 +1823,17 @@ class Battle:
             if not tgts:
                 continue
             self.fx("power", unit=h, uid=pc.uid, name=pc.name)
+            buff_target = self.ballista_power_targets.get(pc.uid)
             for t in tgts:
-                yield from self.apply(h, pw.get("do", []), t, {"before": self.played})
+                yield from self.apply(h, pw.get("do", []), t, {"before": self.played, "buff_target": buff_target})
 
     def exhaust_card(self, card):
         """Изгнание: карта уходит до конца боя (не временная — будит Силы «при изгнании»)."""
+        if self.garden is not None:
+            self.garden.drop_attachment(card)
         self.exhaust.append(card)
+        self.run_relics.observe_exhaust(card)
+        yield from self.card_event("exhausted", card)
         if not card.d.get("token"):
             self.fx("exhaust", unit=self.hero, uid=card.uid)
             yield from self.power_fire("exhaust", card=card)
@@ -1285,6 +1841,8 @@ class Battle:
 
     def per_count(self, per, tgt, ctx):
         """«За каждую…»: сколько раз прибавить шаг масштабирования."""
+        if per.get("div"):
+            return self.per_count({k: v for k, v in per.items() if k != "div"}, tgt, ctx) // max(1, per["div"])
         h = self.hero
         w = per["what"]
         before = ctx.get("before")
@@ -1292,7 +1850,8 @@ class Battle:
         if w == "played":
             return before
         if w.startswith("tag:"):
-            return sum(w[4:] in t for t in self.turn_tags[:before])
+            tag = M.tag_id(w[4:])
+            return sum(tag in t for t in self.turn_tags[:before])
         if w == "strength":
             return max(0, h.ds["strength"])
         if w in ("bleed", "burn", "poison", "mark", "vulnerable", "weak"):
@@ -1309,6 +1868,8 @@ class Battle:
             return h.ds["heat"]
         if w == "hunt":
             return h.ds.get("hunt", 0)
+        if w == "fae":
+            return h.ds.get("fae", 0)
         if w == "walked":
             return self.walked
         if w in ("foes_burning", "foes_bleeding"):
@@ -1322,6 +1883,8 @@ class Battle:
 
     def fire_echo(self, c, src):
         """Карта срабатывает сама: бесплатно, раз за ход; реакция после этого — в сброс, остальные остаются."""
+        if self.attacks_locked(c):
+            return
         e = c.d["echo"]
         h = self.hero
         aim = e.get("aim", "nearest")
@@ -1355,10 +1918,11 @@ class Battle:
             return [target]
         out = []
         p = h.cell
+        blockers = {u.cell for u in self.ballistas}
         for _ in range(max(1, rng)):
             p = (p[0] + dx, p[1] + dy)
             cell = self.c.grid.get(p)
-            if cell is None or not cell.passable:
+            if cell is None or not cell.passable or p in blockers:
                 break
             f = next((u for u in self.foes() if u.cell == p), None)
             if f is not None:
@@ -1393,35 +1957,67 @@ class Battle:
         return bool(self.targets(card, mode))
 
     def play(self, card, mode, target, free=False, auto=False):
+        relics = self.run_relics
+        previous, relics.active_card = relics.active_card, card if mode == "main" else None
+        try:
+            yield from self._play(card, mode, target, free=free, auto=auto)
+        finally:
+            relics.active_card = previous
+
+    def _play(self, card, mode, target, free=False, auto=False):
         """Сыграть карту из руки: mode "main" (энергия, копит прозрение) или "alt" (бесплатно).
         free — Цепочка: полный розыгрыш без оплаты; auto — автоматическая карта в конце хода."""
-        if card not in self.hand:
+        rules = M.card_rules(card.d)
+        if card not in self.hand or self.attacks_locked(card) or "unactivatable" in rules:
             return
         if card.d.get("auto_end") and not auto:
             return
         if card.d[mode].get("target") == "statue":            # свиток Жреца: через статую бога
-            yield from self.play_scroll(card, target)
+            yield from self.play_scroll(card, target, manual=not free and not auto)
             return
-        if self.is_spot(target):                              # подойти на выбранную клетку и ударить
+        shooter = None
+        if card.d[mode].get("target") == "ballista_fire":
+            explicit = isinstance(target, BallistaShot)
+            if explicit:
+                shooter, target = target.ballista, target.victim
+            shooters = self.ballista_shooters(target, card.d[mode].get("range", 6))
+            if not shooters or (explicit and shooter not in shooters):
+                return
+            if not explicit:
+                shooter = shooters[0]
+        hand_targets = ()
+        if card.d[mode]["target"] in ("hand_retain", "hand_other", "hand_attach", "hand_link"):
+            hand_targets = target if isinstance(target, tuple) else (target,)
+            options = self.targets(card, mode, auto=auto)
+            if (len(hand_targets) != card.d[mode].get("count", 1)
+                    or any(c not in options for c in hand_targets)
+                    or len(set(hand_targets)) != len(hand_targets)):
+                return
+        elif self.is_spot(target):                            # подойти на выбранную клетку и ударить
             spot, foe = target
             if foe not in self.reach_spots(card, mode).get(spot, []):
                 return
         elif target not in self.targets(card, mode, auto=auto):
             return
         u = card.d[mode]
+        board = self.board_relics
+        board.begin_play(card, mode)
         self.hand.remove(card)
         paid, mom0 = card.cost, self.hero.ds["momentum"]
         x_paid = 0
         if mode == "main":
+            resource = self.pay_pool(card)
+            self.run_relics.observe_play(card)
             if not free:
                 if card.d.get("x_cost"):
-                    x_paid = self.energy
+                    x_paid = self.available_card_resource(card)
                     paid = x_paid
-                    self.energy = 0
-                elif card.levels:
-                    self.hero.ds["heat"] -= card.cost
                 else:
-                    self.energy -= card.cost
+                    paid = self.effective_cost(card, consume=True)
+                if resource == "heat":
+                    self.hero.ds["heat"] -= paid
+                else:
+                    self.energy -= paid
             card.uses += 1
             self.try_insight(card)
             before = self.played
@@ -1429,8 +2025,17 @@ class Battle:
             self.say(f"{card.name}: {card.text('main')}", (255, 230, 160))
         else:
             self.say(f"{card.name} (просто): {card.text('alt')}", (200, 200, 180))
+        had_lead = card.uid in self.lead_discounts
+        self.hand_relics.lost_lead(card)
+        self.lead_discounts.clear()
+        self.hand_relics.played.add(card.uid)
         h = self.hero
+        origin = h.cell
+        walked_before = self.walked
+        previous_tags = self.turn_tags[-1] if self.turn_tags else ()
+        armed_block = self.items.take_card_bonus(card, "block") if mode == "main" else 0
         t = u["target"]
+        command_installation = getattr(card, "ballista_owner", None)
         if t == "reach":                                      # подойти к врагу — на выбранную клетку или ближе всего
             reach = self.paths(h, u.get("reach", 1))
             if self.is_spot(target):
@@ -1439,33 +2044,53 @@ class Battle:
                 best = min((p for p in reach if cheb(p, target.cell) <= 1), key=lambda p: len(reach[p]))
             yield from self.walk(h, reach[best])
         elif t == "cell_step":
-            yield from self.walk(h, self.paths(h, u.get("step", 1))[target])
+            yield from self.walk(h, self.paths(h, self.move_value(u, "step"))[target])
         elif t == "cell_dash":
-            d = (sign(target[0] - h.cell[0]), sign(target[1] - h.cell[1]))
-            path = []
-            p = h.cell
-            while p != target:
-                p = (p[0] + d[0], p[1] + d[1])
-                path.append(p)
-            yield from self.walk(h, path)
-        tgt = target if hasattr(target, "cell") and target is not h else None
+            yield from self.walk(h, self.dash_paths(self.move_value(u, "dash"))[target])
+        elif t == "area" and mode == "main":
+            target = yield from self.hand_relics.area_center(target, u)
+        tgt = target if hasattr(target, "cell") and target is not h and t != "self" else None
         ctx = {"ranged": u.get("ranged", False), "center": target if isinstance(target, tuple) else None,
                "push_bonus": 0, "tag": u.get("tag"), "card": card if mode == "main" else None,
-               "x": x_paid}
+               "x": x_paid, "fae_before": h.ds.get("fae", 0), "had_lead": had_lead}
+        if t == "hand_attach" and hand_targets:
+            ctx["attach_host"] = hand_targets[0]
+        if t in ("ballista_place", "ballista_load", "ballista_fire"):
+            ctx["range"] = u.get("range", 6 if t == "ballista_fire" else 2)
+        if shooter is not None:
+            ctx["ballista"] = shooter
+        if t == "copy_hand":
+            ctx["copy_target"] = target
+        if hand_targets:
+            ctx["hand_targets"] = hand_targets
+        if t == "self" and target in self.ballistas:
+            ctx["buff_target"] = target
         if mode == "main":
             conds = list(u.get("if", []))
             echo = card.d.get("echo") or {}
             if echo.get("when", {}).get("k") == "resonance":
                 conds.append({"when": echo["when"], "repeat": 1})     # резонанс = повтор розыгрыша
             ctx["conds"], ctx["before"] = conds, before
+            if any(c["when"].get("k") == "surrounded" for c in conds):
+                ctx["surrounded"] = self.met({"k": "surrounded"})
             self._mom = h.ds["momentum"]
-            ctx["emp"] = sum(self.empower.pop(tg, 0) for tg in card.tags)      # «Следующая карта [Тег]»
+            ctx["emp"] = 0 if shooter is not None else self.card_damage_buff(h, card, consume=True)
             ctx["temper"] = self.temper.get(card.uid, 0)
         ops = u.get("do", [])
-        if u.get("vfx"):                                      # свой эффект карты (по уровню у Пиромантки)
+        redirected = False
+        if mode == "main":
+            if t == "area":
+                yield from board.area(card, target, self.effect_radius(u))
+            if shooter is None and tgt is not None and u.get("ranged"):
+                if t == "enemy" and tgt in self.ballistas:
+                    board.redirect_shot(tgt)
+                    redirected = True
+                else:
+                    redirected = yield from board.intercept_shot(card, tgt, bresenham(h.cell, tgt.cell)[1:-1])
+        if u.get("vfx") and not redirected:                   # свой эффект карты (по уровню у Пиромантки)
             ctx["vfx"] = True
-            self.vfx(h, u["vfx"], card.name, target=tgt, center=ctx["center"],
-                     radius=u.get("radius", 0) if t == "area" else 0, tag=u.get("tag"))
+            self.vfx(h, u["vfx"], card.name, target=ctx.get("buff_target") or tgt, center=ctx["center"],
+                     radius=self.effect_radius(u) if t == "area" else 0, tag=u.get("tag"))
             yield IMPACT                                      # ждём попадания — урон и HP в этот миг
             if u.get("shake"):
                 self.fx("shake", unit=h, n=10)
@@ -1478,34 +2103,55 @@ class Battle:
             self.fx("alt", what=kind, unit=h, target=tgt)
         reps = 1 + sum((1 if c["when"].get("k") == "resonance" else c.get("repeat", 0))
                        for c in ctx.get("conds", [])
-                       if self.met(c["when"], tgt, before) and (c.get("repeat") or c["when"].get("k") == "resonance"))
-        for rep in range(reps):                              # Близнец: дважды
-            if rep and (self.result or (tgt is not None and not tgt.alive)):
+                       if self.play_condition(c["when"], tgt, ctx)
+                       and (c.get("repeat") or c["when"].get("k") == "resonance"))
+        resonance = any(c["when"].get("k") == "resonance" and self.play_condition(c["when"], tgt, ctx)
+                        for c in ctx.get("conds", []))
+        combo = any(c["when"].get("k") in ("after", "series", "first", "allin")
+                    and self.play_condition(c["when"], tgt, ctx) for c in ctx.get("conds", []))
+        effect_target = tgt
+        for rep in range(0 if redirected else reps):         # Близнец: дважды
+            if rep == 1 and resonance and not self.result:
+                effect_target = yield from self.hand_relics.resonance_target(card, tgt, u)
+            if rep and (self.result or (effect_target is not None and not effect_target.alive)):
                 break
             if rep and u.get("vfx"):                          # второй раз — снова эффект и попадание
-                self.vfx(h, u["vfx"], card.name, target=tgt, center=ctx["center"],
-                         radius=u.get("radius", 0) if t == "area" else 0, tag=u.get("tag"))
+                self.vfx(h, u["vfx"], card.name, target=effect_target, center=ctx["center"],
+                         radius=self.effect_radius(u) if t == "area" else 0, tag=u.get("tag"))
                 yield IMPACT
-            if u.get("pierce") and tgt is not None:           # линия: пробивает всех на пути
-                for f in self.line_enemies(tgt, u.get("range", 6)):
+            if u.get("pierce") and effect_target is not None:  # линия: пробивает всех на пути
+                for f in self.line_enemies(effect_target, u.get("range", 6)):
                     yield from self.apply(h, [o for o in ops if o["op"] not in ONCE], f, ctx)
                     yield from self.cond_extras(ctx, f, area=True)
                 yield from self.apply(h, [o for o in ops if o["op"] in ONCE], None, ctx)
             elif t == "area":                                # область: каждому врагу в радиусе
-                r = u.get("radius", 1)
+                r = self.effect_radius(u)
                 for f in [f for f in self.foes() if cheb(f.cell, target) <= r]:
                     yield from self.apply(h, [o for o in ops if o["op"] not in ONCE], f, ctx)
                     yield from self.cond_extras(ctx, f, area=True)
                 yield from self.apply(h, [o for o in ops if o["op"] in ONCE], None, ctx)
+                for c in ctx.get("conds", []):                       # «раз за область» части условий
+                    extra = [o for o in c.get("do", []) if o["op"] in ONCE]
+                    if extra and self.play_condition(c["when"], None, ctx):
+                        yield from self.apply(h, extra, None, dict(ctx, conds=[]))
             else:
-                yield from self.apply(h, ops, tgt, ctx)
-                yield from self.cond_extras(ctx, tgt)
+                yield from self.apply(h, ops, effect_target, ctx)
+                yield from self.cond_extras(ctx, effect_target)
+        board.playing_card = None
         if mode == "main":
-            yield from self.hunt_followup(card, tgt)
+            yield from board.after_movement(card)
+            if not redirected:
+                yield from self.hunt_followup(card, tgt)
+                yield from board.around_attack(card, tgt)
+            if self.garden is not None:
+                yield from self.garden.after_card(card, tgt)
+            board.last_tags = frozenset(card.tag_ids)
+            if armed_block:
+                self.gain_shield(h, armed_block)
         card.manual = False
         back = False
         if mode == "main":
-            self.turn_tags.append(set(card.tags))
+            self.turn_tags.append(frozenset(card.tag_ids))
             self.items.turn_types.append(card.d.get("type"))
             if card.d.get("type") == "skill":                    # злится от умений героя
                 for f in self.foes():
@@ -1521,23 +2167,52 @@ class Battle:
             back = bool(u.get("back")) and self.met(u["back"], tgt, before)
             self._mom = None
             yield from self.echoes()
+            yield from self.card_event("played", card, tgt)
             yield from self.react()
-        if back:                                              # Возврат: снова в руке
-            self.hand.append(card)
+        else:
+            yield from self.card_event("played", card, tgt)
+        if not free and not auto:
+            yield from self.linked_play(card)
+        exhausted_after_two = False
+        if mode == "main" and "exhaust_2" in rules:
+            self.exhaust_plays[card.uid] = self.exhaust_plays.get(card.uid, 0) + 1
+            exhausted_after_two = self.exhaust_plays[card.uid] >= 2
+        if t == "ballista_place":
+            self.discard.append(card)
+        elif back and not exhausted_after_two:                # Возврат: снова в руке
+            self.receive_card(card)
             self.say(f"Возврат: {card.name} снова в руке", (170, 255, 170))
         elif mode == "main" and u.get("power"):               # Сила: действует до конца боя
             self.powers.append(card)
+            if ctx.get("buff_target") is not None:
+                self.ballista_power_targets[card.uid] = ctx["buff_target"]
             self.items.turn_types.append("power")
             self.say(f"Сила: {card.name} — до конца боя", (210, 170, 255))
             self.fx("power", unit=h, uid=card.uid, name=card.name)
-        elif card.d.get("token") or (mode == "main" and card.d.get("exhaust")):
+        elif card.d.get("token") or exhausted_after_two or (mode == "main" and "exhaust" in rules):
             yield from self.exhaust_card(card)
-        else:
-            self.used.append(card)                            # CZN: до конца хода — в Used, не в Discard
+        elif t != "copy_hand" and (command_installation is None or command_installation.alive):
+            returned = not redirected and (yield from board.bullet_returns(card, tgt))
+            if not returned:
+                self.used.append(card)                        # CZN: до конца хода — в Used, не в Discard
         if mode == "main" and not self.result:                # предметы: что сыграно (после розыгрыша — рука видна)
-            yield from self.items.fire("play", card=card, tgt=tgt, mom=mom0, heat=paid if card.levels else 0)
+            if "exhaust_2" in rules:
+                yield from self.hand_relics.exhaust_count(card, self.exhaust_plays[card.uid])
+            yield from self.hand_relics.after_card(card, combo, self.walked > walked_before)
+            yield from self.items.fire("play", card=card, tgt=tgt, mom=mom0,
+                                       heat=paid if resource == "heat" else 0,
+                                       origin=origin, previous_tags=previous_tags)
             yield from self.react()
         self.sync_levels()
+        if mode == "main" and "finale" in rules and not auto:
+            yield from board.finale(card)
+            if not self.result:
+                yield from self.run_relics.finale()
+            self.finale_pending = True
+        if self.finale_pending and not free and not auto and not self.enemy_phase and not self.result:
+            self.finale_pending = False
+            self.run_relics.active_card = None
+            yield from self.end_turn(from_finale=True)
 
     def try_insight(self, card):
         """Прозрение: 5% за основное применение, с гарантией после 20 неудач."""
@@ -1550,7 +2225,7 @@ class Battle:
 
     def hunt_followup(self, card, tgt):
         """Преследование: после одноцелевой атаки с тегом [Преследование] — дополнительный выстрел за стаки."""
-        if tgt is None or not getattr(tgt, "alive", False) or "Преследование" not in card.tags:
+        if tgt is None or not getattr(tgt, "alive", False) or "pursuit" not in card.tag_ids:
             return
         n = self.hero.ds.get("hunt", 0)
         if n <= 0 or not self.is_attack(card, "main"):
@@ -1560,7 +2235,7 @@ class Battle:
         yield from self.strike(self.hero, tgt, n, kind="shot" if card.d["main"].get("ranged") else "melee",
                                tag="Преследование")
 
-    def play_scroll(self, card, target):
+    def play_scroll(self, card, target, *, manual=True):
         """Свиток через статую: target — IdolCast(статуя, цель). Бесплатно; добил с Мёртвой водой — в руку."""
         idols = self.idols
         if idols is None or not isinstance(target, IdolCast) or target.statue not in idols.statues:
@@ -1570,15 +2245,23 @@ class Battle:
         if ch is not None and target.tgt not in ch:
             return
         self.hand.remove(card)
+        self.hand_relics.lost_lead(card)
+        self.lead_discounts.clear()
+        self.hand_relics.played.add(card.uid)
+        self.run_relics.observe_play(card)
         card.uses += 1
         self.try_insight(card)
         self.played += 1
         yield from idols.cast_card(target.statue, card, target.tgt)
+        yield from self.card_event("played", card, target.tgt)
+        if manual:
+            yield from self.linked_play(card)
         self.items.scrolls[id(target.statue)] = self.items.scrolls.get(id(target.statue), 0) + 1
         yield from self.items.fire("scroll", card=card, statue=target.statue)
+        yield from self.hand_relics.after_scroll(target.statue)
         if idols.killed and idols.dead_water:
             idols.dead_water = False
-            self.hand.append(card)
+            self.receive_card(card)
             self.say(f"Мёртвая вода: «{card.name}» снова в руке", (180, 220, 255))
         else:
             self.used.append(card)
@@ -1598,15 +2281,30 @@ class Battle:
         self.walk_left -= len(path)
         yield from self.walk(self.hero, path)
 
+    def play_condition(self, when, tgt, ctx):
+        if when["k"] == "surrounded" and "surrounded" in ctx:
+            return ctx["surrounded"]
+        return self.met(when, tgt, ctx.get("before"), ctx)
+
     def cond_extras(self, ctx, tgt, area=False):
         """Усиление: действия условий («В окружении: защита 4») — после основных."""
         h = self.hero
         for c in ctx.get("conds", []):
             if c["when"].get("k") == "resonance":
                 continue                         # у резонанса нет отдельного эффекта
-            if c.get("do") and self.met(c["when"], tgt, ctx.get("before")):
+            if c.get("do") and self.play_condition(c["when"], tgt, ctx):
                 ops = [o for o in c["do"] if not area or o["op"] not in ONCE]
                 yield from self.apply(h, ops, tgt, dict(ctx, conds=[]))
+
+    def card_damage_buff(self, unit, card, *, consume=False):
+        buffs = unit.ds.get("card_damage_buffs", {})
+        if not buffs:
+            return 0
+        tags, card_type = card.tag_ids, card.d.get("type")
+        matching = [key for key in buffs if key[0] == self.turn
+                    and (not key[1] or key[1] in tags)
+                    and (not key[2] or key[2] == card_type)]
+        return sum(buffs.pop(key) if consume else buffs[key] for key in matching)
 
     def damage_preview(self, card, mode):
         """Реальный урон карты по герою без уязвимости/метки/брони цели.
@@ -1623,10 +2321,10 @@ class Battle:
         ctx = {"ranged": u.get("ranged", False), "tag": u.get("tag"),
                "card": card if mode == "main" else None, "before": self.played,
                "temper": 0, "emp": 0,
-               "x": self.energy if card.d.get("x_cost") and mode == "main" else 0}
+               "x": self.available_card_resource(card) if card.d.get("x_cost") and mode == "main" else 0}
         if mode == "main":
             ctx["temper"] = self.temper.get(card.uid, 0)
-            ctx["emp"] = sum(self.empower.get(tag, 0) for tag in card.tags)
+            ctx["emp"] = self.card_damage_buff(h, card)
         emp, mom, focus, dbl = ctx["emp"], (ds["momentum"] if self.mech == "momentum" else 0), \
             bool(ds["focus"]), bool(self.double_next and mode == "main")
         out = []
@@ -1634,7 +2332,9 @@ class Battle:
             kind = op.get("op")
             if kind not in ("damage", "body_slam"):
                 continue
-            n = h.shield if kind == "body_slam" else op.get("n", 0)
+            n = op.get("n", 0)
+            if kind == "body_slam":
+                n += h.shield
             if kind == "damage" and op.get("per"):
                 n += op["per"].get("k", 1) * self.per_count(op["per"], None, ctx)
             if kind == "damage" and mode == "main":
@@ -1656,7 +2356,7 @@ class Battle:
                     if self.met(c["when"], None, ctx["before"]):
                         n = (n + c.get("plus", 0)) * c.get("mult", 1)
                 n += self.items.card_bonus(card, "damage")
-                if self.variant == "ash" and "Область" in card.tags:
+                if self.variant == "ash" and "area" in card.tag_ids:
                     n += 2
             n += ds["strength"]
             if ds["weak"]:
@@ -1697,20 +2397,26 @@ class Battle:
         return n
 
     def resolve_discard(self, cards):
+        finish(self.resolve_discard_gen(cards))
+
+    def resolve_discard_gen(self, cards):
         """Игрок выбрал карты для сброса (Адажио/подобные эффекты)."""
-        n = 0
+        discarded = []
         for c in list(cards):
             if self.pending_discard <= 0:
                 break
             if c in self.hand:
                 self.hand.remove(c)
-                self.discard.append(c)
+                self.place_discarded_card(c)
+                discarded.append(c)
                 self.pending_discard -= 1
-                n += 1
-        if n:
-            self.say(f"Сброшено карт: {n}", (220, 210, 180))
+        if discarded:
+            self.say(f"Сброшено карт: {len(discarded)}", (220, 210, 180))
         if not self.hand:
             self.pending_discard = 0
+        for card in discarded:
+            yield from self.hand_relics.manual_discard(card)
+        yield from self.react_card_events()
         self.sync_levels()
 
     def apply(self, src, ops, tgt, ctx=None):
@@ -1720,10 +2426,16 @@ class Battle:
         for op in ops:
             if self.result and op["op"] not in ("block",):
                 return
+            if op.get("when") and not self.play_condition(op["when"], tgt, ctx):
+                continue
             k = op["op"]
             n = op.get("n", 0)
             if op.get("per") and src is h:                                  # «за каждую…»
                 n += op["per"].get("k", 1) * self.per_count(op["per"], tgt, ctx)
+            buff_target = ctx.get("buff_target")
+            if src is h and buff_target is not None and M.ballista_buff_op(op):
+                self.buff_ballista(buff_target, op, n)
+                continue
             if k == "damage" and tgt is not None:
                 dbl = 1
                 if src is h and ctx.get("card") is not None and ctx["card"].d.get("type") == "attack":
@@ -1741,20 +2453,33 @@ class Battle:
                     for c in ctx.get("conds", []):            # Усиление: «ещё +N», «урон ×N»
                         if c["when"].get("k") == "resonance":
                             continue                          # резонанс только повторяет карту
-                        if (c.get("plus") or c.get("mult")) and self.met(c["when"], tgt, ctx.get("before")):
+                        if (c.get("plus") or c.get("mult")) and self.play_condition(c["when"], tgt, ctx):
                             n = (n + c.get("plus", 0)) * c.get("mult", 1)
                     n += self.items.card_bonus(ctx.get("card"), "damage")   # предметы: карты тега сильнее
-                    if self.variant == "ash" and ctx.get("card") is not None and "Область" in ctx["card"].tags:
+                    if self.variant == "ash" and ctx.get("card") is not None and "area" in ctx["card"].tag_ids:
                         n += 2                                              # Пепел: области сильнее
                     if self.double_next and ctx.get("card") is not None:     # предмет: двойной урон (итоговый)
                         dbl = 2
                         self.double_next = False
                         self.say("Двойной урон!", (255, 220, 120))
+                    if tgt.shield > 0 and ctx.get("card") is not None and "pulverize" in ctx["card"].tag_ids:
+                        n = n * 6 // 5
+                hp, shield = tgt.hp, tgt.shield
+                saved_shield = tgt.shield
+                if op.get("ignore_shield"):
+                    tgt.shield = 0
                 yield from self.strike(src, tgt, n, kind="shot" if ctx.get("ranged") else "melee",
                                        el=op.get("el"), anim=not ctx.get("vfx"), tag=ctx.get("tag"), mult=dbl)
-            elif k == "body_slam" and tgt is not None:
-                n = self.hero_bonus(tgt, src.shield, op, ctx) if src is h else src.shield
+                if op.get("ignore_shield"):
+                    tgt.shield = saved_shield
+                if src is h and not self.result:
+                    yield from self.board_relics.check_totem(ctx.get("card"), tgt)
                 if src is h:
+                    yield from self.hand_relics.hit(ctx.get("card"), tgt, hp, shield)
+            elif k == "body_slam" and tgt is not None:
+                n += src.shield
+                if src is h:
+                    n = self.hero_bonus(tgt, n, op, ctx)
                     n += self.items.card_bonus(ctx.get("card"), "damage")
                 dbl = 1
                 if src is h and ctx.get("card") is not None and ctx["card"].d.get("type") == "attack":
@@ -1764,7 +2489,10 @@ class Battle:
                         self.say("Двойной залп!", (255, 220, 120))
                     if ctx.get("double_done"):
                         dbl = 2
+                hp, shield = tgt.hp, tgt.shield
                 yield from self.strike(src, tgt, n, anim=not ctx.get("vfx"), mult=dbl)
+                if src is h:
+                    yield from self.hand_relics.hit(ctx.get("card"), tgt, hp, shield)
             elif k == "double_next":
                 self.double_next = True
             elif k == "resource":                                          # энергия / жар / свиток — по герою
@@ -1776,13 +2504,16 @@ class Battle:
                     self.energy += n
             elif k == "next_energy":
                 self.next_energy += n
+            elif k == "next_heat":
+                src.ds["next_heat"] = src.ds.get("next_heat", 0) + n
             elif k == "next_draw":
                 self.next_draw += n
             elif k == "add_random":                                        # случайные карты героя — только на бой
-                pool = [cid for cid in self.hero_def.get("rewards", []) if cid in self.run.defs]
+                pool = [cid for cid in self.hero_def.get("rewards", []) if cid in self.run.defs
+                        and not self.run.defs[cid].get("deck_unique")]
                 for _ in range(n):
                     if pool and len(self.hand) < HAND_MAX:
-                        self.hand.append(M.Card(self.rng.choice(pool), self.run.defs))
+                        self.receive_card(M.Card(self.rng.choice(pool), self.run.defs))
             elif k == "spread" and ctx.get("dead") is not None and tgt is not None:   # перекинуть состояние
                 d = ctx["dead"]
                 what = op.get("what", "bleed")
@@ -1802,6 +2533,14 @@ class Battle:
             elif k == "strength_x2":
                 src.ds["strength"] *= 2
                 self.fx("status", unit=src, el="rally")
+            elif k == "note":
+                pass
+            elif k == "discard_hand":
+                for c in list(ctx.get("hand_targets", ())):
+                    if c in self.hand:
+                        self.hand.remove(c)
+                        self.place_discarded_card(c)
+                        yield from self.card_event("discarded", c)
             elif k == "burn_card":                                         # Изгнать из руки N карт (случайно)
                 pool = [c for c in self.hand if not c.d.get("token")]
                 self.rng.shuffle(pool)
@@ -1819,6 +2558,8 @@ class Battle:
                     hit.add(cur)
                     self.fx("react", unit=cur, what="shock")
                     self.hurt(cur, self.attack_value(h, n) if src is h else n, src, "spell")
+                    if op.get("stun") and cur.alive:
+                        cur.ds["stun"] = True
             elif k == "block":
                 if op.get("mom_k") and src is h:                           # Резкая остановка: разгон — в защиту
                     n += src.ds["momentum"] * op["mom_k"]
@@ -1826,13 +2567,32 @@ class Battle:
                 if src is h:
                     n += ctx.get("temper", 0)
                     n += self.items.card_bonus(ctx.get("card"), "block")
-                src.shield += n
-                self.c.emit("shield", unit=src, amount=n)
+                self.gain_shield(src, n)
+            elif k == "stance" and src is h and not ctx.get("stance_applied"):
+                stance = op["id"]
+                ctx["stance_applied"] = True
+                self.set_stance(None if self.stance == stance else stance)
+                yield from self.hand_relics.changed_stance()
             elif k in ("push", "pull") and tgt is not None:
-                yield from self.push(src, tgt, n + (ctx.get("push_bonus", 0) if k == "push" else 0), toward=k == "pull")
+                start = tgt.cell
+                bonus = self.items.take_card_bonus(ctx.get("card"), "displace") if src is h and tgt.alive and n else 0
+                if k == "push":
+                    bonus += ctx.get("push_bonus", 0)
+                yield from self.push(src, tgt, n + bonus, toward=k == "pull", card=ctx.get("card"))
+                if src is h:
+                    yield from self.board_relics.after_push(ctx.get("card"), tgt, start)
+                if op.get("burn_on_move") and tgt.alive and tgt.cell != start:
+                    self.add_burn(tgt, op["burn_on_move"])
                 if k == "push" and src is h and self.variant == "press":
                     src.ds["momentum"] = min(self.hero_def.get("momentum_max", 5), src.ds["momentum"] + 1)
             elif k == "retreat" and tgt is not None:                       # отскок от цели
+                if src is h and self.stance == "knight" and not self.enemy_phase:
+                    jumps = self.knight_paths(n)
+                    distance = cheb(src.cell, tgt.cell)
+                    destination = max(jumps, key=lambda p: cheb(p, tgt.cell), default=src.cell)
+                    if cheb(destination, tgt.cell) > distance:
+                        yield from self.walk(src, jumps[destination])
+                    continue
                 d = (sign(src.cell[0] - tgt.cell[0]), sign(src.cell[1] - tgt.cell[1]))
                 path, p = [], src.cell
                 for _ in range(n):
@@ -1846,7 +2606,46 @@ class Battle:
                 tgt.ds["root"] = max(tgt.ds["root"], n)
                 self.say(f"{tgt.name}: корни — не двигается", (180, 230, 140))
             elif k == "add_card":
-                self.add_tokens(op.get("card", "arrow"), n, force=bool(op.get("force")))
+                pool = op.get("pool")
+                force = bool(op.get("force"))
+                if pool and op.get("same"):
+                    self.add_tokens(self.rng.choice(pool), n, force=force)
+                elif pool and op.get("distinct"):
+                    first = op.get("first")
+                    choices = [cid for cid in dict.fromkeys(pool) if cid != first]
+                    chosen = [first] if first and n else []
+                    chosen += self.rng.sample(choices, min(max(0, n - len(chosen)), len(choices)))
+                    for cid in chosen:
+                        self.add_tokens(cid, 1, force=force)
+                elif pool:
+                    count = n if force else min(n, HAND_MAX - len(self.hand))
+                    for _ in range(count):
+                        self.add_tokens(self.rng.choice(pool), 1, force=force)
+                else:
+                    self.add_tokens(op.get("card", "arrow"), n, force=force)
+            elif k == "copy_hand" and ctx.get("copy_target") is not None:
+                self.copy_hand_card(ctx.pop("copy_target"))
+            elif k == "trigger_retain":
+                for c in ctx.get("hand_targets", ()):
+                    for _ in range(n):
+                        if c not in self.hand:
+                            break
+                        event = "retained" if M.card_reactions(c.d, "retained") else "hand_turn_end"
+                        yield from self.card_event(event, c)
+                        yield from self.react_card_events()
+            elif k == "grant_retain":
+                for c in ctx.get("hand_targets", ()):
+                    self.temporary_retain[c.uid] = max(n, self.temporary_retain.get(c.uid, 0))
+            elif k == "retain_rewards":
+                rewards = src.ds.setdefault("retain_rewards", {"damage": 0, "block": 0})
+                rewards["damage"] += n
+                rewards["block"] += op.get("block", 0)
+            elif k == "create_retain":
+                pool = [cid for cid, d in self.run.defs.items() if "retain" in M.card_rules(d)
+                        and not d.get("deck_unique") and (self.idols is not None or not d.get("meaning"))]
+                for _ in range(n):
+                    if pool:
+                        self.add_tokens(self.rng.choice(pool), 1, heat_payment=self.mech == "heat")
             elif k == "ranged_bonus":
                 src.ds["ranged_bonus"] += n
             elif k == "focus":
@@ -1863,8 +2662,60 @@ class Battle:
                 src.ds["keep_mom"] = True
             elif k == "momentum":
                 src.ds["momentum"] = min(self.hero_def.get("momentum_max", 5), src.ds["momentum"] + n)
+            elif k == "fae" and src is h:
+                self.gain_fae(n)
+            elif k == "spend_fae" and src is h:
+                self.spend_fae(n, tgt)
+            elif k == "plant" and self.garden is not None:
+                center = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
+                yield from self.garden.plant(op, center)
+            elif k == "beast" and self.garden is not None:
+                self.garden.summon_beast(op["beast"])
+            elif k == "attach" and self.garden is not None:
+                self.garden.attach(ctx.get("card"), ctx.get("attach_host"), op["attach"])
+            elif k == "fae_ring" and self.garden is not None:
+                center = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
+                self.garden.add_ring(center, op.get("turns", 3) + src.ds.get("fae", 0) // 4)
+            elif k == "blueprint" and self.garden is not None and ctx.get("card") is not None:
+                self.garden.make_parts(ctx["card"].cid)
+            elif k == "execute_below" and tgt is not None and tgt.alive:
+                if tgt.hp * 100 < tgt.max_hp * n:
+                    self.say(f"Казнь: {tgt.name}", (255, 170, 120))
+                    self.hurt(tgt, tgt.hp + 999, src, "spell")
+            elif k == "damage_nearest" and src is h:
+                target = self.garden.nearest_foe(h.cell) if self.garden is not None else None
+                if target is not None:
+                    self.hurt(target, self.attack_value(h, n), h, "spell")
+            elif k in ("aoe_target", "aoe_center"):
+                center = (ctx.get("center") if k == "aoe_center" else None) or \
+                         (tgt.cell if tgt is not None else ctx.get("center") or h.cell)
+                for f in [f for f in self.foes() if cheb(f.cell, center) <= op.get("r", 1)]:
+                    yield from self.apply(src, op["do"], f, dict(ctx, center=None))
             elif k == "trap" and ctx.get("center"):
                 self.traps[ctx["center"]] = n
+            elif k == "ballista_place" and src is h:
+                self.place_ballista(ctx.get("center"), ctx.get("range", 2),
+                                    hp=op.get("hp", BALLISTA_HP), charge=op.get("charge", 0), card=ctx.get("card"))
+            elif k == "ballista_load" and src is h and tgt is not None and tgt in self.ballistas:
+                if tgt in self.ballista_load_targets(ctx.get("range", 2)):
+                    tgt.charge = min(tgt.charge_max, tgt.charge + n)
+                    self.say(f"Баллиста заряжена: {tgt.charge}/{tgt.charge_max}", (236, 205, 130))
+                    yield from self.board_relics.ballista_loaded(tgt)
+            elif k == "ballista_fire" and src is h and tgt is not None:
+                ballista = ctx.get("ballista")
+                if ballista is not None and ballista in self.ballista_shooters(tgt, ctx.get("range", 6)):
+                    kept_charge = yield from self.board_relics.held_charge(ballista)
+                    ballista.charge -= kept_charge
+                    damage = self.ballista_damage(op, ballista=ballista)
+                    mult = self.ballista_shot_multiplier(ballista)
+                    ballista.ds["focus"] = False
+                    ballista.ds.pop("shot_empower", None)
+                    ballista.ds.pop("double_next", None)
+                    if ballista.ds.get("double_attacks"):
+                        ballista.ds["double_attacks"] -= 1
+                    ballista.charge = kept_charge
+                    self.say(f"Выстрел баллисты: {tgt.name}", (236, 205, 130))
+                    yield from self.strike(ballista, tgt, damage, kind="shot", mult=mult)
             elif k == "ignite":                                            # поджечь клетки
                 c0 = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
                 for p in self.c.grid.in_radius(c0, n):
@@ -1880,8 +2731,6 @@ class Battle:
                     self.hurt(f, dmg, src, "spell")
             elif k == "burn" and tgt is not None:
                 self.add_burn(tgt, n)
-            elif k == "empower":
-                self.empower[op["tag"]] = self.empower.get(op["tag"], 0) + n
             elif k == "burn_all":
                 for f in [f for f in self.foes() if f.ds["burn"]]:
                     self.add_burn(f, n)
@@ -1909,11 +2758,37 @@ class Battle:
             elif k == "discard_choose":
                 self.pending_discard += max(0, n)
                 self.say(f"Выберите {self.pending_discard} карт(ы) для сброса", (220, 210, 180))
+            elif k == "discard_blessing":
+                if src.shield * 10 < src.max_hp * 3:
+                    amount = src.max_hp * 3 // 5
+                    recipient = yield from self.run_relics.blessing_target(src)
+                    recipient.shield += amount
+                    self.c.emit("shield", unit=recipient, amount=amount)
             elif k == "energy":
                 self.energy += n
             elif k == "heal":
                 src.hp = min(src.max_hp, src.hp + n)
                 self.c.emit("heal", unit=src, amount=n)
+            elif k in ("temper_card", "temper_spirit"):
+                card = ctx["card"]
+                self.temper[card.uid] = self.temper.get(card.uid, 0) + n
+                self.say(f"«{card.name}»: +{n} урона", (255, 220, 120))
+            elif k in ("empower", "card_damage_buff", "next_fire_damage"):
+                # next_fire_damage встречается в прежних определениях карт из сохранений.
+                tag = M.tag_id(op.get("tag", "fire" if k == "next_fire_damage" else ""))
+                card_type = op.get("type", "attack" if k == "next_fire_damage" else "")
+                key = (self.turn + op.get("delay", 0 if k == "empower" else 1), tag, card_type)
+                buffs = src.ds.setdefault("card_damage_buffs", {})
+                buffs[key] = buffs.get(key, 0) + n
+            elif k == "reduce_burn":
+                src.ds["burn"] = max(0, src.ds["burn"] - n)
+                self._icons(src)
+            elif k == "spirit_ignite" and tgt is not None:
+                x, y = tgt.cell
+                self.set_surface(tgt.cell, "fire")
+                if n:
+                    for cell in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                        self.set_surface(cell, "fire")
             elif k == "lose_hp":
                 self.hurt(src, n, None, "hp_cost")
             elif k == "strength":
@@ -1933,7 +2808,11 @@ class Battle:
                 for f in [f for f in self.foes() if cheb(f.cell, src.cell) <= 1]:
                     yield from self.apply(src, op["do"], f, ctx)
             elif k == "aoe_radius":
-                for f in [f for f in self.foes() if cheb(f.cell, src.cell) <= op.get("r", 1)]:
+                r = op.get("r", 1)
+                rf = op.get("r_fae")
+                if rf and src is h and h.ds.get("fae", 0) >= rf.get("fae", 99):
+                    r = max(r, rf.get("r", r))
+                for f in [f for f in self.foes() if cheb(f.cell, src.cell) <= r]:
                     yield from self.apply(src, op["do"], f, ctx)
             for v in (src, tgt):
                 if v is not None:
@@ -1951,18 +2830,23 @@ class Battle:
             if target is None:
                 if c in self.hand:
                     self.hand.remove(c)
-                    self.discard.append(c)
+                    self.place_discarded_card(c)
+                    yield from self.card_event("discarded", c)
                 continue
             yield from self.play(c, "main", target, free=True, auto=True)
             if self.result:
                 return
 
-    def end_turn(self):
+    def end_turn(self, *, from_finale=False):
         """Конец хода игрока: рука в сброс, враги исполняют намерения, начинается новый ход."""
         if self.result:
             return
+        yield from self.hand_relics.before_end(from_finale)
+        self.finale_pending = False
         h = self.hero
-        if self.mech == "heat":                                          # перегрев: ожог за каждую единицу сверх
+        pact = self.run_relics.pact_turn == self.turn + 1
+        protected = self.run_relics.pact_card if pact else None
+        if self.mech == "heat" and not pact:                             # перегрев: ожог за каждую единицу сверх
             hd = self.hero_def
             over = h.ds["heat"] - hd.get("overheat", 8)
             if over > 0 and self.items.mod("overheat_burn"):          # предмет: перегрев — пламя врагам
@@ -1984,32 +2868,65 @@ class Battle:
         yield from self.items.fire("end")
         if self.result:
             return
-        for c in list(self.hand):                         # заряжающиеся стрелы растут в руке
-            g = c.d.get("grow_end")
-            if g:
-                n = int(g.get("n", 1))
-                self.temper[c.uid] = self.temper.get(c.uid, 0) + n
-                self.say(f"«{c.name}»: +{n} урона", (255, 220, 120))
+        for c in list(self.hand):
+            if c in self.hand:
+                yield from self.card_event("hand_turn_end", c)
         yield from self.auto_end_turn()
         if self.result:
             return
+        for c in list(self.hand):
+            if c in self.hand and c is not protected and "ephemeral" in M.card_rules(c.d):
+                self.hand.remove(c)
+                yield from self.exhaust_card(c)
+                yield from self.hand_relics.on_ephemeral(c)
+        self.hand_relics.clear_fleeting()
         self.discard += self.used                            # CZN: Used → Discard только в конце хода
         self.used = []
-        kept = [c for c in self.hand if (c.d.get("keep") and self.met(c.d["keep"])) or c.d.get("retain")
-                or self.has_mod("retain") or self.items.mod("retain_all")]    # Задел / Сохранение
+        temporary, self.temporary_retain = self.temporary_retain, {}
+        retain_all = self.has_mod("retain") or self.items.mod("retain_all")
+        retained = {c for c in self.hand if c.uid in temporary or "retain" in M.card_rules(c.d) or retain_all
+                    or (self.garden is not None and self.garden.attached(c))}
+        kept = [c for c in self.hand if c in retained or (c.d.get("keep") and self.met(c.d["keep"]))]
         if self.idols is not None:                            # Жрец: несыгранные свитки остаются
             kept = [c for c in self.hand if not c.d.get("token")][:PRIEST_HAND]
-        for c in kept:
-            self.say(f"Задел: {c.name} остаётся в руке", (170, 255, 170))
+            if protected in self.hand and protected not in kept:
+                kept = [*kept[:PRIEST_HAND - 1], protected]
         self.guard = [c for c in self.hand if c not in kept and (c.d.get("echo") or {}).get("on")]
-        kept += self.guard                                  # отклик на ход врага — ждёт в руке
-        self.discard += [c for c in self.hand if not c.d.get("token") and c not in kept]   # стрелы не копятся
-        self.hand = kept
+        discarded = [c for c in self.hand if not c.d.get("token") and c not in kept and c not in self.guard]
+        for c in discarded:
+            self.place_discarded_card(c)
+        self.hand = kept + self.guard                       # отклик на ход врага ждёт в руке
+        retained_count = 0
+        for c in kept:
+            if c in self.hand:
+                self.say(f"{c.name} остаётся в руке", (170, 255, 170))
+                yield from self.card_event("retained", c)
+                if c in retained:
+                    retained_count += 1
+                    self.hand_relics.retained(c)
+                    if discount := temporary.get(c.uid, 0):
+                        self.retained_card_discounts[c.uid] = (self.turn + 1, discount)
+                    yield from self.board_relics.retained(c)
+                    yield from self.items.fire("retained", card=c)
+        rewards = h.ds.pop("retain_rewards", {})
+        if retained_count and rewards.get("damage"):
+            yield from self.apply(h, [{"op": "card_damage_buff", "n": rewards["damage"] * retained_count,
+                                       "tag": "fire", "type": "attack"}], None)
+        if retained_count and rewards.get("block"):
+            self.gain_shield(h, rewards["block"] * retained_count)
+        for c in discarded:
+            yield from self.card_event("discarded", c)
+        yield from self.react_card_events()
+        if self.garden is not None:
+            yield from self.garden.end_turn()
+            if self.result:
+                return
         self.tick_end(self.hero)
         if self.idols is not None:                            # статуи играют свои свитки, призванные — ход
             yield from self.idols.end_of_turn()
             if self.result:
                 return
+        yield from self.board_relics.end_turn()
         self.enemy_phase = True
         yield from self.env_resolve()
         if self.result:
@@ -2017,6 +2934,8 @@ class Battle:
         for u in list(self.foes()):
             if self.result:
                 return
+            if self.board_relics.delayed.get(u) == self.turn:
+                continue
             u.shield = 0
             yield from self.tick_start(u)
             if not u.alive:
@@ -2162,6 +3081,8 @@ class Battle:
             it["cells"], it["dir"] = cells, dd
         if it["kind"] == "zone":                             # зона отмечается сразу и не двигается
             it["cells"] = self.zone_cells(u, it)
+            if it.get("shape") == "cross":
+                it["cross_center"] = self.hero.cell
         u.intent = it
 
     def zone_cells(self, u, it):
@@ -2192,6 +3113,16 @@ class Battle:
         c = h if shape == "target" else u.cell
         return sorted(p for p in g.in_radius(c, it.get("r", 1)) if g.in_bounds(p) and (shape == "target" or p != u.cell))
 
+    def zone_hit_cells(self, it):
+        """Луч останавливается на баллисте, даже если её поставили после прицеливания."""
+        cells = it.get("cells", [])
+        if it.get("shape") == "beam":
+            blockers = {u.cell for u in self.ballistas}
+            for i, p in enumerate(cells):
+                if p in blockers:
+                    return cells[:i + 1]
+        return cells
+
     def intent_damage(self, u):
         """Сколько получит герой, если намерение сработает (для значка)."""
         it = u.intent or {}
@@ -2202,7 +3133,7 @@ class Battle:
             dmg = it["dmg"] if steps * 2 <= u.speed else max(1, it["dmg"] // 2)
             return self.hit_value(u, self.hero, dmg) if steps <= u.speed else 0
         if it.get("kind") == "zone":                          # зона: только если герой в её клетках
-            return self.hit_value(u, self.hero, it["dmg"]) if self.hero.cell in it.get("cells", []) else 0
+            return self.hit_value(u, self.hero, it["dmg"]) if self.hero.cell in self.zone_hit_cells(it) else 0
         if it.get("kind") == "shot":
             return self.hit_value(u, self.hero, it["dmg"] * u.ds["aim"]) if self.in_fire_zone(u, it) else 0
         if it.get("kind") == "charge":
@@ -2290,6 +3221,12 @@ class Battle:
             yield WAIT
             return
         if k == "melee":
+            blocker = self.garden.blocker_for(u) if self.garden is not None else None
+            if blocker is not None:                          # сад загораживает героя — враг рубит его
+                self.say(f"{u.name} рубит {blocker.name}", (220, 190, 150))
+                yield from self.strike(u, blocker, it.get("dmg", 1))
+                yield WAIT
+                return
             st = self.desecrate_target(u)
             if st is not None:                               # глушить статую Жреца — вместо удара
                 path = self.enemy_move_to(u, lambda p: cheb(p, st.cell) <= 1, lambda p: cheb(p, st.cell))
@@ -2303,9 +3240,16 @@ class Battle:
                 yield WAIT
                 return
             walked = 0
+            lure = self.board_relics.consume_lure(u)
+            if lure is not None:
+                yield from self.walk(u, [lure])
+                walked = 1
+                if not u.alive or self.result:
+                    return
             if cheb(u.cell, h.cell) > 1:
                 path = self.enemy_move_to(u, lambda p: cheb(p, h.cell) <= 1, lambda p: cheb(p, h.cell))
-                walked = len(path)
+                path = path[:max(0, u.speed - walked)]
+                walked += len(path)
                 yield from self.walk(u, path)
             if u.alive and cheb(u.cell, h.cell) <= 1:
                 dmg = it["dmg"]
@@ -2329,7 +3273,13 @@ class Battle:
             else:
                 self.say(f"{u.name} не дотянулся", (180, 180, 180))
         elif k == "shot":                                   # стоит и стреляет: в зоне и на виду — попал
-            if self.in_fire_zone(u, it):
+            decoy = self.board_relics.take_decoy(u, it)
+            if decoy is not None:
+                self.say(f"{u.name}: выстрел ушёл в двойника", (190, 220, 255))
+                self.zone_fx = ([decoy], 0.5)
+                u.ds["aim"] = 1
+                yield IMPACT
+            elif self.in_fire_zone(u, it):
                 dmg = it["dmg"] * u.ds["aim"]
                 u.ds["aim"] = 1
                 rod = self.rod(h)
@@ -2345,17 +3295,27 @@ class Battle:
                 yield from self.take_firing_spot(u, it.get("range", 5))
         elif k == "zone":
             self.say(f"{u.name}: {it['name']}", (255, 160, 140))
-            self.zone_fx = (list(it["cells"]), 0.6)          # вспышка зоны — рисует экран
-            mid = it["cells"][len(it["cells"]) // 2]
-            if self.vfx(u, it.get("vfx"), it["name"], center=mid, radius=it.get("r", 1)):
+            cells = self.zone_hit_cells(it)
+            if it.get("shape") == "cell" and it.get("vfx") == "aimed_shot" and h.cell in cells:
+                decoy = self.board_relics.take_decoy(u, it)
+                if decoy is not None:
+                    self.say(f"{u.name}: выстрел ушёл в двойника", (190, 220, 255))
+                    self.zone_fx = ([decoy], 0.5)
+                    yield IMPACT
+                    return
+            self.zone_fx = (list(cells), 0.6)                # вспышка зоны — рисует экран
+            if cells and self.vfx(u, it.get("vfx"), it["name"], center=cells[len(cells) // 2], radius=it.get("r", 1)):
                 yield IMPACT
-            if h.cell in it["cells"]:
+            for ballista in self.ballistas:
+                if ballista.cell in cells:
+                    yield from self.strike(u, ballista, it["dmg"], kind="zone")
+            if h.cell in cells:
                 yield from self.strike(u, h, it["dmg"], kind="zone")
                 yield from self.apply(u, it.get("add", []), h)
             else:
                 self.say(f"{h.name}: ушли из зоны", (180, 230, 180))
             if it.get("hazard"):                             # лужи яда, расплав, масло, туман, тернии
-                for p in it["cells"]:
+                for p in cells:
                     self.set_surface(p, it["hazard"])
         elif k == "block":
             if self.vfx(u, it.get("vfx"), it["name"]):
@@ -2462,4 +3422,7 @@ class Battle:
 
     def finish_into_run(self):
         """Итог боя — в забег: HP героя."""
+        self.hand_relics.clear_fleeting()
         self.run.hp = max(0, self.hero.hp)
+        for card in self.run.deck:
+            card.linked_spent = False

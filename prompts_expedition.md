@@ -2813,3 +2813,89 @@ candle with a steady flame.
 
 Попросить в том же чате: «Same image, but the background must be a flat solid #FF00FF magenta, not a
 checkerboard and not transparent».
+
+## Стойки и баллиста
+
+Два листа из шести ячеек каждый. Исходники лежат в `assets/art_src`.
+
+### Спрайты и значки — `sheet_field_stances.png`
+
+```
+Create ONE game sprite sheet, landscape 3:2, in the established late 1990s hand-clustered pixel-art dark
+forest tactics RPG style. A perfectly even 3 column x 2 row layout with exactly six isolated sprites, centers
+at x 1/6, 1/2, 5/6 and y 1/4, 3/4. Plain solid flat #FF00FF magenta through all the background, gutters and
+corners. Wide empty gutters so each asset can be cropped safely. Crisp square pixels, hard dark one-pixel
+outlines, logical 32x32 miniature drawn and enlarged using nearest-neighbor, restrained palette with 2–4 tones
+per material, small top-left highlights. Every design must read at 32 pixels. Three-quarter game view for the
+objects in the first row. Top-left: a compact freestanding medieval wooden ballista, broad crossbow
+silhouette, visible side supports, brass bindings, oak frame aimed east/right on a squat wooden stand, idle,
+dark grey iron detailing. Top-middle: the same identical ballista in same position and scale with a subtle
+amber highlight and visible ochre bolt indicating charged state. Top-right: compact medieval ballista loader
+icon, short cluster of thick ochre fletched bolts within an iron-and-leather bundle, in same pixel style.
+Bottom-left: an ordinary stance icon, warm bronze and moss green boots poised on a small stone chip, prominent
+silhouette. Bottom-middle: a chess knight icon, simple blue-silver piece showing the carved horse head in
+profile, base and a thin gold accent. Bottom-right: defensive stance icon, blue-steel medieval shield with one
+broad brass horizontal band and a small white painted central boss. Each item fully within middle 68% of its
+respective tile. Visual style matches rich brown wood and dark outlines of existing pixel-art fantasy object
+atlases and bold isolated high-contrast status icons. No text, frames, gridlines, ground shadow, watermarks,
+extra decorations, or gradients. Return one unified sprite sheet.
+```
+
+Импорт через `tools/import_sheet.py --set field_stances` в промежуточный каталог. Выходы
+`ballista` и `ballista_loaded` кладутся в `assets/sprites` и `assets/sprites/x2` при импорте с `--res 2`.
+Значки 32×32 идут в `assets/icons`, версии 64×64 идут в `assets/ui/icons` как `s_stance_ready`,
+`s_stance_knight`, `s_stance_guard` и `s_ballista` (пучок болтов). Значки карт `ballista_card`
+и `ballista_fire` используют два состояния спрайта.
+
+### Иллюстрации карт — `sheet_cards_stances_ballista.png`
+
+```
+One seamless 3-column by 2-row atlas of SIX separate pixel-art card illustrations for an original medieval
+dark-fantasy grid tactics RPG. Overall canvas 3:2 landscape. Exactly equal rectangular tiles, straight
+boundaries at thirds and halfway down, fully painted edge-to-edge in each tile with one small near-black
+separator, no outer border. Each scene reads alone inside that rectangle and its visual interest is centered
+horizontally in the upper two thirds. Bottom quarter can be dark foreground for the card banner. Established
+visual direction: densely hand-placed HD pixel clusters, sharp clean pixel edges and subtly dithered shadows,
+moody cold blue-green swamp or old fortress stone counterbalanced by warm ochre torches and brass. No text,
+letters, numbers, icons, frame, or labels. TOP LEFT: the mercenary, sturdy fur-lined charcoal leather and
+iron, reddish-brown scarf, mid guard with buckler and short sword planted on wet cobblestones, amber torch
+light. TOP MIDDLE: same mercenary vaulting diagonally across a low cracked wall, cloak swinging, a subtle
+blue-silver chess horse shape formed in the path of cold motion wisps; agile and weighty. TOP RIGHT: same
+mercenary crouching behind a broad blue steel shield with an ochre horizontal band as orange sparks rain off
+it, blue torch-lit arch in background. BOTTOM LEFT: an emerald-hooded huntress setting a compact old
+oak-and-brass freestanding giant crossbow ballista on a mossy tactical trail, its silhouette clear, subdued
+night. BOTTOM MIDDLE: leather-gloved hands sliding an ochre-feathered thick fantasy bolt into the same
+ballista, close view, cold ambient light plus warm amber reflection. BOTTOM RIGHT: the same ballista in dark
+stone ruins with a bright warm bolt visibly leaving to the right along a straight line, moonlit brick and
+drifting moss. Distinct illustration per tile, arcane grounded atmosphere, no modern weapons.
+```
+
+`python tools/import_descent_art.py assets/art_src/sheet_cards_stances_ballista.png --set dc6_stances_ballista`
+
+### Духи Пиромантки, ранги I–III
+
+Лист 3×3. Ряды сверху вниз — Уголь, Тяга, Пепел. Столбцы слева направо — I, II, III.
+
+```text
+Create ONE seamless sheet of 9 distinct original fantasy card art illustrations, a locked 3 column by 3 row atlas of equal square panels, straight boundaries at exact thirds. Each completely separate illustration fills its panel edge to edge, with only hairline charcoal separators. Each row is the SAME creature at three successive power stages, left-to-right. HD handmade pixel art, crisp clustered pixels, deep soot blacks, burnt amber warm key light, navy and teal in cool shadows, the moody stone and moss of a dark fantasy tactics game, crisp edges. Each creature has a distinct signature shape and palette, centered in upper two-thirds of its cell. TOP ROW all coal spirits: at left a single levitating coal-black hand-sized imp with orange ember eyes and a narrow flame crest; middle the same creature with cracking scarlet seams and orange groundfire directly beneath; right the same creature proud, crown crystal coal and cross-shaped floor fire, hot gold highlights. MIDDLE ROW all draft spirits: horse-free, serpent-shaped, two cyan eyes in a coiling funnel of hot orange draft and swirling sparks; at left small slender one-coil wisp, middle a longer three-loop vortex serpent pulling sparks inward, right a towering bold serpentine air current with amber mantle and trailing scarlet fire. BOTTOM ROW all ash spirits: powdery muted gray hovering figure with cute paired lilac points of light in a dark fold and broad ash cloak; at left tiny with shell of ash around it; middle larger sheltering under layered silver ash shields and surrounded by a few purple-gray cinders; right the same figure riding a swooping gray dust veil and sheltering itself with a clearly defined broad ash wing. Show all 9 panels equally sized. Row identity extremely clear, stages progress through silhouette and detail. No frames, borders except fine separators, no words, numbers, characters, watermark, or symbols.
+```
+
+`python tools/import_descent_art.py assets/art_src/sheet_spirit_ranks.png --set dc6_spirit_ranks`
+
+### Сохранение Пиромантки и предметы
+
+```text
+undefined
+```
+
+`python tools/import_descent_art.py assets/art_src/sheet_retain_cards_items.png --set dc6_retain`
+
+`python tools/import_descent_art.py assets/art_src/sheet_retain_cards_items.png --set dc7_retain`
+
+### Пять предметов для тегов
+
+```text
+undefined
+```
+
+`python tools/import_descent_art.py assets/art_src/sheet_tag_relics.png --set dc7_tag_relics`

@@ -8,6 +8,7 @@ from sim.data import GameData
 from ui import audio
 from . import model as M
 from .battle import Battle
+from .relic_run import CREST, RELICS as RUN_RELICS, tagged_candidates, tagged_card
 from .sound import SoundPanel
 from .ui import BattleScreen, ChoiceScreen, DeckScreen, EndScreen, HeroSelect, MapScreen, ShopScreen
 
@@ -165,6 +166,8 @@ class DescentGame:
         audio.set_context("boss" if (self.node or {}).get("type") == "boss" else "battle")
         b = Battle(self.gd, run, fight, seed=(self.seed or 0) * 1000 + run.depth * 50 + len(run.floor.path))
         self.scene = BattleScreen(self, b)
+        if b.run_relics.owned:
+            self.scene.run_job(b.run_relics.opening())
 
     def _camp(self, what):
         run = self.run
@@ -211,7 +214,7 @@ class DescentGame:
                                 sub="Полоска внизу карты — путь к прозрению (основные применения)")
 
     def open_atlas(self):
-        """Открыть атлас всех карт; Esc вернёт на прежний экран."""
+        """Открыть атлас карт и предметов; Esc вернёт на прежний экран."""
         from .atlas import CardAtlasScreen
         if isinstance(self.scene, CardAtlasScreen):
             return
@@ -224,6 +227,7 @@ class DescentGame:
         run = self.run
         for c in run.deck:                                 # зелёный прогноз — только в бою
             c.preview = None
+            c.preview_cost = None
         if b.result != "victory":
             self.end_run()
             self.scene = EndScreen(self, False, [f"Пал на этаже {run.depth} в бою «{b.fight['name']}».",
@@ -240,7 +244,24 @@ class DescentGame:
         self._boss = kind == "boss"
         self._elite = kind == "elite"
         self._gold = gold
-        self._branches()
+        self._battle_run_relics = getattr(b, "run_relics", None)
+        choices = list(self._battle_run_relics.victory_choices()) if self._battle_run_relics else []
+        self._victory_relic_choices(choices)
+
+    def _victory_relic_choices(self, choices):
+        if not choices:
+            self._branches()
+            return
+        (relic, cards), *rest = choices
+        sub = ("Отложить одну из изгнанных карт до первой перетасовки следующего боя."
+               if relic == CREST else "Положить карту наверх добора в первом бою следующего этажа.")
+
+        def proceed(card=None):
+            if card is not None:
+                self._battle_run_relics.record_choice(relic, card)
+            self._victory_relic_choices(rest)
+
+        self.scene = DeckScreen(self, RUN_RELICS[relic]["name"], cards, proceed, on_pick=proceed, sub=sub)
 
     def _branches(self):
         """Жрец: боги, выросшие в бою, — ветка 1 из 2 (переделка смысла или аура), по одному уровню за экран."""
@@ -265,6 +286,38 @@ class DescentGame:
         run = self.run
         audio.set_context("camp")
         offer = run.reward_offer()
+        rules, self._battle_run_relics = getattr(self, "_battle_run_relics", None), None
+        if rules:
+            reroll, oath = rules.reward_tags()
+            if oath and (extra := tagged_card(run, oath, offer, insight=True)):
+                offer.append(extra)
+            if reroll and offer:
+                self._trophy_reward(offer, reroll)
+                return
+        self._show_card_reward(offer)
+
+    def _trophy_reward(self, offer, tags):
+        possible = [tag for tag in tags if tagged_candidates(self.run, tag, offer)]
+        if not possible:
+            self._show_card_reward(offer)
+            return
+
+        def select_card(index):
+            def replace(tag):
+                offer[index] = tagged_card(self.run, tag, offer)
+                self._show_card_reward(offer)
+            self.scene = ChoiceScreen(
+                self, "Книга трофеев", "Выберите тег новой карты.",
+                [(M.tag_label(tag), None, tag) for tag in possible], replace,
+                skip=lambda: self._show_card_reward(offer), back=self.frame)
+
+        self.scene = ChoiceScreen(
+            self, "Книга трофеев", "Выберите карту награды, которую хотите заменить.",
+            [("", card, i) for i, card in enumerate(offer)], select_card,
+            skip=lambda: self._show_card_reward(offer), back=self.frame)
+
+    def _show_card_reward(self, offer):
+        run = self.run
         self.scene = ChoiceScreen(self, "Победа!", f"+{self._gold} золота · HP {run.hp}/{run.max_hp} (между боями "
                                   "не восстанавливается). Возьмите карту в колоду:", [("", c, c) for c in offer],
                                   self._took, skip=lambda: self._took(None), back=self.frame)
@@ -335,12 +388,11 @@ class DescentGame:
         def took(r):
             run.relics.append(r)
             then(f"Предмет: {r['name']}")
-        from .items import RARITY_NAME, about
         sub =("Сильный предмет с минусом — до конца забега" if source == "boss" else
                "Предмет лежит в сумке до конца забега и срабатывает при условии · I — сумка")
         self.scene = ChoiceScreen(self, title, sub,
-                                  [(f"{r['name']} · {RARITY_NAME.get(r.get('rarity'), '')}\n{about(r, run)}", None, r)
-                                   for r in offer], took, skip=lambda: then(None), back=self.frame)
+                                  [(r["name"], None, r) for r in offer], took, skip=lambda: then(None),
+                                  back=self.frame, relics=True)
 
     # ---------- цикл ----------
 

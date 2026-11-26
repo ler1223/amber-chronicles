@@ -113,8 +113,8 @@ def main():
     merc_ids.append("m_brace")
 
     add(cards, "m_rampart", "m_unbreak", "Осадный вал",
-        {"target": "self", "do": [B(8)],
-         "if": [{"when": {"k": "not_walked"}, "do": [op("thorns", 3), op("fort")]}]},
+        {"target": "self", "do": [B(9)],
+         "if": [{"when": {"k": "not_walked"}, "do": [B(4), op("thorns", 4), op("fort")]}]},
         ["Защита", "Шипы"], typ="skill", cost=2, rarity=3, alt=self_block(3), owner="merc")
     merc_ids.append("m_rampart")
 

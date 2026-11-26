@@ -4,7 +4,7 @@
 
 Предмет: {id, name, icon, rarity: common|uncommon|rare|boss|shop, hero?, about, on, …фильтры, do, aim}.
   on     — событие боя: battle, turn, play, kill, hit, exhaust, create, shuffle, step, end, hp_low, last_foe,
-           trap, counter, scroll, desecrated, chain.
+           trap, counter, scroll, desecrated, chain, retained.
   фильтры: tag / type / card (что сыграно), turn (номер хода), every (каждые N ходов), when — список проверок
            состояния (no_attack, played_max, hand_min, hand_empty, shield_min, not_walked, hp_below, trio,
            victim_bleed, victim_burn, momentum_min, far, heat_min, foes_min), count+scope — счётчик (run | battle
@@ -14,7 +14,10 @@
            retain_all, start_hp, slime, no_camp_heal, fewer_rewards, overheat_burn, revive.
   tag_bonus — пассивная прибавка картам с тегом: [{"tag": "Выстрел", "damage": 2}] или
            {"tags": ["Резонанс", "Цепочка"], "damage": 3}; block — к защите.
+  retained_discount — скидка при основном розыгрыше карты, сохранённой в прошлом ходу, раз за ход.
+  arm — отложенный бонус в пределах хода: {kind: block | displace, tag, n}.
 """
+from .model import card_rules, tag_id
 from sim.grid import cheb
 
 RARITY_NAME = {"common": "обычный", "uncommon": "необычный", "rare": "редкий", "boss": "предмет стража",
@@ -72,6 +75,8 @@ class Items:
         self.kills_turn = 0
         self.hp_low_fired = False
         self.scrolls = {}              # Жрец: свитков в статую за ход
+        self.retention = {}            # uid карты → последний ход сохранения и длина серии
+        self.armed = {}                # id предмета → бонус, ожидающий подходящую карту в этом ходу
 
     @property
     def list(self):
@@ -84,21 +89,55 @@ class Items:
         """Пассивная прибавка к карте по её тегу: tag_bonus у предметов."""
         if card is None:
             return 0
-        tags = set(card.tags)
+        tags = set(card.tag_ids)
         total = 0
         for r in self.list:
             for b in r.get("tag_bonus", []):
                 need = b.get("tags") or [b.get("tag")]
-                if tags & set(need):
+                if tags.intersection(map(tag_id, need)):
                     total += int(b.get(kind, 0))
         return total
 
     def new_turn(self):
+        self.armed.clear()
         for k in [k for k in self.counts if k[0] == "turn"]:
             del self.counts[k]
         self.turn_types = []
         self.kills_turn = 0
         self.scrolls = {}
+        self.retention = {uid: record for uid, record in self.retention.items() if record[0] >= self.b.turn - 1}
+
+    def take_card_bonus(self, card, kind):
+        if card is None:
+            return 0
+        total = 0
+        for iid, relic in tuple(self.armed.items()):
+            bonus = relic["arm"]
+            if bonus["kind"] != kind or tag_id(bonus["tag"]) not in card.tag_ids:
+                continue
+            total += bonus["n"]
+            del self.armed[iid]
+            self.b.say(f"{relic['name']}: {about(relic, self.run)}", (170, 220, 255))
+            self.b.fx("relic", unit=self.b.hero, name=relic["name"])
+        return total
+
+    def retained_discount(self, card, price, *, consume=False):
+        """Вычислить скидку на розыгрыш, сохраняя заряд для первой платной карты."""
+        b = self.b
+        if price <= 0 or self.retention.get(card.uid, (None, 0))[0] != b.turn - 1:
+            return 0
+        discount = 0
+        for relic in self.list:
+            amount = min(price - discount, relic.get("retained_discount", 0))
+            key = (relic["id"], "turn", b.turn)
+            if amount <= 0 or key in self.done:
+                continue
+            discount += amount
+            if consume:
+                self.done.add(key)
+                b.say(f"{relic['name']}: скидка {amount}", (170, 220, 255))
+                b.fx("relic", unit=b.hero, name=relic["name"])
+        return discount
 
     # ---------- проверки ----------
 
@@ -147,7 +186,15 @@ class Items:
         if k == "heat_zero":
             return h.ds.get("heat", 0) == 0
         if k == "retained":
-            return sum(1 for c in b.hand if c.d.get("retain")) >= n
+            return sum(1 for c in b.hand if "retain" in card_rules(c.d)) >= n
+        if k == "retain_streak":
+            return ctx.get("retain_streak", 0) == n
+        if k == "moved_to_terrain":
+            cell = b.c.grid.get(h.cell)
+            origin = ctx.get("origin")
+            return origin is not None and origin != h.cell and cell is not None and cell.terrain in w["terrain"]
+        if k == "previous_tag":
+            return tag_id(w["tag"]) in ctx.get("previous_tags", ())
         if k == "all_fed":
             return b.idols is not None and all(getattr(s, "fed", False) for s in b.idols.statues)
         if k == "same_statue":
@@ -161,7 +208,7 @@ class Items:
         card = ctx.get("card")
         if r.get("tag"):
             tags = r["tag"] if isinstance(r["tag"], list) else [r["tag"]]
-            if card is None or not set(tags) & set(card.tags):
+            if card is None or not any(tag_id(tag) in card.tag_ids for tag in tags):
                 return False
         if r.get("type") and (card is None or card.d.get("type") != r["type"]):
             return False
@@ -178,6 +225,14 @@ class Items:
     def fire(self, ev, **ctx):
         """Событие ev: предметы, у которых выполнены фильтры, — считают или срабатывают."""
         b = self.b
+        if ev == "retained":
+            uid = ctx["card"].uid
+            turn, streak = self.retention.get(uid, (0, 0))
+            if turn == b.turn:
+                return
+            streak = streak + 1 if turn == b.turn - 1 else 1
+            self.retention[uid] = b.turn, streak
+            ctx["retain_streak"] = streak
         for r in self.list:
             if b.result:
                 return
@@ -207,6 +262,9 @@ class Items:
 
     def trigger(self, r, ctx):
         b = self.b
+        if r.get("arm"):
+            self.armed[r["id"]] = r
+            return
         h = b.hero
         aim = r.get("aim", "self")
         foes = b.foes()

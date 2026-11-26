@@ -78,7 +78,7 @@ SPEC = {
     },
     "morana": {
         "attack": ("enemy", "Серп", "{5} урона; раненому (меньше половины HP) ×2", "ice_bolt"),
-        "defense": (None, "Ледяная корка", "щит {5}, но следующий ход Жрец не ходит", "frost_guard"),
+        "defense": (None, "Ледяная корка", "щит {8}, но следующий ход Жрец не ходит", "frost_guard"),
         "move": ("enemy", "Скольжение", "враг скользит от статуи до упора", "ice_bolt"),
         "curse": ("enemy", "Стужа", "мороз {4} (на 10 — скован; мокрый — сразу)", "frost_needle"),
         "gift": (None, "Мёртвая вода", "следующий свиток, что добьёт врага, вернётся в руку", None),
@@ -848,9 +848,7 @@ class Idols:
         yield WAIT
 
     def shield(self, n):
-        h = self.b.hero
-        h.shield += n
-        self.b.c.emit("shield", unit=h, amount=n)
+        self.b.gain_shield(self.b.hero, n)
 
     def look(self, st, sid, name, target=None, center=None, radius=0):
         if sid and self.b.vfx(st, sid, name, target=target, center=center, radius=radius):
@@ -1210,7 +1208,7 @@ class Idols:
         yield from self.hit(st, tgt, n, "ice_bolt", None, "Серп")
 
     def morana_defense(self, st, tgt):
-        self.shield(self.n(st, 5))
+        self.shield(self.n(st, 8))
         self.b.hero.ds["iced"] = 1
         self.b.say("Ледяная корка: следующий ход Жрец не ходит", (180, 220, 255))
         yield WAIT

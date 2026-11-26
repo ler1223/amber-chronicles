@@ -24,9 +24,11 @@ from . import cardface as CF
 from . import gfx as G
 from . import model as M
 from . import skin as SK
+from .battle import BallistaShot
 from .hints import Hints, Plain
 from .idols import MEANING_ICON, SPEC, IdolCast
 from .terrain import Ground
+from .relic_choice import RelicChoice
 from .hand import HandView
 
 
@@ -153,6 +155,11 @@ class Inspector:
                "token": "Служебная"}.get(c.category, c.category)
         out.insert(0, ("Редкость", f"{c.rarity_name} · {cat}",
                        M.CARD_RARITY_COLOR.get(c.rarity, M.CARD_RARITY_COLOR[1])))
+        if c.spirit_rank_name:
+            out.append((f"Слияние · ранг {c.spirit_rank_name}", M.TAG_INFO["Слияние"], CF.GOLD))
+        retained = M.retain_phrase(d)
+        if retained:
+            out.append(("При сохранении", retained, (150, 230, 160)))
         if d["alt"]["target"] != "none":
             out.append(("Простое — бесплатно", M.phrase(d["alt"]) + " Не считается сыгранной картой.",
                         (150, 230, 160)))
@@ -291,23 +298,23 @@ class Inspector:
         self.made_rects = []
         if not made:
             return
-        w = self.PV
-        h = round(w * CF.FH / CF.FW)
-        x = r.x - 24 - w
-        y = r.y + 46
-        for c in made[:2]:
+        gap = 24
+        y = r.y + 42
+        available = T.SCREEN_H - y - 24 - gap * (len(made) - 1)
+        h = min(round(self.PV * CF.FH / CF.FW), available // len(made))
+        w = round(h * CF.FW / CF.FH)
+        x = r.x - 24 - (self.PV + w) // 2
+        title_text(surf, "Создаёт", (x + 4, y - 32), 18, (150, 220, 255))
+        for c in made:
             cr = pygame.Rect(x, y, w, h)
             hot = cr.collidepoint(mouse)
-            title_text(surf, "Создаёт", (cr.x + 4, cr.y - 42), 18, (150, 220, 255))
             sh = cr.move(6, 8)
             pygame.draw.rect(surf, (0, 0, 0), sh, border_radius=12)
             CF.blit_card(surf, cr.inflate(16, 22) if hot else cr, c, True, True, hot)
             if hot:
                 pygame.draw.rect(surf, (150, 220, 255), cr.inflate(22, 28), 3, border_radius=14)
-            T.text(surf, "клик — открыть", (cr.centerx, cr.bottom + 14), 13, (180, 220, 255), center=True,
-                   shadow=True)
             self.made_rects.append((cr, c))
-            y = cr.bottom + 60
+            y = cr.bottom + gap
 
 
 def reading_event(screen, ev, card_under):
@@ -412,6 +419,16 @@ def item_icon(surf, r, center, size, alpha=255):
             sm.set_alpha(alpha)
         surf.blit(sm, (center[0] - size // 2, center[1] - size // 2))
     return True
+
+
+def draw_item_icon(surf, item, center, size):
+    if item_icon(surf, item, center, size):
+        return
+    img = CF.art(item.get("icon", ""), size)
+    if img is not None:
+        surf.blit(img, img.get_rect(center=center))
+    else:
+        T.text(surf, item["name"][:1], center, size // 2, T.AMBER, True, center=True)
 
 
 class Bag:
@@ -597,12 +614,17 @@ class BattleScreen:
         self.chain_pick = None             # (карта, режим): Цепочка ждёт выбора цели игроком
         self.chain_send = None
         self.chain_send_ready = False
+        self.relic_choice = None
+        self.relic_choice_offset = 0
+        self.relic_choice_hits = []
         self.sel = None                    # (карта, режим): выбрана кликом или тянется
+        self.hand_picks = []
         self.press = None                  # (карта, кнопка, точка) — нажали на карту, ещё не ясно: клик или тяга
         self.press_t = 0.0                 # сколько держат нажатой без движения
         self.inspect = None                # Inspector: удержание или закреплённое чтение (Shift)
         self.discard_pick = []             # Адажио: выбранные в руке карты для сброса
         self.pick = None                   # подошли на клетку, а рядом несколько врагов: (карта, сторона, клетка, враги)
+        self.shot_pick = None               # цель залпа выбрана, ждём выбор орудия
         self.prayer = None                 # Жрец: свиток на статуе, ждём цель — (карта, статуя, варианты)
         self.drag = False                  # карту тянут мышью
         self.end_rect = pygame.Rect(T.SCREEN_W - 200, T.SCREEN_H - 70, 180, 50)
@@ -690,7 +712,7 @@ class BattleScreen:
                     over[u.id] = (nt - 1.0) * u.move_dur
                 u.move_t = min(1.0, nt)
         moving = any(u.move_t < 1.0 for u in self.combat.units if u.alive)
-        if self.job is not None and not moving and self.chain_pick is None:
+        if self.job is not None and not moving and self.chain_pick is None and self.relic_choice is None:
             self.wait -= dt
             if self.wait <= 0:
                 try:
@@ -699,7 +721,13 @@ class BattleScreen:
                         self.chain_send_ready = False
                     else:
                         act = next(self.job)
-                    if act and act[0] == "chain_card":      # Цепочка: сначала показать карту, потом эффект
+                    if isinstance(act, RelicChoice):
+                        if act.options:
+                            self.relic_choice = act
+                            self.relic_choice_offset = 0
+                            self.relic_choice_hits = []
+                        self.wait = 0.0
+                    elif act and act[0] == "chain_card":      # Цепочка: сначала показать карту, потом эффект
                         self.chain_show, self.chain_t, self.chain_dur = act[2], 0.0, max(0.35, act[1])
                         self.wait = max(0.45, act[1]) + 0.06
                     elif act and act[0] == "chain_choice":  # не-атака: игрок сам выбирает цель
@@ -966,13 +994,36 @@ class BattleScreen:
         wx, wy = self.view.uncam(pos)
         return P.screen_to_cell(wx, wy, self.combat.grid.w, self.combat.grid.h)
 
+    def pick_target_unit(self, pos, units, reach=0):
+        unit = self.view.pick_unit(pos, lambda v: v in units, reach=reach)
+        if unit is not None:
+            return unit
+        cell = self.cell_at(pos)
+        return next((u for u in units if u.cell == cell), None)
+
     def target_at(self, pos, sel=None):
         """Цель под курсором для выбранной карты: юнит (по фигурке или клетке) или клетка."""
         sel = sel or self.sel
-        if not sel or pos[1] >= self.hand_area.y + 30:
+        if not sel:
             return None
         card, mode = sel
+        use = card.d[mode]
         ts = self.b.targets(card, mode)
+        if use["target"] in M.HAND_TARGETS:
+            uid = self.hv.hit(pos, exclude=card.uid)
+            return next((c for c in ts if c.uid == uid), None)
+        if pos[1] >= self.hand_area.y + 30:
+            return None
+        hero = self.b.hero
+        if use.get("allow_stay") and hero.cell in ts and self.pick_target_unit(pos, [hero]) is hero:
+            return hero.cell
+        if self.shot_pick and self.shot_pick[:2] == sel:
+            victim = self.shot_pick[2]
+            if victim not in ts:
+                return None
+            shooters = self.b.ballista_shooters(victim, use.get("range", 6))
+            shooter = self.pick_target_unit(pos, shooters, reach=10)
+            return BallistaShot(shooter, victim) if shooter is not None else None
         if card.d[mode]["target"] == "statue":            # свиток Жреца: статуя под курсором (фигурка или клетка)
             if self.prayer is not None:
                 return self.prayer_target(pos)
@@ -1011,17 +1062,54 @@ class BattleScreen:
             return
         ts = self.b.targets(card, mode)
         if not ts:
-            self.toast = ("Нет цели" + (" или энергии" if mode == "main" else ""), 1.2)
+            self.toast = (self.unplayable_reason(card, mode), 1.2)
             return
-        if card.d[mode]["target"] == "self":
+        self.shot_pick = None
+        self.hand_picks.clear()
+        if card.d[mode]["target"] == "self" and ts == [self.b.hero]:
             self.fire(card, mode, self.b.hero)
             return
         self.sel = (card, mode)
+
+    def unplayable_reason(self, card, mode):
+        b = self.b
+        if b.attacks_locked(card):
+            return "Глухая оборона закрывает карты атаки"
+        if mode == "main" and not b.can_afford(card):
+            return "Не хватает ресурса для розыгрыша"
+        target = card.d[mode].get("target")
+        if target == "ballista_place" and b.ballista_locked(card):
+            return "Установка этой карты уже на поле"
+        if target == "ballista_fire":
+            if not b.ballistas:
+                return "Сначала поставьте баллисту"
+            if not any(unit.charge for unit in b.ballistas):
+                return "Сначала зарядите баллисту"
+            return "На линиях баллисты сейчас нет цели"
+        if target == "copy_hand":
+            return "В руке нужна другая карта, которую можно скопировать"
+        if target in ("hand_retain", "hand_other"):
+            return "В руке недостаточно подходящих карт"
+        return "Нет доступной цели"
+
+    def choose_hand_target(self, card, mode, target):
+        if target in self.hand_picks:
+            self.hand_picks.remove(target)
+            return
+        self.hand_picks.append(target)
+        if len(self.hand_picks) == card.d[mode].get("count", 1):
+            chosen = tuple(self.hand_picks) if len(self.hand_picks) > 1 else target
+            self.hand_picks.clear()
+            if self.chain_pick is not None:
+                self.chain_choose(chosen)
+            else:
+                self.fire(card, mode, chosen)
 
     def chain_choose(self, target):
         """Игрок выбрал цель для не-атаки, которую разыграла Цепочка."""
         if self.chain_pick is None:
             return
+        self.hand_picks.clear()
         self.chain_pick = None
         self.chain_send = target
         self.chain_send_ready = True
@@ -1031,13 +1119,23 @@ class BattleScreen:
     def fire(self, card, mode, target):
         """Сыграть: карта летит к цели и гаснет, бой отыгрывает её."""
         self.sel = None
+        self.hand_picks.clear()
         self.drag = False
         self.hv.drag = None
         v = self.view
-        aim = target.statue if isinstance(target, IdolCast) else target[1] if self.b.is_spot(target) else target
-        pos = v.cam(v.feet_pos(aim)) if hasattr(aim, "cell") else v.cam(T.cell_feet(aim))
-        self.hv.played(card, (pos[0], pos[1] - 40))
+        aim = (target.statue if isinstance(target, IdolCast) else target.ballista if isinstance(target, BallistaShot)
+               else target[1] if self.b.is_spot(target) else target)
+        if isinstance(aim, tuple) and aim and isinstance(aim[0], M.Card):
+            aim = aim[-1]
+        if isinstance(aim, M.Card):
+            sprite = self.hv.sprites.get(aim.uid)
+            pos = self.hv.rect_of(sprite).center if sprite is not None else self.mouse
+        else:
+            x, y = v.cam(v.feet_pos(aim)) if hasattr(aim, "cell") else v.cam(T.cell_feet(aim))
+            pos = (x, y - 40)
+        self.hv.played(card, pos)
         self.pick = None
+        self.shot_pick = None
         self.prayer = None
         self.run_job(self.b.play(card, mode, target))
 
@@ -1055,6 +1153,9 @@ class BattleScreen:
             if hasattr(ev, "pos"):
                 self.mouse = ev.pos
             return
+        if self.relic_choice is not None:
+            self.handle_relic_choice(ev)
+            return
         if self.b.pending_discard:                            # Адажио: выбор карт для сброса
             if ev.type == pygame.MOUSEMOTION:
                 self.mouse = ev.pos
@@ -1068,7 +1169,7 @@ class BattleScreen:
                         self.discard_pick.append(card)
                     need = min(self.b.pending_discard, len(self.b.hand))
                     if len(self.discard_pick) >= need:
-                        self.b.resolve_discard(self.discard_pick)
+                        self.resolve_player_discard(tuple(self.discard_pick))
                         self.discard_pick = []
             return
         if self.chain_pick is not None:                       # Цепочка ждёт выбора цели для не-атаки
@@ -1079,11 +1180,22 @@ class BattleScreen:
                 card, mode = self.chain_pick
                 target = self.target_at(ev.pos, (card, mode))
                 if target is not None:
-                    self.chain_choose(target)
+                    if card.d[mode]["target"] in M.HAND_TARGETS:
+                        self.choose_hand_target(card, mode, target)
+                    else:
+                        self.chain_choose(target)
                 elif ev.pos[1] < self.hand_area.y:
                     self.toast = (f"«{card.name}»: выберите подсвеченную цель", 1.2)
             return
         if self.ui_event(ev):
+            return
+        if ((ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 3) or
+                (ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE)) and (
+                self.shot_pick or (self.sel and self.sel[0].d[self.sel[1]]["target"] in M.HAND_TARGETS)):
+            self.sel = self.press = self.shot_pick = None
+            self.hand_picks.clear()
+            self.drag = False
+            self.hv.drag = None
             return
         if ev.type == pygame.MOUSEMOTION and self.inspect is not None and self.inspect.pinned:
             self.inspect.mouse = ev.pos                      # читают карту — мышь только для чтения,
@@ -1108,6 +1220,7 @@ class BattleScreen:
                 card.manual = True
                 card.lvl = max(0, min(len(card.levels) - 1, card.lvl + (1 if ev.y > 0 else -1)))
                 if self.sel and self.sel[0] is card:
+                    self.hand_picks.clear()
                     self.sel = (card, self.sel[1])
             return
         elif ev.type == pygame.MOUSEBUTTONDOWN and self.inspect is not None and self.inspect.pinned:
@@ -1143,6 +1256,11 @@ class BattleScreen:
                 return
             uid = self.hv.hit(ev.pos)
             card = next((c for c in self.b.hand if c.uid == uid), None)
+            if self.sel and not self.busy and self.sel[0].d[self.sel[1]]["target"] in M.HAND_TARGETS:
+                target = self.target_at(ev.pos)
+                if target is not None:
+                    self.choose_hand_target(*self.sel, target)
+                    return
             if card is not None and ev.button == 3:          # ПКМ — повернуть карту
                 if card.d["alt"].get("target") == "none":    # простого нет (свиток Жреца) — не переворачивать
                     self.toast = ("У этой карты нет простого применения", 1.2)
@@ -1183,11 +1301,9 @@ class BattleScreen:
                 return
             if self.sel and not self.busy:
                 t = self.target_at(ev.pos)
-                if self.ask_pick(*self.sel, t):
-                    return
-                if t is None and ev.pos[1] < self.hand_area.y:          # атака — мимо врагов: ближайшему
+                if t is None and not self.shot_pick and ev.pos[1] < self.hand_area.y:
                     t = self.b.auto_target(*self.sel)
-                if t is not None:
+                if t is not None and not self.ask_pick(*self.sel, t):
                     self.fire(*self.sel, t)
         elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
             self.mouse = ev.pos
@@ -1197,9 +1313,17 @@ class BattleScreen:
                 return
             if self.drag and self.sel:                       # отпустили тянутую карту — только тут она играется
                 card, mode = self.sel
+                if card.d[mode]["target"] in M.HAND_TARGETS and self.b.targets(card, mode):
+                    target = self.target_at(ev.pos)
+                    self.drag = False
+                    self.hv.drag = None
+                    if target is not None:
+                        self.choose_hand_target(card, mode, target)
+                    self.press = None
+                    return
                 if not self.b.targets(card, mode):
-                    self.toast = ("Эта сторона карты сейчас не играется", 1.4)
-                elif card.d[mode]["target"] == "self":
+                    self.toast = (self.unplayable_reason(card, mode), 1.4)
+                elif card.d[mode]["target"] == "self" and self.b.targets(card, mode) == [self.b.hero]:
                     if ev.pos[1] < self.hand_area.y:
                         self.fire(card, mode, self.b.hero)
                 else:
@@ -1216,6 +1340,7 @@ class BattleScreen:
                 self.hv.drag = None
                 if self.sel and self.sel[0] is card:
                     self.sel = None
+                    self.shot_pick = None
             elif self.press:                                 # клик: выбрать карту, цель — следующим кликом
                 card, button, _ = self.press
                 if self.sel and self.sel[0] is card:
@@ -1295,6 +1420,14 @@ class BattleScreen:
             return True
         if card.d[mode]["target"] == "statue" and t is not None and getattr(t, "statue", None):
             return self.ask_prayer(card, t)
+        if card.d[mode]["target"] == "ballista_fire" and t is not None and not isinstance(t, BallistaShot):
+            shooters = self.b.ballista_shooters(t, card.d[mode].get("range", 6))
+            if len(shooters) == 1:
+                self.fire(card, mode, BallistaShot(shooters[0], t))
+            elif shooters:
+                self.shot_pick = (card, mode, t)
+                self.sel = (card, mode)
+            return bool(shooters)
         if isinstance(t, tuple) and len(t) == 2 and isinstance(t[0], tuple) and t[1] is None:
             self.pick = (card, mode, t[0], self.b.reach_spots(card, mode)[t[0]])
             self.sel = (card, mode)
@@ -1320,6 +1453,8 @@ class BattleScreen:
         if self.busy or self.b.result:
             return
         self.sel = None
+        self.hand_picks.clear()
+        self.shot_pick = None
         self.run_job(self.b.end_turn())
 
     # ---------- земля ----------
@@ -1391,6 +1526,13 @@ class BattleScreen:
         b = self.b
         pulse = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 180)
         hero = b.hero
+        if self.relic_choice is not None:
+            pointed = next((value for r, value in self.relic_choice_hits if r.collidepoint(self.mouse)), None)
+            hot_cell = self.relic_choice_cell(pointed)
+            for _, value in self.relic_choice.options:
+                cell = self.relic_choice_cell(value)
+                if cell is not None:
+                    h.cell(cell, T.SELECT, fill=65 if cell == hot_cell else 30, width=2.5, glow=True)
         c = lambda p: P.cell_ground(p)                    # noqa: E731 — центр клетки
         self.life.collect(h)                              # тени облаков и птиц, круги на воде
         if b.idols is not None:
@@ -1413,6 +1555,9 @@ class BattleScreen:
             e = b.env_now
             col = (150, 200, 255) if e["kind"] == "gust" else (255, 110, 40)
             h.zone(e["cells"], col, int(40 + 40 * pulse), 230, 2.0)
+        if b.garden is not None:                          # фейные кольца эльфа — мягкая зелёная зона
+            for ring in b.garden.rings:
+                h.zone(list(ring["cells"]), (130, 225, 150), int(22 + 18 * pulse), 140, 1.2, glow=False)
         for p, _n in b.traps.items():                    # капканы Охотницы: кольцо с зубьями
             cc = c(p)
             h.ring(cc, 0.26, (235, 205, 140), 240, 2.0, glow=False, fill=90, squash=0.9)
@@ -1440,7 +1585,7 @@ class BattleScreen:
             it = u.intent or {}
             k = it.get("kind")
             if k == "zone":
-                h.zone(it["cells"], (255, 70, 50), int(45 + 45 * pulse), 235, 2.5)
+                h.zone(b.zone_hit_cells(it), (255, 70, 50), int(45 + 45 * pulse), 235, 2.5)
             elif k == "charge":                           # линия рывка — отмечена заранее
                 h.zone(it.get("cells", []), (255, 110, 60), int(40 + 40 * pulse), 230, 2.5)
             elif k == "pull":                             # досягаемость утягивания
@@ -1465,18 +1610,31 @@ class BattleScreen:
         if self.sel:
             card, mode = self.sel
             u = card.d[mode]
+            if u["target"] in M.HAND_TARGETS:
+                return
             h.zone(b.range_cells(card, mode), (255, 205, 120), 30, 170, 1.5, glow=False)   # дальность — всегда
             for t in b.targets(card, mode):
                 h.cell(t.cell if hasattr(t, "cell") else t, (255, 230, 120), 50, 210, 0.1, 2)
             if u["target"] == "reach":                    # куда можно встать рядом с врагом
                 for q in b.reach_spots(card, mode):
                     h.ring(c(q), 0.12, (120, 220, 255), 230, 2, fill=120, glow=False)
+            if u["target"] == "ballista_fire":
+                victim = self.shot_pick[2] if self.shot_pick else None
+                shooters = (b.ballista_shooters(victim, u.get("range", 6)) if victim is not None
+                            else [unit for unit in b.ballistas if unit.charge])
+                for shooter in shooters:
+                    h.ring(self.feet(shooter), 0.49, (255, 215, 132), 230, 2.5, squash=0.55)
+                    if victim is not None:
+                        h.line(self.feet(shooter), self.feet(victim), (255, 206, 115), 130, 2, glow=False)
             if self.pick:                                  # рядом несколько — кого бить?
                 pp = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 140)
                 h.cell(self.pick[2], (120, 220, 255), 60, 240, 0.04, 3, glow=True)
                 for f in self.pick[3]:
                     h.ring(self.feet(f), 0.5, (255, 120, 80), int(120 + 120 * pp), 3)
             t, auto = self.aim()
+            shot_origin = t.ballista if isinstance(t, BallistaShot) else None
+            if shot_origin is not None:
+                t = t.victim
             spot = isinstance(t, tuple) and len(t) == 2 and isinstance(t[0], tuple)
             if spot:                                       # встать сюда: клетка и тот, кого ударит
                 if t[1] is not None:
@@ -1491,9 +1649,19 @@ class BattleScreen:
                 if u["target"] == "area":                  # область удара вокруг выбранной клетки
                     h.zone([q for q in b.c.grid.in_radius(p, u.get("radius", 1)) if b.c.grid.get(q) is not None],
                            (255, 140, 60), 70, 230, 2.5)
+                elif u["target"] == "ballista_place":
+                    for ray, victim in b.ballista_lines(origin=p):
+                        color = (255, 206, 115) if victim is not None else (165, 184, 200)
+                        h.zone(ray, color, 28, 145, 1.2, glow=False)
+                elif u["target"] == "ballista_fire":
+                    shooters = [shot_origin] if shot_origin else b.ballista_shooters(t, u.get("range", 6))
+                    for shooter in shooters:
+                        h.line(self.feet(shooter), self.feet(t), (255, 206, 115), 245, 3.5)
                 path = None
                 if u["target"] == "cell_step":
                     path = b.paths(hero, u.get("step", 1)).get(p)
+                elif u["target"] == "cell_dash":
+                    path = b.dash_paths(u.get("dash", 1)).get(p)
                 elif u["target"] == "reach":
                     reach = b.paths(hero, u.get("reach", 1))
                     if spot:
@@ -1513,9 +1681,11 @@ class BattleScreen:
         """Обновить зелёные числа на картах в руке под текущие баффы героя."""
         for c in getattr(self.game.run, "deck", []):
             c.preview = None
+            c.preview_cost = None
         for c in self.b.hand:
             c.preview = {"main": self.b.damage_preview(c, "main"),
                          "alt": self.b.damage_preview(c, "alt")}
+            c.preview_cost = self.b.effective_cost(c)
 
     def draw(self, surf):
         self.refresh_damage_previews()
@@ -1590,6 +1760,75 @@ class BattleScreen:
             self.inspect.draw(surf, self.inspect.mouse or self.mouse)
         self.draw_help(surf)
         self.bag.draw(surf, self.game.run, self.b)
+        if self.relic_choice is not None:
+            self.draw_relic_choice(surf)
+
+    def complete_relic_choice(self, value):
+        self.relic_choice = None
+        self.chain_send = value
+        self.chain_send_ready = True
+
+    def resolve_player_discard(self, cards):
+        current = self.job
+
+        def job():
+            yield from self.b.resolve_discard_gen(cards)
+            if current is not None:
+                yield from current
+
+        self.run_job(job())
+
+    def handle_relic_choice(self, ev):
+        if ev.type == pygame.MOUSEMOTION:
+            self.mouse = ev.pos
+        elif ev.type == pygame.MOUSEWHEEL:
+            limit = max(0, len(self.relic_choice.options) - 6)
+            self.relic_choice_offset = max(0, min(limit, self.relic_choice_offset - ev.y))
+            self.relic_choice_hits = []
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_ESCAPE:
+                self.complete_relic_choice(None)
+            elif pygame.K_1 <= ev.key <= pygame.K_6:
+                index = self.relic_choice_offset + ev.key - pygame.K_1
+                if index < len(self.relic_choice.options):
+                    self.complete_relic_choice(self.relic_choice.options[index][1])
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            for rect, value in self.relic_choice_hits:
+                if rect.collidepoint(ev.pos):
+                    self.complete_relic_choice(value)
+                    return
+            clicked = self.cell_at(ev.pos)
+            if clicked is not None:
+                for _, value in self.relic_choice.options:
+                    if self.relic_choice_cell(value) == clicked:
+                        self.complete_relic_choice(value)
+                        return
+
+    def relic_choice_cell(self, value):
+        p = getattr(value, "cell", value)
+        if isinstance(p, tuple) and len(p) == 2 and all(type(x) is int for x in p) and self.b.c.grid.get(p):
+            return p
+        return None
+
+    def draw_relic_choice(self, surf):
+        choice = self.relic_choice
+        visible = choice.options[self.relic_choice_offset:self.relic_choice_offset + 6]
+        panel = pygame.Rect(T.SCREEN_W - 486, 128, 440, 138 + 44 * len(visible))
+        T.frame(surf, panel, 248, accent=T.AMBER)
+        for i, line in enumerate(T.wrap(choice.prompt, 17, panel.w - 30)):
+            T.text(surf, line, (panel.x + 16, panel.y + 14 + 20 * i), 17, T.AMBER, True)
+        self.relic_choice_hits = []
+        if len(choice.options) > 6:
+            first = self.relic_choice_offset + 1
+            T.text(surf, f"{first}–{first + len(visible) - 1} из {len(choice.options)} · колесо",
+                   (panel.x + 16, panel.bottom - 70), 12, T.TEXT_DIM)
+        for i, (label, value) in enumerate(visible):
+            rect = pygame.Rect(panel.x + 14, panel.y + 74 + 44 * i, panel.w - 28, 38)
+            button(surf, rect, f"{i + 1}. {label}", self.mouse)
+            self.relic_choice_hits.append((rect, value))
+        decline = pygame.Rect(panel.x + 14, panel.bottom - 50, panel.w - 28, 38)
+        button(surf, decline, "Пропустить (Esc)", self.mouse)
+        self.relic_choice_hits.append((decline, None))
         if self.shown_t is not None and G.is_canvas(surf):  # бой проявляется из темноты заставки
             k = (self.intro_t - self.shown_t) / 0.5
             if k < 1:
@@ -1645,6 +1884,9 @@ class BattleScreen:
             return None
         card, mode = self.sel
         t = self.target_at(self.mouse)
+        shot_origin = t.ballista if isinstance(t, BallistaShot) else None
+        if shot_origin is not None:
+            t = t.victim
         if t is None or not hasattr(t, "cell") or t is self.b.hero:
             return None
         dmg = 0
@@ -1652,7 +1894,11 @@ class BattleScreen:
             if op["op"] == "damage":
                 dmg += self.b.hit_value(self.b.hero, t, op["n"])
             elif op["op"] == "body_slam":
-                dmg += self.b.hit_value(self.b.hero, t, self.b.hero.shield)
+                dmg += self.b.hit_value(self.b.hero, t, self.b.hero.shield + op.get("n", 0))
+            elif op["op"] == "ballista_fire":
+                shooters = self.b.ballista_shooters(t, card.d[mode].get("range", 6))
+                if shot_origin is not None or len(shooters) == 1:
+                    dmg += self.b.ballista_damage(op, t, ballista=shot_origin or shooters[0])
         if not dmg:
             return None
         return {self.combat.units.index(t): (dmg, dmg >= t.hp + t.shield)}
@@ -1743,6 +1989,9 @@ class BattleScreen:
             r = pygame.Rect(0, 0, 40, 6)
             r.center = (fx, top + 10)
             self.hp_bar(surf, r, u.hp, u.max_hp, col=(200, 180, 150))
+            if u in self.b.ballistas:
+                col = (236, 205, 130) if u.charge else (150, 149, 140)
+                sk.badge(surf, (fx, top - 8), 10, "s_ballista", col, f"{u.charge}/{u.charge_max}")
             return
         bw = 62 if u.boss else 52
         r = pygame.Rect(0, 0, bw, 9)
@@ -1864,6 +2113,9 @@ class BattleScreen:
                 out.append((icon, col, n if not isinstance(n, bool) else "", word))
         if u.shield:
             out.insert(0, ("s_shield", (150, 190, 255), u.shield, "Защита"))
+        if u is self.b.hero and self.b.stance:
+            name, _, color = M.FIELD_STANCES[self.b.stance]
+            out.insert(0, (f"s_stance_{self.b.stance}", color, "", name))
         return out
 
     def draw_side(self, surf):
@@ -1994,6 +2246,8 @@ class BattleScreen:
             return f"{st.god['name']} — {spec[1]}: {spec[2]} · выберите цель · ПКМ — отмена"
         if self.pick:
             return "Рядом несколько врагов — щёлкните, кого ударить"
+        if self.shot_pick:
+            return "Выберите баллисту для залпа · ПКМ — отмена"
         if self.sel:
             card, mode = self.sel
             tg = card.d[mode]["target"]
@@ -2002,8 +2256,19 @@ class BattleScreen:
             if tg == "reach":
                 return "Выберите клетку, куда встать (можно зайти врагу за спину) · ПКМ — повернуть карту"
             if tg == "cell_step":
+                if card.d[mode].get("allow_stay"):
+                    return "Выберите клетку для шага или щёлкните по герою, чтобы остаться"
                 return "Выберите клетку для шага"
+            if tg == "copy_hand":
+                return "Выберите карту в руке для копирования · ПКМ — отмена"
+            if tg in M.HAND_TARGETS:
+                need = card.d[mode].get("count", 1)
+                return f"Выберите карты в руке ({len(self.hand_picks)}/{need}) · ПКМ — отмена"
+            if tg == "ballista_fire":
+                return "Выберите цель залпа на подсвеченной линии"
             if tg == "self":
+                if self.b.ballistas and M.can_buff_ballista(card.d[mode]):
+                    return "Выберите героя или баллисту для усиления"
                 return "Отпустите над полем — сыграть" if self.drag else "Щёлкните по полю — сыграть"
             if self.drag:
                 return "Отпустите над целью · без цели — ударит ближайшего · ПКМ — повернуть карту"
@@ -2046,6 +2311,16 @@ class BattleScreen:
             sk.ribbon(surf, r, "")
             sk.text(surf, tip, r.center, 15, sk.p["text"], center=True)
         self.hv.draw(surf, self.state_of)
+        if self.sel and self.sel[0].d[self.sel[1]]["target"] in M.HAND_TARGETS:
+            target = self.target_at(self.mouse)
+            native = surf.native if G.is_canvas(surf) else surf
+            for card in b.targets(*self.sel):
+                sprite = self.hv.sprites.get(card.uid)
+                if sprite is not None:
+                    rect = self.hv.rect_of(sprite).inflate(4, 4)
+                    rect = surf.rect(rect) if G.is_canvas(surf) else rect
+                    pygame.draw.rect(native, T.SELECT, rect,
+                                     width=3 if card is target or card in self.hand_picks else 1, border_radius=8)
         if self.sel and self.sel[0].d[self.sel[1]]["target"] != "self" and self.mouse[1] < self.hand_area.y + 20:
             t, auto = self.aim()                              # без стрелки: цель видна по подсветке на поле
             ok = t is not None
@@ -2114,7 +2389,7 @@ class BattleScreen:
         for ts in b.turn_tags:
             for t in ts:
                 tags[t] = tags.get(t, 0) + 1
-        s = f"Сыграно {b.played}" + "".join(f" · {t} {n}" for t, n in tags.items()) + \
+        s = f"Сыграно {b.played}" + "".join(f" · {M.tag_label(t)} {n}" for t, n in tags.items()) + \
             (f" · пройдено {b.walked}" if b.walked else "")
         w = sk.size(s, 13)[0] + 28
         r = pygame.Rect(x, y, w, 28)
@@ -2127,6 +2402,19 @@ class BattleScreen:
         sk = self.skin
         ds = b.hero.ds
         lines = []
+        if b.mech == "fae":
+            fae = ds.get("fae", 0)
+            r = pygame.Rect(x, y, 190, 62)
+            sk.panel(surf, r, 228)
+            sk.text(surf, "Феи", (r.x + 14, r.y + 5), 15, sk.p["title"], title=True)
+            sk.text(surf, f"{fae}/10", (r.right - 14, r.y + 5), 15, sk.p["text"], right=True, title=True)
+            sk.pips(surf, r.x + 14, r.y + 30, 10, fae, w=(r.w - 28 - 4 * 9) / 10, h=9, gap=4)
+            if b.garden is not None:
+                plants = sum(1 for u in b.garden.plants if u.alive)
+                beasts = sum(1 for u in b.garden.beasts.values() if u.alive)
+                sk.text(surf, f"растения {plants} · звери {beasts} · прививки {len(b.garden.attachments)}",
+                        (r.x + 14, r.y + 44), 11, sk.p["dim"])
+            return r.y
         if b.mech == "momentum":
             mx = b.hero_def.get("momentum_max", 5)
             r = pygame.Rect(x, y, 160, 50)
@@ -2239,6 +2527,23 @@ class BattleScreen:
                 self.tip_box(surf, lines, self.mouse, 380)
                 return
         u = self.view.pick_unit(self.mouse)
+        if u in self.b.ballistas and self.mouse[1] < self.hand_area.y and not self.sel:
+            sk = self.skin
+            lines = [(u.name, (236, 205, 130), True),
+                     (f"Прочность {u.hp}/{u.max_hp} · Заряды {u.charge}/{u.charge_max}", sk.p["text"], False),
+                     ("В начале хода +1 заряд, картой +2. Для залпа выберите цель на прямой линии.",
+                      sk.p["text"], False)]
+            buffs = (("Мощь", u.ds["strength"]), ("Дальний урон", u.ds["ranged_bonus"]),
+                     ("К следующему залпу", u.ds.get("shot_empower")), ("Удвоенные залпы", u.ds.get("double_attacks")))
+            bonus = [f"{name} +{n}" for name, n in buffs if n]
+            if u.ds["focus"]:
+                bonus.append("Фокус")
+            if u.ds.get("double_next"):
+                bonus.append("Следующий залп ×2")
+            if bonus:
+                lines.insert(2, (" · ".join(bonus), sk.p["title"], False))
+            self.tip_box(surf, lines, self.mouse, 270)
+            return
         if u is None or not u.alive or u.team != ENEMY or self.sel or self.mouse[1] > self.hand_area.y:
             return
         sk = self.skin
@@ -2332,7 +2637,7 @@ class BattleScreen:
 class ChoiceScreen:
     """Выбор между боями: награда (карта из 3), прозрение (1 из 2 веток), костёр."""
 
-    def __init__(self, game, title, sub, options, on_pick, skip=None, back=None):
+    def __init__(self, game, title, sub, options, on_pick, skip=None, back=None, *, relics=False):
         self.game = game
         self.title, self.sub = title, sub
         self.options = options               # [(подпись, карта или None, значение)]
@@ -2342,6 +2647,7 @@ class ChoiceScreen:
         self.mouse = (0, 0)
         self.rects = []
         self.skip_rect = None
+        self.relics = relics
 
     def update(self, dt):
         pass
@@ -2385,8 +2691,8 @@ class ChoiceScreen:
         n = len(self.options)
         big = any(card is not None for _, card, _ in self.options)
         tall = any("\n" in (label or "") for label, _, _ in self.options)
-        w = int(CW * 1.35) if big else 340 if tall else 300
-        h = int(CH * 1.35) if big else 110 if tall else 90
+        w = int(CW * 1.35) if big else 340 if tall or self.relics else 300
+        h = int(CH * 1.35) if big else 230 if self.relics else 110 if tall else 90
         gap = 40
         x0 = cx - (n * w + (n - 1) * gap) // 2
         self.rects = []
@@ -2399,6 +2705,20 @@ class ChoiceScreen:
                        M.CARD_RARITY_COLOR.get(card.rarity, T.TEXT_DIM), center=True)
                 if label:
                     T.text(surf, label, (r.centerx, r.bottom + 16), 16, T.SELECT if hot else T.TEXT, True, center=True)
+            elif self.relics:
+                from .items import RARITY_COLOR, RARITY_NAME, about
+                color = RARITY_COLOR.get(val.get("rarity"), T.AMBER)
+                T.frame(surf, r, 245, accent=T.SELECT if hot else color,
+                        fill=(60, 44, 26) if hot else (40, 30, 22))
+                draw_item_icon(surf, val, (r.centerx, r.y + 49), 72)
+                y = r.y + 96
+                for line in T.wrap(val["name"], 19, r.w - 28, True):
+                    T.text(surf, line, (r.centerx, y), 19, T.TEXT, True, center=True)
+                    y += 22
+                T.text(surf, RARITY_NAME.get(val.get("rarity"), "").capitalize(),
+                       (r.centerx, y), 14, color, center=True)
+                for i, line in enumerate(T.wrap(about(val, self.game.run), 15, r.w - 28)):
+                    T.text(surf, line, (r.centerx, y + 24 + i * 19), 15, T.TEXT, center=True)
             elif "\n" in label:                              # заголовок и пояснение (дар бога)
                 head, rest = label.split("\n", 1)
                 hot = r.collidepoint(self.mouse)
@@ -2931,8 +3251,10 @@ class ShopScreen:
         if run.gold < price:
             self.toast = ("Не хватает золота", 1.2)
             return False
+        if run.take(card) is False:
+            self.toast = ("Уникальная карта уже есть в колоде", 1.2)
+            return False
         run.gold -= price
-        run.take(card)
         self.sold.add(i)
         return True
 
@@ -3020,8 +3342,16 @@ class ShopScreen:
         button(surf, self.potion_rect, f"Зелье +{self.cfg['potion_heal']} HP — {pp}" if self.potion else "Зелье продано",
                self.mouse, on=self.potion and run.gold >= pp and run.hp < run.max_hp)
         for rl, price, rr in self.items:
-            button(surf, rr, f"{rl['name']} — {price}" if rl else "Продано", self.mouse,
-                   on=rl is not None and run.gold >= price)
+            if rl is None:
+                button(surf, rr, "Продано", self.mouse, on=False)
+                continue
+            affordable = run.gold >= price
+            button(surf, rr, "", self.mouse, on=affordable)
+            draw_item_icon(surf, rl, (rr.x + 25, rr.centery), 34)
+            lines = T.wrap(f"{rl['name']} — {price}", 15, rr.w - 62, True)
+            for i, line in enumerate(lines):
+                T.text(surf, line, (rr.centerx + 20, rr.centery + 17 * i - 8 * (len(lines) - 1)),
+                       15, T.TEXT if affordable else T.TEXT_DIM, True, center=True)
         hot = next((it for it in self.items if it[0] is not None and it[2].collidepoint(self.mouse)), None)
         if hot is not None:
             from .items import RARITY_NAME
@@ -3161,6 +3491,9 @@ class StarterDeckScreen:
                     if len(self.selected) >= 4:
                         self.toast = ("Уже выбраны 4 карты · щёлкните по карте в колоде, чтобы убрать", 1.4)
                         self.toast_t = 1.4
+                    elif M.deck_limit_reached(c.cid, self.data["cards"]["cards"], self.deck_ids()):
+                        self.toast = ("Достигнут предел копий этой карты", 1.4)
+                        self.toast_t = 1.4
                     else:
                         self.selected.append(c.cid)
                     return
@@ -3272,7 +3605,7 @@ class HeroSelect:
         self.go = pygame.Rect(T.SCREEN_W // 2 - 230, T.SCREEN_H - 74, 460, 56)
         self.cont = pygame.Rect(T.SCREEN_W - 300, T.SCREEN_H - 74, 270, 56)   # продолжить сохранённый забег
         self.sound_rect = pygame.Rect(T.SCREEN_W - 250, 24, 220, 38)           # звук доступен до выбора героя
-        self.atlas_rect = pygame.Rect(24, T.SCREEN_H - 74, 250, 56)             # все карты до старта
+        self.atlas_rect = pygame.Rect(24, T.SCREEN_H - 74, 250, 56)
         self.clock = 0.0
         self.saved = game.has_save()
 
@@ -3320,7 +3653,7 @@ class HeroSelect:
         T.text(surf, "Кто спустится в подземелье?", (T.SCREEN_W // 2, 34), 30, T.AMBER, True, center=True,
                shadow=True)
         button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
-        button(surf, self.atlas_rect, "Атлас карт · F2", self.mouse)
+        button(surf, self.atlas_rect, "Атлас · F2", self.mouse)
         self.hits = []
         n = len(self.order)
         gap = 18 if n < 4 else 12
