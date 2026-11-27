@@ -20,7 +20,7 @@ from ui.ground import GroundPainter, prop_image
 from ui.marks import MarkLayer
 from ui.fxlab.router import FxRouter
 from ui.props import load_props
-from ui.sprites import DRAWERS, SpriteBank
+from ui.sprites import DRAWERS, SpriteBank, res as sprite_resolution
 from ui.vfx import Light, VfxWorld, resolve_color
 from ui.vfx_textures import make_textures
 
@@ -185,8 +185,8 @@ class BattleView:
 
     # ---------- события симуляции → эффекты ----------
 
-    def reset(self, combat):
-        P.set_board(combat.grid.w, combat.grid.h)       # доска любого размера: камера и плоская карта под неё
+    def reset(self, combat, *, foreground=P.DEFAULT_FOREGROUND):
+        P.set_board(combat.grid.w, combat.grid.h, foreground=foreground)
         if self.flat.get_size() != (P.FLAT_W, P.FLAT_H):
             self.flat = pygame.Surface((P.FLAT_W, P.FLAT_H))
             self.overlay = pygame.Surface((P.FLAT_W, P.FLAT_H), pygame.SRCALPHA)
@@ -291,7 +291,7 @@ class BattleView:
                 img, (max(1, round(img.get_width() * k)), max(1, round(img.get_height() * k)))))
         return out[1]
 
-    def sprite_of(self, u, flip=False, flash=False):
+    def sprite_of(self, u, flip=False, flash=False, *, full_resolution=False):
         if u.obj:                      # объект поля: своя моделька (assets/sprites/<id>.png или заглушка)
             names = [u.proto_id]
             if u.proto_id == "ballista" and getattr(u, "charge", 0):
@@ -299,14 +299,15 @@ class BattleView:
             return self.sprites.get(names, "object", u.color, False, flip, flash, {"object": u.obj.get("art")})
         if u.form:                     # облик друида: свой спрайт (druid_bear.png / bear.png) или заглушка зверя
             return self.sprites.get([f"{u.proto_id}_{u.form}", u.form], u.form, u.color, u.boss, flip, flash)
-        names = [u.proto.get("path"), u.proto_id, SPRITE_ALIAS.get(u.proto_id), u.proto.get("sprite_fallback")]
+        names = [getattr(u, "art_sprite", None), u.proto.get("path"), u.proto_id,
+                 SPRITE_ALIAS.get(u.proto_id), u.proto.get("sprite_fallback")]
         if u.proto.get("mirror") and u.owner is not None:     # отражение лучника: свой призрак, иначе фигурка хозяина
             names = [u.proto.get("path"), u.proto_id, u.owner.proto.get("path"), u.owner.proto_id] + names
         if u.proto_id in SKELETONS:                  # поднятые скелеты — 4 вида вразнобой
             names.insert(0, f"skeleton_minion_{u.id % 4 + 1}")
         look = u.proto.get("look")
         kind = u.proto_id if u.proto_id in DRAWERS or look else u.role
-        return self.sprites.get(names, kind, u.color, u.boss, flip, flash, look)
+        return self.sprites.get(names, kind, u.color, u.boss, flip, flash, look, full_resolution=full_resolution)
 
     def _water(self, img, seed=0):
         """Фигурка-отражение: голубоватая, полупрозрачная, строки колышутся синусоидой (искажение воды)."""
@@ -2175,13 +2176,18 @@ class BattleView:
         fx, fy = self.feet_pos(u)
         a = self.anim(u)
         dk = self.depth(u)
-        img = self.scaled(self.sprite_of(u, a.facing < 0, a.hit > HIT_T * 0.4), dk)
+        flip, flash = a.facing < 0, a.hit > HIT_T * 0.4
+        img = self.scaled(self.sprite_of(u, flip, flash), dk)
+        w0, h0 = img.get_size()
+        hd = (self.crisp and hasattr(surf, "native") and getattr(u, "art_sprite", None) == "elf"
+              and sprite_resolution() >= 128)
+        if hd:
+            img = self.sprite_of(u, flip, flash, full_resolution=True)
         if "stealth" in u.buffs:                     # в тени — едва видно (свой отряд видит силуэт)
             img = img.copy()
             img.set_alpha(80 + int(30 * math.sin(self.clock * 5)))
         if u.proto.get("mirror"):                    # отражение: полупрозрачное, плывёт, как в воде
             img = self._water(img, u.id)
-        w0, h0 = img.get_size()
         # дыхание, сжатие от удара, подскок при шаге, выпад к цели, дрожь
         ph = self.clock * 2.4 + u.id * 1.7
         sx, sy = 1 - 0.02 * math.sin(ph), 1 + 0.035 * math.sin(ph)
@@ -2237,7 +2243,7 @@ class BattleView:
             img = img.copy()
             img.fill((*tint, 255), special_flags=pygame.BLEND_RGBA_MULT)
         w, h = max(1, int(w0 * sx)), max(1, int(h0 * sy))
-        if (w, h) != (w0, h0):
+        if not hd and (w, h) != (w0, h0):
             img = pygame.transform.scale(img, (w, h))
         # тень и кольцо команды у ног
         sw = int(w0 * (0.75 if u.boss else 0.62) * (0.7 if u.flying else 1.0))
@@ -2263,7 +2269,12 @@ class BattleView:
         rect = pygame.Rect(fx - w / 2 + dx, fy - h + 4 + dy - hop, w, h)
         if look == "trap":
             self._draw_trap(surf, fx, fy, dk)
-        surf.blit(img, rect)
+        if hd:
+            native_rect = surf.rect(rect)
+            surf.native.blit(pygame.transform.smoothscale(img, native_rect.size), native_rect)
+            img = pygame.transform.smoothscale(img, rect.size)
+        else:
+            surf.blit(img, rect)
         if self.crisp:                                # «Спуск»: фигурку кладут ещё раз поверх чётких подсказок
             self.unit_blits.append((img, rect))
         self._mark_depth(img, rect.topleft, fy)

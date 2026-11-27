@@ -37,6 +37,23 @@ def test_atlas_filters_and_esc_returns():
     assert not isinstance(g.scene, CardAtlasScreen)
 
 
+def test_elf_theme_is_selectable_from_hero_card(monkeypatch):
+    from ui import settings
+
+    g = DescentGame(seed=2, gd=ED)
+    g.save_settings = False
+    sc = HeroSelect(g)
+    monkeypatch.setitem(settings.SETTINGS, "elf_theme", "grove")
+    sc.draw(SCREEN)
+    buttons = {what[2]: r for r, what in sc.hits if what[0] == "elf_theme"}
+    assert set(buttons) == {"grove", "moon"}
+    sc.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=buttons["moon"].center))
+    assert sc.pick == "elf"
+    assert settings.SETTINGS["elf_theme"] == "moon"
+    sc.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=buttons["grove"].center))
+    assert settings.SETTINGS["elf_theme"] == "grove"
+
+
 def test_item_atlas_lists_all_relics_and_can_select_the_last_entry():
     g = DescentGame(seed=2, gd=ED)
     back = g.scene

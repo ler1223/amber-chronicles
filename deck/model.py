@@ -363,7 +363,9 @@ def _op_phrase(op, dmg=None):
         "focus": lambda: "Следующая дальняя атака {×2}.",
         "burn_all": lambda: f"Всем горящим врагам: ещё {_n('+' + str(n))} *горения*.",
         "scrape": lambda: "Отскрести *тину* — мусор от врагов.",
-        "empower": lambda: f"Следующая карта [{tag_label(op['tag'])}] в этот ход: ещё {_n('+' + str(n))} урона.",
+        "empower": lambda: ("Следующая карта [" + tag_label(op["tag"]) + "] в этот ход: ещё "
+                            if op.get("tag") else "Следующая атака в этот ход: ещё ") +
+                           f"{_n('+' + str(n))} урона.",
         "heat_regen": lambda: f"В начале хода {_n('+' + str(n))} *жар*.",
         "keep_momentum": lambda: "*Разгон* больше не гаснет в конце хода.",
         "momentum": lambda: f"{_n('+' + str(n))} *разгона*.",
@@ -602,6 +604,8 @@ def fae_burn_value(u, card_type=None):
     burn = u.get("fae_burn")
     if burn == "all":
         return burn
+    if burn == 0:
+        return 0
     base = burn if isinstance(burn, int) else (3 if card_type == "attack" else 1)
     if card_type == "attack":
         return max(base, 3)

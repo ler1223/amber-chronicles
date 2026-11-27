@@ -26,6 +26,7 @@ from . import gfx as G
 from . import model as M
 from . import skin as SK
 from .battle import BallistaShot
+from .elf_flight import FaeFlight
 from .hints import Hints, Plain
 from .idols import MEANING_ICON, SPEC, IdolCast
 from .terrain import Ground
@@ -616,6 +617,7 @@ class BattleScreen:
     def __init__(self, game, battle):
         self.game = game
         self.b = battle
+        self.shown_energy = ELF.energy_fraction(battle.energy, battle.max_energy)
         self.W, self.H = T.SCREEN_W, T.SCREEN_H
         self._fit_w = 0
         self.combat = battle.c
@@ -623,7 +625,7 @@ class BattleScreen:
         self.view.simple = True
         self.view.hero_scale = 1.0
         self.view.num_boost, self.view.num_dy = 6, -34    # цифры урона крупнее и всплывают от фигурки, не под табличкой
-        self.view.reset(self.combat)
+        self.view.reset(self.combat, foreground=9)
         self.fit_board()
         self._light_props()
         self.life = FieldLife(random.randrange(1 << 30))  # своё зерно: случайность забега не трогаем
@@ -634,6 +636,7 @@ class BattleScreen:
         self.view.crisp = True                           # подсказки и кольца у ног — чётким слоем (deck/hints.py)
         self.hints = Hints()
         self.garden_rows = []
+        self.fae_flight = FaeFlight(battle.garden.fae()) if battle.garden is not None else None
         self.ground = Ground()                           # земля: HD-пиксель с рельефом (deck/terrain.py)
         self.ground.prepare(self.combat, self.view.painter)
         self.view.height_at = self.ground.height_at      # декор, трава, вороны — на буграх
@@ -825,6 +828,13 @@ class BattleScreen:
         self.ambient(dt)
         self.life.update(real, self.view, self.combat)
         self.view.update(dt, dt)
+        if self.b.garden is not None:
+            target = ELF.energy_fraction(self.b.energy, self.b.max_energy)
+            self.shown_energy += (target - self.shown_energy) * (1 - math.exp(-12 * real))
+            if abs(target - self.shown_energy) < .002:
+                self.shown_energy = target
+            self.fae_flight.set_count(self.b.garden.fae())
+            self.fae_flight.update(real, self.view.feet_pos(self.b.hero))
         dt = real
         if self.press and not self.drag and self.press[1] == 1 and self.inspect is None:   # держат без движения
             self.press_t += dt
@@ -1014,7 +1024,10 @@ class BattleScreen:
         vx = v.vfx
         k = e["kind"]
         u = e.get("unit")
-        if k == "alt":                                     # простое действие — скромно
+        if k == "fae_count":
+            if self.fae_flight is not None:
+                self.fae_flight.set_count(e["count"])
+        elif k == "alt":                                   # простое действие — скромно
             what = e["what"]
             fx, fy = v.feet_pos(u)
             if what == "step":
@@ -1934,6 +1947,11 @@ class BattleScreen:
             for img, r in v.unit_blits:
                 surf.blit(img, r)
             v.vfx.draw_cpu(surf, v._cpu_tex, v._cpu_cache, props=v.props)
+        if self.fae_flight is not None and self.b.hero.alive:
+            hero = self.b.hero
+            rect = next((r for r, unit in v.sprite_rects if unit is hero), None)
+            if rect is not None:
+                self.fae_flight.draw(surf, self.skin, rect, v.anim(hero).facing)
         v.icon_tips = []                                   # полоски HP и цифры урона — на чётком слое
         v._fc = self.forecast()
         for u in self.combat.units:                       # HP и состояния — видны и при скрытом интерфейсе
@@ -2248,7 +2266,7 @@ class BattleScreen:
             " · элита" if b.fight.get("elite") else ""
         title = f"{b.fight['name']}{tag}"
         w = max(sk.size(title, 21, True)[0], 200) + 36
-        r = pygame.Rect(12, 10, w, 60)
+        r = pygame.Rect(12, 10, w, 68 if b.garden is not None else 60)
         sk.panel(surf, r, 228, accent=True)
         sk.text(surf, title, (r.x + 18, r.y + 7), 21, sk.p["title"], title=True)
         sk.text(surf, f"Этаж {self.game.run.depth} · ход {b.turn}", (r.x + 18, r.y + 35), 14, sk.p["dim"])
@@ -2326,9 +2344,10 @@ class BattleScreen:
         b = self.b
         sk = self.skin
         h = b.hero
-        r = pygame.Rect(self.W - 262, 14, 248, 156 + (118 if self.log_open else 0))
+        edge_space = 10 if b.garden is not None else 0
+        r = pygame.Rect(self.W - 262, 14, 248, 156 + edge_space + (118 if self.log_open else 0))
         sk.panel(surf, r, 236, accent=True)
-        pc = (r.x + 40, r.y + 42)
+        pc = (r.x + (44 if edge_space else 40), r.y + 42)
         port = sk.art("portrait")
         native, S, pt = SK.ctx(surf)
         if b.mech == "fae":
@@ -2384,7 +2403,7 @@ class BattleScreen:
             gy = pygame.Rect(r.x, r.bottom + 8, r.w, 28)
             sk.panel(surf, gy, 220)
             sk.text(surf, f"Сброс {len(b.discard)}  ·  за ход +{len(b.used)}",
-                    (gy.centerx, gy.y + 7), 12, (226, 214, 192), center=True,
+                    (gy.centerx, gy.y + (14 if edge_space else 7)), 12, (226, 214, 192), center=True,
                     outline=False)
 
     def hp_bar(self, surf, r, hp, mx, shield=0, col=(206, 52, 44), ticks=False, lost=0, kill=False, t=0.0):
@@ -2436,6 +2455,7 @@ class BattleScreen:
         return (b.can_play(c, "main"), b.can_play(c, "alt"), c.uid in (self.hv.hover, sel_uid),
                 b.hero.ds["heat"] if c.levels else None, b.lit(c))
 
+
     def hint_text(self):
         """Подсказка по текущему действию — над рукой."""
         b = self.b
@@ -2486,8 +2506,6 @@ class BattleScreen:
             return f"Кликните клетку — пройти (шагов: {b.walk_left}) · тяните свиток на статую"
         if not any(b.can_play(c, "main") or b.can_play(c, "alt") for c in b.hand):
             return "Ходов больше нет — Space: конец хода"
-        if self.hv.hover and self.inspect is None and not self.drag:
-            return "Shift — подробнее"
         return None
 
     def draw_attachment_tabs(self, surf):
@@ -2528,15 +2546,16 @@ class BattleScreen:
     def draw_hand(self, surf):
         b = self.b
         sk = self.skin
-        g = self.combat.grid                               # поднос: плотный к краю земли (за ним — пусто)
-        edge = P.project(g.w / 2, g.h + P.MARGIN_B)[1]
-        sk.tray(surf, min(edge - 40, T.SCREEN_H - 200), min(edge + 2, T.SCREEN_H))
+        sk.tray(surf, self.H - 220, self.H, alpha=68)
         ex, ey = 70, T.SCREEN_H - 112                    # энергия (или жар) и стопки
         if b.mech == "heat":
             self.draw_heat(surf, ex, ey)
         elif b.idols is not None:                               # Жрец: шаги этого хода
             sk.orb(surf, (ex, ey), 36, b.walk_left, b.walk_max, self.hv.t, label=str(b.walk_left))
             sk.text(surf, "шаги", (ex, ey + 22), 12, (255, 240, 220), center=True)
+        elif b.garden is not None:
+            ELF.draw_energy(surf, sk, ex, ey - 24, b.energy, b.max_energy,
+                            fraction=self.shown_energy, t=self.hv.t)
         else:
             sk.orb(surf, (ex, ey), 36, b.energy, b.max_energy, self.hv.t)
         if self.ui_hidden:                                    # скрыт интерфейс: только карты и энергия
@@ -2548,14 +2567,6 @@ class BattleScreen:
         self.deck_pile_rect = self.pile(surf, (60, self.H - 34), len(b.draw_pile), "колода")
         self.discard_pile_rect = self.pile(surf, (self.W - 240, self.H - 40), len(b.discard),
                                            "сброс", side=-1)
-        tip = self.hint_text()
-        if tip:
-            w = sk.size(tip, 15)[0] + 90
-            r = pygame.Rect(0, 0, w, 32)
-            r.center = (self.W // 2 - 20, 30)                   # сверху по центру: рука и поднятая карта не закрывают
-            r.right = min(r.right, self.help_rect.x - 10)
-            sk.ribbon(surf, r, "")
-            sk.text(surf, tip, r.center, 15, sk.p["text"], center=True)
         self.draw_attachment_tabs(surf)
         self.hv.draw(surf, self.state_of)
         self.draw_attachment_reveal(surf)
@@ -2577,8 +2588,7 @@ class BattleScreen:
             sk.text(surf, label, (self.mouse[0] + 18, self.mouse[1] + 12), 14,
                     (255, 225, 110) if ok else sk.p["dim"])
         sk.button(surf, self.end_rect, "Конец хода", self.end_rect.collidepoint(self.mouse),
-                  on=not self.busy and not b.result, primary=not self.hint_text() or "Space" in (self.hint_text() or ""),
-                  t=self.hv.t, size=19)
+                  on=not self.busy and not b.result, size=19, glow=False)
 
     def draw_discard_choice(self, surf):
         """Подсказка и подсветка выбранных карт для сброса (Адажио)."""
@@ -2589,7 +2599,7 @@ class BattleScreen:
                 pygame.draw.rect(surf, T.SELECT, self.hv.rect_of(sp).inflate(7, 7), 3, border_radius=8)
         text = f"Сбросьте карты: {len(self.discard_pick)}/{need} · клик по карте — выбрать"
         w = T.font(15, True).size(text)[0] + 38
-        r = pygame.Rect((self.W - w) // 2, 82, w, 36)
+        r = pygame.Rect((self.W - w) // 2, self.hand_area.top - 42, w, 36)
         T.frame(surf, r, 245, accent=T.SELECT)
         T.text(surf, text, r.center, 15, T.TEXT, True, center=True)
 
@@ -2651,7 +2661,8 @@ class BattleScreen:
         ds = b.hero.ds
         lines = []
         if b.garden is not None:
-            top, self.garden_rows = ELF.draw_garden(surf, sk, b.garden, x, y, self.mouse, self.hover_cell)
+            bottom = min(y + 62, self.hand_area.top - 8)
+            top, self.garden_rows = ELF.draw_garden(surf, sk, b.garden, x, bottom, self.mouse, self.hover_cell)
             return top
         if b.mech == "momentum":
             mx = b.hero_def.get("momentum_max", 5)
@@ -2706,8 +2717,6 @@ class BattleScreen:
         self.skin.badge(surf, (x + 24 * side, y - 6), 11, "", self.skin.p["accent"])
         self.skin.text(surf, str(n), (x + 24 * side, y - 6), 13, (255, 246, 230), center=True, title=True)
         self.skin.text(surf, label, (x + 2, y + 13), 11, self.skin.p["dim"], center=True)
-        if hit.collidepoint(self.mouse):
-            pygame.draw.rect(surf, T.SELECT, hit, 1, border_radius=6)
         return hit
 
     def tip_box(self, surf, lines, anchor, width=320):
@@ -3405,13 +3414,14 @@ class MapScreen:
         self.bag.draw(surf, run)
 
     def toggle_res(self):
-        """Качество моделек между боями: 32×32 (пиксели) ↔ 64×64 (вдвое подробнее) — со следующего боя."""
+        """Переключить комплект моделей «Спуска»."""
         from ui import settings
-        settings.SETTINGS["sprite_res"] = 128 if model_res() == 32 else 32
+        resolutions = (32, 64, 128)
+        settings.SETTINGS["sprite_res"] = resolutions[(resolutions.index(model_res()) + 1) % len(resolutions)]
         if getattr(self.game, "save_settings", True):
             settings.save()
         r = model_res()
-        self.toast = (f"Модели {r}×{r} — со следующего боя", 2.0)
+        self.toast = (f"Модели {r}×{r}", 2.0)
 
     def draw_deck_strip(self, surf):
         run = self.game.run
@@ -3977,11 +3987,16 @@ class HeroSelect:
                 return
             for r, what in reversed(self.hits):          # варианты лежат внутри карточки героя — они первыми
                 if r.collidepoint(ev.pos):
-                    if what[0] == "hero":
-                        self.pick = what[1]
-                    else:
-                        self.pick = what[1]
+                    self.pick = what[1]
+                    if what[0] == "variant":
                         self.variant[what[1]] = what[2]
+                    elif what[0] == "elf_theme":
+                        from ui import settings
+
+                        if getattr(self.game, "save_settings", True):
+                            settings.put("elf_theme", what[2])
+                        else:
+                            settings.SETTINGS["elf_theme"] = what[2]
                     return
         elif ev.type == pygame.KEYDOWN:
             if ev.key == pygame.K_ESCAPE:
@@ -4064,11 +4079,14 @@ class HeroSelect:
                 from .model import Card
                 total = min(5, len(seen))
                 cw = min(70, (w - 24) // total - 6)
+                ch = int(cw * CF.FH / CF.FW)
                 sx = r.centerx - (total * (cw + 6) - 6) // 2
                 for k, cid in enumerate(seen[:5]):
-                    cr = pygame.Rect(sx + k * (cw + 6), y + 4, cw, int(cw * CF.FH / CF.FW))
+                    cr = pygame.Rect(sx + k * (cw + 6), y + 4, cw, ch)
                     CF.blit_card(surf, cr, Card(cid, self.game.run_defs()))
-                T.text(surf, "стартовые карты", (r.centerx, y + 120), 12, T.TEXT_DIM, center=True)
+                T.text(surf, "стартовые карты", (r.centerx, y + ch + 14), 12, T.TEXT_DIM, center=True)
+                if sk:
+                    self.draw_elf_themes(surf, r, sk)
         h = self.heroes[self.pick]
         label = f"Начать спуск: {h['name']}"
         if h.get("passives"):
@@ -4076,3 +4094,15 @@ class HeroSelect:
         button(surf, self.go, label, self.mouse, primary=True)
         if self.saved:                                     # сохранённый забег — продолжить
             button(surf, self.cont, "Продолжить забег (C)", self.mouse, primary=True)
+
+    def draw_elf_themes(self, surf, card, sk):
+        T.text(surf, "Интерфейс эльфа", (card.centerx, card.bottom - 103), 15, sk.p["title"], True,
+               center=True)
+        for i, (theme, title) in enumerate((("grove", "Роща светлячков"), ("moon", "Сад лунных бутонов"))):
+            r = pygame.Rect(card.x + 21, card.bottom - 89 + i * 34, card.w - 42, 30)
+            chosen = sk.variant == theme
+            sk.button(surf, r, title, r.collidepoint(self.mouse),
+                      primary=chosen, size=14, glow=False)
+            pygame.draw.circle(surf, sk.p["title"] if chosen else sk.p["dim"], (r.left + 14, r.centery),
+                               4, 0 if chosen else 1)
+            self.hits.append((r, ("elf_theme", "elf", theme)))

@@ -94,10 +94,9 @@ class Battle:
             if u.team == PLAYER and u.summon:
                 self.c.units.remove(u)
         self.hero = next(u for u in self.c.units if u.team == PLAYER and not u.obj)
-        art = (run.hero or {}).get("art_sprite")
+        art = (getattr(run, "hero", None) or {}).get("art_sprite")
         if art:
-            self.hero.proto = dict(self.hero.proto)
-            self.hero.proto["path"] = art
+            self.hero.art_sprite = art
         self._setup(self.hero, {"name": run.hero_name, "hp": run.max_hp}, hp=run.hp)
         self.hp_k, self.dmg_k = run.scale() if hasattr(run, "scale") else (1.0, 1.0)
         units = [u for u in self.c.units if u.team == ENEMY and not u.obj]
@@ -310,6 +309,8 @@ class Battle:
             self.gain_shield(h, total - 10)
         self.say(f"Феи: {h.ds['fae']}/10", (180, 235, 190))
         self.fx("status", unit=h, el="fae")
+        if h.ds["fae"] != before:
+            self.fx("fae_count", count=h.ds["fae"])
         return h.ds["fae"] - before
 
     def spend_fae(self, n, tgt=None):
@@ -321,6 +322,7 @@ class Battle:
         if spent:
             self.say(f"Феи: {h.ds['fae']}/10 (−{spent})", (200, 230, 170))
             self.fx("status", unit=h, el="fae")
+            self.fx("fae_count", count=h.ds["fae"])
             if self.garden is not None:
                 self.garden.on_spend(spent, tgt, before=before)
         return spent
@@ -2745,16 +2747,17 @@ class Battle:
                 center = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
                 yield from self.garden.plant(op, center, extra_growth=self.fae_bonus(ctx, "growth"))
             elif k == "beast" and self.garden is not None:
-                self.garden.summon_beast(op["beast"], bonus=self.fae_bonus(ctx, "beast"))
+                self.garden.summon_beast(op["beast"], bonus=self.fae_bonus(ctx, "beast"), extra=op.get("stats"))
             elif k == "attach" and self.garden is not None:
                 self.garden.attach(ctx.get("card"), ctx.get("attach_host"), op["attach"],
-                                   bonus=self.fae_bonus(ctx, "growth"))
+                                   bonus=self.fae_bonus(ctx, "growth"), extra=op.get("bonus"))
             elif k == "fae_ring" and self.garden is not None:
                 center = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
-                self.garden.add_ring(center, op.get("turns", 3) + src.ds.get("fae", 0) // 4
-                                     + self.fae_bonus(ctx, "duration"))
+                self.garden.add_ring(center, op.get("n", 3) + src.ds.get("fae", 0) // 4
+                                     + self.fae_bonus(ctx, "duration"), radius=op.get("r", 1),
+                                     trap=bool(op.get("trap")))
             elif k == "blueprint" and self.garden is not None and ctx.get("card") is not None:
-                self.garden.make_parts(ctx["card"].cid)
+                self.garden.make_parts(ctx["card"])
             elif k == "execute_below" and tgt is not None and tgt.alive:
                 if tgt.hp * 100 < tgt.max_hp * n:
                     self.say(f"Казнь: {tgt.name}", (255, 170, 120))

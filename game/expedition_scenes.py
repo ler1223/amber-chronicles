@@ -130,8 +130,10 @@ def rarity_color(xd, item):
 
 
 def hero_sprite(data, cls, k=1.0):
-    c = data.classes.get(cls) or data.classes.get("archer") or {"color": (200, 200, 200)}
-    img = _SPRITES.get([cls], cls, tuple(c["color"]), look=c.get("look"))
+    base = cls if cls in data.classes else "archer"
+    c = data.classes.get(base) or {"color": (200, 200, 200)}
+    names = [cls] if cls == base else [cls, base]
+    img = _SPRITES.get(names, base, tuple(c["color"]), look=c.get("look"))
     if k != 1:
         img = pygame.transform.scale(img, (int(img.get_width() * k), int(img.get_height() * k)))
     return img

@@ -20,7 +20,7 @@ def res():
 
 
 def sprite_path(name, folder=ASSET_DIR):
-    """Файл спрайта под детализацию: высокая — из x2, если есть. Второе значение — во сколько раз он крупнее."""
+    """Файл нужной детализации и его масштаб относительно базового спрайта."""
     if res() >= 128:
         hi4 = os.path.join(folder, "x4", f"{name}.png")
         if os.path.exists(hi4):
@@ -57,9 +57,9 @@ class SpriteBank:
         self.cache = {}
         self.base = {}
 
-    def _base(self, names, kind, color, boss, look=None):
+    def _base(self, names, kind, color, boss, look=None, full_resolution=False):
         """Спрайт в итоговом масштабе, смотрит вправо. names — кандидаты имени файла по порядку."""
-        key = (tuple(names), boss, res())
+        key = (tuple(names), boss, res(), full_resolution)
         if key in self.base:
             return self.base[key]
         img = None
@@ -74,6 +74,9 @@ class SpriteBank:
                 break
         if img is None:
             img = placeholder(kind, color, look)
+        if full_resolution:
+            self.base[key] = img
+            return img
         if res() <= 16:
             img = lowres(img)
         target = TARGET_H["boss" if boss else "normal"]
@@ -87,10 +90,10 @@ class SpriteBank:
         self.base[key] = img
         return img
 
-    def get(self, names, kind, color, boss=False, flip=False, flash=False, look=None):
-        key = (tuple(names), boss, flip, flash, res())
+    def get(self, names, kind, color, boss=False, flip=False, flash=False, look=None, *, full_resolution=False):
+        key = (tuple(names), boss, flip, flash, res(), full_resolution)
         if key not in self.cache:
-            img = self._base(names, kind, color, boss, look)
+            img = self._base(names, kind, color, boss, look, full_resolution)
             if flip:
                 img = pygame.transform.flip(img, True, False)
             if flash:

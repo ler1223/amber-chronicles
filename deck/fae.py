@@ -8,6 +8,9 @@
 Battle держит `self.garden = FaeGarden(self)` только у эльфа. Садовник сам не
 рисует интерфейс: он даёт события хода/карт, а `deck/ui.py` показывает счётчик фей.
 """
+import copy
+from itertools import combinations
+
 from sim.combat import PLAYER
 from sim.grid import cheb
 
@@ -56,6 +59,7 @@ class FaeGarden:
         self.rings = []                # {"cell", "cells", "turns"}
         self.walls = []
         self.pending_assemblies = []   # [(blueprint, parts, weapon_cid)] — собрать после текущего эффекта
+        self.blueprint_recipes = {}    # blueprint cid → {"parts", "assemble_min", "weapon_mods"}
         self.crown_used = False
         self.step_bonus = 0
 
@@ -83,6 +87,10 @@ class FaeGarden:
                 self.gain(2)
                 self.b.say("Фейное кольцо: +2 феи", (170, 240, 180))
                 break
+        for ring in self.rings:
+            if ring.get("trap"):
+                for f in [x for x in self.b.foes() if x.cell in ring["cells"]]:
+                    f.ds["root"] = max(f.ds["root"], 1)
         if self.crown_active():
             extra = max(0, self.fae() - 5)
             if extra:
@@ -98,6 +106,10 @@ class FaeGarden:
         owl = self.beasts.get("owl")
         if owl is not None and owl.alive:
             self.b.draw(owl.draw_n)
+            if getattr(owl, "block_n", 0):
+                self.b.gain_shield(hero, owl.block_n)
+            if getattr(owl, "energy_n", 0):
+                self.b.energy += owl.energy_n
         deer = self.beasts.get("deer")
         if deer is not None and deer.alive:
             self.step_bonus = deer.step_n
@@ -165,10 +177,10 @@ class FaeGarden:
 
     # ---------- карты ----------
 
-    def attach(self, card, host, sid, bonus=0):
+    def attach(self, card, host, sid, bonus=0, extra=None):
         if host is None or self.attachments.get(host.uid) or getattr(host, "attached_id", None):
             return False
-        self.attachments[host.uid] = {"card": card, "id": sid, "growth": bonus}
+        self.attachments[host.uid] = {"card": card, "id": sid, "growth": bonus, "bonus": dict(extra or {})}
         host.attached_id = sid
         self.b.say(f"«{card.name}» привита к «{host.name}»", (180, 240, 180))
         return True
@@ -216,6 +228,23 @@ class FaeGarden:
             heal = 8 if fae >= 6 else 4
             hero.hp = min(hero.max_hp, hero.hp + heal + growth)
             b.c.emit("heal", unit=hero, amount=heal + growth)
+        bonus = att.get("bonus") or {}
+        if bonus:
+            ops = []
+            for key, opname in (("fae", "fae"), ("block", "block"), ("heal", "heal"), ("draw", "draw"),
+                                ("energy", "energy"), ("damage", "damage"), ("root", "root"),
+                                ("poison", "poison"), ("weak", "weak"), ("vulnerable", "vulnerable"),
+                                ("counter", "counter"), ("thorns", "thorns")):
+                if bonus.get(key):
+                    ops.append({"op": opname, "n": int(bonus[key])})
+            if ops:
+                yield from b.apply(hero, ops, target, {"card": att["card"]})
+            if bonus.get("root_all"):
+                center = target.cell if target is not None and hasattr(target, "cell") else hero.cell
+                for f in [x for x in b.foes() if cheb(x.cell, center) <= 1]:
+                    f.ds["root"] = max(f.ds["root"], int(bonus["root_all"]))
+            if bonus.get("return"):
+                b.receive_card(att["card"])
         b.say(f"Прививка: {att['card'].name}", (180, 240, 180))
 
     # ---------- растения ----------
@@ -235,12 +264,12 @@ class FaeGarden:
                 cells.append(p)
         initial = (self.fae() // max(1, op.get("grow_fae", 4)) if op.get("grow_fae") else 0) + extra_growth
         for cell in cells[:n]:
-            u = self.spawn_plant(sid, cell, initial)
+            u = self.spawn_plant(sid, cell, initial, op.get("bonus"))
             if sid == "world_tree" and self.fae() >= 8:
                 u.growth = spec["grow"]
                 yield from self.mature(u)
 
-    def spawn_plant(self, sid, cell, growth=0):
+    def spawn_plant(self, sid, cell, growth=0, bonus=None):
         b = self.b
         spec = PLANTS[sid]
         proto = {"name": spec["name"], "label": spec["name"][:2], "color": spec["color"], "role": "object",
@@ -250,6 +279,7 @@ class FaeGarden:
         u = b.c._spawn(PLAYER, spec["sprite"], proto, cell)
         b._setup(u, {"name": spec["name"], "hp": 2})
         u.plant_id = sid
+        u.plant_bonus = dict(bonus or {})
         u.growth = growth
         u.max_hp = u.hp = 2
         u.obj = proto["object"]
@@ -297,7 +327,7 @@ class FaeGarden:
                     for f in [f for f in b.foes() if cheb(f.cell, target.cell) <= 1]:
                         f.ds["root"] = max(f.ds["root"], 1)
         elif sid == "living_hedge":
-            self.spawn_wall(cell, 6 + fae + (6 if fae >= 6 else 0), 3)
+            self.spawn_wall(cell, 6 + fae + (6 if fae >= 6 else 0) + getattr(u, "plant_bonus", {}).get("wall_hp", 0), 3)
         elif sid == "glowing_moss":
             self.gain(3 + fae // 4)
         elif sid == "mushroom_web":
@@ -321,13 +351,52 @@ class FaeGarden:
                     b.hurt(target, dmg, b.hero, "spell")
         elif sid == "grove_gift":
             b.gain_shield(b.hero, max(6 + fae, 10 if fae >= 6 else 0))
+        self.apply_plant_bonus(u, cell)
         yield from self.plant_matured()
 
+    def apply_plant_bonus(self, u, cell):
+        """Дополнительные эффекты созревания/гибели из прозрений."""
+        bonus = getattr(u, "plant_bonus", {}) or {}
+        if not bonus:
+            return
+        b, hero = self.b, self.b.hero
+        if bonus.get("block"):
+            b.gain_shield(hero, int(bonus["block"]))
+        if bonus.get("heal"):
+            n = int(bonus["heal"])
+            hero.hp = min(hero.max_hp, hero.hp + n)
+            b.c.emit("heal", unit=hero, amount=n)
+        if bonus.get("fae"):
+            self.gain(int(bonus["fae"]))
+        if bonus.get("energy"):
+            b.energy += int(bonus["energy"])
+        if bonus.get("draw"):
+            b.draw(int(bonus["draw"]))
+        if bonus.get("grow_all"):
+            for plant in self.plants:
+                plant.growth += int(bonus["grow_all"])
+        target = self.nearest_foe(cell)
+        if target is not None:
+            if bonus.get("damage"):
+                b.hurt(target, int(bonus["damage"]), hero, "spell")
+            if bonus.get("root"):
+                target.ds["root"] = max(target.ds["root"], int(bonus["root"]))
+            if bonus.get("poison"):
+                target.ds["poison"] += int(bonus["poison"])
+                b._icons(target)
+        if bonus.get("root_all"):
+            for f in [x for x in b.foes() if cheb(x.cell, cell) <= 1]:
+                f.ds["root"] = max(f.ds["root"], int(bonus["root_all"]))
+        if bonus.get("all_damage"):
+            for f in [x for x in b.foes() if cheb(x.cell, cell) <= 1]:
+                b.hurt(f, int(bonus["all_damage"]), hero, "spell")
+
     def plant_destroyed(self, u):
-        """Семя убили до созревания: срабатывает только «Дар рощи»."""
+        """Семя убили до созревания: срабатывает «Дар рощи» и бонус прозрения."""
         if u.plant_id == "grove_gift":
             self.b.gain_shield(self.b.hero, max(6 + self.fae(), 10 if self.fae() >= 6 else 0))
             self.b.say("Дар рощи: семя погибло, но дала защиту", (180, 235, 180))
+        self.apply_plant_bonus(u, u.cell)
         if u in self.plants:
             self.plants.remove(u)
 
@@ -341,27 +410,49 @@ class FaeGarden:
     def in_ring(self, cell):
         return any(cell in ring["cells"] for ring in self.rings)
 
-    def add_ring(self, center, turns=3):
-        cells = set(self.b.c.grid.in_radius(center, 1))
-        self.rings.append({"cell": center, "cells": cells, "turns": turns})
+    def add_ring(self, center, turns=3, radius=1, trap=False):
+        cells = set(self.b.c.grid.in_radius(center, radius))
+        self.rings.append({"cell": center, "cells": cells, "turns": turns, "trap": trap})
         self.b.fx("portal", cell=center)
         self.b.say(f"Фейное кольцо на {turns} хода", (180, 240, 180))
 
     # ---------- звери ----------
 
-    def summon_beast(self, kind, bonus=0):
+    def summon_beast(self, kind, bonus=0, extra=None):
         b = self.b
         spec = BEASTS[kind]
         fae = self.fae()
+        extra = extra or {}
         stats = {}
         if kind == "wolf":
             stats = {"hp": 8 + bonus, "dmg": 6 + fae + bonus, "double": fae >= 6}
         elif kind == "owl":
-            stats = {"hp": 4 + bonus, "draw_n": 1}
+            stats = {"hp": 4 + bonus, "draw_n": 1, "block_n": 0, "energy_n": 0}
         elif kind == "snake":
             stats = {"hp": 8 + fae + bonus, "poison": 2, "root": 1, "root_all": fae >= 6}
         elif kind == "deer":
             stats = {"hp": 6 + fae + bonus, "step_n": 2 if fae >= 6 else 1}
+        stats["hp"] += int(extra.get("hp", 0))
+        if "dmg" in stats:
+            stats["dmg"] += int(extra.get("dmg", 0))
+        if "draw_n" in stats:
+            stats["draw_n"] += int(extra.get("draw", 0))
+        if "block_n" in stats:
+            stats["block_n"] += int(extra.get("block", 0))
+        if "energy_n" in stats:
+            stats["energy_n"] += int(extra.get("energy", 0))
+        if "step_n" in stats:
+            stats["step_n"] += int(extra.get("step", 0))
+        if "poison" in stats:
+            stats["poison"] += int(extra.get("poison", 0))
+        if extra.get("root_all"):
+            stats["root_all"] = True
+        if extra.get("fae"):
+            self.gain(int(extra["fae"]))
+        if extra.get("block"):
+            b.gain_shield(b.hero, int(extra["block"]))
+        if extra.get("energy"):
+            b.energy += int(extra["energy"])
         old = self.beasts.get(kind)
         if old is not None and old.alive:
             old.max_hp = old.hp = stats["hp"]
@@ -441,7 +532,19 @@ class FaeGarden:
 
     def make_parts(self, blueprint):
         """Рассыпать части чертежа по колоде добора и сбросу."""
-        parts = BLUEPRINTS.get(blueprint, (None, ()))[1]
+        if isinstance(blueprint, M.Card):
+            card = blueprint
+            blueprint = card.cid
+            main = card.d.get("main", {})
+        else:
+            main = {}
+        default = BLUEPRINTS.get(blueprint, (None, ()))[1]
+        parts = list(main.get("parts") or default)
+        self.blueprint_recipes[blueprint] = {
+            "parts": parts,
+            "assemble_min": int(main.get("assemble_min", len(parts))),
+            "weapon_mods": dict(main.get("weapon_mods") or {}),
+        }
         cards = [M.Card(pid, self.b.run.defs) for pid in parts]
         placed = self.b.scatter_parts(cards)
         if placed:
@@ -453,19 +556,57 @@ class FaeGarden:
         """Найти полные комплекты в руке и поставить их в очередь на сборку."""
         b = self.b
         used = {c.uid for _, parts, _ in self.pending_assemblies for c in parts}
-        for blueprint, (weapon_cid, parts) in BLUEPRINTS.items():
-            chosen = []
-            local = set(used)
-            for pid in parts:
-                card = next((c for c in b.hand if c.cid == pid and c.uid not in local), None)
-                if card is None:
-                    break
-                chosen.append(card)
-                local.add(card.uid)
-            else:
-                if chosen:
+        for blueprint, (weapon_cid, default_parts) in BLUEPRINTS.items():
+            recipe = self.blueprint_recipes.get(blueprint) or {
+                "parts": list(default_parts), "assemble_min": len(default_parts), "weapon_mods": {}
+            }
+            parts = recipe["parts"]
+            need = max(1, min(recipe.get("assemble_min", len(parts)), len(parts)))
+            for combo in combinations(parts, need):
+                chosen = []
+                local = set(used)
+                for pid in combo:
+                    card = next((c for c in b.hand if c.cid == pid and c.uid not in local), None)
+                    if card is None:
+                        break
+                    chosen.append(card)
+                    local.add(card.uid)
+                else:
                     self.pending_assemblies.append((blueprint, chosen, weapon_cid))
                     used = local
+                    break
+
+    def make_weapon(self, weapon_cid, mods):
+        if not mods:
+            return M.Card(weapon_cid, self.b.run.defs)
+        d = copy.deepcopy(self.b.run.defs[weapon_cid])
+        main = d["main"]
+
+        def walk(node):
+            if isinstance(node, dict):
+                yield node
+                for value in node.values():
+                    yield from walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    yield from walk(value)
+
+        for op in walk(main.get("do", [])):
+            kind = op.get("op")
+            if kind == "damage" and mods.get("damage"):
+                op["n"] = op.get("n", 0) + int(mods["damage"])
+            elif kind == "aoe_radius" and mods.get("radius"):
+                op["r"] = max(int(op.get("r", 1)), int(mods["radius"]))
+        extra = []
+        for key, opname in (("vulnerable", "vulnerable"), ("root", "root"), ("poison", "poison"),
+                            ("stun", "stun"), ("block", "block"), ("heal", "heal"),
+                            ("energy", "energy"), ("draw", "draw"), ("fae", "fae")):
+            if mods.get(key):
+                extra.append({"op": opname, "n": int(mods[key])})
+        if mods.get("execute_below"):
+            extra.append({"op": "execute_below", "n": int(mods["execute_below"])})
+        main.setdefault("do", []).extend(extra)
+        return M.Card(weapon_cid, {weapon_cid: d})
 
     def flush_assemblies(self):
         """Собрать отложенные комплекты; каждая сборка ждёт свою анимацию."""
@@ -474,9 +615,10 @@ class FaeGarden:
             blueprint, parts, weapon_cid = self.pending_assemblies.pop(0)
             if not all(card in b.hand for card in parts):
                 continue
+            recipe = self.blueprint_recipes.get(blueprint, {})
             for card in parts:
                 b.hand.remove(card)
-            weapon = M.Card(weapon_cid, b.run.defs)
+            weapon = self.make_weapon(weapon_cid, recipe.get("weapon_mods") or {})
             b.hand.append(weapon)
             b.queue_card_event("entered_hand", weapon)
             b.say(f"Собрано оружие: {weapon.name}", (220, 240, 180))

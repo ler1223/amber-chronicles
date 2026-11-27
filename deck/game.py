@@ -136,14 +136,17 @@ class DescentGame:
             self.scene.toast = (toast, 3.0)
 
     def hero_img(self, sprite=None, k=0.7):
+        from ui.sprites import res
+
         run = getattr(self, "run", None)
         if sprite is None and run is not None:
             sprite = run.hero.get("art_sprite", run.sprite)
         sprite = sprite or "warrior"
-        if (sprite, k) not in self._imgs:
+        key = (sprite, k, res())
+        if key not in self._imgs:
             from game.expedition_scenes import hero_sprite
-            self._imgs[(sprite, k)] = hero_sprite(self.gd, sprite, k)
-        return self._imgs[(sprite, k)]
+            self._imgs[key] = hero_sprite(self.gd, sprite, k)
+        return self._imgs[key]
 
     # ---------- узлы ----------
 

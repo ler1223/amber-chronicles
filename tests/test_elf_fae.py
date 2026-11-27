@@ -131,7 +131,7 @@ def test_generator_cards_do_not_burn_fae_at_the_threshold():
 def test_elf_uses_its_own_high_detail_hero_sprite():
     b, run = hero_battle("elf")
     assert run.hero.get("art_sprite") == "elf"
-    assert b.hero.proto.get("path") == "elf"
+    assert getattr(b.hero, "art_sprite", b.hero.proto.get("path")) == "elf"
     from ui import settings as S
     from ui.sprites import SpriteBank
     old = S.SETTINGS.get("sprite_res", 32)
@@ -139,6 +139,10 @@ def test_elf_uses_its_own_high_detail_hero_sprite():
         S.SETTINGS["sprite_res"] = 128
         img = SpriteBank().get(["elf"], "elf", (200, 200, 200))
         assert img.get_height() == 64 and img.get_width() > 0
+        game = DescentGame(seed=1, gd=ED)
+        game.run = run
+        view = BattleScreen(game, b).view
+        assert view.sprite_of(b.hero, full_resolution=True).get_size() == (128, 128)
     finally:
         S.SETTINGS["sprite_res"] = old
 
@@ -205,6 +209,87 @@ def test_fae_gain_event_is_drawn_by_battle_screen_without_crashing():
     battle.gain_fae(2)
     screen.update(1 / 60)
     assert battle.hero.ds["fae"] == 2
+    assert len(screen.fae_flight.arrivals) == 2
+
+
+def test_fae_flight_tracks_gains_spends_and_thresholds(monkeypatch):
+    from deck import skin
+    from ui import settings
+
+    game = DescentGame(seed=1, gd=ED)
+    battle, game.run = hero_battle("elf")
+    screen = BattleScreen(game, battle)
+    screen.pump()
+    battle.gain_fae(5)
+    battle.gain_fae(4)
+    battle.spend_fae(3)
+    screen.pump()
+    flight = screen.fae_flight
+    assert len(flight.arrivals) == battle.garden.fae() == 6
+    assert len(flight.departures) == 3
+    assert [threshold for _, threshold in flight.waves] == [6, 8]
+    assert flight.waves[0][0] < flight.waves[1][0]
+    flight.update(.04, (150, 160))
+    flight.update(.04, (154, 160))
+    assert flight.trail.x < 0
+    flight.update(1.0, (154, 160))
+    assert not flight.departures and not flight.waves
+    hero = pygame.Rect(120, 100, 64, 64)
+    for theme in ("grove", "moon"):
+        monkeypatch.setitem(settings.SETTINGS, "elf_theme", theme)
+        sk = skin.use("elf")
+        frames = [sk.art(f"fae_flight_{i}") for i in range(4)]
+        assert len({pygame.image.tobytes(frame, "RGBA") for frame in frames}) == 4
+        surf = pygame.Surface((300, 210), pygame.SRCALPHA)
+        flight.draw(surf, sk, hero, -1)
+        assert surf.get_bounding_rect()
+        assert not surf.subsurface(hero.inflate(-20, -8)).get_bounding_rect()
+        halo = flight._halo(sk, 30, False)
+        assert 0 < halo.get_at((5, 15)).a < halo.get_at((15, 15)).a
+
+
+def test_elf_hud_themes_switch_and_render_energy(monkeypatch):
+    from deck import elf_ui, skin
+    from ui import settings
+
+    frames = []
+    for theme in ("grove", "moon"):
+        monkeypatch.setitem(settings.SETTINGS, "elf_theme", theme)
+        elf = skin.use("elf")
+        assert elf.variant == theme
+        assert all(elf.art(name) is not None for name in ("panel", "button", "fairy", "bud", "orb", "orb_mask"))
+        def frame(energy, t=0):
+            surf = pygame.Surface((120, 134), pygame.SRCALPHA)
+            elf_ui.draw_energy(surf, elf, 60, 48, energy, 3, t=t)
+            return pygame.image.tobytes(surf.subsurface((12, 0, 96, 92)), "RGBA")
+
+        snapshots = [frame(energy) for energy in range(4)]
+        assert len(set(snapshots)) == 4
+        assert frame(0, 1) == snapshots[0]
+        assert frame(2, 1) != snapshots[2]
+        assert frame(3, 1) != snapshots[3]
+        frames.append(snapshots[2])
+    assert frames[0] != frames[1]
+
+
+def test_elf_hud_energy_level_eases_after_spend_and_refill(monkeypatch):
+    game = DescentGame(seed=1, gd=ED)
+    battle, game.run = hero_battle("elf")
+    screen = BattleScreen(game, battle)
+    monkeypatch.setattr(screen, "ready", lambda: True)
+    assert screen.shown_energy == 1
+    battle.energy = 0
+    screen.update(1 / 60)
+    assert 0 < screen.shown_energy < 1
+    for _ in range(40):
+        screen.update(1 / 60)
+    assert screen.shown_energy == 0
+    battle.energy = battle.max_energy
+    screen.update(1 / 60)
+    assert 0 < screen.shown_energy < 1
+    for _ in range(40):
+        screen.update(1 / 60)
+    assert screen.shown_energy == 1
 
 
 def test_fae_are_capped_and_excess_becomes_shield():
@@ -368,6 +453,87 @@ def test_weapon_merge_animation_blocks_input_until_finished():
     for _ in range(40):
         screen.update(1 / 60)
     assert screen.merge is None
+
+
+def test_plant_and_graft_insight_bonuses_apply():
+    b, _ = hero_battle("elf")
+    b.energy = 9
+    seed = M.Card("e_thorn_seed", b.run.defs, picks=[3])
+    b.hand.append(seed)
+    foe = b.foes()[0]
+    put(b, foe, (b.hero.cell[0] + 2, b.hero.cell[1]))
+    finish(b.play(seed, "main", b.targets(seed, "main")[0]))
+    plant = b.garden.plants[0]
+    plant.growth = 10
+    hp = foe.hp
+    finish(b.garden.mature(plant))
+    assert hp - foe.hp == 9 and foe.ds["root"] == 2
+
+    b, _ = hero_battle("elf")
+    b.energy = 9
+    host = card(b, "e_basic_attack")
+    graft = M.Card("e_ivy_graft", b.run.defs, picks=[2])
+    b.hand.append(graft)
+    finish(b.play(graft, "main", host))
+    foe = b.foes()[0]
+    put(b, foe, (b.hero.cell[0] + 1, b.hero.cell[1]))
+    hp = foe.hp
+    finish(b.play(host, "main", foe))
+    assert hp - foe.hp >= 7
+
+
+def test_beast_and_ring_insights_apply():
+    b, _ = hero_battle("elf")
+    b.energy = 9
+    owl = M.Card("e_owl_herald", b.run.defs, picks=[3])
+    b.hand.append(owl)
+    finish(b.play(owl, "main", b.hero))
+    b.energy = 0
+    finish(b.start_player_turn())
+    assert b.energy == 4
+
+    b, _ = hero_battle("elf")
+    b.energy = 9
+    ring = M.Card("e_fae_ring", b.run.defs, picks=[3])
+    b.hand.append(ring)
+    finish(b.play(ring, "main", b.targets(ring, "main")[0]))
+    foe = b.foes()[0]
+    put(b, foe, b.garden.rings[0]["cell"])
+    finish(b.start_player_turn())
+    assert foe.ds["root"] == 1
+
+
+def test_blueprint_insights_change_recipe_and_weapon():
+    b, _ = hero_battle("elf")
+    b.energy = 9
+    bp = M.Card("e_moon_scythe", b.run.defs, picks=[0])
+    b.hand.append(bp)
+    finish(b.play(bp, "main", b.hero))
+    parts = [c for c in b.draw_pile + b.discard if c.cid.startswith("e_part_scythe")]
+    assert len(parts) == 2
+    for c in parts:
+        if c in b.draw_pile:
+            b.draw_pile.remove(c)
+        if c in b.discard:
+            b.discard.remove(c)
+        b.receive_card(c)
+    finish(b.garden.flush_assemblies())
+    assert any(c.cid == "e_weapon_scythe" for c in b.hand)
+
+    b, _ = hero_battle("elf")
+    b.energy = 9
+    bp = M.Card("e_moon_scythe", b.run.defs, picks=[1])
+    b.hand.append(bp)
+    finish(b.play(bp, "main", b.hero))
+    parts = [c for c in b.draw_pile + b.discard if c.cid.startswith("e_part_scythe")]
+    for c in parts[:2]:
+        if c in b.draw_pile:
+            b.draw_pile.remove(c)
+        if c in b.discard:
+            b.discard.remove(c)
+        b.receive_card(c)
+    finish(b.garden.flush_assemblies())
+    assert any(c.cid == "e_weapon_scythe" for c in b.hand) and parts[2] not in b.hand
 
 
 def test_fae_is_spent_only_when_the_enhanced_threshold_is_reached():

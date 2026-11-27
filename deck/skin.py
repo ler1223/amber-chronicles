@@ -56,6 +56,10 @@ _cache = {}
 _imgs = {}
 _skins = {}
 
+ELF_MOON = {**SKINS["elf"], "fill": ((31, 48, 60), (15, 23, 35)),
+            "title": (225, 238, 255), "text": (220, 230, 247), "dim": (165, 185, 207),
+            "accent": (177, 213, 248), "energy": ((222, 241, 255), (129, 173, 239), (44, 44, 104))}
+
 
 def _remember(key, make):
     v = _cache.get(key)
@@ -233,12 +237,19 @@ def ring_hole(art):
 
 
 class Skin:
-    def __init__(self, hero):
+    def __init__(self, hero, variant=None):
         self.id = hero if hero in SKINS else "merc"
         self.p = SKINS[self.id]
         self.dir = os.path.join(ART, self.id)
+        self.variant = variant
+        if variant == "moon":
+            self.p = ELF_MOON
+        if variant:
+            self.id = f"{self.id}/{variant}"
 
     def art(self, name):
+        if self.variant and name != "portrait":
+            return _load(os.path.join(self.dir, self.variant, f"{name}.png"))
         return _load(os.path.join(self.dir, f"{name}.png"))
 
     # ---------- текст ----------
@@ -278,6 +289,23 @@ class Skin:
         return r
 
     def _panel(self, w, h, S, alpha, accent, cut):
+        plate = self.art("panel") if self.variant else None
+        if plate is not None:
+            sh = round(10 * S)
+            out = pygame.Surface((w + 2 * sh, h + 2 * sh), pygame.SRCALPHA)
+            aw, ah = plate.get_size()
+            ax, ay = round(aw * .24), round(ah * .24)
+            border = min(round(22 * S), w // 3, h // 3)
+            sx, sy = (0, ax, aw - ax, aw), (0, ay, ah - ay, ah)
+            dx, dy = (0, border, w - border, w), (0, border, h - border, h)
+            for row in range(3):
+                for col in range(3):
+                    src = (sx[col], sy[row], sx[col + 1] - sx[col], sy[row + 1] - sy[row])
+                    size = (dx[col + 1] - dx[col], dy[row + 1] - dy[row])
+                    patch = pygame.transform.smoothscale(plate.subsurface(src), size)
+                    out.blit(patch, (sh + dx[col], sh + dy[row]))
+            out.set_alpha(alpha)
+            return out
         if self.art("edge") is not None and self.art("fill") is not None and self.art("corner") is not None:
             return self._panel_art(w, h, S, alpha, accent)
         p = self.p
@@ -406,7 +434,7 @@ class Skin:
 
     # ---------- кнопка ----------
 
-    def button(self, surf, rect, label, hover=False, on=True, primary=False, t=0.0, size=18):
+    def button(self, surf, rect, label, hover=False, on=True, primary=False, t=0.0, size=18, *, glow=True):
         """Плашка с острыми концами: металл, внутри кожа; доступная главная — дышит светом акцента."""
         native, S, pt = ctx(surf)
         r = pygame.Rect(rect)
@@ -415,11 +443,11 @@ class Skin:
         img = _remember(("btn", self.id, w, h, state, round(S, 3)), lambda: self._button(w, h, S, state))
         x, y = pt(r.topleft)
         g = round(14 * S)
-        if on and (primary or hover):                       # свечение вокруг — пульс
-            glow = _remember(("btn_glow", self.id, w, h, round(S, 3)), lambda: self._glow(w, h, S, g))
+        if glow and on and (primary or hover):
+            halo = _remember(("btn_glow", self.id, w, h, round(S, 3)), lambda: self._glow(w, h, S, g))
             k = 0.55 + 0.45 * math.sin(t * 3.2) if not hover else 1.0
-            glow.set_alpha(int(255 * k))
-            native.blit(glow, (round(x) - g, round(y) - g))
+            halo.set_alpha(int(255 * k))
+            native.blit(halo, (round(x) - g, round(y) - g))
         native.blit(img, (round(x), round(y)))
         col = self.p["title"] if on else (140, 128, 116)
         if hover and on:
@@ -766,7 +794,7 @@ class Skin:
         return out
 
     def tray(self, surf, y0, y1, alpha=235):
-        """Поднос под рукой: от прозрачного (y0) к плотному тёмному (y1 и ниже) — край земли не виден."""
+        """Затемнение рельефа под рукой: от прозрачного (y0) до заданной плотности (y1)."""
         native, S, pt = ctx(surf)
         _, ya = pt((0, y0))
         _, yb = pt((0, y1))
@@ -788,6 +816,11 @@ class Skin:
 
 
 def use(hero):
-    if hero not in _skins:
-        _skins[hero] = Skin(hero)
-    return _skins[hero]
+    variant = None
+    if hero == "elf":
+        from ui import settings
+        variant = "moon" if settings.SETTINGS.get("elf_theme") == "moon" else "grove"
+    key = (hero, variant)
+    if key not in _skins:
+        _skins[key] = Skin(hero, variant)
+    return _skins[key]

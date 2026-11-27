@@ -13,7 +13,8 @@ import math
 
 FLAT = 64                       # пикселей плоской карты на клетку (пиксель-арт 32×32 ×2)
 COLS, ROWS = 10, 6              # размер доски (все карты 10×6)
-MARGIN_L, MARGIN_T, MARGIN_R, MARGIN_B = 9, 10, 9, 3     # клеток местности вокруг доски
+DEFAULT_FOREGROUND = 3
+MARGIN_L, MARGIN_T, MARGIN_R, MARGIN_B = 9, 10, 9, DEFAULT_FOREGROUND
 FLAT_W = (MARGIN_L + COLS + MARGIN_R) * FLAT
 FLAT_H = (MARGIN_T + ROWS + MARGIN_B) * FLAT
 
@@ -34,10 +35,11 @@ GROUND_YS = SIN                 # во сколько раз круг на зе�
 _DEFAULT = (CENTER_SCREEN, PX_PER_CELL)
 
 
-def set_board(cols, rows):
+def set_board(cols, rows, *, foreground=DEFAULT_FOREGROUND):
     """Размер доски боя (клеток). Камера подстраивается: доска влезает в экран, фигурки — по размеру клетки."""
-    global COLS, ROWS, FLAT_W, FLAT_H, DIST, CX, CY, PX_PER_CELL, FOCAL
+    global COLS, ROWS, FLAT_W, FLAT_H, DIST, CX, CY, PX_PER_CELL, FOCAL, MARGIN_B
     COLS, ROWS = cols, rows
+    MARGIN_B = foreground
     FLAT_W = (MARGIN_L + COLS + MARGIN_R) * FLAT
     FLAT_H = (MARGIN_T + ROWS + MARGIN_B) * FLAT
     DIST = COS * (ROWS / 2) * (DEPTH_RATIO + 1) / (DEPTH_RATIO - 1)

@@ -1,5 +1,6 @@
-"""Феи, пороги карт и рост растений в интерфейсе Эльфа."""
+"""Феи, энергия и рост растений в интерфейсе Эльфа."""
 
+import math
 import pygame
 
 from . import cardface as CF
@@ -51,9 +52,92 @@ def _fae_glyph(surf, x, y, color, lit):
                          max(1, round(scale)))
 
 
-def draw_garden(surf, sk, garden, x, y, mouse, hovered_cell):
+def _icon(surf, sk, name, x, y, size, opacity=255):
+    art = sk.art(name)
+    if art is None:
+        return False
+    native, scale, point = SK.ctx(surf)
+    side = max(1, round(size * scale))
+
+    def make():
+        ratio = side / max(art.get_size())
+        icon = pygame.transform.smoothscale(art, tuple(max(1, round(n * ratio)) for n in art.get_size()))
+        icon.set_alpha(opacity)
+        return icon
+
+    icon = SK._remember(("elf-icon", sk.id, name, side, opacity), make)
+    native.blit(icon, icon.get_rect(center=point((x, y))))
+    return True
+
+
+def energy_fraction(value, maximum):
+    return max(0.0, min(1.0, value / max(1, maximum)))
+
+
+def _reservoir_parts(sk, art, aperture, size):
+    ratio = size / max(art.get_size())
+    shape = tuple(max(1, round(n * ratio)) for n in art.get_size())
+    bezel = pygame.transform.smoothscale(art, shape)
+    opening = pygame.transform.smoothscale(aperture, shape)
+    rect = opening.get_bounding_rect()
+    _, mid, _ = sk.p["energy"]
+    shade = SK.darker(sk.p["fill"][1], .36)
+    glass = SK.vgrad(*shape, [(0, SK.mix(shade, mid, .20)), (.43, shade), (1, SK.darker(shade, .4))])
+    return bezel, opening, rect, glass
+
+
+def _reservoir(sk, art, aperture, size, fraction, t):
+    bezel, opening, rect, glass = SK._remember(("elf-orb-parts", sk.id, size),
+                                               lambda: _reservoir_parts(sk, art, aperture, size))
+    out = glass.copy()
+    if fraction:
+        width = out.get_width()
+        bright, mid, deep = sk.p["energy"]
+        level = rect.bottom - rect.h * fraction
+        amplitude = max(1, rect.h * .038) * min(1, fraction * 4)
+        top = max(0, math.floor(level - amplitude * 1.4))
+        depth = max(2, rect.bottom - top)
+        liquid = SK.vgrad(width, depth, [(0, bright), (.18, mid), (.62, SK.mix(mid, deep, .64)), (1, deep)])
+        reflection = pygame.Surface(liquid.get_size(), pygame.SRCALPHA)
+        for i, (position, speed) in enumerate(((.40, 1.6), (.70, -1.15))):
+            band = [(px, depth * (position + .06 * math.sin(t * speed + i)) +
+                     depth * .11 * math.sin((px / width) * 6 + t * speed))
+                    for px in range(width)]
+            pygame.draw.lines(reflection, (*bright, 16 + i * 6), False, band, max(1, round(rect.h * .043)))
+            pygame.draw.aalines(reflection, (*bright, 30 + i * 3), False, band)
+        liquid.blit(reflection, (0, 0))
+        if fraction < 1:
+            wave = [(px, level - top + amplitude * (
+                math.sin((px - rect.left) * 6 / rect.w - t * 2.7) +
+                .4 * math.sin((px - rect.left) * 11 / rect.w + t * 1.9)))
+                    for px in range(width)]
+            wet = pygame.Surface(liquid.get_size(), pygame.SRCALPHA)
+            pygame.draw.polygon(wet, (255, 255, 255, 255), wave + [(width - 1, depth), (0, depth)])
+            liquid = SK.apply_mask(liquid, wet)
+            pygame.draw.aalines(liquid, bright, False, wave)
+        out.blit(liquid, (0, top))
+    out = SK.apply_mask(out, opening)
+    out.blit(bezel, (0, 0))
+    return out
+
+
+def draw_energy(surf, sk, x, y, value, maximum, *, fraction=None, t=0.0):
+    art, aperture = sk.art("orb"), sk.art("orb_mask")
+    label = f"{value} / {maximum}"
+    if art is None or aperture is None:
+        sk.orb(surf, (x, y), 36, value, maximum)
+        return
+    native, scale, point = SK.ctx(surf)
+    size = max(4, round(84 * scale))
+    fraction = energy_fraction(value, maximum) if fraction is None else fraction
+    img = _reservoir(sk, art, aperture, size, fraction, t)
+    native.blit(img, img.get_rect(center=point((x, y))))
+    sk.text(surf, label, (x, y + 52), 15, sk.p["text"], title=True, center=True)
+
+
+def draw_garden(surf, sk, garden, x, bottom, mouse, hovered_cell):
     plants = sorted((u for u in garden.plants if u.alive), key=lambda u: plant_progress(garden, u)[1])
-    # Панель привязана к прежнему нижнему краю и растёт вверх, не закрывая руку.
+    # Панель растёт вверх от верхней границы руки.
     shown = plants[:3]
     notes = []
     if not shown:
@@ -65,37 +149,48 @@ def draw_garden(surf, sk, garden, x, y, mouse, hovered_cell):
         [f"Прививки {len(garden.attachments)}"] if garden.attachments else [])
     if active:
         notes.append(" · ".join(active))
-    height = 73 + 23 * len(shown) + 15 * len(notes)
-    panel = pygame.Rect(x, y + 62 - height, 208, height)
+    height = 95 + 23 * len(shown) + 15 * len(notes)
+    panel = pygame.Rect(x, bottom - height, 240, height)
+    left, right = panel.left + 25, panel.right - 25
     fae = garden.fae()
     charged = fae >= FAE_THRESHOLD
     sk.panel(surf, panel, 239, accent=True)
-    sk.text(surf, "Феи", (panel.x + 14, panel.y + 9), 17, sk.p["title"], title=True)
-    sk.text(surf, f"{fae} / {FAE_MAX}", (panel.right - 13, panel.y + 8), 17,
+    sk.text(surf, "Феи", (left, panel.y + 13), 17, sk.p["title"], title=True)
+    sk.text(surf, f"{fae} / {FAE_MAX}", (right, panel.y + 13), 17,
             GOLD if charged else sk.p["text"], right=True, title=True)
     for i in range(FAE_MAX):
         lit = i < fae
-        color = GOLD if i + 1 in (FAE_THRESHOLD, GREATER_THRESHOLD) else MINT
-        _fae_glyph(surf, panel.x + 18 + 19 * i, panel.y + 35,
-                   color if lit else SK.mix(sk.p["fill"][0], color, 0.26), lit)
+        cx, cy = left + 9 + 19 * i, panel.y + 44
+        native, scale, point = SK.ctx(surf)
+        if i + 1 in (FAE_THRESHOLD, GREATER_THRESHOLD):
+            rect = pygame.Rect(point((cx - 9, cy - 9)), (round(18 * scale), round(18 * scale)))
+            color = GOLD if lit else SK.mix(sk.p["fill"][0], GOLD, .46)
+            pygame.draw.rect(native, color, rect, max(1, round(scale)), border_radius=round(4 * scale))
+        if not _icon(surf, sk, "fairy", cx, cy, 14, 255 if lit else 74):
+            _fae_glyph(surf, cx, cy, sk.p["accent"] if lit else sk.p["dim"], lit)
     threshold = ("Порог 8 активен" if fae >= GREATER_THRESHOLD else
-                 "Порог 6 активен" if charged else f"До порога 6 · ещё {FAE_THRESHOLD - fae}")
-    sk.text(surf, threshold, (panel.x + 14, panel.y + 48), 12, GOLD if charged else sk.p["dim"])
+                 f"Порог 6 активен · до 8: {GREATER_THRESHOLD - fae}" if charged else
+                 f"До порога 6 · ещё {FAE_THRESHOLD - fae}")
+    sk.text(surf, threshold, (left, panel.y + 59), 12, GOLD if charged else sk.p["dim"])
     hits = []
     for i, plant in enumerate(shown):
         _, turns, fast = plant_progress(garden, plant)
-        row = pygame.Rect(panel.x + 9, panel.y + 65 + 23 * i, panel.w - 18, 21)
+        row = pygame.Rect(left, panel.y + 77 + 23 * i, right - left, 21)
         hits.append((row, plant))
         hot = row.collidepoint(mouse) or hovered_cell == plant.cell
         color = PLANTS[plant.plant_id]["color"]
+        native, scale, point = SK.ctx(surf)
         if hot:
-            pygame.draw.rect(surf, (51, 80, 67), row, border_radius=5)
-        pygame.draw.circle(surf, color, (row.x + 8, row.centery), 3)
-        sk.text(surf, plant.name, (row.x + 17, row.y + 2), 12, sk.p["text"])
-        sk.text(surf, f"{turns} х.", (row.right - 7, row.y + 2), 12,
+            hot_row = surf.rect(row) if native is not surf else row
+            pygame.draw.rect(native, SK.mix(sk.p["fill"][0], sk.p["accent"], .26), hot_row,
+                             border_radius=round(5 * scale))
+        if not _icon(surf, sk, "bud", row.x + 8, row.centery, 14):
+            pygame.draw.circle(native, color, point((row.x + 8, row.centery)), max(1, round(3 * scale)))
+        sk.text(surf, plant.name, (row.x + 20, row.y + 2), 12, sk.p["text"])
+        sk.text(surf, f"{turns} х.", (row.right, row.y + 2), 12,
                 GOLD if fast or turns <= 1 else color, right=True)
     for i, note in enumerate(notes):
-        sk.text(surf, note, (panel.x + 15, panel.y + 65 + 23 * len(shown) + 15 * i), 11, sk.p["dim"])
+        sk.text(surf, note, (left, panel.y + 77 + 23 * len(shown) + 15 * i), 11, sk.p["dim"])
     return panel.y, hits
 
 

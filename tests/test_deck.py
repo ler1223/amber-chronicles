@@ -1407,7 +1407,7 @@ def test_walk_is_one_smooth_motion():
 
 
 def test_model_quality_toggle_between_battles():
-    """Карта этажа: M — модели 32×32 ↔ 64×64; бой берёт спрайты из assets/sprites/x2 (без записи настроек)."""
+    """Карта переключает три комплекта моделей, включая отдельный спрайт эльфа."""
     import pygame
     from deck.game import DescentGame
     from deck.ui import MapScreen, model_res
@@ -1417,16 +1417,23 @@ def test_model_quality_toggle_between_battles():
         settings.SETTINGS["sprite_res"] = 32
         g = DescentGame(seed=5)
         g.save_settings = False
-        g.start_run("merc")
+        g.start_run("elf")
         assert isinstance(g.scene, MapScreen)
-        g.scene.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m, mod=0, unicode="m"))
-        assert model_res() == 128
+        base = g.hero_img()
+        toggle = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m, mod=0, unicode="m")
+        for expected in (64, 128, 32, 64, 128):
+            g.scene.handle(toggle)
+            assert model_res() == expected
+        assert g.hero_img() is not base
         g.enter_node(g.run.floor.available()[0])
         hero = g.scene.b.hero
         img = g.scene.view.sprite_of(hero)
         from ui.sprites import sprite_path
-        path, k = sprite_path(hero.proto.get("path") or hero.proto_id)
-        assert k in (2, 4) and img.get_height() >= 64             # подробный спрайт, тот же размер на экране
+        path, k = sprite_path(hero.art_sprite)
+        assert hero.proto_id == "archer" and hero.art_sprite == "elf"
+        assert path.endswith("elf.png") and k == 4 and img.get_height() == 64
+        archer = g.scene.view.sprites.get(["archer"], "archer", hero.color)
+        assert pygame.image.tobytes(img, "RGBA") != pygame.image.tobytes(archer, "RGBA")
     finally:
         settings.SETTINGS["sprite_res"] = old
 

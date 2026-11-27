@@ -50,13 +50,13 @@ def test_model_detail_setting_changes_sprites():
     old = S.SETTINGS.get("sprite_res", 32)
     try:
         sizes = {}
-        for res in (16, 32, 128):
+        for res in (16, 32, 64, 128):
             S.SETTINGS["sprite_res"] = res
             img = bank.get(["warrior"], "warrior", (200, 90, 60))
             sizes[res] = img.get_height()
             colors = np.unique(pygame.surfarray.array3d(img).reshape(-1, 3), axis=0)
             sizes[f"c{res}"] = len(colors)
-        assert sizes[16] == sizes[32] == sizes[128] == 64             # на экране — тот же рост
+        assert sizes[16] == sizes[32] == sizes[64] == sizes[128] == 64
         if os.path.exists(os.path.join("assets", "sprites", "x4", "warrior.png")):
             assert sizes["c128"] > sizes["c32"]                        # высокая детализация — больше деталей
     finally:
@@ -68,7 +68,10 @@ def test_x4_hero_sprites_are_128():
     for name in ("warrior", "archer", "mage", "priest", "elf"):
         p = os.path.join("assets", "sprites", "x4", f"{name}.png")
         assert os.path.exists(p), p
-        assert Image.open(p).size == (128, 128), p
+        with Image.open(p) as img:
+            assert img.size == (128, 128), p
+            alpha = img.getchannel("A")
+            assert alpha.getextrema() == (0, 255) and alpha.getbbox()[3] >= 126, p
 
 
 def test_hero_tint_follows_class_color():

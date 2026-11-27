@@ -1,0 +1,32 @@
+[
+  {
+    "sheet": "sheet_01.png",
+    "title": "Роща светлячков",
+    "columns": 3,
+    "rows": 2,
+    "assets": [
+      "panel",
+      "orb",
+      "button",
+      "fairy",
+      "bud",
+      "corner"
+    ],
+    "prompt": "Revise this original fantasy elf HUD asset sheet. Keep the exact 1536×1024 canvas, 3 equal columns × 2 equal rows and same asset positions. Make six clearly separable front-on art assets with true transparent alpha and ample cell padding, no built-in labels or numbers. Preserve the distinct palette, placement, overall frame and button dimensions, open round shape of the energy reservoir, low-contrast dark centers of panel and button, and winged fairy + simple garden bud silhouettes. Change the actual physical material of every frame, rim, button trim and corner to the material specified below. Metallic gold/silver rims, bevels, rivets, nailheads, clasps, gemstones, metallic lines or paint must disappear entirely. Colors may remain as biological or natural slate hues and restrained lighting. Top left: flat almost square dark HUD plate, intentionally sparse and quiet inside, decoration stays along outer border and corners only. Top middle: a genuinely circular empty reservoir frame with a physically open circular hole (fully transparent) about 72% of the outer diameter for game liquid. Keep interior entirely empty including lower section so engine can fill it dynamically, no painted level or central ornament. Top right: one horizontal 3:1 quiet dark button. Bottom left: one isolated bright readable fairy icon, two primary wings. Bottom middle: one isolated garden bud with two leaves. Bottom right: one isolated L-shaped top-left matching corner. Exact positions. Material must read at HUD sizes; limited shiny specular highlights, controlled high-contrast silhouette. Hand painted fantasy interface, no background scene.\nWarm firefly grove. Make the panel and rim out of actual stripped bark with wide visible rough wood grains and overlapping nonparallel twisted tree roots. Roots follow the sides but flex and organically vary in thickness and cross at the corners; keep it conservative around text. A few young lime-green leaves and branching vine tendrils grow directly out of the wood. Rounded reservoir is circular inside and bent woody vine outside, two small leaves arranged winglike at 12 o'clock. Button is dark bark slab with carved-overgrown roots no smooth rim. L corner out of two visible connected thick split branches with ivy. Rich umber, pine black, moss-greens and pale chartreuse. Amber is only warm bark light and the bud, no bronze casing. Fairy and golden-brown bud still recognizable."
+  },
+  {
+    "sheet": "sheet_02.png",
+    "title": "Сад лунных бутонов",
+    "columns": 3,
+    "rows": 2,
+    "assets": [
+      "panel",
+      "orb",
+      "button",
+      "fairy",
+      "bud",
+      "corner"
+    ],
+    "prompt": "Revise this original fantasy elf HUD asset sheet. Keep the exact 1536×1024 canvas, 3 equal columns × 2 equal rows and same asset positions. Make six clearly separable front-on art assets with true transparent alpha and ample cell padding, no built-in labels or numbers. Preserve the distinct palette, placement, overall frame and button dimensions, open round shape of the energy reservoir, low-contrast dark centers of panel and button, and winged fairy + simple garden bud silhouettes. Change the actual physical material of every frame, rim, button trim and corner to the material specified below. Metallic gold/silver rims, bevels, rivets, nailheads, clasps, gemstones, metallic lines or paint must disappear entirely. Colors may remain as biological or natural slate hues and restrained lighting. Top left: flat almost square dark HUD plate, intentionally sparse and quiet inside, decoration stays along outer border and corners only. Top middle: a genuinely circular empty reservoir frame with a physically open circular hole (fully transparent) about 72% of the outer diameter for game liquid. Keep interior entirely empty including lower section so engine can fill it dynamically, no painted level or central ornament. Top right: one horizontal 3:1 quiet dark button. Bottom left: one isolated bright readable fairy icon, two primary wings. Bottom middle: one isolated garden bud with two leaves. Bottom right: one isolated L-shaped top-left matching corner. Exact positions. Material must read at HUD sizes; limited shiny specular highlights, controlled high-contrast silhouette. Hand painted fantasy interface, no background scene.\nCool moonbud garden. Make panel edges and round reservoir out of substantial matte gray-blue slate, coarse visibly stone-textured with irregular faceted chips and tiny planar cracks. Slab has a few weathered carved notches and accumulated moss where stone sections join. Keep quiet blue-teal dark slate interior. Practical round stone lip with a largely circular open hole, visually layered natural slate, tiny blue-green moss and two small real pale lilac petals growing from lower outside corner. Button carved from one flatter slate slab with a chiseled leading and trailing edge and tiny lilac bud at each end. L corner broken-edge gritty stone with moss and one tiny lilac petal. No filigreed lines or silvery reflections. Periwinkle fairy wings and lilac moonflower bud remain recognizable."
+  }
+]

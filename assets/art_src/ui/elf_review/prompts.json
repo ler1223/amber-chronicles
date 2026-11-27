@@ -1,0 +1,32 @@
+[
+  {
+    "sheet": "sheet_01.png",
+    "title": "Роща светлячков",
+    "columns": 3,
+    "rows": 2,
+    "assets": [
+      "panel",
+      "orb",
+      "button",
+      "fairy",
+      "bud",
+      "corner"
+    ],
+    "prompt": "Produce one clean concept asset sheet for the elf HUD of our original hand-painted dark fantasy tactical card game. 1536×1024, exact 3 columns by 2 rows, six independent 512×512 cells. No grid lines; the sheet and each asset's surroundings have real transparent alpha. Every asset is isolated, center of its cell, at least 12% invisible padding, no asset crosses cell boundary. Crop-friendly, flat orthographic FRONT view throughout, no perspective or dramatically tilted props. Here's what to borrow from the three reference images: detailed forged relief and engraved ornament on the Huntress ring and the Pyromancer medallion, sturdy readable shape and central negative space. The supplied elf portrait guides relative color, leaf forms, and the fairy wing shape; do NOT include or redraw any portrait. Use restrained hand-painted highlights and clear bold pixel-art-compatible forms for HUD shown as small as 16–200 px. Quiet opaque button and panel interiors are intentionally dark and low-contrast so dynamic white game text stays accessible. Fairy wings ever simple, no detailed humanoid faces. No letters, no numbers, no text-like glyphs, no counters, no pips embedded into panels, no black backdrop, no decorative labels, no scene. Exact tile assignments: TOP LEFT nearly-square UI panel plate, clean dark textured center, compressed decorative border, corner accents only, no central objects or placeholders. TOP MIDDLE empty circular resource bezel (a clean open hole about 73% of the diameter must be completely transparent for existing game fill), the fairy influence readable in rim silhouette, symmetric or nearly symmetric. TOP RIGHT one elongated rectangular button plate, ratio about 3:1, thin rim, flat empty center, short ornaments limited to the ends. BOTTOM LEFT single small fairy resource icon, strong bold unmistakable silhouette of two wings and luminous central body, no particle dust or halo outside it, read clearly at 15 px. BOTTOM MIDDLE single small garden bud icon only, visible main bud and two round leaves, suitable at 16 px. BOTTOM RIGHT isolated L-shaped top-left frame corner, clear 90-degree arms and one leaf motif, transparent central opening and no panel backing.\nDesign direction: lantern-lit grove. Main family bottle-green, old gold and luminous pale chartreuse. Panel body very dark pine lacquer almost black, thin antique-gold metal and only a few small carved ivy tips at corners. Orb is a slim cast bronze cage with a simple paired wing arch across its top, not wood and no antlers; hole remains open. Button umber pine lacquer with emerald end studs and narrow antique-gold rim. Fairy especially resembles a pair of pale mint leaf-wings on a tiny upright light. Garden icon round amber bud, fresh olive leaves. Top-left corner ivy and small seed-shaped gold fastener. Warm dusk highlights, barely visible patina, no flowers on the border."
+  },
+  {
+    "sheet": "sheet_02.png",
+    "title": "Сад лунных бутонов",
+    "columns": 3,
+    "rows": 2,
+    "assets": [
+      "panel",
+      "orb",
+      "button",
+      "fairy",
+      "bud",
+      "corner"
+    ],
+    "prompt": "Produce one clean concept asset sheet for the elf HUD of our original hand-painted dark fantasy tactical card game. 1536×1024, exact 3 columns by 2 rows, six independent 512×512 cells. No grid lines; the sheet and each asset's surroundings have real transparent alpha. Every asset is isolated, center of its cell, at least 12% invisible padding, no asset crosses cell boundary. Crop-friendly, flat orthographic FRONT view throughout, no perspective or dramatically tilted props. Here's what to borrow from the three reference images: detailed forged relief and engraved ornament on the Huntress ring and the Pyromancer medallion, sturdy readable shape and central negative space. The supplied elf portrait guides relative color, leaf forms, and the fairy wing shape; do NOT include or redraw any portrait. Use restrained hand-painted highlights and clear bold pixel-art-compatible forms for HUD shown as small as 16–200 px. Quiet opaque button and panel interiors are intentionally dark and low-contrast so dynamic white game text stays accessible. Fairy wings ever simple, no detailed humanoid faces. No letters, no numbers, no text-like glyphs, no counters, no pips embedded into panels, no black backdrop, no decorative labels, no scene. Exact tile assignments: TOP LEFT nearly-square UI panel plate, clean dark textured center, compressed decorative border, corner accents only, no central objects or placeholders. TOP MIDDLE empty circular resource bezel (a clean open hole about 73% of the diameter must be completely transparent for existing game fill), the fairy influence readable in rim silhouette, symmetric or nearly symmetric. TOP RIGHT one elongated rectangular button plate, ratio about 3:1, thin rim, flat empty center, short ornaments limited to the ends. BOTTOM LEFT single small fairy resource icon, strong bold unmistakable silhouette of two wings and luminous central body, no particle dust or halo outside it, read clearly at 15 px. BOTTOM MIDDLE single small garden bud icon only, visible main bud and two round leaves, suitable at 16 px. BOTTOM RIGHT isolated L-shaped top-left frame corner, clear 90-degree arms and one leaf motif, transparent central opening and no panel backing.\nDesign direction: moonflower garden. Main family midnight teal, patinated pale silver and periwinkle. Panel body darkest blue-green matte slate, thin silver edging with restrained moonflower petals only at the corners and light moss-green leaves. Orb is a cast silver rim with two simple clean frost-blue petal accents framing the bottom, generous circular open center. Button blue slate with silver trim and one small pale lilac seed at each end. Winged fairy ice blue with legible centered body, distinct from bud. Garden icon small lilac moonflower bud and gray-green round leaves. L-shaped corner silver relief of two tightly folded flower petals. Cool silver surfaces with a hint of turquoise oxidation; keep light accents small and sharp."
+  }
+]
