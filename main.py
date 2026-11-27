@@ -11,7 +11,6 @@ python main.py --sandbox        — песочница: открыто всё (�
 python main.py --screenshot out.png --seconds 3
                                 — без окна: таверна, прокрутить и сохранить кадр
 
-Старые режимы и нейросети — в archive/ (не поддерживаются, см. archive/README.md).
 Сохранение одно на оба режима — общая таверна: save/expedition.json (песочница — save/sandbox_expedition.json).
 """
 import argparse

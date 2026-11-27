@@ -7,10 +7,12 @@
 (data/deck/cards.json → ill), потом свои иллюстрации (prompts_expedition.md, лист DC1).
 """
 import os
+from itertools import groupby
 
 import pygame
 
 from ui import theme as T
+from ui import settings
 
 from . import gfx as G
 from .model import CARD_RARITY_COLOR, card_extras, phrase
@@ -41,22 +43,73 @@ FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 _fonts = {}
 
 
-def font(size, bold=False):
-    """Текст карт — PT Serif (assets/fonts, OFL); нет файла — шрифт интерфейса."""
-    key = ("pt", size, bold)
+class FontWithSymbols:
+    """Основной шрифт и запасные глифы для стрелок и знаков интерфейса."""
+
+    def __init__(self, primary, symbols):
+        self.primary = primary
+        self.symbols = symbols
+        self._glyphs = {}
+        self.get_height = primary.get_height
+
+    def _face(self, char):
+        face = self._glyphs.get(char)
+        if face is None:
+            metrics = self.primary.metrics(char)[0]
+            face = self.primary if char.isspace() or (metrics and any(metrics[:4])) else self.symbols
+            self._glyphs[char] = face
+        return face
+
+    def _runs(self, text):
+        return [(face, "".join(chars)) for face, chars in groupby(text, self._face)]
+
+    def size(self, text):
+        runs = self._runs(text)
+        if not runs:
+            return self.primary.size(text)
+        return sum(face.size(part)[0] for face, part in runs), self.primary.get_height()
+
+    def render(self, text, antialias, color):
+        runs = self._runs(text)
+        if not runs or (len(runs) == 1 and runs[0][0] is self.primary):
+            return self.primary.render(text, antialias, color)
+        images = [(face, face.render(part, antialias, color)) for face, part in runs]
+        ascent = self.primary.get_ascent()
+        out = pygame.Surface((sum(img.get_width() for _, img in images), self.primary.get_height()),
+                             pygame.SRCALPHA)
+        x = 0
+        for face, img in images:
+            out.blit(img, (x, ascent - face.get_ascent()))
+            x += img.get_width()
+        return out
+
+
+def font(size, bold=False, *, style=None):
+    """Шрифт интерфейса и лиц карт, в том числе для предпросмотра."""
+    style = title_style() if style is None else style
+    key = (style, size, bold)
     if key not in _fonts:
-        p = os.path.join(FONT_DIR, "PTSerif-Bold.ttf" if bold else "PTSerif-Regular.ttf")
-        _fonts[key] = pygame.font.Font(p, size) if os.path.exists(p) else T.font(size, bold)
+        file = settings.DESCENT_FONTS[style][1]
+        if style == "pt_serif" and bold:
+            file = "PTSerif-Bold.ttf"
+        p = os.path.join(FONT_DIR, file)
+        if os.path.exists(p):
+            face = pygame.font.Font(p, size)
+            if bold and style not in ("pt_serif", "alegreya_sc"):
+                face.set_bold(True)
+            _fonts[key] = FontWithSymbols(face, T.system_font(size, bold))
+        else:
+            _fonts[key] = T.system_font(size, bold)
     return _fonts[key]
+
+
+def title_style():
+    key = settings.SETTINGS.get("descent_font")
+    return key if key in settings.DESCENT_FONTS else settings.DEFAULTS["descent_font"]
 
 
 def title_font(size):
-    """Имена карт и заголовки плашек — Alegreya SC Bold (книжные капители)."""
-    key = ("title", size)
-    if key not in _fonts:
-        p = os.path.join(FONT_DIR, "AlegreyaSC-Bold.ttf")
-        _fonts[key] = pygame.font.Font(p, size) if os.path.exists(p) else T.font(size, True)
-    return _fonts[key]
+    return font(size, True)
 
 
 # ---------- текст действия ----------
@@ -247,9 +300,9 @@ def _ribbon(surf, rect, color, name, frame):
     pygame.draw.line(surf, T.mix(frame, (255, 255, 255), 0.3), (x, y), (x + w, y), 2)
     pygame.draw.line(surf, (14, 10, 8), (x, y + h), (x + w, y + h), 2)
     size = 24
-    while size > 15 and T.font(size, True).size(name)[0] > w - 18:
+    while size > 15 and title_font(size).size(name)[0] > w - 18:
         size -= 1
-    f = T.font(size, True)
+    f = title_font(size)
     img = f.render(name, True, (250, 240, 220))
     sh = f.render(name, True, (10, 6, 4))
     cx, cy = x + w / 2 - img.get_width() / 2, y + h / 2 - img.get_height() / 2
@@ -318,7 +371,7 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Лицо карты OW×OH (кэш по состоянию). heat — жар героя: тусклые уровни, на которые не хватает;
     lit — выполненные сейчас условия (подсвечиваются зелёным)."""
     lit = frozenset(lit or ())
-    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+    key = (title_style(), card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
            card.spirit_rank, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     if key in _cache:
@@ -424,7 +477,7 @@ def face(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=Non
     if cardart.available():
         return cardart.compose(card, main_ok, alt_ok, hot, heat, lit, tilt, width)
     lit = frozenset(lit or ())
-    key = ("old", card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+    key = ("old", title_style(), card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
            card.spirit_rank, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     if key not in _cache:

@@ -322,6 +322,28 @@ def snow_cloud(name="snow_cloud", frames=24, res=56):
     render_frames(name, frames, 12, [0.5, 0.5], start=30)
 
 
+def elf_gust():
+    """Боковой порыв у земли: короткий импульс поднимает полосы пыли разной плотности."""
+    sc = scene(32, size=128, samples=48)
+    dom, mod = gas_domain((5.4, 2.2, 2.2), 96, vorticity=.75, dissolve=36,
+                          name="elf_gust", fire=False)
+    mod.domain_settings.cache_frame_end = sc.frame_end
+    for y, z, speed in [(-.19, .60, 8.1), (.20, .74, 7.4), (.06, .95, 9.6)]:
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=.24, location=(-1.85, y, z))
+        src = bpy.context.active_object
+        src.scale = (1.4, .58, .65)
+        fs = flow(src, kind="SMOKE", temp=.1, density=.85, vel=(.3, (speed, y, .24))).flow_settings
+        fs.keyframe_insert(data_path="use_inflow", frame=17)
+        fs.use_inflow = False
+        fs.keyframe_insert(data_path="use_inflow", frame=18)
+    sc.frame_set(1)
+    bake(dom)
+    volume_material(dom, fire_strength=0, smoke=(.71, .75, .62), density=12)
+    camera(sc, target=(0, 0, .82), ortho=5.5)
+    sun(sc, 4)
+    render_frames("elf_gust", 15, 12, [.5, .5], every=2, start=3)
+
+
 def shards(name="ice_burst", frames=20, count=46, big=False):
     """Ледяные осколки: гранёные куски разлетаются по баллистике и скачут по земле (анимация считается тут же)."""
     sc = scene(frames + 2, samples=24)
@@ -420,7 +442,7 @@ def ice_wall(name="ice_wall"):
 
 
 JOBS = {"explosion": explosion, "test": lambda: explosion("test", res=40, test=True), "explosion_big": lambda: explosion("explosion_big", 0.62, 30, 80, big=True),
-        "fire_loop": fire_loop, "fire_head": projectile, "snow_cloud": snow_cloud, "ice_burst": shards,
+        "fire_loop": fire_loop, "fire_head": projectile, "snow_cloud": snow_cloud, "elf_gust": elf_gust, "ice_burst": shards,
         "ice_burst_big": lambda: shards("ice_burst_big", 24, 80, big=True), "ice_wall": ice_wall}
 
 os.makedirs(OUT, exist_ok=True)

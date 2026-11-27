@@ -5,7 +5,8 @@ import pygame
 from sim import expedition as X
 from sim.data import GameData
 
-from ui import audio
+from ui import audio, theme as T
+from . import cardface as CF
 from . import model as M
 from .battle import Battle
 from .relic_run import CREST, RELICS as RUN_RELICS, tagged_candidates, tagged_card
@@ -61,6 +62,7 @@ class DescentGame:
         elif self.run is not None and self.run.hp > 0:
             opts.append(("Выйти из забега", "abandon"))
         opts.append(("Выйти из игры", "quit"))
+        opts.append(("Настройки", "settings"))
         self.pause = PauseMenu(self, opts)
 
     def start_run(self, hero="merc", variant=None, starter=None):
@@ -432,24 +434,27 @@ class DescentGame:
     # ---------- цикл ----------
 
     def handle(self, ev):
-        if self.pause is not None:
-            self.pause.handle(ev)
-            return
-        if self.sound.handle(ev):                         # F10 / панель звука поверх сцены
-            return
-        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F2:
-            self.open_atlas()
-            return
-        self.scene.handle(ev)
+        with T.use_fonts(CF.title_style(), CF.font):
+            if self.pause is not None:
+                self.pause.handle(ev)
+                return
+            if self.sound.handle(ev):                     # F10 / панель звука поверх сцены
+                return
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F2:
+                self.open_atlas()
+                return
+            self.scene.handle(ev)
 
     def update(self, dt):
         if self.pause is None:
-            self.scene.update(dt)
+            with T.use_fonts(CF.title_style(), CF.font):
+                self.scene.update(dt)
 
     def draw(self, surf):
-        self.scene.draw(surf)
-        if self.pause is not None:
-            self.pause.draw(surf)
-        self.sound.draw(surf)
-        if isinstance(self.scene, BattleScreen) and (self.scene.b.result or self.frame is None):
-            self.frame = surf.copy()                        # фон под наградой — кадр конца боя
+        with T.use_fonts(CF.title_style(), CF.font):
+            self.scene.draw(surf)
+            if self.pause is not None:
+                self.pause.draw(surf)
+            self.sound.draw(surf)
+            if isinstance(self.scene, BattleScreen) and (self.scene.b.result or self.frame is None):
+                self.frame = surf.copy()                    # фон под наградой — кадр конца боя

@@ -1,9 +1,57 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+/.pytest-*/
+/.mypy_cache/
+/.ruff_cache/
+/.coverage
+/htmlcov/
+/.venv/
+/venv/
+/.env
+/.env.*
+!/.env.example
+/build/
+/dist/
+*.egg-info/
+.DS_Store
+Thumbs.db
+
+# Локальные инструменты и настройки редактора
+/.agents/
+/.claude/
+/.codex/
+/.opencode/
+/.vscode/
+/.idea/
+/skills-lock.json
+
 # личные сохранения и настройки игрока
-save/
+/save/
 # кэш запечённых текстур эффектов — пересобирается при запуске
-assets/cache/
+/assets/cache/
+
+# Исходные листы, рабочие промпты и отладочные кадры.
+# Готовые игровые ресурсы из assets/ отслеживаются.
+/assets/art_src/
+/assets/**/*_prompt.txt
+/assets/ui/map/prompt.txt
+/prompts_*.md
+/promt.md
+/art_prompts.md
+/screenshots/*
+!/screenshots/descent_elf.png
+!/screenshots/descent_chapter_maps.png
+!/screenshots/passive_battle.png
+!/screenshots/expedition_tavern.jpg
+!/screenshots/expedition_event.jpg
+
+# Архив и отдельные прототипы вне «Спуска» и «Экспедиции»
+/archive/
+/gem_workshop/
+/merge_duel.py
+/docs/merge_duel.md
+/tests/test_merge_duel.py
+
 *.tmp
 prof.out

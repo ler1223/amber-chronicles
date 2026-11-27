@@ -8,6 +8,8 @@ import math
 
 import pygame
 
+from .cardface import title_style
+
 SPRING = 210.0          # жёсткость пружины положения
 DAMP = 20.0             # затухание
 ASPRING = 260.0
@@ -230,7 +232,7 @@ class HandView:
         for sp in items:
             st = state_of(sp.card)
             zoom = self.zoom if sp.s > 1.15 else 1.0                       # лицо — под размер: в покое или крупно
-            key = (sp.card.uid, sp.card.tier, sp.card.uses, sp.card.ready, sp.card.insight_misses,
+            key = (title_style(), sp.card.uid, sp.card.tier, sp.card.uses, sp.card.ready, sp.card.insight_misses,
                    sp.card.lvl, sp.card.spirit_rank, st, zoom, sp.card.preview_key())
             face = self.cache.get(key)
             tilted = self.face_tilt is not None and abs(sp.tilt[0]) + abs(sp.tilt[1]) > 0.05

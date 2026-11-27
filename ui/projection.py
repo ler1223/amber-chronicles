@@ -140,15 +140,15 @@ def project(gx, gy, gz=0.0):
             DIST / zc * PX_PER_CELL / BASE_PX)
 
 
-def unproject(sx, sy):
-    """Экран → точка на земле (gx, gy) или None, если выше горизонта."""
+def unproject(sx, sy, gz=0.0):
+    """Экран → (gx, gy) на заданной высоте или None выше горизонта."""
     u = (sx - CENTER_SCREEN[0]) / FOCAL
     v = (sy - CENTER_SCREEN[1]) / FOCAL
     den = SIN + v * COS
     if den <= 1e-4:
         return None
-    t = v * DIST / den
-    zc = DIST - t * COS
+    t = (v * DIST + (COS - v * SIN) * gz) / den
+    zc = DIST - t * COS - gz * SIN
     return CX + u * zc, CY + t
 
 

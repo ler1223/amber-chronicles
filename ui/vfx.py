@@ -26,6 +26,7 @@ import numpy as np
 
 from ui.projection import GROUND_YS  # круги на земле сплющены так же, как земля под камерой
 from ui.settings import SETTINGS
+from ui.vfx_readable import Cue
 from ui.vfx_textures import FLIP, FRAMES, INDEX
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
@@ -38,6 +39,7 @@ SFX_MODES = {"ring": 0, "vortex": 1, "pillar": 2, "orb": 3, "dome": 4, "disc": 5
              "d_ring": 20, "d_haze": 21, "d_pinch": 22}
 RIB_MODES = {"energy": 0, "slash": 1, "smoke": 2, "fire": 3, "water": 4, "lightning": 5}
 GROUPS = ("under_alpha", "under_add", "air_alpha", "air_add")
+READABLE_TEMPO = 1.7
 
 
 def _load(name):
@@ -107,7 +109,7 @@ class Prop:
 
     def __init__(self, idx, name, x, y, scale=2.0, rot=0.0, vx=0.0, vy=0.0, g=0.0, spin=0.0, orient=False,
                  life=2.0, floor=None, bounce=0.0, stick=False, path=None, on_end=None, alive=None, follow=None,
-                 grow=(1.0, 1.0), grow_time=0.15, fade=0.25, flip=False):
+                 grow=(1.0, 1.0), grow_time=0.15, fade=0.25, flip=False, opaque=False):
         self.idx, self.name = idx, name
         self.x, self.y, self.vx, self.vy, self.g = x, y, vx, vy, g
         self.rot, self.spin, self.orient = rot, spin, orient
@@ -115,6 +117,7 @@ class Prop:
         self.life, self.floor, self.bounce, self.stick = life, floor, bounce, stick
         self.path, self.on_end, self.alive_fn, self.follow = path, on_end, alive, follow
         self.fade, self.flip = fade, flip
+        self.opaque = opaque
         self.age = 0.0
         self.rest = None           # время, когда улеглась
         self.dying = None
@@ -239,6 +242,7 @@ class VfxWorld:
                         self.floor, self.bounce, self.fps, self.f0, self.a0, self.a1,
                         self.c0, self.c1, self.shape, self.fbn, self.add, self.under, self.orient]
         self.decals, self.emitters, self.props, self.sfx, self.ribbons, self.lights = [], [], [], [], [], []
+        self.cues = []
         self.frame_lights = []      # свет на один кадр (горящие клетки, касты) — заполняет BattleView
         self.marks = []             # следы, которые BattleView впечатает в слой поля
         self.pending = []           # (время, функция)
@@ -248,13 +252,13 @@ class VfxWorld:
     def clear(self):
         self.n = 0
         for lst in (self.decals, self.emitters, self.props, self.sfx, self.ribbons, self.lights, self.frame_lights,
-                    self.marks, self.pending):
+                    self.marks, self.pending, self.cues):
             lst.clear()
         self.screen = Screen()
 
     def busy(self):
         return bool(self.n or self.decals or self.emitters or self.props or self.sfx or self.ribbons or self.lights
-                    or self.pending)
+                    or self.pending or self.cues)
 
     # ---------- частицы ----------
 
@@ -461,8 +465,12 @@ class VfxWorld:
     def mark(self, name, x, y, size=80, rot=0.0, alpha=1.0, flat=0.5):
         self.marks.append((name, x, y, size, rot, alpha, flat))
 
+    def cue(self, kind, point, color, size, duration, path=None):
+        self.cues.append(Cue(kind, self.time, duration, tuple(point), tuple(color), size, path))
+
     def projectile(self, a, b, speed, head, trail, color, arc=0.0, scale=1.0, on_hit=None, trail_rate=150,
-                   ribbon=None, prop=None, sfx=None, light=None, dur=None, stick=None, prop_scale=2.0, spin=0.0):
+                   ribbon=None, prop=None, sfx=None, light=None, dur=None, stick=None, prop_scale=2.0, spin=0.0,
+                   *, readable=False):
         """Снаряд a → b: голова (пресеты частиц), след, лента, моделька, шейдерная сфера, свет; on_hit — по прилёте.
         Возвращает время полёта."""
         dist = math.dist(a, b)
@@ -477,6 +485,10 @@ class VfxWorld:
 
         def pos(e):
             return at(e.age)
+        if readable:
+            self.cue("trail", a, color, max(5, 8 * scale), dur, at)
+            if not prop:
+                self.cue("orb", a, color, max(5, 9 * scale), dur, at)
         ender = [on_hit]          # on_hit вызывает первый объект, который «долетит»
 
         def take():
@@ -497,7 +509,7 @@ class VfxWorld:
             self.add_light(light, lambda: at(self.time - start), color, scale, alive=lambda: self.time - start < dur)
         if prop:
             self.prop(prop, a[0], a[1], scale=prop_scale, path=(a, b, dur, arc), orient=not spin, spin=spin,
-                      on_end=take(), stick=stick, life=dur + 0.01)
+                      on_end=take(), stick=stick, life=dur + 0.01, opaque=readable)
         fn = take()
         if fn:
             self.after(dur, fn)
@@ -521,7 +533,7 @@ class VfxWorld:
         for layer in layers:
             if layer.get("min_tier", 0) > tier:
                 continue
-            self.after(layer.get("t", 0.0), lambda layer=layer: self._layer(layer, ctx))
+            self.after(layer.get("t", 0.0) * ctx.get("tempo", 1.0), lambda layer=layer: self._layer(layer, ctx))
 
     def _points(self, at, ctx):
         if at == "cells":
@@ -654,10 +666,14 @@ class VfxWorld:
                 if ext:
                     d = math.dist(a, b) or 1
                     b = (b[0] + (b[0] - a[0]) / d * ext, b[1] + (b[1] - a[1]) / d * ext)
-                dur = spec.get("time", 0.1)
-                self.add_ribbon(spec["ribbon"], lambda t: (a[0] + (b[0] - a[0]) * min(1, t / dur),
-                                                           a[1] + (b[1] - a[1]) * min(1, t / dur)),
-                                color, scale, duration=dur)
+                dur = spec.get("time", 0.1) * ctx.get("tempo", 1.0)
+                def path(t):
+                    k = min(1, t / dur)
+                    return a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k
+                self.add_ribbon(spec["ribbon"], path, color, scale, duration=dur)
+                if ctx.get("readable"):
+                    self.cue("trail", a, color, max(6, 9 * scale), dur + .06, path)
+                    self.cue("orb", a, color, max(4, 6 * scale), dur, path)
 
     def _while(self, cond, ctx):
         if not cond:
@@ -738,11 +754,13 @@ class VfxWorld:
             if stick:
                 self.mark("prop:" + spec["prop"], b[0], b[1] + 2, 0, self.prng.uniform(0, 40))
         col = tuple(spec["color"]) if spec.get("color") else color
-        self.projectile(a, b, spec.get("speed", 900) * scale, spec.get("head"), spec.get("trail"), col,
+        tempo = ctx.get("tempo", 1.0)
+        time = spec.get("time")
+        self.projectile(a, b, spec.get("speed", 900) * scale / tempo, spec.get("head"), spec.get("trail"), col,
                         spec.get("arc", 0) * scale, spec.get("head_scale", 1.0) * scale, hit,
                         spec.get("trail_rate", 150), spec.get("ribbon"), spec.get("prop"), spec.get("sfx"),
-                        spec.get("light"), spec.get("time"), None, spec.get("prop_scale", 2.0),
-                        math.radians(spec.get("spin", 0)))
+                        spec.get("light"), time * tempo if time is not None else None, None, spec.get("prop_scale", 2.0),
+                        math.radians(spec.get("spin", 0)), readable=ctx.get("readable", False))
 
     def _arc(self, spec, c, ctx, color, scale):
         """Взмах: лента по дуге вокруг точки, повёрнутой по направлению удара."""
@@ -825,6 +843,8 @@ class VfxWorld:
         if dt <= 0:
             return
         self.time += dt
+        if self.cues:
+            self.cues = [cue for cue in self.cues if self.time < cue.start + cue.life]
         due = [p for p in self.pending if p[0] <= self.time]
         if due:
             self.pending = [p for p in self.pending if p[0] > self.time]
@@ -1183,13 +1203,15 @@ class VfxWorld:
         from ui.vfx_textures import NAMES, cpu_ids
         groups = self.batches(cpu_ids())
         dim = self.screen.fx_alpha()
+        for cue in self.cues:
+            cue.draw(surf, self.time, scale, offset)
         if props:
             for p in self.props:
                 img = props.get(p.name)
                 if img is None:
                     continue
                 img = pygame.transform.rotozoom(img, -math.degrees(p.rot), p.scale * scale)
-                if dim < 1.0:
+                if dim < 1.0 and not p.opaque:
                     img.set_alpha(int(255 * dim))
                 surf.blit(img, (p.x * scale - img.get_width() / 2 + offset[0],
                                 p.y * scale - img.get_height() / 2 + offset[1]))

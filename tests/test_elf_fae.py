@@ -55,7 +55,12 @@ def test_full_card_text_keeps_long_descriptions_and_extras():
 
 def test_full_description_panel_only_for_clipped_cards():
     run = M.Run(seed=1, hero="elf")
-    long_card = Inspector(M.Card("e_thorn_seed", run.defs), pinned=True)
+    seed = run.defs["e_thorn_seed"]
+    main = dict(seed["main"], do=seed["main"]["do"] + [
+        {"op": "note", "text": "При созревании семя выпускает колючие побеги. " * 18},
+    ])
+    defs = dict(run.defs, e_test_clipped_seed=dict(seed, main=main))
+    long_card = Inspector(M.Card("e_test_clipped_seed", defs), pinned=True)
     short_card = Inspector(M.Card("e_moon_arrow", run.defs), pinned=True)
     assert any(name == "Полное описание" for name, _, _ in long_card.panels())
     assert not any(name == "Полное описание" for name, _, _ in short_card.panels())
@@ -210,6 +215,45 @@ def test_fae_gain_event_is_drawn_by_battle_screen_without_crashing():
     screen.update(1 / 60)
     assert battle.hero.ds["fae"] == 2
     assert len(screen.fae_flight.arrivals) == 2
+    assert screen.view.elf_particles.n > 0
+    battle.spend_fae(2)
+    screen.pump()
+    particles = screen.view.elf_particles
+    falling = particles.grav[:particles.n] > 5
+    assert falling.sum() >= 48
+    assert particles.vx[:particles.n][falling].mean() > 0
+
+
+def test_each_plant_growth_stage_has_a_distinct_field_sprite():
+    from pathlib import Path
+
+    from deck.fae import PLANTS
+
+    game = DescentGame(seed=1, gd=ED)
+    battle, game.run = hero_battle("elf")
+    screen = BattleScreen(game, battle)
+    cells = [cell for cell in battle.c.grid.cells if battle.free(cell)]
+    for sid, cell in zip(PLANTS, cells, strict=False):
+        plant = battle.garden.spawn_plant(sid, cell)
+        required = PLANTS[sid]["grow"]
+        frames = set()
+        for level in range(required + 1):
+            assert Path(f"assets/sprites/elf_plants/{sid}_{level}.png").is_file()
+            plant.growth = level
+            frames.add(pygame.image.tobytes(screen.view.sprite_of(plant), "RGBA"))
+        assert len(frames) == required + 1
+    assert len(battle.garden.plants) == len(PLANTS)
+
+    plant = battle.garden.plants[0]
+    finish(battle.garden.mature(plant))
+    screen.pump()
+    assert not plant.alive
+    assert (plant, screen.PLANT_BLOOM_TIME) in screen.plant_blooms
+    hedge = next(u for u in battle.garden.plants if u.plant_id == "living_hedge")
+    mature_art = screen.view.sprite_of(hedge)
+    finish(battle.garden.mature(hedge))
+    wall_art = screen.view.sprite_of(battle.garden.walls[-1])
+    assert pygame.image.tobytes(mature_art, "RGBA") == pygame.image.tobytes(wall_art, "RGBA")
 
 
 def test_fae_flight_tracks_gains_spends_and_thresholds(monkeypatch):
@@ -340,6 +384,52 @@ def test_moon_arrow_pierces_the_whole_line_at_the_threshold():
     h.ds["fae"] = 5
     finish(b.play(card(b, "e_moon_arrow"), "main", first))
     assert second.hp == hp2                                # до порога — только цель
+
+
+def test_moon_arrow_waits_for_the_projectile_without_a_lunge():
+    game = DescentGame(seed=1, gd=ED)
+    b, game.run = hero_battle("elf")
+    b.energy = 9
+    h = b.hero
+    h.ds["fae"] = 6
+    first, second = b.foes()[:2]
+    put(b, first, (h.cell[0] + 1, h.cell[1]))
+    put(b, second, (h.cell[0] + 2, h.cell[1]))
+    first.hp = first.max_hp = second.hp = second.max_hp = 200
+    arrow = card(b, "e_moon_arrow")
+    screen = BattleScreen(game, b)
+    screen.pump()
+    play = b.play(arrow, "main", first)
+    for step in play:
+        if step[0] == "impact":
+            break
+    else:
+        raise AssertionError("Moon arrow did not emit a projectile")
+    assert first.hp == second.hp == 200
+    shot = next(e for e in b.c.events if e["t"] == "skill")
+    assert shot["target"] is second and shot["effect_only"]
+    assert shot["empowered"] and shot["line"] == (first.cell,)
+    duration = screen.pump()
+    assert .26 <= duration < .34
+    vfx = screen.view.vfx
+    projectile = next(p for p in vfx.props if p.name == "arrow_ice")
+    assert projectile.opaque
+    assert 29 <= projectile.scale * screen.view.props["arrow_ice"].get_width() <= 45
+    assert any(cue.kind == "slipstream" for cue in vfx.cues)
+    vfx.update(duration + .02)
+    assert any(cue.kind == "gust" and cue.life >= .5 for cue in vfx.cues)
+    particles = screen.view.elf_particles
+    assert particles.n > 30
+    contact = (particles.grav[:particles.n] > 5).nonzero()[0]
+    assert len(contact) > 0
+    chip = contact[0]
+    assert particles.vz[chip] > 0
+    before = particles.vz[chip]
+    particles.update(.05)
+    assert particles.vz[chip] < before
+    assert screen.view.anim(h).lunge == 0
+    finish(play)
+    assert first.hp < 200 and second.hp < 200
 
 
 def test_plant_grows_each_turn_and_matures():
@@ -546,6 +636,7 @@ def test_fae_is_spent_only_when_the_enhanced_threshold_is_reached():
     hp = foe.hp
     finish(b.play(card(b, "e_moon_arrow"), "main", foe))
     assert hp - foe.hp == 11 and h.ds["fae"] == 5            # базовая версия не тратит фей
+    assert not next(e for e in b.c.events if e["t"] == "skill" and e["skill"] == "_elf_moon_arrow")["empowered"]
 
     h.ds["fae"] = 6
     hp = foe.hp

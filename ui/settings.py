@@ -11,6 +11,16 @@ PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 
 # (ключ, название, варианты, подписи)
 VOLUME_VALUES = [i / 100 for i in range(101)]
+DESCENT_FONTS = {
+    "underdog": ("Underdog", "Underdog-Regular.ttf"),
+    "marck_script": ("Marck Script", "MarckScript-Regular.ttf"),
+    "comforter_brush": ("Comforter Brush", "ComforterBrush-Regular.ttf"),
+    "neucha": ("Neucha", "Neucha-Regular.ttf"),
+    "bad_script": ("Bad Script", "BadScript-Regular.ttf"),
+    "kurale": ("Kurale", "Kurale-Regular.ttf"),
+    "alegreya_sc": ("Alegreya SC", "AlegreyaSC-Bold.ttf"),
+    "pt_serif": ("PT Serif", "PTSerif-Regular.ttf"),
+}
 
 OPTIONS = [
     ("bloom", "Свечение эффектов", [0.0, 0.5, 1.0, 1.4], ["выкл", "слабое", "обычное", "сильное"]),
@@ -23,6 +33,8 @@ OPTIONS = [
     ("sprite_res", "Детализация моделей", [16, 32, 64, 128],
      ["низкая (16 px)", "обычная (32 px)", "высокая (64 px)", "максимальная (128 px)"]),
     ("elf_theme", "Интерфейс эльфа", ["grove", "moon"], ["Роща светлячков", "Сад лунных бутонов"]),
+    ("descent_font", "Шрифт «Спуска»", list(DESCENT_FONTS),
+     [name for name, _ in DESCENT_FONTS.values()]),
     ("fx_alpha", "Прозрачность эффектов боя", [1.0, 0.75, 0.5, 0.3], ["нет", "лёгкая", "средняя", "сильная"]),
     ("text_status", "Надписи: криты и состояния", [True, False], ["вкл", "выкл"]),
     ("text_skills", "Надписи: названия навыков", [True, False], ["вкл", "выкл"]),
@@ -39,7 +51,8 @@ OPTIONS = [
 ]
 DEFAULTS = {"music_volume": 0.35, "music_muted": False,
             "bloom": 1.0, "shake": 1.0, "hitstop": True, "flash": 1.0, "zoom": True, "window": "auto",
-            "sprite_res": 32, "elf_theme": "grove", "fx_style": "pixel", "autocast_start": "default", "battle_speed": 1,
+            "sprite_res": 32, "elf_theme": "grove", "descent_font": "underdog",
+            "fx_style": "pixel", "autocast_start": "default", "battle_speed": 1,
             "fx_alpha": 1.0, "text_status": True, "text_skills": True, "text_numbers": True,
             "gl_safe_upload": False, "battle_rounds": False}
 STYLES = next(o[2] for o in OPTIONS if o[0] == "fx_style")

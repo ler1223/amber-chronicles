@@ -122,20 +122,22 @@ def trail_points(a, b, step=11):
     return out
 
 
-def draw_trail(surf, a, b, state, clock=0.0, r_a=24, r_b=24):
+def draw_trail(surf, a, b, state, clock=0.0, r_a=24, r_b=24, palette=None):
     """Тропа: future — тусклый пунктир, done — пройдено (сплошные янтарные стежки), open — путь отсюда (бегут огоньки)."""
     pts = [p for p in trail_points(a, b) if math.dist(p, a) > r_a + 4 and math.dist(p, b) > r_b + 4]
+    dark, dim, bright = palette or ((30, 22, 14), (96, 84, 66), T.AMBER)
     for i, p in enumerate(pts):
         if state == "done":
-            pygame.draw.circle(surf, (40, 28, 16), p, 4)
-            pygame.draw.circle(surf, T.AMBER, p, 3)
+            pygame.draw.circle(surf, dark, p, 4)
+            pygame.draw.circle(surf, bright, p, 3)
         elif state == "open":
             glow = 0.5 + 0.5 * math.sin(clock * 6 - i * 0.7)
-            pygame.draw.circle(surf, (30, 22, 14), p, 4)
-            pygame.draw.circle(surf, T.mix((150, 120, 80), (255, 236, 170), glow), p, 3)
+            pygame.draw.circle(surf, dark, p, 4)
+            active = T.mix(dim, bright, .4 + .6 * glow) if palette else T.mix((150, 120, 80), (255, 236, 170), glow)
+            pygame.draw.circle(surf, active, p, 3)
         elif i % 2 == 0:
-            pygame.draw.circle(surf, (20, 16, 12), p, 3)
-            pygame.draw.circle(surf, (96, 84, 66), p, 2)
+            pygame.draw.circle(surf, dark, p, 3)
+            pygame.draw.circle(surf, dim, p, 2)
 
 
 def _poly(c, r, n, rot=0.0):
@@ -143,7 +145,8 @@ def _poly(c, r, n, rot=0.0):
             for i in range(n)]
 
 
-def draw_node(surf, pos, kind, color, state, clock=0.0, thread=False, molten=False, lava=False):
+def draw_node(surf, pos, kind, color, state, clock=0.0, thread=False, molten=False, lava=False,
+              *, palette=None, radius=None):
     """Медальон узла. state: open (можно идти — пульсирует), here (отряд тут), done (пройден), future (впереди).
     molten — огненный бой (залит лавой), lava — его зальёт следующее извержение. Возвращает радиус медальона."""
     x, y = pos
@@ -152,30 +155,32 @@ def draw_node(surf, pos, kind, color, state, clock=0.0, thread=False, molten=Fal
         ring = pygame.Surface((80, 80), pygame.SRCALPHA)
         pygame.draw.circle(ring, (255, 110, 30, int(90 + 110 * k)), (40, 40), 34, 4)
         surf.blit(ring, (x - 40, y - 40))
-    r = 30 if kind == "boss" else 25 if kind == "elite" else 22
+    r = radius or (30 if kind == "boss" else 25 if kind == "elite" else 22)
+    dark, fill, focus = palette or (WOOD_DARK, WOOD, T.AMBER)
     dim = state == "future"
-    rim = T.mix(color, WOOD_DARK, 0.55) if dim else color
+    rim = T.mix(color, dark, 0.55) if dim else color
     if state == "open":
         pulse = 0.5 + 0.5 * math.sin(clock * 4)
         halo = pygame.Surface((r * 4, r * 4), pygame.SRCALPHA)
-        pygame.draw.circle(halo, (*T.AMBER, int(50 + 60 * pulse)), (r * 2, r * 2), int(r + 8 + 4 * pulse))
+        opacity, radius_gain = (32 + 49 * pulse, 7 + 3 * pulse) if palette else (50 + 60 * pulse, 8 + 4 * pulse)
+        pygame.draw.circle(halo, (*focus, int(opacity)), (r * 2, r * 2), int(r + radius_gain))
         surf.blit(halo, (x - r * 2, y - r * 2))
     # тень и шипы элиты / зубцы босса
     pygame.draw.circle(surf, (0, 0, 0), (x + 2, y + 4), r + 3)
     if kind == "elite":
-        pygame.draw.polygon(surf, T.mix(rim, WOOD_DARK, 0.3), _poly(pos, r + 7, 8, math.pi / 8))
+        pygame.draw.polygon(surf, T.mix(rim, dark, 0.3), _poly(pos, r + 7, 8, math.pi / 8))
     if kind == "boss":
-        pygame.draw.polygon(surf, T.mix(rim, WOOD_DARK, 0.25), _poly(pos, r + 9, 12, clock * 0.15))
-    pygame.draw.circle(surf, WOOD_DARK, pos, r + 3)
+        pygame.draw.polygon(surf, T.mix(rim, dark, 0.25), _poly(pos, r + 9, 12, clock * 0.15))
+    pygame.draw.circle(surf, dark, pos, r + 3)
     pygame.draw.circle(surf, rim, pos, r + 1)
     if molten:                                # огненный бой: обод в расплаве
         for i in range(10):
             a = clock * 1.5 + i * math.pi / 5
             pygame.draw.circle(surf, (255, 150 + int(60 * math.sin(clock * 4 + i)), 40),
                                (x + (r + 1) * math.cos(a), y + (r + 1) * math.sin(a)), 3)
-    inner = T.mix(WOOD, color, 0.18)
+    inner = T.mix(fill, color, 0.18)
     if dim:
-        inner = T.mix(inner, WOOD_DARK, 0.5)
+        inner = T.mix(inner, dark, 0.5)
     pygame.draw.circle(surf, inner, pos, r - 3)
     pygame.draw.circle(surf, T.mix(inner, (255, 255, 255), 0.12), (x, y - 2), r - 6, 1)
     size = 48 if kind == "boss" else 32       # целый масштаб иконки 32×32 — пиксели остаются чёткими
@@ -199,13 +204,14 @@ def draw_node(surf, pos, kind, color, state, clock=0.0, thread=False, molten=Fal
     return r
 
 
-def ribbon(surf, label, center, color, bold=False, dim=False):
+def ribbon(surf, label, center, color, bold=False, dim=False, *, palette=None):
     """Ленточка подписи под узлом."""
     f = T.font(12, bold)
     w = f.size(label)[0] + 16
     x, y = center
     r = pygame.Rect(int(x - w / 2), int(y), w, 17)
-    base = T.mix(PARCHMENT, WOOD_DARK, 0.72 if dim else 0.15)
+    dark, parchment, ink = palette or (WOOD_DARK, PARCHMENT, (36, 26, 18))
+    base = T.mix(parchment, dark, 0.72 if dim else 0.15)
     tails = [((r.x, r.y + 2), (r.x - 6, r.y + 2), (r.x - 2, r.centery), (r.x - 6, r.bottom - 1), (r.x, r.bottom - 1)),
              ((r.right, r.y + 2), (r.right + 6, r.y + 2), (r.right + 2, r.centery), (r.right + 6, r.bottom - 1),
               (r.right, r.bottom - 1))]
@@ -213,4 +219,5 @@ def ribbon(surf, label, center, color, bold=False, dim=False):
         pygame.draw.polygon(surf, T.mix(base, (0, 0, 0), 0.3), t)
     pygame.draw.rect(surf, base, r, border_radius=3)
     pygame.draw.rect(surf, T.mix(color, (0, 0, 0), 0.2), r, 1, border_radius=3)
-    T.text(surf, label, r.center, 12, (36, 26, 18) if not dim else (150, 140, 120), bold, center=True)
+    muted = T.mix(parchment, (255, 255, 242), .35) if palette else (150, 140, 120)
+    T.text(surf, label, r.center, 12, ink if not dim else muted, bold, center=True)

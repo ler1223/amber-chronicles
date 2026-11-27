@@ -9,8 +9,8 @@ from .elf_ui import FAE_THRESHOLD, GREATER_THRESHOLD
 
 
 class FaeFlight:
-    MOTION = .38
-    DISSOLVE = .27
+    MOTION = .52
+    DISSOLVE = .09
     WAVE = .46
     SLOTS = ((10, -17), (26, -9), (10, 0), (26, 9), (10, 17))
 
@@ -52,9 +52,9 @@ class FaeFlight:
         scale = max(.88, min(1.35, rect.h / 60))
         phase = self.t * (3.4 + .13 * slot) + slot * 1.8
         drift = max(0.0, 1 - age / self.MOTION) ** 2
-        x = rect.centerx + side * (rect.w / 2 + (gap + 13 * drift + 2 * math.sin(phase)) * scale)
+        x = rect.centerx + side * (rect.w / 2 + (gap + 24 * drift + 2 * math.sin(phase)) * scale)
         bob = 1.8 * math.sin(self.t * 3.2 + side) + .8 * math.cos(phase)
-        y = rect.top + .63 * rect.h + (lift + 8 * drift + bob) * scale
+        y = rect.top + .63 * rect.h + (lift + 14 * drift + bob) * scale
         return x + self.trail.x * .55, y + self.trail.y * .75
 
     @staticmethod
@@ -77,8 +77,8 @@ class FaeFlight:
         native, scale, point = SK.ctx(surf)
         height = max(1, round(max(12, min(18, .23 * rect.h)) * scale))
         for slot, born in enumerate(self.arrivals):
-            flash = any(0 <= self.t - start - slot * .032 < .13 and slot < threshold
-                        for start, threshold in self.waves)
+            flash = self.t - born < .20 or any(0 <= self.t - start - slot * .032 < .13 and slot < threshold
+                                               for start, threshold in self.waves)
             self._draw_one(native, point, sk, slot, rect, born, height, facing, flash)
         for slot, when, born in self.departures:
             progress = (self.t - when) / self.DISSOLVE
@@ -109,7 +109,7 @@ class FaeFlight:
             return
         age = self.t - born
         x, y = self._position(slot, rect, age)
-        opacity = (1 - fade) * min(1.0, .48 + age / self.MOTION)
+        opacity = (1 - fade) * min(1.0, .75 + age / self.MOTION)
         halo = self._halo(sk, round(height * (2.0 if flash else 1.8)), flash)
         halo.set_alpha(round(255 * opacity * (.86 + .14 * math.sin(self.t * 4 + slot))))
         px, py = point((x, y - fade * 8))

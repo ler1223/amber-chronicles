@@ -105,6 +105,7 @@ class FaeGarden:
                 self.b.say("Лесной завет: первая фея даёт 5 защиты", (180, 240, 190))
         owl = self.beasts.get("owl")
         if owl is not None and owl.alive:
+            self.b.fx("elf_effect", unit=owl, target=hero, look="twins")
             self.b.draw(owl.draw_n)
             if getattr(owl, "block_n", 0):
                 self.b.gain_shield(hero, owl.block_n)
@@ -112,6 +113,7 @@ class FaeGarden:
                 self.b.energy += owl.energy_n
         deer = self.beasts.get("deer")
         if deer is not None and deer.alive:
+            self.b.fx("elf_effect", unit=deer, target=hero, look="step")
             self.step_bonus = deer.step_n
 
     def force_lead(self):
@@ -163,9 +165,11 @@ class FaeGarden:
             if foes:
                 target = min(foes, key=lambda f: (cheb(f.cell, wolf.cell), f.hp))
                 b.say(f"Лунный волк бьёт {target.name}", (190, 210, 255))
-                yield from b.strike(wolf, target, wolf.dmg, kind="melee")
+                yield from b.elf_cast(wolf, "e_claw", wolf.name, target=target)
+                yield from b.strike(wolf, target, wolf.dmg, kind="melee", anim=False)
                 if wolf.double and target.alive:
-                    yield from b.strike(wolf, target, wolf.dmg, kind="melee")
+                    yield from b.elf_cast(wolf, "e_claw", wolf.name, target=target)
+                    yield from b.strike(wolf, target, wolf.dmg, kind="melee", anim=False)
         for att in self.attachments.values():
             att["growth"] += 1
             if att["id"] == "moon_moss":
@@ -206,22 +210,27 @@ class FaeGarden:
         growth = att.get("growth", 0)
         target = tgt if hasattr(tgt, "cell") and tgt is not hero else self.nearest_foe(hero.cell)
         if sid == "symbiosis":
+            b.fx("elf_effect", unit=hero, look="leaves")
             self.gain(1 + fae // 4 + growth)
             b.draw(1)
         elif sid == "ivy_graft":
+            b.fx("elf_effect", unit=hero, look="bark")
             self.gain(2)
             b.gain_shield(hero, 4 + fae + growth)
         elif sid == "thorn_graft":
             if target is not None:
+                yield from b.elf_cast(hero, "_elf_thorn_seed", att["card"].name, target=target)
                 b.hurt(target, 6 + fae + growth, hero, "spell")
                 target.ds["root"] = max(target.ds["root"], 1)
                 if fae >= 6:
                     yield from b.apply(hero, [{"op": "aoe_target", "r": 1, "do": [{"op": "root", "n": 1}]}],
                                        target, {"center": target.cell})
         elif sid == "moon_moss":
+            b.fx("elf_effect", unit=hero, look="dew")
             b.draw(1)
         elif sid == "parasite_flower":
             if target is not None:
+                yield from b.elf_cast(hero, "e_wither", att["card"].name, target=target)
                 b.hurt(target, 4 + fae + growth, hero, "spell")
                 if fae >= 6:
                     target.ds["root"] = max(target.ds["root"], 1)
@@ -249,7 +258,7 @@ class FaeGarden:
 
     # ---------- растения ----------
 
-    def plant(self, op, center, extra_growth=0):
+    def plant(self, op, center, extra_growth=0, *, empowered=False):
         b = self.b
         sid = op["plant"]
         spec = PLANTS[sid]
@@ -264,18 +273,19 @@ class FaeGarden:
                 cells.append(p)
         initial = (self.fae() // max(1, op.get("grow_fae", 4)) if op.get("grow_fae") else 0) + extra_growth
         for cell in cells[:n]:
-            u = self.spawn_plant(sid, cell, initial, op.get("bonus"))
+            u = self.spawn_plant(sid, cell, initial, op.get("bonus"), empowered=empowered)
             if sid == "world_tree" and self.fae() >= 8:
                 u.growth = spec["grow"]
                 yield from self.mature(u)
 
-    def spawn_plant(self, sid, cell, growth=0, bonus=None):
+    def spawn_plant(self, sid, cell, growth=0, bonus=None, *, empowered=False):
         b = self.b
         spec = PLANTS[sid]
         proto = {"name": spec["name"], "label": spec["name"][:2], "color": spec["color"], "role": "object",
                  "hp": 2, "move_time": 1.0, "attack": {"damage": 0, "range": 0, "cooldown": 99.0},
                  "static": True,
-                 "object": {"id": sid, "name": spec["name"], "hp": 2, "color": spec["color"], "art": spec["sprite"]}}
+                 "object": {"id": sid, "name": spec["name"], "hp": 2, "color": spec["color"], "art": spec["sprite"],
+                            "growth_art": (f"elf_plants/{sid}", spec["grow"])}}
         u = b.c._spawn(PLAYER, spec["sprite"], proto, cell)
         b._setup(u, {"name": spec["name"], "hp": 2})
         u.plant_id = sid
@@ -284,7 +294,7 @@ class FaeGarden:
         u.max_hp = u.hp = 2
         u.obj = proto["object"]
         self.plants.append(u)
-        b.fx("portal", cell=cell)
+        b.fx("elf_effect", unit=u, look="plant", empowered=empowered)
         b.say(f"Посажено: {spec['name']} (рост {growth}/{spec['grow']})", (170, 235, 170))
         return u
 
@@ -296,31 +306,38 @@ class FaeGarden:
         u.alive = False
         cell = u.cell
         fae = self.fae()
+        if sid != "living_hedge":
+            b.fx("plant_mature", unit=u)
         b.say(f"{PLANTS[sid]['name']} созрело", (180, 245, 180))
         if sid == "thorn_seed":
             target = self.nearest_foe(cell)
             if target is not None:
+                yield from b.elf_cast(u, "_elf_thorn_seed", u.name, target=target, empowered=fae >= 6)
                 b.hurt(target, 6, b.hero, "spell")
                 target.ds["root"] = max(target.ds["root"], 1)
             if fae >= 6:
                 for f in [f for f in b.foes() if cheb(f.cell, cell) <= 1]:
                     f.ds["root"] = max(f.ds["root"], 1)
         elif sid == "moon_flower":
+            yield from b.elf_cast(u, "rejuvenate", u.name, target=b.hero, empowered=fae >= 6)
             b.gain_shield(b.hero, 6 + fae)
             b.hero.hp = min(b.hero.max_hp, b.hero.hp + 4)
             b.c.emit("heal", unit=b.hero, amount=4)
             if fae >= 6:
                 self.gain(2)
         elif sid == "world_tree":
+            yield from b.elf_cast(u, "spirit_tree", u.name, empowered=fae >= 8)
             b.energy += 1
             b.draw(2)
         elif sid == "thorn_garden":
             if fae >= 6:
+                yield from b.elf_cast(u, "_elf_thorn_attack", u.name, center=cell, radius=1, empowered=True)
                 for f in [f for f in b.foes() if cheb(f.cell, cell) <= 1]:
                     f.ds["root"] = max(f.ds["root"], 1)
         elif sid == "hunting_vine":
             target = self.nearest_foe(cell)
             if target is not None:
+                yield from b.elf_cast(u, "_elf_thorn_attack", u.name, target=target, empowered=fae >= 6)
                 b.hurt(target, 10 + fae, b.hero, "spell")
                 target.ds["root"] = max(target.ds["root"], 1)
                 if fae >= 6:
@@ -329,8 +346,10 @@ class FaeGarden:
         elif sid == "living_hedge":
             self.spawn_wall(cell, 6 + fae + (6 if fae >= 6 else 0) + getattr(u, "plant_bonus", {}).get("wall_hp", 0), 3)
         elif sid == "glowing_moss":
+            b.fx("elf_effect", unit=u, target=b.hero, look="call")
             self.gain(3 + fae // 4)
         elif sid == "mushroom_web":
+            yield from b.elf_cast(u, "e_plague", u.name, center=cell, radius=2, empowered=fae >= 6)
             for f in [f for f in b.foes() if cheb(f.cell, cell) <= 2]:
                 f.ds["weak"] += 1 + fae // 4
                 if fae >= 6:
@@ -339,6 +358,7 @@ class FaeGarden:
         elif sid == "crusher_root":
             target = self.nearest_foe(cell)
             if target is not None:
+                yield from b.elf_cast(u, "earth_power", u.name, target=target, empowered=fae >= 6 and target.shield > 0)
                 dmg = 8 + fae
                 if target.shield > 0 and fae < 6:
                     dmg = dmg * 6 // 5
@@ -350,6 +370,7 @@ class FaeGarden:
                 else:
                     b.hurt(target, dmg, b.hero, "spell")
         elif sid == "grove_gift":
+            b.fx("elf_effect", unit=u, target=b.hero, look="bark")
             b.gain_shield(b.hero, max(6 + fae, 10 if fae >= 6 else 0))
         self.apply_plant_bonus(u, cell)
         yield from self.plant_matured()
@@ -378,6 +399,7 @@ class FaeGarden:
         target = self.nearest_foe(cell)
         if target is not None:
             if bonus.get("damage"):
+                b.vfx(u, "e_entangle", u.name, target=target, effect_only=True)
                 b.hurt(target, int(bonus["damage"]), hero, "spell")
             if bonus.get("root"):
                 target.ds["root"] = max(target.ds["root"], int(bonus["root"]))
@@ -388,6 +410,7 @@ class FaeGarden:
             for f in [x for x in b.foes() if cheb(x.cell, cell) <= 1]:
                 f.ds["root"] = max(f.ds["root"], int(bonus["root_all"]))
         if bonus.get("all_damage"):
+            b.vfx(u, "e_entangle", u.name, center=cell, radius=1, effect_only=True)
             for f in [x for x in b.foes() if cheb(x.cell, cell) <= 1]:
                 b.hurt(f, int(bonus["all_damage"]), hero, "spell")
 
@@ -403,6 +426,7 @@ class FaeGarden:
     def plant_matured(self):
         for c in list(self.b.hand):
             if "unactivatable" in M.card_rules(c.d) and M.card_reactions(c.d, "plant_matured"):
+                self.b.fx("elf_effect", unit=self.b.hero, look="firefly")
                 yield from self.b.card_event("plant_matured", c)
                 if self.fae() >= 6:
                     yield from self.b.card_event("plant_matured", c)
@@ -418,7 +442,7 @@ class FaeGarden:
 
     # ---------- звери ----------
 
-    def summon_beast(self, kind, bonus=0, extra=None):
+    def summon_beast(self, kind, bonus=0, extra=None, *, empowered=False):
         b = self.b
         spec = BEASTS[kind]
         fae = self.fae()
@@ -459,6 +483,7 @@ class FaeGarden:
             for key, value in stats.items():
                 setattr(old, key, value)
             old.summon_fae = fae
+            b.fx("elf_effect", unit=old, look="summon", empowered=empowered)
             b.say(f"{spec['name']} обновлён", (180, 240, 180))
             return old
         cell = self.free_near(b.hero.cell)
@@ -474,7 +499,7 @@ class FaeGarden:
         for key, value in stats.items():
             setattr(u, key, value)
         self.beasts[kind] = u
-        b.fx("portal", cell=cell)
+        b.fx("elf_effect", unit=u, look="summon", empowered=empowered)
         b.c.emit("summon", unit=u, owner=b.hero)
         b.say(f"Призван {spec['name']} ({stats['hp']} HP)", (180, 240, 180))
         return u
@@ -498,6 +523,7 @@ class FaeGarden:
         snake = self.beasts.get("snake")
         if snake is None or not snake.alive or src is None or not getattr(src, "alive", False):
             return
+        self.b.fx("elf_effect", unit=snake, target=src, look="venom")
         self.b.add_poison(src, snake.poison)
         src.ds["root"] = max(src.ds["root"], snake.root)
         self.b.say(f"Змей-хранитель: {src.name} отравлен и скован", (150, 230, 160))
@@ -513,7 +539,7 @@ class FaeGarden:
                  "hp": hp, "move_time": 1.0, "attack": {"damage": 0, "range": 0, "cooldown": 99.0},
                  "static": True,
                  "object": {"id": "hedge", "name": "Живая изгородь", "hp": hp, "color": (110, 180, 110),
-                            "art": "bone_wall"}}
+                            "art": "bone_wall", "sprite": f"elf_plants/living_hedge_{PLANTS['living_hedge']['grow']}"}}
         u = b.c._spawn(PLAYER, "bone_wall", proto, cell)
         b._setup(u, {"name": "Живая изгородь", "hp": hp})
         u.max_hp = u.hp = hp
@@ -521,6 +547,7 @@ class FaeGarden:
         u.wall_turns = turns
         u.blocks_los = self.fae() >= 6
         self.walls.append(u)
+        b.fx("elf_effect", unit=u, look="leaves")
         b.say(f"Выросла живая изгородь ({hp} HP, {turns} хода)", (150, 220, 150))
         return u
 

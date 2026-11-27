@@ -188,8 +188,7 @@ def grain(w, h, amount, seed=3):
 
 
 def outlined(text, px, color, outline=(10, 6, 4), title=False, width=None):
-    """Надпись шрифтом карт (Alegreya SC — заголовки, PT Serif — текст) с тёмной обводкой — читается на любом
-    фоне."""
+    """Надпись шрифтом карт с тёмной обводкой."""
     def make():
         f = CF.title_font(px) if title else CF.font(px, True)
         main = f.render(text, True, color)
@@ -202,25 +201,43 @@ def outlined(text, px, color, outline=(10, 6, 4), title=False, width=None):
                     out.blit(dark, (o + dx, o + dy))
         out.blit(main, (o, o))
         return out
-    return _remember(("txt", text, px, tuple(color), tuple(outline), title, width), make)
+    return _remember(("txt", text, px, tuple(color), tuple(outline), CF.title_style(), title, width), make)
+
+
+def _at_scale(art, k):
+    size = tuple(max(1, round(n * k)) for n in art.get_size())
+    return pygame.transform.smoothscale(art, size)
+
+
+def _tile(out, image, rect):
+    """Заполнить участок повтором рисунка в исходных пропорциях."""
+    if not rect.w or not rect.h:
+        return
+    w, h = image.get_size()
+    mirror = ((image, pygame.transform.flip(image, True, False)),
+              (pygame.transform.flip(image, False, True), pygame.transform.flip(image, True, True)))
+    # Обрезать от центра, если участок меньше одного фрагмента.
+    for row, y in enumerate(range(0, rect.h, h)):
+        for col, x in enumerate(range(0, rect.w, w)):
+            use_w, use_h = min(w, rect.w - x), min(h, rect.h - y)
+            sx, sy = max(0, (w - rect.w) // 2), max(0, (h - rect.h) // 2)
+            out.blit(mirror[row % 2][col % 2], (rect.x + x, rect.y + y), (sx, sy, use_w, use_h))
 
 
 def slice3(art, w, h, cap=0.3):
-    """Плашка из картинки на любую ширину: концы (cap ширины картинки) — без искажений, середина тянется."""
-    k = h / art.get_height()
-    aw = art.get_width()
-    cw = int(aw * cap)
-    left = pygame.transform.smoothscale(art.subsurface((0, 0, cw, art.get_height())), (max(1, round(cw * k)), h))
-    right = pygame.transform.smoothscale(art.subsurface((aw - cw, 0, cw, art.get_height())),
-                                         (max(1, round(cw * k)), h))
+    """Кнопки и ленты из двух торцов и повторяемой середины."""
+    aw, ah = art.get_size()
+    cw = max(1, int(aw * cap))
+    k = min(h / ah, max(1, (w - 1) // 2) / cw)
+    left = _at_scale(art.subsurface((0, 0, cw, ah)), k)
+    right = _at_scale(art.subsurface((aw - cw, 0, cw, ah)), k)
+    middle = _at_scale(art.subsurface((cw, 0, aw - 2 * cw, ah)), k)
     out = pygame.Surface((w, h), pygame.SRCALPHA)
-    lw = min(left.get_width(), w // 2)
-    mid_w = w - 2 * lw
-    if mid_w > 0:
-        mid = art.subsurface((cw, 0, aw - 2 * cw, art.get_height()))
-        out.blit(pygame.transform.smoothscale(mid, (mid_w, h)), (lw, 0))
-    out.blit(left, (0, 0), (0, 0, lw, h))
-    out.blit(right, (w - lw, 0), (right.get_width() - lw, 0, lw, h))
+    lw, mh = left.get_size()
+    y = (h - mh) // 2
+    _tile(out, middle, pygame.Rect(lw, y, max(0, w - 2 * lw), mh))
+    out.blit(left, (0, y))
+    out.blit(right, (w - lw, y))
     return out
 
 
@@ -260,7 +277,7 @@ class Skin:
         px = max(6, round(size * S))
         col = color or self.p["text"]
         img = outlined(s, px, col, title=title) if outline else _remember(
-            ("plain", s, px, tuple(col), title),
+            ("plain", s, px, tuple(col), CF.title_style(), title),
             lambda: (CF.title_font(px) if title else CF.font(px, True)).render(s, True, col))
         x, y = pt(pos)
         if center:
@@ -295,15 +312,19 @@ class Skin:
             out = pygame.Surface((w + 2 * sh, h + 2 * sh), pygame.SRCALPHA)
             aw, ah = plate.get_size()
             ax, ay = round(aw * .24), round(ah * .24)
-            border = min(round(22 * S), w // 3, h // 3)
+            k = min(22 * S / max(ax, ay), w / (3 * ax), h / (3 * ay))
+            bx, by = max(1, round(ax * k)), max(1, round(ay * k))
             sx, sy = (0, ax, aw - ax, aw), (0, ay, ah - ay, ah)
-            dx, dy = (0, border, w - border, w), (0, border, h - border, h)
+            dx, dy = (0, bx, w - bx, w), (0, by, h - by, h)
             for row in range(3):
                 for col in range(3):
                     src = (sx[col], sy[row], sx[col + 1] - sx[col], sy[row + 1] - sy[row])
-                    size = (dx[col + 1] - dx[col], dy[row + 1] - dy[row])
-                    patch = pygame.transform.smoothscale(plate.subsurface(src), size)
-                    out.blit(patch, (sh + dx[col], sh + dy[row]))
+                    dest = pygame.Rect(sh + dx[col], sh + dy[row], dx[col + 1] - dx[col], dy[row + 1] - dy[row])
+                    patch = _at_scale(plate.subsurface(src), k)
+                    if row == 1 or col == 1:
+                        _tile(out, patch, dest)
+                    else:
+                        out.blit(patch, dest.topleft)
             out.set_alpha(alpha)
             return out
         if self.art("edge") is not None and self.art("fill") is not None and self.art("corner") is not None:
@@ -381,8 +402,8 @@ class Skin:
         """Панель из набора героя: фон — середина нарисованной панели, по краям — кайма, в углах — орнамент."""
         sh = round(10 * S)
         out = pygame.Surface((w + 2 * sh, h + 2 * sh), pygame.SRCALPHA)
-        t = round(max(5, min(11, h * 0.2)) * S)               # толщина каймы
-        cs = round(max(16, min(44, min(w, h) * 0.8 / S, 44)) * S)   # уголок
+        t = max(1, min(round(10 * S), h // 4, w // 4))
+        cs = max(2, min(round(38 * S), w // 2, h // 2))
         c = max(3, round(6 * S))
         shadow = apply_mask(pygame.Surface(out.get_size(), pygame.SRCALPHA),
                             mask(out.get_size(), chamfer(w, h, c, sh + 2 * S, sh + 4 * S)))
@@ -391,7 +412,8 @@ class Skin:
         fill = self.art("fill")
         fw, fh = fill.get_size()
         core = fill.subsurface((int(fw * 0.16), int(fh * 0.16), int(fw * 0.68), int(fh * 0.68)))
-        body = pygame.transform.smoothscale(core, (w - 2, h - 2))
+        body = pygame.Surface((w - 2, h - 2), pygame.SRCALPHA)
+        _tile(body, _at_scale(core, 144 * S / core.get_width()), body.get_rect())
         body.blit(vgrad(w - 2, h - 2, [(0, (255, 255, 255)), (1, (165, 160, 155))]), (0, 0),
                   special_flags=pygame.BLEND_RGB_MULT)
         body.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
@@ -400,14 +422,11 @@ class Skin:
         ek = t / edge.get_height()
         tile = pygame.transform.smoothscale(edge, (max(4, round(edge.get_width() * ek)), t))
         tile = tile.subsurface((tile.get_width() // 8, 0, tile.get_width() * 3 // 4, t)).copy()  # без торцов
-        horiz = pygame.Surface((w, t), pygame.SRCALPHA)
-        for x in range(0, w, tile.get_width()):
-            horiz.blit(tile, (x, 0))
-        vert = pygame.transform.rotate(pygame.transform.scale(horiz, (h, t)) if h != w else horiz, 90)
-        out.blit(horiz, (sh, sh))
-        out.blit(pygame.transform.flip(horiz, False, True), (sh, sh + h - t))
-        out.blit(vert, (sh, sh))
-        out.blit(pygame.transform.flip(vert, True, False), (sh + w - t, sh))
+        vertical = pygame.transform.rotate(tile, 90)
+        _tile(out, tile, pygame.Rect(sh, sh, w, t))
+        _tile(out, pygame.transform.flip(tile, False, True), pygame.Rect(sh, sh + h - t, w, t))
+        _tile(out, vertical, pygame.Rect(sh, sh, t, h))
+        _tile(out, pygame.transform.flip(vertical, True, False), pygame.Rect(sh + w - t, sh, t, h))
         corner = self.art("corner")
         ck = cs / max(corner.get_size())
         cimg = pygame.transform.smoothscale(corner, (max(1, round(corner.get_width() * ck)),

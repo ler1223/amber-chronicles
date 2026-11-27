@@ -13,7 +13,7 @@ import pygame
 
 from sim.combat import ENEMY
 from sim.grid import cheb
-from ui import audio
+from ui import audio, settings
 from ui import projection as P
 from ui import theme as T
 from ui.battle_view import FR, BattleView, Fx
@@ -22,6 +22,8 @@ from ui.vfx_textures import make_textures
 
 from . import cardface as CF
 from . import elf_ui as ELF
+from . import hero_resources as HR
+from . import map_style
 from . import gfx as G
 from . import model as M
 from . import skin as SK
@@ -84,7 +86,7 @@ def shift_held():
 
 
 def title_text(surf, s, pos, size, color):
-    """Заголовок капителями Alegreya SC (на холсте — в родном разрешении)."""
+    """Заголовок в выбранном шрифте и в родном разрешении."""
     if G.is_canvas(surf):
         img = CF.title_font(max(6, round(size * surf.S))).render(s, True, color)
         x, y = surf.pt(pos)
@@ -614,10 +616,14 @@ def button(surf, r, label, mouse, on=True, primary=False):
 class BattleScreen:
     """Бой: поле, рука, намерения, журнал."""
 
+    PLANT_BLOOM_TIME = .62
+
     def __init__(self, game, battle):
         self.game = game
         self.b = battle
         self.shown_energy = ELF.energy_fraction(battle.energy, battle.max_energy)
+        self.shown_heat = battle.hero.ds.get("heat", 0)
+        self.shown_steps = float(battle.walk_left)
         self.W, self.H = T.SCREEN_W, T.SCREEN_H
         self._fit_w = 0
         self.combat = battle.c
@@ -636,6 +642,7 @@ class BattleScreen:
         self.view.crisp = True                           # подсказки и кольца у ног — чётким слоем (deck/hints.py)
         self.hints = Hints()
         self.garden_rows = []
+        self.plant_blooms = []
         self.fae_flight = FaeFlight(battle.garden.fae()) if battle.garden is not None else None
         self.ground = Ground()                           # земля: HD-пиксель с рельефом (deck/terrain.py)
         self.ground.prepare(self.combat, self.view.painter)
@@ -828,13 +835,19 @@ class BattleScreen:
         self.ambient(dt)
         self.life.update(real, self.view, self.combat)
         self.view.update(dt, dt)
+        target = ELF.energy_fraction(self.b.energy, self.b.max_energy)
+        self.shown_energy += (target - self.shown_energy) * (1 - math.exp(-12 * real))
+        if abs(target - self.shown_energy) < .002:
+            self.shown_energy = target
+        if self.b.mech == "heat":
+            self.shown_heat += (self.b.hero.ds["heat"] - self.shown_heat) * (1 - math.exp(-9 * real))
+        if self.b.idols is not None:
+            step_delta = self.b.walk_left - self.shown_steps
+            self.shown_steps += step_delta if abs(step_delta) < .02 else step_delta * (1 - math.exp(-13 * real))
         if self.b.garden is not None:
-            target = ELF.energy_fraction(self.b.energy, self.b.max_energy)
-            self.shown_energy += (target - self.shown_energy) * (1 - math.exp(-12 * real))
-            if abs(target - self.shown_energy) < .002:
-                self.shown_energy = target
-            self.fae_flight.set_count(self.b.garden.fae())
+            self.set_fae_visual_count(self.b.garden.fae())
             self.fae_flight.update(real, self.view.feet_pos(self.b.hero))
+            self.plant_blooms = [(plant, left - real) for plant, left in self.plant_blooms if left > real]
         dt = real
         if self.press and not self.drag and self.press[1] == 1 and self.inspect is None:   # держат без движения
             self.press_t += dt
@@ -1019,6 +1032,34 @@ class BattleScreen:
         if m["t"] >= m["dur"]:
             self.finish_merge()
 
+    def set_fae_visual_count(self, count):
+        from ui import elf_spells
+
+        flight = self.fae_flight
+        before = len(flight.arrivals)
+        if count == before:
+            return
+        hero, view = self.b.hero, self.view
+        feet = pygame.Vector2(view.feet_pos(hero))
+        # Use the most recent model bounds, anchored to the hero's current feet.
+        rect = next((r for r, unit in view.sprite_rects if unit is hero), None)
+        if rect is not None:
+            rect = rect.copy()
+        else:
+            sprite = view.scaled(view.sprite_of(hero), view.depth(hero))
+            rect = sprite.get_rect()
+        rect.midbottom = feet
+        if count > before:
+            for slot in range(before, count):
+                origin = flight._position(slot, rect, 0)
+                dest = flight._position(slot, rect, flight.MOTION)
+                elf_spells.fairy_transition(view, origin, dest, slot, arriving=True)
+        else:
+            for slot in range(count, before):
+                pos = flight._position(slot, rect, flight.t - flight.arrivals[slot])
+                elf_spells.fairy_transition(view, pos, pos, slot, arriving=False)
+        flight.set_count(count)
+
     def deck_fx(self, e):
         v = self.view
         vx = v.vfx
@@ -1026,7 +1067,9 @@ class BattleScreen:
         u = e.get("unit")
         if k == "fae_count":
             if self.fae_flight is not None:
-                self.fae_flight.set_count(e["count"])
+                self.set_fae_visual_count(e["count"])
+        elif k == "plant_mature":
+            self.plant_blooms.append((u, self.PLANT_BLOOM_TIME))
         elif k == "alt":                                   # простое действие — скромно
             what = e["what"]
             fx, fy = v.feet_pos(u)
@@ -1067,6 +1110,11 @@ class BattleScreen:
             gx, gy = v.feet_pos(u)
             v.fx.append(Fx("ring", 0.7, x=gx, y=gy, r0=10, r1=60 * e.get("r", 3), color=(220, 140, 255)))
             self.shake(5)
+        elif k == "elf_effect":
+            from ui import elf_spells
+            ctx = v._ctx(u, e.get("target") or u)
+            ctx["empowered"] = e.get("empowered", False)
+            elf_spells.play(v, e["look"], ctx)
         elif k == "portal":                                # призыв — портал на месте появления
             vx.play("portal_fx", v._ctx(center=e["cell"]))
         elif k == "shake":
@@ -1947,6 +1995,11 @@ class BattleScreen:
             for img, r in v.unit_blits:
                 surf.blit(img, r)
             v.vfx.draw_cpu(surf, v._cpu_tex, v._cpu_cache, props=v.props)
+        for plant, left in self.plant_blooms:
+            x, y = v.feet_pos(plant)
+            img = v.scaled(v.sprite_of(plant), v.depth(plant)).copy()
+            img.set_alpha(round(255 * min(1, left / .28)))
+            surf.blit(img, (round(x - img.get_width() / 2), round(y - img.get_height() + 4)))
         if self.fae_flight is not None and self.b.hero.alive:
             hero = self.b.hero
             rect = next((r for r, unit in v.sprite_rects if unit is hero), None)
@@ -2377,8 +2430,6 @@ class BattleScreen:
         states = self.state_badges(h) + [("s_power", (200, 150, 255), "", f"Сила: {c.name}") for c in b.powers]
         if b.double_attacks:
             states.insert(0, ("s_power", (255, 220, 120), b.double_attacks, "Двойной залп"))
-        if not states:
-            sk.text(surf, "без состояний", (r.x + 18, y - 9), 13, sk.p["dim"], outline=False)
         for icon, col, n, word in states[:8]:
             sk.badge(surf, (x, y), 13, icon, col, n)
             self._state_tips.append((pygame.Rect(x - 15, y - 15, 30, 30), word, n))
@@ -2399,12 +2450,6 @@ class BattleScreen:
             for ln, col in lines[-7:]:
                 sk.text(surf, ln, (r.x + 16, yy), 12, col, outline=False)
                 yy += 15
-        else:                                                   # кладбище: сброс + Used текущего хода
-            gy = pygame.Rect(r.x, r.bottom + 8, r.w, 28)
-            sk.panel(surf, gy, 220)
-            sk.text(surf, f"Сброс {len(b.discard)}  ·  за ход +{len(b.used)}",
-                    (gy.centerx, gy.y + (14 if edge_space else 7)), 12, (226, 214, 192), center=True,
-                    outline=False)
 
     def hp_bar(self, surf, r, hp, mx, shield=0, col=(206, 52, 44), ticks=False, lost=0, kill=False, t=0.0):
         native, S, pt = SK.ctx(surf)
@@ -2549,21 +2594,20 @@ class BattleScreen:
         sk.tray(surf, self.H - 220, self.H, alpha=68)
         ex, ey = 70, T.SCREEN_H - 112                    # энергия (или жар) и стопки
         if b.mech == "heat":
-            self.draw_heat(surf, ex, ey)
+            HR.heat(surf, sk, (ex, ey - 10), b.hero.ds["heat"], b.hero_def.get("overheat", 8),
+                    self.shown_heat, self.hv.t)
         elif b.idols is not None:                               # Жрец: шаги этого хода
-            sk.orb(surf, (ex, ey), 36, b.walk_left, b.walk_max, self.hv.t, label=str(b.walk_left))
-            sk.text(surf, "шаги", (ex, ey + 22), 12, (255, 240, 220), center=True)
+            HR.beads(surf, sk, (ex, ey - 10), b.walk_left, b.walk_max, self.shown_steps, self.hv.t)
         elif b.garden is not None:
             ELF.draw_energy(surf, sk, ex, ey - 24, b.energy, b.max_energy,
                             fraction=self.shown_energy, t=self.hv.t)
         else:
-            sk.orb(surf, (ex, ey), 36, b.energy, b.max_energy, self.hv.t)
+            HR.liquid_orb(surf, sk, (ex, ey), b.energy, b.max_energy, self.shown_energy, self.hv.t)
         if self.ui_hidden:                                    # скрыт интерфейс: только карты и энергия
             self.deck_pile_rect = self.discard_pile_rect = None
             self.hv.draw(surf, self.state_of)
             return
-        top = self.draw_mechanic(surf, 14, ey - 168)
-        self.draw_turn(surf, 14, (top if top is not None else ey - 118) - 36)
+        self.draw_mechanic(surf, 14, ey - 168)
         self.deck_pile_rect = self.pile(surf, (60, self.H - 34), len(b.draw_pile), "колода")
         self.discard_pile_rect = self.pile(surf, (self.W - 240, self.H - 40), len(b.discard),
                                            "сброс", side=-1)
@@ -2626,33 +2670,6 @@ class BattleScreen:
                center=True, shadow=True)
         CF.blit_card(surf, cr, c, main_ok=True, alt_ok=False, hot=True, alpha=int(255 * k),
                      lit=("chain",))
-
-    def draw_heat(self, surf, ex, ey):
-        """Жар Пиромантки: раскалённый шар с числом, деления — до перегрева."""
-        b = self.b
-        hd = b.hero_def
-        heat, over = b.hero.ds["heat"], hd.get("overheat", 8)
-        k = min(1.0, heat / max(1, over))
-        hot = (255, 90, 30) if heat > over else T.mix((150, 70, 30), (255, 170, 60), k)
-        cols = (T.mix(hot, (255, 255, 220), 0.6), hot, T.mix(hot, (40, 10, 4), 0.7))
-        self.skin.orb(surf, (ex, ey), 38, max(1, heat), over, self.hv.t * (1 + k), label=str(heat), colors=cols,
-                      pips=True)
-        self.skin.text(surf, "жар", (ex, ey + 22), 12, (255, 230, 200), center=True)
-
-    def draw_turn(self, surf, x, y):
-        """Счётчики хода для условий: сколько сыграно, по тегам, сколько клеток пройдено."""
-        b = self.b
-        sk = self.skin
-        tags = {}
-        for ts in b.turn_tags:
-            for t in ts:
-                tags[t] = tags.get(t, 0) + 1
-        s = f"Сыграно {b.played}" + "".join(f" · {M.tag_label(t)} {n}" for t, n in tags.items()) + \
-            (f" · пройдено {b.walked}" if b.walked else "")
-        w = sk.size(s, 13)[0] + 28
-        r = pygame.Rect(x, y, w, 28)
-        sk.panel(surf, r, 220, cut=7)
-        sk.text(surf, s, (r.x + 14, r.y + 6), 13, (190, 225, 255))
 
     def draw_mechanic(self, surf, x, y):
         """Особенность героя — плашкой над энергией: разгон, пассивка Охотницы, жар и перегрев."""
@@ -3143,17 +3160,39 @@ class EndScreen:
 class PauseMenu:
     """Пауза поверх текущего экрана: продолжить, выйти из забега, выйти из игры."""
 
+    FONT_ROWS = 4
+
     def __init__(self, game, options):
         self.game = game
         self.options = options                  # [(подпись, действие)]
         self.mouse = (0, 0)
         self.rects = []
+        self.show_settings = False
+        self.font_offset = 0
+        self.font_track = None
 
     def update(self, dt):
         pass
 
     def choose(self, key):
-        if key == "resume":
+        if key == "settings":
+            self.show_settings = True
+            self.rects = []
+            selected = tuple(settings.DESCENT_FONTS).index(CF.title_style())
+            self.scroll_fonts(selected - self.font_offset)
+        elif key == "back_settings":
+            self.show_settings = False
+            self.rects = []
+            self.font_track = None
+        elif key in settings.DESCENT_FONTS:
+            if getattr(self.game, "save_settings", True):
+                settings.put("descent_font", key)
+            else:
+                settings.SETTINGS["descent_font"] = key
+            selected = tuple(settings.DESCENT_FONTS).index(key)
+            if selected < self.font_offset or selected >= self.font_offset + self.FONT_ROWS:
+                self.scroll_fonts(selected - self.font_offset)
+        elif key == "resume":
             self.game.pause = None
         elif key == "abandon":
             self.game.pause = None
@@ -3167,24 +3206,48 @@ class PauseMenu:
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
+        elif ev.type == pygame.MOUSEWHEEL and self.show_settings:
+            self.scroll_fonts(-ev.y)
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.show_settings and self.font_track and self.font_track.collidepoint(ev.pos):
+                fraction = (ev.pos[1] - self.font_track.y) / self.font_track.h
+                self.scroll_fonts(round(fraction * self.font_max_offset) - self.font_offset)
+                return
             for r, key in self.rects:
                 if r.collidepoint(ev.pos):
                     self.choose(key)
                     return
         elif ev.type == pygame.KEYDOWN:
-            if ev.key == pygame.K_ESCAPE:
-                self.choose("resume")
-            elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
-                self.choose("resume")
+            if ev.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE):
+                self.choose("back_settings" if self.show_settings else "resume")
+            elif self.show_settings and ev.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_PAGEUP, pygame.K_PAGEDOWN):
+                self.scroll_fonts({pygame.K_UP: -1, pygame.K_DOWN: 1,
+                                   pygame.K_PAGEUP: -self.FONT_ROWS, pygame.K_PAGEDOWN: self.FONT_ROWS}[ev.key])
             elif pygame.K_1 <= ev.key <= pygame.K_9:
                 i = ev.key - pygame.K_1
-                if i < len(self.options):
-                    self.choose(self.options[i][1])
+                options = self.visible_options()
+                if i < len(options):
+                    self.choose(options[i][1])
+
+    @property
+    def font_max_offset(self):
+        return max(0, len(settings.DESCENT_FONTS) - self.FONT_ROWS)
+
+    def scroll_fonts(self, delta):
+        self.font_offset = max(0, min(self.font_max_offset, self.font_offset + delta))
+        self.rects = []
+
+    def visible_options(self):
+        if not self.show_settings:
+            return self.options
+        return [(name, key) for key, (name, _) in settings.DESCENT_FONTS.items()] + [("Назад · Esc", "back_settings")]
 
     def draw(self, surf):
         sw, sh = wide_layout(surf)
         dim(surf, 175)
+        if self.show_settings:
+            self.draw_font_settings(surf, sw, sh)
+            return
         w = 420
         h = 104 + len(self.options) * 58
         box = pygame.Rect(sw // 2 - w // 2, sh // 2 - h // 2, w, h)
@@ -3198,6 +3261,34 @@ class PauseMenu:
             button(surf, r, label, self.mouse, primary=key == "resume")
             self.rects.append((r, key))
             y += 58
+
+    def draw_font_settings(self, surf, sw, sh):
+        box = pygame.Rect(0, 0, 624, 463)
+        box.center = sw // 2, sh // 2
+        T.frame(surf, box, 248, accent=T.AMBER)
+        T.text(surf, "Шрифт интерфейса", (box.centerx, box.y + 29), 27, T.AMBER, True, center=True)
+        T.text(surf, "Для карты, боя и текста карт · колесо или ↑ ↓", (box.centerx, box.y + 60),
+               16, T.TEXT_DIM, center=True)
+        options = list(settings.DESCENT_FONTS.items())
+        self.rects = []
+        for i, (style, (name, _)) in enumerate(options[self.font_offset:self.font_offset + self.FONT_ROWS]):
+            r = pygame.Rect(box.x + 26, box.y + 84 + i * 76, box.w - 71, 66)
+            selected = style == CF.title_style()
+            accent = T.AMBER if selected or r.collidepoint(self.mouse) else T.PANEL_EDGE
+            T.frame(surf, r, 245, accent=accent)
+            T.text(surf, name + (" · выбран" if selected else ""), (r.x + 14, r.y + 4), 15, T.TEXT_DIM)
+            with T.use_fonts(style, lambda size, bold: CF.font(size, bold, style=style)):
+                T.text(surf, "Чернозёмная топь · Лунная стрела", (r.x + 15, r.y + 28), 23, T.TEXT, True)
+            self.rects.append((r, style))
+        self.font_track = pygame.Rect(box.right - 33, box.y + 84, 12, self.FONT_ROWS * 76 - 10)
+        pygame.draw.rect(surf, (31, 23, 18), self.font_track, border_radius=5)
+        thumb = self.font_track.copy()
+        thumb.h = round(thumb.h * min(1, self.FONT_ROWS / len(options)))
+        thumb.y += round((self.font_track.h - thumb.h) * self.font_offset / max(1, self.font_max_offset))
+        pygame.draw.rect(surf, T.AMBER_DIM, thumb, border_radius=5)
+        back = pygame.Rect(box.centerx - 94, box.bottom - 58, 188, 37)
+        button(surf, back, "Назад · Esc", self.mouse)
+        self.rects.append((back, "back_settings"))
 
 
 # ---------- карта этажа ----------
@@ -3351,17 +3442,25 @@ class MapScreen:
         w = self.W
         run = self.game.run
         fl = run.floor
-        backdrop(surf)
-        hk, dk = run.scale()
-        run_header(surf, run, f"Болото · этаж {fl.depth} из 3 — {run.floor_name}" if run.floor_name else
-                   f"Подземелье · этаж {fl.depth}",
-                   f"Выберите путь: клик или 1–3 · враги этажа: HP ×{hk:.2f}, урон ×{dk:.2f} · D — колода",
-                   width=w)
-        self.bag.bar(surf, run, (w - 40, 74), self.mouse, right=True)
-        button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
-        button(surf, self.atlas_rect, "Атлас · A", self.mouse)
+        style = map_style.for_run(run)
         board = self.board
-        T.frame(surf, board, 150, accent=T.AMBER_DIM)
+        sk = map_style.backdrop(surf, style, board)
+        chapter = run.chapter_at()
+        if chapter:
+            _, info, floor = chapter
+            title = f"{info['name']} · этаж {floor + 1} из {len(info['floors'])}"
+            if run.floor_name:
+                title += f" — {run.floor_name}"
+        else:
+            title = f"Подземелье · этаж {fl.depth}"
+        hk, dk = run.scale()
+        sk.text(surf, title, (24, 13), 27, sk.p["title"], title=True)
+        sk.text(surf, f"Выберите путь · враги этажа: HP ×{hk:.2f}, урон ×{dk:.2f}", (26, 51), 14, sk.p["text"])
+        sk.text(surf, f"Золото · {run.gold}", (w - 26, 15), 20, GOLD, title=True, right=True)
+        sk.text(surf, f"Здоровье · {run.hp}/{run.max_hp}", (w - 26, 46), 16, sk.p["text"], right=True)
+        self.bag.bar(surf, run, (w - 40, 74), self.mouse, right=True)
+        map_style.button(surf, sk, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
+        map_style.button(surf, sk, self.atlas_rect, "Атлас · A", self.mouse)
         avail = set(fl.available())
         visited = set(fl.path)
         rs = 1.0 if w < 1500 else 1.18
@@ -3376,7 +3475,8 @@ class MapScreen:
                     state = "open"
                 else:
                     state = "future"
-                MA.draw_trail(surf, self.pos[n["id"]], self.pos[nxt], state, self.clock, rad[n["id"]], rad[nxt])
+                MA.draw_trail(surf, self.pos[n["id"]], self.pos[nxt], state, self.clock, rad[n["id"]], rad[nxt],
+                              palette=style.trail)
         hover = self.node_at(self.mouse)
         keys = {nid: i + 1 for i, nid in enumerate(sorted(avail, key=lambda n: self.pos[n][1]))}
         for n in fl.nodes.values():
@@ -3384,29 +3484,34 @@ class MapScreen:
             x, y = self.pos[nid]
             state = "here" if nid == fl.node else "open" if nid in avail else "done" if nid in visited else "future"
             col = NODE_COLORS[n["type"]]
-            r = MA.draw_node(surf, (x, y), NODE_GLYPH.get(n["type"], n["type"]), col, state, self.clock)
+            col = SK.mix(col, style.accent, .28)
+            r = MA.draw_node(surf, (x, y), NODE_GLYPH.get(n["type"], n["type"]), col, state, self.clock,
+                             palette=style.node, radius=rad[nid])
             if nid == hover and state != "future":
                 pygame.draw.circle(surf, (255, 240, 200), (int(x), int(y)), r + 5, 2)
             label = n["fight"]["name"] if n.get("fight") and n["type"] != "battle" else NODE_NAMES[n["type"]]
-            MA.ribbon(surf, label, (x, y + r + 5), col, n["type"] == "boss", dim=state == "future")
+            half_label = T.font(12, n["type"] == "boss").size(label)[0] // 2 + 22
+            caption_x = min(board.right - half_label, max(board.left + half_label, x))
+            MA.ribbon(surf, label, (caption_x, y + r + 5), col, n["type"] == "boss", dim=state == "future",
+                      palette=style.ribbon)
             if state == "open" and nid in keys:
                 bx, by = int(x - r - 4), int(y - r - 4)
-                pygame.draw.circle(surf, (20, 16, 10), (bx, by), 11)
-                pygame.draw.circle(surf, GOLD, (bx, by), 11, 2)
-                T.text(surf, str(keys[nid]), (bx, by), 15, GOLD, True, center=True)
+                pygame.draw.circle(surf, style.bottom, (bx, by), 11)
+                pygame.draw.circle(surf, style.accent, (bx, by), 11, 2)
+                T.text(surf, str(keys[nid]), (bx, by), 15, style.accent, True, center=True)
         if fl.node:
             x, y = self.pos[fl.node]
+            x -= 34
         else:
-            first = min(avail, key=lambda n: self.pos[n][0])
-            x, y = self.pos[first][0] - 40, (160 + 500) / 2
+            x, y = board.left + 27, board.centery
         img = self.game.hero_img()
         bob = int(2 * math.sin(self.clock * 3))
-        surf.blit(img, (x - 34 - img.get_width() // 2, y + 10 - img.get_height() + bob))
+        surf.blit(img, (x - img.get_width() // 2, y + 10 - img.get_height() + bob))
         self.draw_deck_strip(surf)
-        button(surf, self.deck_rect, f"Колода ({len(run.deck)}) · D", self.mouse)
+        map_style.button(surf, sk, self.deck_rect, f"Колода ({len(run.deck)}) · D", self.mouse, primary=True)
         r = model_res()
-        button(surf, self.res_rect, f"Модели: {r}×{r} · M", self.mouse)
-        button(surf, self.bag_rect, f"Сумка ({len(run.relics)}) · I", self.mouse)
+        map_style.button(surf, sk, self.res_rect, f"Модели: {r}×{r} · M", self.mouse)
+        map_style.button(surf, sk, self.bag_rect, f"Сумка ({len(run.relics)}) · I", self.mouse)
         if hover and not self.bag.open:
             self.tip(surf, fl.nodes[hover])
         if self.toast:
@@ -3425,14 +3530,15 @@ class MapScreen:
 
     def draw_deck_strip(self, surf):
         run = self.game.run
-        T.text(surf, f"Убито врагов: {run.kills} · выиграно боёв: {run.fight}", (44, 576), 15, T.TEXT_DIM, True)
+        T.text(surf, f"Убито врагов: {run.kills} · выиграно боёв: {run.fight}",
+               (44, 576), 15, T.TEXT, True, shadow=True)
         ready = [c for c in run.deck if c.growth_next()]
         near = sorted(ready, key=lambda c: c.insight_progress(), reverse=True)[:4]
         if near:
             T.text(surf, f"Прозрение: {int(M.INSIGHT_CHANCE * 100)}% за применение, "
                          f"гарантия на {M.INSIGHT_PITY}-м. Ближе всего: " + ", ".join(
                 f"{c.name} {('готово' if c.insight_ready() else str(c.insight_misses) + '/' + str(M.INSIGHT_PITY))}"
-                for c in near), (44, 600), 14, (255, 220, 140))
+                for c in near), (44, 600), 14, (255, 220, 140), shadow=True)
 
     def tip(self, surf, n):
         run = self.game.run
@@ -4017,8 +4123,8 @@ class HeroSelect:
         self.cont.right = sw - 30
         self.sound_rect.right = sw - 30
         backdrop(surf, 185)
-        T.text(surf, "Кто спустится в подземелье?", (sw // 2, 34), 30, T.AMBER, True, center=True,
-               shadow=True)
+        SK.use("merc").text(surf, "Кто спустится в подземелье?", (sw // 2, 34), 30, T.AMBER,
+                            center=True, title=True)
         button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
         button(surf, self.atlas_rect, "Атлас · F2", self.mouse)
         self.hits = []

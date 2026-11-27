@@ -21,7 +21,7 @@ from ui.marks import MarkLayer
 from ui.fxlab.router import FxRouter
 from ui.props import load_props
 from ui.sprites import DRAWERS, SpriteBank, res as sprite_resolution
-from ui.vfx import Light, VfxWorld, resolve_color
+from ui.vfx import Light, READABLE_TEMPO, VfxWorld, resolve_color
 from ui.vfx_textures import make_textures
 
 SKILL_KEYS = "QWERDGTYUI"     # одиночка: пятый и шестой навык — D и G (F — кнопка механики класса)
@@ -73,7 +73,7 @@ _FIT = {}
 
 def fit(s, size, width):
     """Обрезает строку по ширине, добавляя «…» (результат запоминается — подписи меряются каждый кадр)."""
-    key = (s, size, int(width))
+    key = (T.font(size), s, size, int(width))
     out = _FIT.get(key)
     if out is None:
         if len(_FIT) > 4000:
@@ -182,6 +182,7 @@ class BattleView:
         self.gl_camera = False     # рисуем через OpenGL — интерфейс над юнитами следует за камерой
         self.fx_bounds = (0, 0, T.SCREEN_W, T.SCREEN_H)   # область экранных частиц (в превью — его окно)
         self.pix = FxRouter(self)  # стиль эффектов огня и льда: пиксельный или стили ui/fxlab (art_style.md)
+        self.elf_particles = None
 
     # ---------- события симуляции → эффекты ----------
 
@@ -212,6 +213,8 @@ class BattleView:
         self.marks.clear()
         self._prop_imgs.clear()
         self.pix.reset()
+        if self.elf_particles is not None:
+            self.elf_particles.clear()
         self.relayout()
 
     def relayout(self):
@@ -293,7 +296,11 @@ class BattleView:
 
     def sprite_of(self, u, flip=False, flash=False, *, full_resolution=False):
         if u.obj:                      # объект поля: своя моделька (assets/sprites/<id>.png или заглушка)
-            names = [u.proto_id]
+            names = [u.obj.get("sprite"), u.proto_id]
+            if growth_art := u.obj.get("growth_art"):
+                prefix, mature = growth_art
+                stage = max(0, min(mature, u.growth)) if u.alive else mature
+                names.insert(0, f"{prefix}_{stage}")
             if u.proto_id == "ballista" and getattr(u, "charge", 0):
                 names.insert(0, "ballista_loaded")
             return self.sprites.get(names, "object", u.color, False, flip, flash, {"object": u.obj.get("art")})
@@ -462,6 +469,7 @@ class BattleView:
                 return self._launch(spec, ctx, a, b, color, melee=e["kind"] == "melee")
         u = e["unit"]
         sid = e["skill"]
+        effect_only = e.get("effect_only", False)
         sk = u.skill_defs.get(sid) if sid else None
         tags = [eff.get("tag") for eff in (sk["effects"] if sk else []) if eff.get("tag")]
         tag = tags[0] if tags else None
@@ -471,8 +479,10 @@ class BattleView:
         if override:
             spec = dict(spec, impact=override)
         radius = sk.get("radius", 0) if sk else 1
+        if effect_only:
+            radius = e.get("radius", radius)
         center = e["center"]
-        cells = self._fx_cells(center, radius) if radius else None
+        cells = (self.grid.in_radius(center, radius) if effect_only else self._fx_cells(center, radius)) if radius else None
         if u.proto_id == "cryo" and not self.pix.on:   # лёд у всех способностей Криоманта (старый стиль)
             for p in (cells or [center])[:4]:
                 gx, gy = T.cell_feet(p)
@@ -481,18 +491,34 @@ class BattleView:
         tunit = e["target"] if e["target"] is not None and e["target"] is not u else None
         scale = spec.get("scale", 1.0) * (1 + 0.14 * tier + 0.05 * len(sk.get("runes", []) if sk else []))
         ctx = self._ctx(u, tunit, center if tunit is None and center != u.cell else None, cells, color, scale, tier)
-        if tunit is not None or center != u.cell:
+        if effect_only:
+            ctx.update(readable=True, tempo=READABLE_TEMPO, radius=radius, empowered=e.get("empowered", False),
+                       pierce_points=tuple(T.cell_feet(cell) for cell in e.get("line", ())))
+            from ui import elf_spells
+            if spec.get("elf_wind"):
+                from ui import elf_wind
+                self._skill_now = None
+                kind = spec["elf_wind"]
+                duration = elf_wind.play(self, kind, ctx)
+                elf_spells.wind_impact(self, kind, ctx, duration)
+                return duration
+            look = spec.get("elf_spell") or elf_spells.LOOKS.get(sid)
+            if look:
+                self._skill_now = None
+                return elf_spells.play(self, look, ctx)
+        if not effect_only and (tunit is not None or center != u.cell):
             self._face(u, ctx["target"][0])
         hit = e.get("hit") or 0.0
         ctx["hit"] = hit
-        self._skill_now = sid
+        self._skill_now = None if effect_only else sid
         far = tunit is not None or center != u.cell
         # сам по себе визуал долетает ровно к удару: снаряд (растягиваем полёт), падение с неба, таймлайн
         natural = bool((far and spec.get("travel")) or spec.get("delay") or sid == "blizzard"
-                       or self.pix.handles(sid, sk))      # пиксельный стиль сам ведёт замах, полёт и удар
+                       or (not effect_only and self.pix.handles(sid, sk)))
         if sk:
-            name = sk["name"] + (" ·авто" if e.get("auto") else "")
-            self.float_text(u, name, (255, 235, 170), 14, ttl=1.0, dy=10, kind="skill")
+            if not effect_only:
+                name = sk["name"] + (" ·авто" if e.get("auto") else "")
+                self.float_text(u, name, (255, 235, 170), 14, ttl=1.0, dy=10, kind="skill")
             if hit > 0 and not natural and far:          # метка: куда ударит — заполняется к моменту удара
                 for p in cells or [center]:
                     self.fx.append(Fx("tele", hit, pos=p, color=color))
@@ -501,16 +527,17 @@ class BattleView:
                     self.fx.append(Fx("cell", 0.45, pos=p, color=color))
             if hit > 0 and far and tunit is not None and not natural:
                 self.fx.append(Fx("tele", hit, pos=tunit.cell, color=color))
-        if spec.get("release") and not self.pix.own_release(sid):
+        if spec.get("release") and (effect_only or not self.pix.own_release(sid)):
             self.vfx.play(spec["release"], ctx)
         self._line = (spec.get("line_fx", "pierce_line"), color, scale, tier)   # для события «line» этого навыка
 
         def play():
             from ui import flight
             with flight.fixed(hit if natural and spec.get("travel") or sid == "blizzard" else None):
-                d = self.pix.skill(u, sk, spec, ctx, color, far, radius, tier, sid)
-                if d is not None:
-                    return d
+                if not effect_only:
+                    d = self.pix.skill(u, sk, spec, ctx, color, far, radius, tier, sid)
+                    if d is not None:
+                        return d
                 return self._launch(spec if far else dict(spec, travel=None), ctx, ctx["caster"], ctx["target"],
                                     color)
         if hit > 0 and not natural:                  # без снаряда: удар — когда бой применит эффекты
@@ -521,7 +548,16 @@ class BattleView:
     def _launch(self, spec, ctx, a, b, color, melee=False):
         impact = spec.get("impact")
         tr = spec.get("travel")
-        extra = spec.get("delay", 0.0)          # удар таймлайна наступает не сразу (стрелы ещё падают с неба)
+        readable = ctx.get("readable", False)
+        tempo = ctx.get("tempo", 1.0)
+        extra = spec.get("delay", 0.0) * tempo
+
+        def landed():
+            if impact:
+                self.vfx.play(impact, ctx)
+            if readable:
+                self.vfx.after(extra, lambda: self._readable_impact(ctx, impact))
+
         if tr:
             col = tuple(tr["color"]) if tr.get("color") else color
             if tr.get("to") == "ground":
@@ -530,18 +566,39 @@ class BattleView:
                 off = tr.get("sky", [-140, -560])
                 a = (b[0] + off[0], b[1] + off[1])
             scale = ctx.get("scale", 1.0)
+            speed = tr.get("speed", 800) / tempo
+            duration = tr.get("time")
+            prop = tr.get("prop")
+            prop_scale = tr.get("prop_scale", 2.0)
+            if readable:
+                duration = duration * tempo if duration is not None else max(.30, math.dist(a, b) / speed)
+                duration = min(1.05, duration)
+                if prop and prop.startswith("arrow") and prop in self.props:
+                    length = 56 if prop == "arrow_ice" else 43
+                    prop_scale = length * max(.82, min(1.25, scale)) / self.props[prop].get_width()
             return extra + self.vfx.projectile(
-                a, b, tr.get("speed", 800), tr.get("head"), tr.get("trail"), col, tr.get("arc", 0),
-                tr.get("head_scale", 1.0) * scale, on_hit=(lambda: self.vfx.play(impact, ctx)) if impact else None,
-                trail_rate=tr.get("trail_rate", 150), ribbon=tr.get("ribbon"), prop=tr.get("prop"),
-                sfx=tr.get("sfx"), light=tr.get("light"), dur=tr.get("time"), stick=tr.get("stick"),
-                prop_scale=tr.get("prop_scale", 2.0), spin=math.radians(tr.get("spin", 0)))
+                a, b, speed, tr.get("head"), tr.get("trail"), col, tr.get("arc", 0),
+                tr.get("head_scale", 1.0) * scale, on_hit=landed if impact or readable else None,
+                trail_rate=tr.get("trail_rate", 150), ribbon=tr.get("ribbon"), prop=prop,
+                sfx=tr.get("sfx"), light=tr.get("light"), dur=duration, stick=tr.get("stick"),
+                prop_scale=prop_scale, spin=math.radians(tr.get("spin", 0)), readable=readable)
         if melee:      # удар — на пике выпада
             self.vfx.after(LUNGE_T * 0.45, lambda: self.vfx.play(impact, ctx))
             return LUNGE_T * 0.45
-        if impact:
-            self.vfx.play(impact, ctx)
+        landed()
         return extra
+
+    def _readable_impact(self, ctx, impact):
+        scale = max(.8, min(1.25, ctx["scale"]))
+        color = ctx["color"]
+        if impact in ("shield_dome", "barrier", "frost_armor_fx"):
+            self.vfx.cue("ward", ctx["target_ground"], color, 24 * scale, .66)
+        elif ctx.get("radius"):
+            self.vfx.cue("ring", ctx["target_ground"], color, (22 + 16 * ctx["radius"]) * scale, .64)
+            for point in ctx["cells"]:
+                self.vfx.cue("burst", (point[0], point[1] - 8 * scale), color, 9 * scale, .48)
+        else:
+            self.vfx.cue("burst", ctx["target"], color, 17 * scale, .55)
 
     def _event(self, e):
         t = e["t"]
@@ -1348,6 +1405,8 @@ class BattleView:
         if game_dt > 0 and self.combat:
             self._ambient(game_dt)
         self.pix.update(game_dt)
+        if self.elf_particles is not None:
+            self.elf_particles.update(game_dt)
         self.vfx.real_update(real_dt)
         self.vfx.update(game_dt)
         self._follow(real_dt)
@@ -1904,6 +1963,9 @@ class BattleView:
                 self.depth_surf = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
             self.depth_surf.fill((0, 0, 0, 0))
         items += self.pix.world_items(c)
+        if self.elf_particles is not None and self.elf_particles.prepare():
+            for y, part in self.elf_particles.buckets():
+                items.append((y, 2, "pix", (self.elf_particles.draw, (None, part))))
         self.ghosts = [g for g in self.ghosts if self.clock - g[3] < g[4]]
         items += [(g[2] - 0.5, 0, "ghost", g) for g in self.ghosts]
         life = getattr(self, "life", None)               # живое поле (ui/field_life.py) — только где включено

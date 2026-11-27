@@ -61,14 +61,31 @@ DMG_TO_ENEMY = (255, 255, 255)
 CAST = (255, 170, 60)
 
 _fonts = {}
+_font_style = None
+_font_factory = None
 
 
-def font(size, bold=False):
+@contextmanager
+def use_fonts(style, factory):
+    global _font_style, _font_factory
+    previous = _font_style, _font_factory
+    _font_style, _font_factory = style, factory
+    try:
+        yield
+    finally:
+        _font_style, _font_factory = previous
+
+
+def system_font(size, bold=False):
     key = (size, bold)
     if key not in _fonts:
         f = pygame.font.SysFont("segoeui,arial,dejavusans", size, bold=bold)
         _fonts[key] = f
     return _fonts[key]
+
+
+def font(size, bold=False):
+    return _font_factory(size, bold) if _font_factory else system_font(size, bold)
 
 
 _renders = {}
@@ -78,7 +95,7 @@ CACHE_LIMIT = 4000
 
 def render(s, size, color, bold=False):
     """Готовая надпись из кэша: интерфейс перерисовывается каждый кадр, а текст почти не меняется."""
-    key = (s, size, tuple(color), bold)
+    key = (_font_style, s, size, tuple(color), bold)
     img = _renders.get(key)
     if img is None:
         if len(_renders) > CACHE_LIMIT:
@@ -101,7 +118,7 @@ def text(surf, s, pos, size=16, color=TEXT, bold=False, center=False, shadow=Fal
 
 
 def wrap(s, size, width, bold=False):
-    key = (s, size, width, bold)
+    key = (_font_style, s, size, width, bold)
     if key in _wraps:
         return _wraps[key]
     f = font(size, bold)

@@ -328,16 +328,17 @@ class SettingsScene(CampBackdrop):
         opts = S.OPTIONS
         cols = 2 if len(opts) > 8 else 1           # много настроек — в две колонки
         per = (len(opts) + cols - 1) // cols
+        step = 48 if per > 9 else 54
         w = 520 if cols == 1 else 450
         x0 = T.SCREEN_W // 2 - (w * cols + 20 * (cols - 1)) // 2
         for i, (key, name, _, _) in enumerate(opts):
             col, row = divmod(i, per)
-            self.rows.append((pygame.Rect(x0 + col * (w + 20), 210 + row * 54, w, 46), key, name))
+            self.rows.append((pygame.Rect(x0 + col * (w + 20), 210 + row * step, w, step - 8), key, name))
         self.slider = None
         for r, key, _ in self.rows:
             if key == "music_volume":
                 self.slider = pygame.Rect(r.right - 224, r.centery - 9, 132, 18)
-        y = 210 + per * 54
+        y = 210 + per * step
         self.box = pygame.Rect(x0 - 30, 190, w * cols + 20 * (cols - 1) + 60, y - 190 + 80)
         self.back = pygame.Rect(T.SCREEN_W // 2 - 110, y + 16, 220, 46)
 

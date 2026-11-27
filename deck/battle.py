@@ -249,7 +249,8 @@ class Battle:
         """Событие для экрана: эффект механики или простого действия (deck/ui.py рисует его сам)."""
         self.c.emit("deck_fx", kind=kind, **kw)
 
-    def vfx(self, u, sid, name, target=None, center=None, radius=0, tag=None):
+    def vfx(self, u, sid, name, target=None, center=None, radius=0, tag=None, *, effect_only=False,
+            empowered=False, line=()):
         """Эффект навыка из библиотеки игры (data/vfx.json): событие «skill» — экран сыграет каст, полёт и удар,
         а урон, пришедший следом, покажет в момент попадания."""
         if not sid:
@@ -264,8 +265,13 @@ class Battle:
         u.skill_defs = dict(u.skill_defs)
         u.skill_defs[sid] = sk
         c = center if center is not None else (target.cell if target is not None else u.cell)
-        self.c.emit("skill", unit=u, skill=sid, center=tuple(c), target=target, auto=False)
+        self.c.emit("skill", unit=u, skill=sid, center=tuple(c), radius=radius, target=target, auto=False,
+                    effect_only=effect_only, empowered=empowered, line=line)
         return True
+
+    def elf_cast(self, source, effect, name, target=None, center=None, radius=0, *, empowered=False):
+        self.vfx(source, effect, name, target=target, center=center, radius=radius, effect_only=True, empowered=empowered)
+        yield IMPACT
 
     def foes(self):
         return [u for u in self.c.units if u.team == ENEMY and u.alive and not u.obj]
@@ -1532,6 +1538,13 @@ class Battle:
             r = max(r, rf.get("r", r))
         return r
 
+    def radius_for_op(self, op):
+        radius = op.get("r", 1)
+        expanded = op.get("r_fae") or {}
+        if self.hero.ds.get("fae", 0) >= expanded.get("fae", 99):
+            radius = max(radius, expanded.get("r", radius))
+        return radius
+
     def reach_spots(self, card, mode):
         """«Подойти и ударить»: куда можно встать (клетка в досягаемости, рядом враг) → [враги рядом].
         Игрок выбирает клетку сам — можно обойти врага сзади (больше разгона, толчок в нужную сторону)."""
@@ -2094,6 +2107,8 @@ class Battle:
         self.hand_relics.played.add(card.uid)
         h = self.hero
         fae_spent, fae_rates = self.fae_empower_spec(card, u) if mode == "main" else (0, {})
+        threshold = M.fae_threshold(u) if self.garden is not None and mode == "main" else None
+        empowered = threshold is not None and h.ds.get("fae", 0) >= threshold
         origin = h.cell
         walked_before = self.walked
         previous_tags = self.turn_tags[-1] if self.turn_tags else ()
@@ -2117,7 +2132,7 @@ class Battle:
         ctx = {"ranged": u.get("ranged", False), "center": target if isinstance(target, tuple) else None,
                "push_bonus": 0, "tag": u.get("tag"), "card": card if mode == "main" else None,
                "x": x_paid, "fae_before": h.ds.get("fae", 0), "had_lead": had_lead,
-               "fae_spent": fae_spent, "fae_bonus": fae_rates}
+               "fae_spent": fae_spent, "fae_bonus": fae_rates, "elf_empowered": empowered}
         if t == "hand_attach" and hand_targets:
             ctx["attach_host"] = hand_targets[0]
         if t in ("ballista_place", "ballista_load", "ballista_fire"):
@@ -2152,10 +2167,28 @@ class Battle:
                     redirected = True
                 else:
                     redirected = yield from board.intercept_shot(card, tgt, bresenham(h.cell, tgt.cell)[1:-1])
-        if u.get("vfx") and not redirected:                   # свой эффект карты (по уровню у Пиромантки)
+        elf_vfx = card.d.get("cast_vfx") if self.garden is not None and mode == "main" else None
+        cast_vfx = u.get("vfx") or elf_vfx
+        vfx_center = None if hand_targets else ctx["center"]
+        vfx_radius = self.effect_radius(u) if t == "area" else 0
+        if elf_vfx and t != "area":
+            area_ops = [op for op in ops if op["op"] in ("aoe_radius", "fae_ring")]
+            for condition in ctx.get("conds", ()):
+                extra_areas = [op for op in condition.get("do", ()) if op["op"] in ("aoe_radius", "fae_ring")]
+                if extra_areas and self.play_condition(condition["when"], tgt, ctx):
+                    area_ops.extend(extra_areas)
+            vfx_radius = max((self.radius_for_op(op) for op in area_ops), default=0)
+        if cast_vfx and not redirected:
             ctx["vfx"] = True
-            self.vfx(h, u["vfx"], card.name, target=ctx.get("buff_target") or tgt, center=ctx["center"],
-                     radius=self.effect_radius(u) if t == "area" else 0, tag=u.get("tag"))
+            visual_target = ctx.get("buff_target") or tgt
+            line = ()
+            if elf_vfx and u.get("pierce") and tgt is not None and h.ds.get("fae", 0) >= u.get("line_fae", 0):
+                line = self.line_enemies(tgt, u.get("range", 6))
+                if line:
+                    visual_target = line[-1]
+            self.vfx(h, cast_vfx, card.name, target=visual_target, center=vfx_center,
+                     radius=vfx_radius, tag=u.get("tag"), effect_only=bool(elf_vfx),
+                     empowered=empowered, line=tuple(unit.cell for unit in line[:-1]))
             yield IMPACT                                      # ждём попадания — урон и HP в этот миг
             if u.get("shake"):
                 self.fx("shake", unit=h, n=10)
@@ -2180,9 +2213,9 @@ class Battle:
                 effect_target = yield from self.hand_relics.resonance_target(card, tgt, u)
             if rep and (self.result or (effect_target is not None and not effect_target.alive)):
                 break
-            if rep and u.get("vfx"):                          # второй раз — снова эффект и попадание
-                self.vfx(h, u["vfx"], card.name, target=effect_target, center=ctx["center"],
-                         radius=self.effect_radius(u) if t == "area" else 0, tag=u.get("tag"))
+            if rep and cast_vfx:                              # второй раз — снова эффект и попадание
+                self.vfx(h, cast_vfx, card.name, target=effect_target, center=vfx_center,
+                         radius=vfx_radius, tag=u.get("tag"), effect_only=bool(elf_vfx), empowered=empowered)
                 yield IMPACT
             pierce = u.get("pierce")
             if pierce and u.get("line_fae") and self.hero.ds.get("fae", 0) < u["line_fae"]:
@@ -2630,9 +2663,13 @@ class Battle:
                     nxt = [f for f in self.foes() if f not in hit and cheb(f.cell, cur.cell) <= 3]
                     if not nxt:
                         break
-                    cur = min(nxt, key=lambda f: cheb(f.cell, cur.cell))
+                    previous, cur = cur, min(nxt, key=lambda f: cheb(f.cell, cur.cell))
                     hit.add(cur)
-                    self.fx("react", unit=cur, what="shock")
+                    if self.garden is not None and src is h:
+                        yield from self.elf_cast(previous, "_elf_storm_jump", "Прыжок молнии", target=cur,
+                                                 empowered=ctx.get("elf_empowered", False))
+                    else:
+                        self.fx("react", unit=cur, what="shock")
                     self.hurt(cur, self.attack_value(h, n) if src is h else n, src, "spell")
                     if op.get("stun") and cur.alive:
                         cur.ds["stun"] = True
@@ -2745,9 +2782,11 @@ class Battle:
                 self.spend_fae(n, tgt)
             elif k == "plant" and self.garden is not None:
                 center = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
-                yield from self.garden.plant(op, center, extra_growth=self.fae_bonus(ctx, "growth"))
+                yield from self.garden.plant(op, center, extra_growth=self.fae_bonus(ctx, "growth"),
+                                             empowered=ctx.get("elf_empowered", False))
             elif k == "beast" and self.garden is not None:
-                self.garden.summon_beast(op["beast"], bonus=self.fae_bonus(ctx, "beast"), extra=op.get("stats"))
+                self.garden.summon_beast(op["beast"], bonus=self.fae_bonus(ctx, "beast"), extra=op.get("stats"),
+                                         empowered=ctx.get("elf_empowered", False))
             elif k == "attach" and self.garden is not None:
                 self.garden.attach(ctx.get("card"), ctx.get("attach_host"), op["attach"],
                                    bonus=self.fae_bonus(ctx, "growth"), extra=op.get("bonus"))
@@ -2765,6 +2804,8 @@ class Battle:
             elif k == "damage_nearest" and src is h:
                 target = self.garden.nearest_foe(h.cell) if self.garden is not None else None
                 if target is not None:
+                    yield from self.elf_cast(h, "_elf_fate_thread", "Разрыв связи", target=target,
+                                             empowered=ctx.get("elf_empowered", False))
                     self.hurt(target, self.attack_value(h, n) + self.fae_bonus(ctx, "damage"), h, "spell")
             elif k in ("aoe_target", "aoe_center"):
                 center = (ctx.get("center") if k == "aoe_center" else None) or \
@@ -2889,10 +2930,7 @@ class Battle:
                 for f in [f for f in self.foes() if cheb(f.cell, src.cell) <= 1]:
                     yield from self.apply(src, op["do"], f, ctx)
             elif k == "aoe_radius":
-                r = op.get("r", 1)
-                rf = op.get("r_fae")
-                if rf and src is h and h.ds.get("fae", 0) >= rf.get("fae", 99):
-                    r = max(r, rf.get("r", r))
+                r = self.radius_for_op(op) if src is h else op.get("r", 1)
                 for f in [f for f in self.foes() if cheb(f.cell, src.cell) <= r]:
                     yield from self.apply(src, op["do"], f, ctx)
             for v in (src, tgt):

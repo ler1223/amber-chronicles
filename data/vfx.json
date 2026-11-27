@@ -1018,6 +1018,14 @@
   }
  },
  "effects": {
+  "_elf_fate_link": [{"t":0,"streak":{"ribbon":"link","time":0.1}},{"t":0.1,"play":"link_hit"}],
+  "_elf_fae_wave": [{"t":0,"sfx":"shockwave","at":"caster_ground","scale":1.3},{"t":0.09,"sfx":"dist_ring_big","at":"caster_ground","scale":0.85},{"t":0.14,"fx":"light_motes","at":"cells","count":4,"scale":0.65}],
+  "_elf_starfall": [{"t":0,"at":"cells","projectile":{"from":"sky","sky":[-46,-225],"sky_jitter":20,"time":0.20,"sfx":"energy_orb","ribbon":"bolt_trail","head_scale":0.52}},{"t":0.2,"fx":"flash_core","at":"cells","count":1,"scale":0.65},{"t":0.2,"fx":"light_motes","at":"cells","count":4,"scale":0.65}],
+  "_elf_pollen_cloud": [{"t":0,"sfx":"ground_aoe","at":"target_ground","scale":0.7},{"t":0.04,"fx":"leaves_burst","at":"cells","count":3,"scale":0.5},{"t":0.09,"fx":"light_motes","at":"cells","count":4,"scale":0.7}],
+  "_elf_star_circle": [{"t":0,"sfx":"green_disc","at":"target_ground","scale":1.1},{"t":0.09,"fx":"rune_motes","at":"cells","count":4,"scale":0.8},{"t":0.14,"fx":"flash_core","at":"cells","count":1,"scale":0.65}],
+  "_elf_star_burst": [{"t":0,"sfx":"holy_orb","at":"target","scale":1.45},{"t":0.24,"sfx":"shockwave_big","at":"target_ground","scale":1.4},{"t":0.24,"fx":"holy_rays","at":"target","count":9},{"t":0.24,"fx":"light_motes","at":"cells","count":4}],
+  "_elf_scythe_sweep": [{"t":0,"sfx":"wave_cleave","at":"target_ground","scale":1.4},{"t":0.12,"fx":"flash_core","at":"cells","count":1,"scale":0.52}],
+  "_elf_storm_jump": [{"t":0,"streak":{"ribbon":"chain","time":0.11}},{"t":0.11,"play":"link_storm"}],
   "rockfall_drop": [
    {
     "t": 0,
@@ -8776,6 +8784,25 @@
   "bog_archer": "arrow_ice"
  },
  "skills": {
+  "_elf_moon_arrow": {"color":[167,213,255],"elf_wind":"moon"},
+  "_elf_fate_thread": {"color":[209,189,255],"impact":"_elf_fate_link","delay":0.1},
+  "_elf_fae_roar": {"color":[135,245,178],"elf_wind":"swarm"},
+  "_elf_thorn_seed": {"color":[154,228,123],"elf_wind":"root"},
+  "_elf_call": {"elf_spell":"call"},
+  "_elf_graft": {"elf_spell":"leaves"},
+  "_elf_well": {"elf_spell":"well"},
+  "_elf_bridge": {"elf_spell":"bridge"},
+  "_elf_compass": {"elf_spell":"compass"},
+  "_elf_balance": {"elf_spell":"balance"},
+  "_elf_star_rain": {"color":[173,198,255],"impact":"_elf_starfall","delay":0.2},
+  "_elf_constellation": {"color":[184,170,255],"impact":"_elf_star_circle","delay":0.14},
+  "_elf_last_star": {"color":[242,225,170],"impact":"_elf_star_burst","delay":0.24},
+  "_elf_moon_scythe": {"color":[183,212,255],"impact":"_elf_scythe_sweep","delay":0.12},
+  "_elf_dawn": {"color":[255,218,148],"impact":"judgment_beam","delay":0.14},
+  "_elf_storm": {"color":[169,198,255],"release":"cast_release","impact":"lightning_strike","delay":0.10},
+  "_elf_storm_jump": {"color":[169,198,255],"impact":"_elf_storm_jump","delay":0.11},
+  "_elf_pollen": {"color":[225,214,117],"impact":"_elf_pollen_cloud","delay":0.09},
+  "_elf_thorn_attack": {"color":[154,228,123],"impact":"roots","delay":0.09},
   "power_strike": {
    "impact": "heavy_slash",
    "branches": {

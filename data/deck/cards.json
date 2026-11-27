@@ -48900,6 +48900,7 @@
    ]
   },
   "e_basic_attack": {
+   "cast_vfx": "_d_quick_arrow",
    "ill": [
     "abandoned_camp",
     0.5,
@@ -49082,6 +49083,7 @@
    "basic_role": "attack"
   },
   "e_basic_defense": {
+   "cast_vfx": "frost_guard",
    "ill": [
     "act_1",
     0.5,
@@ -49274,6 +49276,7 @@
    "basic_role": "defense"
   },
   "e_basic_move": {
+   "cast_vfx": "blink",
    "ill": [
     "act_2",
     0.5,
@@ -49395,6 +49398,7 @@
    "basic_role": "movement"
   },
   "e_call_fae": {
+   "cast_vfx": "_elf_call",
    "ill": [
     "amber_altar",
     0.5,
@@ -49614,6 +49618,7 @@
    ]
   },
   "e_fae_ring": {
+   "cast_vfx": "consecrate",
    "ill": [
     "anvil",
     0.5,
@@ -49893,6 +49898,7 @@
    ]
   },
   "e_firefly": {
+   "cast_vfx": "focus",
    "ill": [
     "archer_ambush",
     0.5,
@@ -50071,6 +50077,7 @@
    }
   },
   "e_pollen": {
+   "cast_vfx": "_elf_pollen",
    "ill": [
     "ash_nest",
     0.5,
@@ -50419,6 +50426,7 @@
    ]
   },
   "e_fae_crown": {
+   "cast_vfx": "inspire",
    "ill": [
     "ash_storm",
     0.5,
@@ -50639,6 +50647,7 @@
    ]
   },
   "e_moon_arrow": {
+   "cast_vfx": "_elf_moon_arrow",
    "ill": [
     "bell_ringer",
     0.5,
@@ -50903,6 +50912,7 @@
    ]
   },
   "e_sleep": {
+   "cast_vfx": "e_sleep",
    "ill": [
     "bellows_hall",
     0.5,
@@ -51162,6 +51172,7 @@
    ]
   },
   "e_moon_shield": {
+   "cast_vfx": "soul_shield",
    "ill": [
     "bone_marsh",
     0.5,
@@ -51425,6 +51436,7 @@
    ]
   },
   "e_thorn_court": {
+   "cast_vfx": "e_entangle",
    "ill": [
     "brass_oracle",
     0.5,
@@ -51750,6 +51762,7 @@
    ]
   },
   "e_fate_thread": {
+   "cast_vfx": "_elf_fate_thread",
    "ill": [
     "broken_automaton",
     0.5,
@@ -52002,6 +52015,7 @@
    ]
   },
   "e_fae_roar": {
+   "cast_vfx": "_elf_fae_roar",
    "ill": [
     "camp",
     0.5,
@@ -52368,6 +52382,7 @@
    ]
   },
   "e_eclipse": {
+   "cast_vfx": "e_gravity",
    "ill": [
     "chained_ifrit",
     0.5,
@@ -52718,6 +52733,7 @@
    ]
   },
   "e_astral_step": {
+   "cast_vfx": "blink",
    "ill": [
     "cold_anvil",
     0.5,
@@ -56173,6 +56189,7 @@
    ]
   },
   "e_moon_scythe": {
+   "cast_vfx": "merge",
    "ill": [
     "druid_heron",
     0.5,
@@ -56443,6 +56460,7 @@
    "blueprint": true
   },
   "e_light_shadow": {
+   "cast_vfx": "merge",
    "ill": [
     "ember_orphans",
     0.5,
@@ -56713,6 +56731,7 @@
    "blueprint": true
   },
   "e_dawn_blade": {
+   "cast_vfx": "merge",
    "ill": [
     "ferryman",
     0.5,
@@ -56982,6 +57001,7 @@
    "blueprint": true
   },
   "e_storm_spear": {
+   "cast_vfx": "merge",
    "ill": [
     "fire_ale",
     0.5,
@@ -57251,6 +57271,7 @@
    "blueprint": true
   },
   "e_star_rain": {
+   "cast_vfx": "_elf_star_rain",
    "ill": [
     "fire_trial",
     0.5,
@@ -57531,6 +57552,7 @@
    ]
   },
   "e_forest_pact": {
+   "cast_vfx": "spirit_tree",
    "ill": [
     "flame_preacher",
     0.5,
@@ -57830,6 +57852,7 @@
    ]
   },
   "e_star_well": {
+   "cast_vfx": "_elf_well",
    "ill": [
     "fog_doubles",
     0.5,
@@ -58042,6 +58065,7 @@
    ]
   },
   "e_ariadne_thread": {
+   "cast_vfx": "_elf_fate_thread",
    "ill": [
     "fog_voices",
     0.5,
@@ -58349,6 +58373,7 @@
    "pair": true
   },
   "e_twin_stars": {
+   "cast_vfx": "spirit_link",
    "ill": [
     "forge_act_0",
     0.5,
@@ -58651,6 +58676,7 @@
    "pair": true
   },
   "e_moon_bridge": {
+   "cast_vfx": "_elf_bridge",
    "ill": [
     "forge_act_1",
     0.5,
@@ -58824,6 +58850,7 @@
    "pair": true
   },
   "e_constellation": {
+   "cast_vfx": "_elf_constellation",
    "ill": [
     "forge_act_2",
     0.5,
@@ -59392,6 +59419,7 @@
    "pair": true
   },
   "e_guiding_star": {
+   "cast_vfx": "e_star_bolt",
    "ill": [
     "frog_gambler",
     0.5,
@@ -59571,6 +59599,7 @@
    ]
   },
   "e_grove_compass": {
+   "cast_vfx": "_elf_compass",
    "ill": [
     "ghost_forge",
     0.5,
@@ -59945,6 +59974,7 @@
    ]
   },
   "e_morning_star": {
+   "cast_vfx": "blessing",
    "ill": [
     "golem_awakening",
     0.5,
@@ -60240,6 +60270,7 @@
    ]
   },
   "e_dew": {
+   "cast_vfx": "rejuvenate",
    "ill": [
     "golem_core",
     0.5,
@@ -60522,6 +60553,7 @@
    ]
   },
   "e_fallen_leaf": {
+   "cast_vfx": "e_wither",
    "ill": [
     "golem_parts",
     0.5,
@@ -60706,6 +60738,7 @@
    }
   },
   "e_star_ash": {
+   "cast_vfx": "e_star_bolt",
    "ill": [
     "greedy_find",
     0.5,
@@ -61272,6 +61305,7 @@
    ]
   },
   "e_mirage": {
+   "cast_vfx": "vanish",
    "ill": [
     "guild_contract",
     0.5,
@@ -61512,6 +61546,7 @@
    ]
   },
   "e_sleep_mist": {
+   "cast_vfx": "e_sleep",
    "ill": [
     "guild_feast",
     0.5,
@@ -61810,6 +61845,7 @@
    ]
   },
   "e_last_star": {
+   "cast_vfx": "_elf_last_star",
    "ill": [
     "guild_toll",
     0.5,
@@ -62388,6 +62424,7 @@
    ]
   },
   "e_twoleaf": {
+   "cast_vfx": "spirit_tree",
    "ill": [
     "hammer_duel",
     0.5,
@@ -62986,6 +63023,7 @@
    }
   },
   "e_symbiosis": {
+   "cast_vfx": "spirit_link",
    "ill": [
     "hot_springs",
     0.5,
@@ -63257,6 +63295,7 @@
    ]
   },
   "e_ivy_graft": {
+   "cast_vfx": "_elf_graft",
    "ill": [
     "hungry_spirit",
     0.5,
@@ -63531,6 +63570,7 @@
    ]
   },
   "e_thorn_graft": {
+   "cast_vfx": "spirit_link",
    "ill": [
     "idol",
     0.5,
@@ -63806,6 +63846,7 @@
    ]
   },
   "e_moon_moss": {
+   "cast_vfx": "spirit_link",
    "ill": [
     "lava_dam",
     0.5,
@@ -64081,6 +64122,7 @@
    ]
   },
   "e_parasite_flower": {
+   "cast_vfx": "spirit_link",
    "ill": [
     "lava_raft",
     0.5,
@@ -64729,6 +64771,7 @@
    ]
   },
   "e_weapon_scythe": {
+   "cast_vfx": "_elf_moon_scythe",
    "art": "item_loop",
    "name": "Серп Луны",
    "cost": 0,
@@ -64790,6 +64833,7 @@
    "retain": true
   },
   "e_weapon_balance": {
+   "cast_vfx": "_elf_balance",
    "art": "unique_mirror_cloak",
    "name": "Равновесие",
    "cost": 0,
@@ -64849,6 +64893,7 @@
    "retain": true
   },
   "e_weapon_dawn": {
+   "cast_vfx": "_elf_dawn",
    "art": "item_blade",
    "name": "Заря",
    "cost": 0,
@@ -64909,6 +64954,7 @@
    "retain": true
   },
   "e_weapon_storm": {
+   "cast_vfx": "_elf_storm",
    "art": "item_bow",
    "name": "Гроза",
    "cost": 0,

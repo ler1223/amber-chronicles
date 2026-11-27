@@ -167,10 +167,14 @@ def art_layer(card):
     return pic
 
 
-def _text_fit(s, size, width):
-    """Кегль заголовка, чтобы влез в ширину (логическую — лица 512×768)."""
+def _text_fit(s, size, width, height):
+    """Кегль заголовка по ширине и высоте ленты."""
     from .cardface import title_font
-    while size > 14 and title_font(size).size(s)[0] > width:
+
+    while size > 14:
+        font = title_font(size)
+        if font.size(s)[0] <= width and font.render(s, True, INK).get_bounding_rect().height <= height:
+            break
         size -= 1
     return size
 
@@ -191,9 +195,11 @@ def text_clipped(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Не обрежется ли основной текст карты на лице даже минимальным кеглем."""
     if not available() or card.levels:
         return False
+    from .cardface import title_style
+
     lit = frozenset(lit or ())
-    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok,
-           card.lvl, card.spirit_rank, lit,
+    key = (title_style(), card.cid, id(card.d), tuple(card.picks), card.uses, card.ready, card.insight_misses,
+           main_ok, alt_ok, card.lvl, card.spirit_rank, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     if key in _clip_cache:
         return _clip_cache[key]
@@ -277,7 +283,7 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
     text, alt = pygame.Rect(m["text"]), pygame.Rect(m["alt"])
     # имя — на ленте
     ban = pygame.Rect(m["banner"]) if m.get("banner") else pygame.Rect(40, m["window"][1] + m["window"][3], 432, 40)
-    size = _text_fit(card.name, 40, int(ban.w * 0.7))
+    size = _text_fit(card.name, 40, int(ban.w * 0.7), max(12, ban.h - 8))
     _lab(s, title_font, size, card.name, (240, 222, 180), center=(ban.centerx, ban.centery + 2))
     _lab(s, title_font, size, card.name, INK, center=ban.center)
     # теги — значки и слова на гравированной планке
@@ -427,8 +433,10 @@ def level_pips(card):
 
 def word_boxes(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
     """Где на лице 512×768 стоят выделенные слова: [(rect, слово, стиль)] — для наведения в режиме чтения."""
+    from .cardface import title_style
+
     lit = frozenset(lit or ())
-    ck = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+    ck = (title_style(), card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
           card.spirit_rank, heat, lit,
           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
     return _content(card, ck, main_ok, alt_ok, hot, heat, lit)[1]
@@ -437,12 +445,14 @@ def word_boxes(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
 def compose(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=None, width=None, _under=False):
     """Лицо 512×768 (или шириной width пикселей: рамки и рисунок уменьшаются, текст пишется сразу в этом
     размере — читается). tilt (x, y) в −1…1 — наклон: слои сдвигаются по глубине."""
+    from .cardface import title_style
+
     lit = frozenset(lit or ())
     tx, ty = tilt or (0.0, 0.0)
     ox, oy = round(tx * 6) / 6, round(ty * 6) / 6                 # шаг наклона — для кэша
     S = round(width / FW, 3) if width and abs(width - FW) > 2 else 1.0
     # _under — отдельный слой: иначе готовое лицо с текстом может подменить «рамку без текста» и текст удвоится.
-    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
+    key = (title_style(), card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
            card.spirit_rank, heat, lit,
            card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key(), ox, oy, S, _under)
     if key in _faces:

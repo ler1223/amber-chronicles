@@ -382,7 +382,7 @@ def test_escape_pause_is_available_outside_battle_and_never_in_battle():
     assert isinstance(g.scene, MapScreen)
     g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
     assert g.pause is not None
-    assert [key for _, key in g.pause.options] == ["resume", "abandon", "quit"]
+    assert [key for _, key in g.pause.options] == ["resume", "abandon", "quit", "settings"]
     g.pause.choose("resume")
     assert g.pause is None
 
@@ -399,6 +399,50 @@ def test_escape_pause_is_available_outside_battle_and_never_in_battle():
     g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
     g.pause.choose("quit")
     assert g.quit_requested
+
+
+def test_descent_font_settings_update_cached_titles_and_persist(tmp_path, monkeypatch):
+    from deck import cardface as CF, skin
+    from deck.game import DescentGame
+    from ui import settings, theme
+
+    values = dict(settings.DEFAULTS)
+    monkeypatch.setattr(settings, "SETTINGS", values)
+    monkeypatch.setattr(settings, "PATH", str(tmp_path / "settings.json"))
+    game = DescentGame(seed=2, gd=ED)
+    game.start_run("merc")
+    card = game.run.deck[0]
+    assert CF.title_style() == "underdog"
+    original = CF.face(card)
+    title = skin.outlined("Лунная стрела", 24, (255, 244, 220), title=True)
+    body = skin.outlined("Получить 4 защиты", 18, (255, 244, 220))
+    with theme.use_fonts(CF.title_style(), CF.font):
+        interface = theme.render("Колода", 18, theme.TEXT)
+    key = lambda value: game.handle(pygame.event.Event(pygame.KEYDOWN, key=value))
+    key(pygame.K_ESCAPE)
+    key(pygame.K_4)
+    assert game.pause.show_settings
+    key(pygame.K_2)
+    assert CF.title_style() == "marck_script"
+    assert CF.face(card) is not original
+    assert skin.outlined("Лунная стрела", 24, (255, 244, 220), title=True) is not title
+    assert skin.outlined("Получить 4 защиты", 18, (255, 244, 220)) is not body
+    with theme.use_fonts(CF.title_style(), CF.font):
+        assert theme.render("Колода", 18, theme.TEXT) is not interface
+    key(pygame.K_3)
+    assert settings.load()["descent_font"] == "comforter_brush"
+    key(pygame.K_1)
+    assert CF.face(card) is original
+    game.handle(pygame.event.Event(pygame.MOUSEWHEEL, y=-20))
+    assert game.pause.font_offset == game.pause.font_max_offset
+    game.draw(pygame.Surface((1280, 800)))
+    tile = next(r for r, style in game.pause.rects if style == "pt_serif")
+    game.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=tile.center))
+    assert CF.title_style() == "pt_serif"
+    key(pygame.K_ESCAPE)
+    assert not game.pause.show_settings
+    key(pygame.K_ESCAPE)
+    assert game.pause is None
 
 
 def test_card_faces_differ_and_have_art():
