@@ -77,7 +77,8 @@ def kind(card):
 
 
 def back(hero):
-    return img(f"back_{hero}.png")
+    """Рубашка героя; у эльфа пока общая лесная (back_hunter)."""
+    return img(f"back_{hero}.png") or img("back_hunter.png")
 
 
 # ---------- слои по типу карты (кэш) ----------
@@ -183,6 +184,45 @@ def _fits(rich, measure, txt, rect, size, sc):
                 max(6, round(size * sc)), (0, 0, 0)) / sc
 
 
+_clip_cache = {}
+
+
+def text_clipped(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
+    """Не обрежется ли основной текст карты на лице даже минимальным кеглем."""
+    if not available() or card.levels:
+        return False
+    lit = frozenset(lit or ())
+    key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok,
+           card.lvl, card.spirit_rank, lit,
+           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key())
+    if key in _clip_cache:
+        return _clip_cache[key]
+    from . import model as M
+    from .cardface import _MEASURE, rich
+    d = card.d
+    inner = pygame.Rect(meta()[kind(card)]["text"]).inflate(-44, -14)
+    extra = M.card_extras(d, lit)
+    preview = card.preview or {}
+    txt = (M.phrase(d["main"], d.get("exhaust"), lit, preview=preview.get("main")) +
+           (" " + extra if extra else "")).strip()
+    size = 38
+    while size > 18 and _fits(rich, _MEASURE, txt, inner, size, 1.0) > inner.h:
+        size -= 1
+    result = _fits(rich, _MEASURE, txt, inner, size, 1.0) > inner.h
+    if not result and d["alt"].get("target") != "none":
+        alt = pygame.Rect(meta()[kind(card)]["alt"])
+        ar = pygame.Rect(12, 18, alt.w - 24, alt.h - 20)
+        atxt = M.phrase(d["alt"], preview=preview.get("alt"))
+        asize = 28
+        while asize > 16 and _fits(rich, _MEASURE, atxt, ar, asize, 1.0) > ar.h:
+            asize -= 1
+        result = _fits(rich, _MEASURE, atxt, ar, asize, 1.0) > ar.h
+    if len(_clip_cache) > 200:
+        _clip_cache.clear()
+    _clip_cache[key] = result
+    return result
+
+
 def _lab(s, make, size, text, color, center=None, topleft=None, shadow=None, offs=((2, 2),)):
     """Надпись на лице: на холсте лица (gfx.FaceCanvas) — сразу кеглем ×S, чётко. Возвращает логический rect."""
     sc = s.S if G.is_canvas(s) else 1.0
@@ -281,7 +321,7 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
         from .cardface import _MEASURE
         while size > 18 and _fits(rich, _MEASURE, txt, inner, size, sc) > inner.h:
             size -= 1
-        rich(s, txt, inner, size, (236, 228, 212), dim=not main_ok and not react, boxes=boxes)
+        rich(s, txt, inner, size, (236, 228, 212), dim=not main_ok and not react, boxes=boxes, clip=True)
     # простое — вверх ногами
     if canvas:
         strip_px = pygame.Surface((round(alt.w * sc), round(alt.h * sc)), pygame.SRCALPHA)
@@ -301,7 +341,7 @@ def _content_draw(s, card, main_ok, alt_ok, hot, heat, lit):
         from .cardface import _MEASURE
         while size > 16 and _fits(rich, _MEASURE, txt, ar, size, sc) > ar.h:
             size -= 1
-        rich(strip, txt, ar, size, ALT_TEXT, dim=not alt_ok, boxes=alt_boxes)
+        rich(strip, txt, ar, size, ALT_TEXT, dim=not alt_ok, boxes=alt_boxes, clip=True)
     if canvas:
         s.native.blit(pygame.transform.rotate(strip_px, 180), (round(alt.x * sc), round(alt.y * sc)))
     else:
@@ -401,14 +441,15 @@ def compose(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=(), tilt=
     tx, ty = tilt or (0.0, 0.0)
     ox, oy = round(tx * 6) / 6, round(ty * 6) / 6                 # шаг наклона — для кэша
     S = round(width / FW, 3) if width and abs(width - FW) > 2 else 1.0
+    # _under — отдельный слой: иначе готовое лицо с текстом может подменить «рамку без текста» и текст удвоится.
     key = (card.cid, tuple(card.picks), card.uses, card.ready, card.insight_misses, main_ok, alt_ok, hot, card.lvl,
            card.spirit_rank, heat, lit,
-           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key(), ox, oy, S)
+           card.divine["id"] if card.divine else None, repr(card.alt_up), card.preview_key(), ox, oy, S, _under)
     if key in _faces:
         return _faces[key]
     t = kind(card)
     m = meta()[t]
-    ck = key[:-3]
+    ck = key[:-4]
     if S != 1.0:                                                  # под размер на экране
         W, H = round(FW * S), round(FH * S)
         under = compose(card, main_ok, alt_ok, False, heat, lit, tilt, None, _under=True)

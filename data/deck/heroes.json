@@ -836,14 +836,16 @@
    "starter": [
     "e_basic_attack",
     "e_basic_attack",
+    "e_basic_attack",
+    "e_basic_defense",
     "e_basic_defense",
     "e_basic_defense",
     "e_basic_move",
     "e_basic_move",
     "e_call_fae",
+    "e_firefly",
     "e_moon_arrow",
-    "e_moon_shield",
-    "e_astral_step"
+    "e_moon_shield"
    ],
    "rewards": [
     "e_call_fae",
@@ -907,7 +909,8 @@
     "defense": "e_basic_defense",
     "movement": "e_basic_move"
    },
-   "reward_guarantee": {}
+   "reward_guarantee": {},
+   "art_sprite": "elf"
   }
  },
  "tokens": [

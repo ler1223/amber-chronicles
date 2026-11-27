@@ -7,7 +7,8 @@ python descent.py --screenshot out.png [--seconds 2]  — без окна: ка�
 
 Бой: тяните карту на цель — ЛКМ основное применение (за энергию), ПКМ простое (бесплатно: шаг, слабый удар, малая
 защита); или клик по карте, затем по цели. Space — конец хода. Наведите на врага — его намерение и ход.
-Карта этажа: клик по узлу или 1–3, D — колода.
+Карта этажа: клик по узлу или 1–3, D — колода. Esc — назад/пауза с выходом из забега или игры;
+в бою Esc только закрывает чтение и снимает выбор — выйти из боя нельзя.
 """
 import argparse
 import os
@@ -73,6 +74,9 @@ def main():
                     d["rel"] = (int(d["rel"][0] / canvas.S), int(d["rel"][1] / canvas.S))
                 ev = pygame.event.Event(ev.type, d)
             game.handle(ev)
+            if game.quit_requested:
+                pygame.quit()
+                return
         game.update(dt)
         screen.fill((10, 8, 6))
         with G.native(canvas):

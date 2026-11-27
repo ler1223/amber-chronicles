@@ -7,11 +7,11 @@ from tests.test_map_keys import start
 
 def test_settings_survive_reload(tmp_path):
     from ui import settings
-    settings.SETTINGS["sprite_res"] = 64
+    settings.SETTINGS["sprite_res"] = 128
     settings.save()
     settings.SETTINGS["sprite_res"] = 32
     settings.load()
-    assert settings.SETTINGS["sprite_res"] == 64
+    assert settings.SETTINGS["sprite_res"] == 128
     assert settings.PATH.startswith(str(tmp_path))          # тесты не пишут в save/settings.json игрока
 
 

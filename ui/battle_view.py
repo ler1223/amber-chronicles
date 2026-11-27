@@ -273,8 +273,9 @@ class BattleView:
         return P.ground_to_flat(*self.ground_pos(u))
 
     def depth(self, u):
-        """Масштаб фигурки по глубине: ближе к камере — крупнее."""
-        return P.scale_at(self.ground_pos(u)[1])
+        """Масштаб фигурки по глубине: ближе к камере — крупнее; герой «Спуска» — заметно крупнее сетки."""
+        k = P.scale_at(self.ground_pos(u)[1])
+        return k * getattr(self, "hero_scale", 1.0) if u.team == PLAYER and not u.obj else k
 
     def scaled(self, img, k):
         """Спрайт в масштабе глубины (ступени по 0.04 — кэш не раздувается, пиксели остаются чёткими)."""
@@ -1886,7 +1887,7 @@ class BattleView:
         hz = self.height_at                              # «Спуск»: неплоская земля — декор стоит на ней
         for gx, gy, kind, col, vk, flip in self.painter.props(c):
             x, y, k = P.project(gx, gy, hz(gx, gy) if hz else 0.0)
-            if -120 < x < T.SCREEN_W + 120 and -40 < y < T.SCREEN_H + 200:
+            if -120 < x < getattr(scene, "W", T.SCREEN_W) + 120 and -40 < y < T.SCREEN_H + 200:
                 items.append((y, 0, "prop", (x, y, k * vk, kind, col, gy, flip)))
         for u in c.units:
             if (scene.dragging and u is scene.picked) or u.id in self.gone or (u.obj and not u.alive) \

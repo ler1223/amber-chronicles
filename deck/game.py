@@ -10,7 +10,7 @@ from . import model as M
 from .battle import Battle
 from .relic_run import CREST, RELICS as RUN_RELICS, tagged_candidates, tagged_card
 from .sound import SoundPanel
-from .ui import BattleScreen, ChoiceScreen, DeckScreen, EndScreen, HeroSelect, MapScreen, ShopScreen
+from .ui import BattleScreen, ChoiceScreen, DeckScreen, EndScreen, HeroSelect, MapScreen, PauseMenu, ShopScreen
 
 CAMP_HEAL = 0.3
 
@@ -28,12 +28,40 @@ class DescentGame:
         self.data = M.load()
         self.sound = SoundPanel()                         # F10: громкость музыки поверх любого экрана
         self.run = None
+        self.pause = None                                 # меню Esc поверх небатальных экранов
+        self.quit_requested = False
         self.new_run()
 
     def new_run(self):
         """Новый забег — с выбора героя."""
         audio.set_context("menu")
+        self.run = None
+        self.node = None
+        self.frame = None
+        self.pause = None
         self.scene = HeroSelect(self)
+
+    def abandon_run(self):
+        """Выйти из забега в выбор героя (сохранение удаляется)."""
+        if self.run is not None:
+            self.end_run()
+        self.run = None
+        self.node = None
+        self.frame = None
+        self.pause = None
+        self.new_run()
+
+    def open_pause(self):
+        """Esc вне боя: пауза с выходом из забега/игры."""
+        if self.pause is not None or isinstance(self.scene, BattleScreen):
+            return
+        opts = [("Продолжить", "resume")]
+        if isinstance(self.scene, EndScreen):
+            opts.append(("В главное меню", "menu"))
+        elif self.run is not None and self.run.hp > 0:
+            opts.append(("Выйти из забега", "abandon"))
+        opts.append(("Выйти из игры", "quit"))
+        self.pause = PauseMenu(self, opts)
 
     def start_run(self, hero="merc", variant=None, starter=None):
         self.run = M.Run(data=self.data, seed=self.seed, hero=hero, variant=variant, starter=starter)
@@ -43,10 +71,10 @@ class DescentGame:
     def open_starter(self, hero, variant=None):
         """Выбор стартовой колоды: 6 базовых + 4 карты первого тира.
 
-        Жрец — исключение: у него своя колода свитков и своя механика статуй,
-        поэтому экран сборки ему не показывается.
+        Жрец и Эльф — исключения: у них своя готовая колода и своя механика,
+        поэтому экран сборки им не показывается.
         """
-        if (self.data["heroes"]["heroes"].get(hero) or {}).get("mechanic") == "idols":
+        if (self.data["heroes"]["heroes"].get(hero) or {}).get("mechanic") in ("idols", "fae"):
             self.start_run(hero, variant)
             return
         from .ui import StarterDeckScreen
@@ -108,7 +136,10 @@ class DescentGame:
             self.scene.toast = (toast, 3.0)
 
     def hero_img(self, sprite=None, k=0.7):
-        sprite = sprite or self.run.sprite
+        run = getattr(self, "run", None)
+        if sprite is None and run is not None:
+            sprite = run.hero.get("art_sprite", run.sprite)
+        sprite = sprite or "warrior"
         if (sprite, k) not in self._imgs:
             from game.expedition_scenes import hero_sprite
             self._imgs[(sprite, k)] = hero_sprite(self.gd, sprite, k)
@@ -163,6 +194,7 @@ class DescentGame:
 
     def start_battle(self, fight):
         run = self.run
+        self.pause = None                                 # в бою пауза-выход недоступна
         audio.set_context("boss" if (self.node or {}).get("type") == "boss" else "battle")
         b = Battle(self.gd, run, fight, seed=(self.seed or 0) * 1000 + run.depth * 50 + len(run.floor.path))
         self.scene = BattleScreen(self, b)
@@ -397,6 +429,9 @@ class DescentGame:
     # ---------- цикл ----------
 
     def handle(self, ev):
+        if self.pause is not None:
+            self.pause.handle(ev)
+            return
         if self.sound.handle(ev):                         # F10 / панель звука поверх сцены
             return
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F2:
@@ -405,10 +440,13 @@ class DescentGame:
         self.scene.handle(ev)
 
     def update(self, dt):
-        self.scene.update(dt)
+        if self.pause is None:
+            self.scene.update(dt)
 
     def draw(self, surf):
         self.scene.draw(surf)
+        if self.pause is not None:
+            self.pause.draw(surf)
         self.sound.draw(surf)
         if isinstance(self.scene, BattleScreen) and (self.scene.b.result or self.frame is None):
             self.frame = surf.copy()                        # фон под наградой — кадр конца боя

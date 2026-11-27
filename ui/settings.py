@@ -20,7 +20,7 @@ OPTIONS = [
     ("zoom", "Зум камеры", [False, True], ["выкл", "вкл"]),
     ("window", "Окно (F11 — полный экран)", ["auto", "1280x800", "1600x1000", "1920x1200", "fullscreen"],
      ["по экрану", "1280×800", "1600×1000", "1920×1200", "полный экран"]),
-    ("sprite_res", "Детализация моделей", [16, 32, 64], ["низкая (16 px)", "обычная (32 px)", "высокая (64 px)"]),
+    ("sprite_res", "Детализация моделей", [16, 32, 128], ["низкая (16 px)", "обычная (32 px)", "высокая (128 px)"]),
     ("fx_alpha", "Прозрачность эффектов боя", [1.0, 0.75, 0.5, 0.3], ["нет", "лёгкая", "средняя", "сильная"]),
     ("text_status", "Надписи: криты и состояния", [True, False], ["вкл", "выкл"]),
     ("text_skills", "Надписи: названия навыков", [True, False], ["вкл", "выкл"]),
@@ -64,6 +64,8 @@ def load(path=None):
         for key, _, values, _ in OPTIONS:
             if d.get(key) in values:
                 SETTINGS[key] = d[key]
+        if d.get("sprite_res") == 64:                    # старый максимум → новый x4-герой
+            SETTINGS["sprite_res"] = 128
         if isinstance(d.get("battle_speed"), int) and not isinstance(d["battle_speed"], bool):
             SETTINGS["battle_speed"] = d["battle_speed"]     # скорость боя: индекс в config.speeds, без пункта меню
     except (OSError, ValueError):

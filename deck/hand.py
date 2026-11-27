@@ -33,6 +33,7 @@ class Sprite:
         self.order = 0
         self.tilt = (0.0, 0.0)   # наклон для объёма рамки (слои сдвигаются по глубине), −1…1
         self.age = 0.0           # сколько живёт в руке: только что взятая — рубашкой вверх
+        self.back_only = False   # всегда рубашкой (полёт части в стопку)
         self.f = 0.0             # поворот переворота (0 — основное сверху, 180 — простое), отдельно от пружины
         self.f0 = self.ft = 0.0
         self.fp = 1.0            # ход переворота 0..1
@@ -120,6 +121,9 @@ class HandView:
         for i, c in enumerate(hand):
             sp = self.sprites.get(c.uid)
             if sp is None or c.uid == self.drag:
+                continue
+            if getattr(sp, "merge_hold", False):              # оружие ждёт конца слияния
+                sp.tx, sp.ty, sp.ts = sp.x, sp.y, sp.s
                 continue
             k = i - mid
             x = cx + k * step
@@ -230,7 +234,7 @@ class HandView:
                    sp.card.lvl, sp.card.spirit_rank, st, zoom, sp.card.preview_key())
             face = self.cache.get(key)
             tilted = self.face_tilt is not None and abs(sp.tilt[0]) + abs(sp.tilt[1]) > 0.05
-            if self.back is not None and sp.age < 0.22 and not sp.fly:          # только что из колоды — рубашкой
+            if self.back is not None and (sp.back_only or (sp.age < 0.22 and not sp.fly)):  # рубашкой
                 face = self.back
             elif tilted:                                                        # объём: слои по наклону
                 face = self.face_tilt(sp.card, st, sp.tilt, zoom)

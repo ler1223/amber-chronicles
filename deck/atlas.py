@@ -11,7 +11,7 @@ from . import cardface as CF
 from . import gfx as G
 from . import model as M
 from .items import RARITY_COLOR, RARITY_NAME, about
-from .ui import Inspector, backdrop, button, draw_item_icon
+from .ui import Inspector, backdrop, button, draw_item_icon, wide_layout
 
 FILTERS = [
     ("all", "Все"),
@@ -50,6 +50,7 @@ class CardAtlasScreen:
         self.reading = None
         self.filter_rects = []
         self.card_rects = []
+        self.W = T.SCREEN_W
         self.back_rect = pygame.Rect(T.SCREEN_W - 250, T.SCREEN_H - 54, 220, 38)
         self._filter_cache = {}
         self._thumbs = {}
@@ -111,7 +112,7 @@ class CardAtlasScreen:
     def _layout_filters(self):
         gap = 6
         w = 124
-        x0 = (T.SCREEN_W - (len(FILTERS) * w + (len(FILTERS) - 1) * gap)) // 2
+        x0 = (self.W - (len(FILTERS) * w + (len(FILTERS) - 1) * gap)) // 2
         self.filter_rects = [(pygame.Rect(x0 + i * (w + gap), 78, w, 34), key, label)
                              for i, (key, label) in enumerate(FILTERS)]
 
@@ -124,7 +125,7 @@ class CardAtlasScreen:
         self.max_scroll = max(0, total - view_h)
         self.scroll_target = max(0.0, min(self.scroll_target, float(self.max_scroll)))
         self.scroll = max(0.0, min(self.scroll, float(self.max_scroll)))
-        x0 = (T.SCREEN_W - (COLS * CW + (COLS - 1) * GAP)) // 2
+        x0 = (self.W - (COLS * CW + (COLS - 1) * GAP)) // 2
         out = []
         for i, card in enumerate(cards):
             y = GRID_TOP + (i // COLS) * (card_h + GAP) - round(self.scroll)
@@ -195,8 +196,9 @@ class CardAtlasScreen:
                 self.reading.mouse = ev.pos
 
     def draw(self, surf):
-        self.back_rect.right = T.SCREEN_W - 30
-        mid = T.SCREEN_W // 2
+        self.W = wide_layout(surf)[0]
+        self.back_rect.right = self.W - 30
+        mid = self.W // 2
         self.tab_rects = [(pygame.Rect(mid - 164, 20, 160, 38), "cards", "Атлас карт"),
                           (pygame.Rect(mid + 4, 20, 160, 38), "items", "Атлас предметов")]
         backdrop(surf, 210)
@@ -221,8 +223,8 @@ class CardAtlasScreen:
             pygame.draw.rect(surf, T.AMBER if active else T.PANEL_EDGE, r, 2 if active else 1, border_radius=7)
             T.text(surf, label, r.center, 15, T.TEXT if active else T.TEXT_DIM, True, center=True)
         T.text(surf, f"{len(cards)} карт · клик — открыть · Shift — закрепить",
-               (T.SCREEN_W // 2, 129), 14, T.TEXT_DIM, center=True)
-        clip = pygame.Rect(18, GRID_TOP, T.SCREEN_W - 36, T.SCREEN_H - GRID_TOP - GRID_BOTTOM)
+               (self.W // 2, 129), 14, T.TEXT_DIM, center=True)
+        clip = pygame.Rect(18, GRID_TOP, self.W - 36, T.SCREEN_H - GRID_TOP - GRID_BOTTOM)
         surf.set_clip(clip)
         for r, card in self.card_rects:
             hot = r.collidepoint(self.mouse)
@@ -236,10 +238,10 @@ class CardAtlasScreen:
                 pygame.draw.rect(surf, T.SELECT, r.inflate(6, 6), 2, border_radius=8)
         surf.set_clip(None)
         if not self.card_rects:
-            T.text(surf, "В этом фильтре карт нет", (T.SCREEN_W // 2, T.SCREEN_H // 2), 20,
+            T.text(surf, "В этом фильтре карт нет", (self.W // 2, T.SCREEN_H // 2), 20,
                    T.TEXT_DIM, center=True)
         if self.max_scroll:
-            track = pygame.Rect(T.SCREEN_W - 17, GRID_TOP, 7, T.SCREEN_H - GRID_TOP - GRID_BOTTOM)
+            track = pygame.Rect(self.W - 17, GRID_TOP, 7, T.SCREEN_H - GRID_TOP - GRID_BOTTOM)
             pygame.draw.rect(surf, (30, 24, 18), track, border_radius=4)
             h = max(28, round(track.h * (T.SCREEN_H - GRID_TOP - GRID_BOTTOM) /
                               max(1, T.SCREEN_H - GRID_TOP - GRID_BOTTOM + self.max_scroll)))
@@ -292,10 +294,11 @@ class ItemAtlas:
     def draw(self, surf):
         items = self.filtered()
         mouse = self.atlas.mouse
-        x = (T.SCREEN_W - 1200) // 2
+        sw = self.atlas.W
+        x = (sw - 1200) // 2
         self.viewport = pygame.Rect(x, GRID_TOP, 764, T.SCREEN_H - GRID_TOP - GRID_BOTTOM)
         filters_width = len(ITEM_FILTERS) * 124
-        left = (T.SCREEN_W - filters_width) // 2
+        left = (sw - filters_width) // 2
         self.filters = [(pygame.Rect(left + i * 124, 78, 118, 34), key, label)
                         for i, (key, label) in enumerate(ITEM_FILTERS)]
         for r, key, label in self.filters:

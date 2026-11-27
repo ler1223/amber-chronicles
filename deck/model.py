@@ -49,6 +49,20 @@ def card_rules(d):
     return frozenset(rules)
 
 
+def exhaust_limit(rules):
+    """Через сколько основных розыгрышей карта изгоняется: None, 1, 2, 3…"""
+    limit = None
+    for rule in rules:
+        if rule == "exhaust":
+            limit = max(limit or 0, 1)
+        elif rule.startswith("exhaust_"):
+            try:
+                limit = max(limit or 0, int(rule.split("_", 1)[1]))
+            except ValueError:
+                pass
+    return limit
+
+
 def card_reactions(d, event):
     declared = d.get("reactions", {})
     if event in declared:
@@ -153,6 +167,11 @@ def _signed(v):
     return ("+" if v > 0 else "−") + str(abs(v))
 
 
+def _fae_tok(v):
+    """Значок фей в тексте: ^+2 — прибавка, ^-1 — трата; рисуется иконкой."""
+    return "^" + (f"+{v}" if v >= 0 else str(v))
+
+
 def _low(s):
     """Первая буква (после разметки *, ~) — строчная; остальное как есть."""
     for i, ch in enumerate(s):
@@ -234,7 +253,7 @@ def _op_phrase(op, dmg=None):
     if t == "fae_ring":
         return f"Создать *фейное кольцо* на {_n(n or 3)} хода."
     if t == "blueprint":
-        return f"*Чертёж*: создать {_n(3)} части оружия в руке."
+        return "*Чертёж*: рассыпать части оружия по колоде и сбросу."
     if t == "execute_below":
         return f"*Казнь*: цель ниже {_n(n)}% HP погибает."
     if t == "discard_hand":
@@ -247,14 +266,26 @@ def _op_phrase(op, dmg=None):
         per = op["per"]
         if t == "pull":
             return f"*Притянуть* на {_n(n)}, ещё {_n(per.get('k', 1))} {per_text(per)}."
-        word = {"damage": "урона", "block": "*защиты*", "bleed": "*кровотечения*", "burn": "*горения*",
-                "poison": "*яда*", "mark": "*метки*", "heal": "*лечения*", "counter": "*контратаки*",
-                "fae": "*фей*"}.get(t, t)
+        if per.get("what") != "fae":
+            word = {"damage": "урона", "block": "*защиты*", "bleed": "*кровотечения*", "burn": "*горения*",
+                    "poison": "*яда*", "mark": "*метки*", "heal": "*лечения*",
+                    "counter": "*контратаки*"}.get(t, t)
+            verb = {"damage": "Нанести", "block": "Получить", "heal": "Восстановить",
+                    "counter": "Получить"}.get(t, "Наложить")
+            shown = _dmg(dmg) if t == "damage" and dmg is not None else _n(n)
+            head = f"{verb} {shown} {word}" if n else f"{verb} {word}"
+            return f"{head}: {_n('+' + str(per.get('k', 1)))} {per_text(per)}."
+        word = {"damage": "урона", "block": "защиты", "bleed": "кровотечения", "burn": "горения",
+                "poison": "яда", "mark": "метки", "heal": "лечения", "counter": "контратаки",
+                "fae": "фея"}.get(t, t)
         verb = {"damage": "Нанести", "block": "Получить", "heal": "Восстановить", "counter": "Получить",
                 "fae": "Получить"}.get(t, "Наложить")
-        shown = _dmg(dmg) if t == "damage" and dmg is not None else _n(n)
-        head = f"{verb} {shown} {word}" if n else f"{verb} {word}"
-        return f"{head}: {_n('+' + str(per.get('k', 1)))} {per_text(per)}."
+        shown = _dmg(dmg) if t == "damage" and dmg is not None else (f"^{n:+d}" if t == "fae" else _n(n))
+        head = f"{verb} {shown} {word}" if n else ""
+        k = per.get("k", 1)
+        add = ("^" + f"+{k}") if t == "fae" else _n("+" + str(k))
+        tail = (f"За каждые {_n(per['div'])} фей" if per.get("div") else "За фею") + f": {add} {word}."
+        return f"{head}. {tail}" if head else tail
     if t == "damage":
         shown = _dmg(dmg) if dmg is not None else _n(n)
         s = f"Нанести {shown} урона"
@@ -336,8 +367,8 @@ def _op_phrase(op, dmg=None):
         "heat_regen": lambda: f"В начале хода {_n('+' + str(n))} *жар*.",
         "keep_momentum": lambda: "*Разгон* больше не гаснет в конце хода.",
         "momentum": lambda: f"{_n('+' + str(n))} *разгона*.",
-        "fae": lambda: f"{_n('+' + str(n))} *феи*.",
-        "spend_fae": lambda: f"Потратить {_n(n)} *фей*.",
+        "fae": lambda: f"Получить {_fae_tok(n)}.",
+        "spend_fae": lambda: f"Потратить {_fae_tok(-n)}.",
         "plant": lambda: "*Посадить растение*.",
         "attach": lambda: "*Привить* к карте.",
         "aoe_adjacent": lambda: "Всем соседним врагам: " + _low(" ".join(_op_phrase(o) for o in op["do"])),
@@ -418,13 +449,14 @@ def cond_text(c, lit=False):
     """Условие разметкой: имя — золотом (выполнено — зелёным), [Тег] — голубым, число — крупно."""
     k = c["k"]
     mark = "~" if lit else "*"
+    if k in ("fae", "fae_min", "fae_before"):
+        return f"{mark}Порог{mark} {_n(c.get('n', 6))}"
     name = " ".join(f"{mark}{w}{mark}" for w in COND_NAMES[k].split())
     if k == "after":
         return f"{name} [{tag_label(c['tag'])}]"
     if k == "resonance":
         return f"{name} {tag_label(c['tag'])} {_n(c['n'])}"
-    if k in ("series", "far", "run", "momentum", "shielded", "fae", "fae_min", "fae_before", "second_fae",
-             "linked_hand"):
+    if k in ("series", "far", "run", "momentum", "shielded", "second_fae", "linked_hand"):
         return f"{name} {_n(c['n'])}"
     return name
 
@@ -516,7 +548,7 @@ def phrase(u, exhaust=False, lit=(), preview=None):
         parts.append(f"Выберите {cards}{what} в руке.")
     if u.get("line"):
         parts.append("*Только по прямой*.")
-    if u.get("pierce"):
+    if u.get("pierce") and not u.get("line_fae"):
         parts.append("*Пробивает всех на линии*.")
     parts += _ops_phrases(do, preview)
     for i, c in enumerate(u.get("if", [])):
@@ -533,6 +565,90 @@ def retain_phrase(d):
     return " ".join(_ops_phrases(card_reactions(d, "retained")))
 
 
+def _has_op(x, names):
+    """Есть ли в ветке описания действие с одним из имён."""
+    if isinstance(x, dict):
+        if x.get("op") in names:
+            return True
+        return any(_has_op(v, names) for v in x.values())
+    if isinstance(x, list):
+        return any(_has_op(v, names) for v in x)
+    return False
+
+
+def fae_generates(u):
+    """Карта-генератор: в основной части даёт фей и не бьёт/защищает/сажает/призывает."""
+    chunks = [u.get("do", [])]
+    power = u.get("power")
+    if isinstance(power, dict):
+        chunks.append(power.get("do", []))
+    gain = any(op.get("op") == "fae" and isinstance(op.get("n"), int) and op["n"] > 0
+               for do in chunks for op in do)
+    if not gain:
+        return False
+    martial = {"block", "heal", "plant", "beast", "attach", "blueprint"}
+    for do in chunks:
+        for op in do:
+            kind = op.get("op", "")
+            if kind in martial or kind.startswith("damage"):
+                return False
+    return True
+
+
+def fae_burn_value(u, card_type=None):
+    """Сколько фей сжигает усиленная карта: генераторы не тратят, атаки — 3+, защита — 2+."""
+    if fae_generates(u):
+        return 0
+    burn = u.get("fae_burn")
+    if burn == "all":
+        return burn
+    base = burn if isinstance(burn, int) else (3 if card_type == "attack" else 1)
+    if card_type == "attack":
+        return max(base, 3)
+    if _has_op(u.get("do", []), {"block"}) or _has_op(u.get("if", []), {"block"}):
+        return max(base, 2)
+    return base
+
+
+def fae_threshold(u):
+    """Порог усиленной версии карты: минимальный N среди условий/полей фей."""
+    nums = []
+    for c in u.get("if", []):
+        w = c.get("when", {}) if isinstance(c, dict) else {}
+        if w.get("k") in ("fae", "fae_min", "fae_before") and w.get("n"):
+            nums.append(int(w["n"]))
+    for key in ("radius_fae", "line_fae"):
+        val = u.get(key)
+        if isinstance(val, dict) and val.get("fae"):
+            nums.append(int(val["fae"]))
+        elif isinstance(val, int) and val:
+            nums.append(int(val))
+    if (u.get("step_thr") or {}).get("fae"):
+        nums.append(int(u["step_thr"]["fae"]))
+    if u.get("fae_thr"):
+        nums.append(int(u["fae_thr"]))
+    return min(nums) if nums else None
+
+
+def fae_empower_text(d):
+    """Строка усиления эльфа: сколько фей сжечь и что это даст."""
+    u = d.get("main") or {}
+    bonus = u.get("fae_bonus") or {}
+    threshold = fae_threshold(u)
+    burn = fae_burn_value(u, d.get("type"))
+    if not burn or not bonus or threshold is None:
+        return ""
+    spent = "^все" if burn == "all" else "^" + f"-{burn}"
+    words = {
+        "damage": "урона/фея", "block": "защиты/фея", "heal": "лечения/фея", "draw": "карта/фея",
+        "stack": "стак/фея", "growth": "рост/фея", "beast": "HP зверя/фея",
+        "duration": "ход кольца/фея", "fae": "фея/фея", "self_block": "защиты/фея",
+    }
+    parts = [f"+{rate} {words.get(kind, kind)}" for kind, rate in bonus.items()]
+    head = f"*Усиление*: порог {_n(threshold)}, " if u.get("fae_thr") else "*Усиление*: "
+    return head + f"сжечь {spent}: " + ", ".join(parts) + "."
+
+
 def card_extras(d, lit=()):
     """Свойства карты целиком (не применения): Отклик и Задел — строкой под основным текстом."""
     out = []
@@ -545,28 +661,11 @@ def card_extras(d, lit=()):
     if "retain" in card_rules(d):
         retained = retain_phrase(d)
         out.append(f"*Сохранение*: {_low(retained)}" if retained else "*Сохранение*.")
-    if "attachment" in {tag_id(t) for t in d.get("tags", ())}:
-        out.append("*Прививка*: прикрепите к карте в руке — она получит *Сохранение*.")
-    if d.get("blueprint"):
-        out.append("*Сборка*: когда все части в руке, оружие собирается само.")
-    if "unactivatable" in card_rules(d):
-        out.append("*Неактивируемая*: срабатывает только по событию.")
-    if "lead" in card_rules(d):
-        out.append("*Наведение*: в начале хода 50% шанс скидки 1; при 6 феях — всегда.")
-    if "initiation" in card_rules(d):
-        out.append("*Инициация*: в начале боя лежит на верху колоды.")
-    if "quietus" in card_rules(d):
-        out.append("*Квиетус*: при сбросе срабатывает и остаётся в Used до конца хода.")
-    if "blessing" in card_rules(d):
-        out.append("*Благословение*: при сбросе даёт защиту, если она ниже 30% HP.")
-    if "ephemeral" in card_rules(d):
-        out.append("*Мимолётная*: если осталась в руке, изгоняется в конце хода.")
-    if "finale" in card_rules(d):
-        out.append("*Финал*: после розыгрыша ход заканчивается.")
-    if "exhaust_2" in card_rules(d):
-        out.append("*Изгнание 2*: после второго розыгрыша карта изгоняется.")
+    empower = fae_empower_text(d)
+    if empower:
+        out.append(empower)
     if d.get("react"):
-        out.append("*Реакция*: самому не сыграть.")
+        out.append("*Реакция*.")
     if d.get("echo"):
         e = d["echo"]
         if e.get("when", {}).get("k") == "resonance":
@@ -643,6 +742,7 @@ TAG_LABELS = {
     "unique": "Уникальная",
     "initiation": "Инициация",
     "exhaust_2": "Изгнание 2",
+    "exhaust_3": "Изгнание 3",
     "ephemeral": "Мимолётная",
     "pulverize": "Дробление",
     "bullet": "Пуля",
@@ -876,6 +976,25 @@ GLOSSARY = [(name.lower(), name, effect + " " + STANCE_SWITCH) for name, effect,
     ("дар", "Дар", "Дар бога на карте — особое свойство (алтарь, награда стража), одно на карту. У свитка Жреца "
                         "Дар — смысл: бог усиливает Жреца или следующие свитки."),
     ("добыч", "Добыча", "Охотница (метка): по добыче +3 урона; добыча пала — +1 энергия, +1 карта, метка переходит."),
+    ("фе", "Феи", "0–10 стаков, не гаснут в конце хода. Избыток сверх 10 даёт защиту. ^+N — прибавка фей, ^-N — трата."),
+    ("порог", "Порог", "С какого количества фей включается усиленная версия карты. Ниже порога — базовый эффект, феи не тратятся."),
+    ("усилен", "Усиление", "На пороге карта сжигает фей: атаки — до 2, остальные — 1, особые — 3/4/всех. Атака получает +3 урона за каждую фею, остальные — свой бонус."),
+    ("прививк", "Прививка", "Карта крепится к другой карте в руке. Хозяин получает Сохранение, после его основной карты срабатывает прививка. На карте — только одна прививка или растение."),
+    ("сборк", "Сборка", "Части оружия лежат в руке с Сохранением. Когда все части собраны, они заменяются оружием; после розыгрыша оружие изгоняется."),
+    ("растен", "Растение", "Семя занимает клетку, имеет 2 HP и растёт в конце хода. При созревании срабатывает и исчезает; порог фей ускоряет рост."),
+    ("звер", "Зверь", "Призванный зверь занимает клетку и действует сам. Один живой зверь каждого вида; HP и сила фиксируются при призыве."),
+    ("поле", "Поле", "Карта создаёт объект или зону на поле: кольцо, семя, стену."),
+    ("чары", "Чары", "Школа заклинаний эльфа. Тег для условий и фильтров."),
+    ("наведен", "Наведение", "В начале хода 50% шанс скидки 1. При 6 феях скидка всегда."),
+    ("инициац", "Инициация", "В начале боя карта лежит на верху колоды."),
+    ("квиетус", "Квиетус", "При сбросе карта срабатывает и остаётся в Used до конца хода."),
+    ("благослов", "Благословение", "При сбросе даёт защиту, если текущая защита ниже 30% максимального HP."),
+    ("мимолёт", "Мимолётная", "Если карта осталась в руке в конце хода, она изгоняется."),
+    ("финал", "Финал", "После розыгрыша карта заканчивает ход."),
+    ("изгнание 2", "Изгнание 2", "После второго основного розыгрыша карта изгоняется."),
+    ("неактивир", "Неактивируемая", "Карту нельзя разыграть вручную: её эффекты срабатывают по событию."),
+    ("дроблен", "Дробление", "Урон по цели со щитом увеличен на 20%."),
+
 ]
 
 
@@ -911,6 +1030,14 @@ TAG_INFO = {
     "Дар": "Смысл свитка: статуя усиливает героя или следующий свиток.",
     "Призыв": "Смысл свитка: статуя зовёт слугу бога.",
     "Хор": "Свиток, который исполняют несколько статуй или который повторяется.",
+    "Фея": "Феи 0–10; карта усиливается на пороге и сжигает фей. ^+N — прибавка, ^-N — трата.",
+    "Чары": "Школа заклинаний эльфа.",
+    "Растение": "Семя на поле/карте; растёт и созревает.",
+    "Зверь": "Призванный помощник; один живой зверь каждого вида.",
+    "Связь": "Парная карта: пока в руке есть другая [Связь], обе получают бонус.",
+    "Прививка": "Крепится к карте в руке; срабатывает после её основной карты.",
+    "Поле": "Создаёт объект или зону на поле.",
+    "Сборка": "Части оружия собираются в руке в одно оружие.",
 }
 
 
@@ -949,6 +1076,7 @@ def keywords(card):
 
 def plain(s):
     """Разметка → обычный текст (журнал боя)."""
+    s = re.sub(r"\^([+-]?\d+|все)", lambda m: "феи " + m.group(1), s)
     return s.replace("{", "").replace("}", "").replace("*", "")
 
 

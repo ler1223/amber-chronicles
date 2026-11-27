@@ -1,0 +1,322 @@
+[
+  {
+    "sheet": "sheet_01.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_dodge",
+        "name": "Уклон"
+      },
+      {
+        "id": "h_backstep",
+        "name": "Шаг назад"
+      },
+      {
+        "id": "h_kick",
+        "name": "Пинок с отскоком"
+      },
+      {
+        "id": "h_aimed",
+        "name": "Прицельный выстрел"
+      },
+      {
+        "id": "h_shoot_roll",
+        "name": "Выстрел с перекатом"
+      },
+      {
+        "id": "h_volley",
+        "name": "Залп"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: two swept arcs around a training stake, wind carries teal and cream petals sideways in a sunlit glade.\nTOP MIDDLE: reversed sets of bootprints trace two paces back from a ledge, bright snowy blue and rust-orange berry bushes.\nTOP RIGHT: a shallow-leather boot and springy practice bolster shown separated above a curving track in ochre dust, apricot daylight.\nBOTTOM LEFT: one perfectly centered view down a fletched arrow at a straw bullseye set across a lavender field, dawn.\nBOTTOM MIDDLE: a rolled green cloak and arrow lying beside a round track pressed into golden grass, broad diagonals and clear daylight.\nBOTTOM RIGHT: a fan of six arrows flying toward a distant bank of straw targets against pale pink and cornflower-blue sky."
+  },
+  {
+    "sheet": "sheet_02.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_poison",
+        "name": "Отравленная стрела"
+      },
+      {
+        "id": "h_pin",
+        "name": "Пригвоздить"
+      },
+      {
+        "id": "h_long",
+        "name": "Выстрел издалека"
+      },
+      {
+        "id": "h_marking",
+        "name": "Метящий выстрел"
+      },
+      {
+        "id": "h_fill",
+        "name": "Полный колчан"
+      },
+      {
+        "id": "h_horn",
+        "name": "Охотничий азарт"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: one green-tinted arrowhead and a capped emerald vial on teal linen, mossy sun-dappled worktable.\nTOP MIDDLE: one long wooden arrow visibly holds a vermilion fabric corner to a straw training pad, pale moss-green background.\nTOP RIGHT: a lone arrow silhouetted between far-off yellow reeds over a sea-blue ravine, dramatic distant perspective.\nBOTTOM LEFT: a simple red ring newly painted on a pale wooden bullseye with one arrow centered nearby, soft spring daylight.\nBOTTOM MIDDLE: full leather quiver with cream feathered arrows seen from a three-quarter angle, ripe ochre fields and clear blue sky.\nBOTTOM RIGHT: antler hunting horn with one green ribbon beside sunlit lilacs on a balcony, bright sand and aqua."
+  },
+  {
+    "sheet": "sheet_03.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_trap",
+        "name": "Капкан"
+      },
+      {
+        "id": "h_focus",
+        "name": "Сосредоточение"
+      },
+      {
+        "id": "h_last",
+        "name": "Последняя стрела"
+      },
+      {
+        "id": "h_trail",
+        "name": "Ложный след"
+      },
+      {
+        "id": "h_brush",
+        "name": "Укрытие в зарослях"
+      },
+      {
+        "id": "h_herbs",
+        "name": "Целебные травы"
+      }
+    ],
+    "prompt": "A single 1536×1024 landscape sheet, exactly 3 equal columns and 2 equal rows, six unrelated videogame environment and still life pictures. Hard pixel clusters, crisp square pixels at about 192×128 logical per picture, selective dithering, nostalgic ecological fantasy adventure, like a vintage pixel-art forest field guide. Keep each panel's main shape in the middle with room around it. Small dark gutters. No typography, no icons or human figures. Top left: a dewdrop caught in the geometric center of a mossy spider web over an ochre leaf on a bright frosty meadow, copper and sage. Top middle: a glass lens concentrating warm sun into a luminous dot on a smooth river stone, cobalt reflections and cream yellow. Top right: a single fallen white feather lying in an empty soft leather carrying case at twilight, apricot rim light and dusty violet shadows. Bottom left: animal tracks continue on the far bank as a stream forks around a sandbar, muted coral reflections under a clear teal sky. Bottom middle: a view outward from inside bright green dense fern fronds and pink fireweed, framing an empty woodland clearing. Bottom right: leaves of plantain and a small bundle of amber calendula petals drying beside a ceramic mortar on a bright windowsill. Give each panel a different arrangement and dominant color."
+  },
+  {
+    "sheet": "sheet_04.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_jagged",
+        "name": "Зазубренная стрела"
+      },
+      {
+        "id": "h_tendon",
+        "name": "В сухожилие"
+      },
+      {
+        "id": "h_pierce",
+        "name": "Бронебойная"
+      },
+      {
+        "id": "h_barrage",
+        "name": "Шквал стрел"
+      },
+      {
+        "id": "h_spikes",
+        "name": "Шипастая ловушка"
+      },
+      {
+        "id": "h_pit",
+        "name": "Волчья яма"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: one close overhead view of an old stylized jagged practice arrowhead resting on burgundy felt, cool silver and cream highlights.\nTOP MIDDLE: stretched natural fiber line fixed to a training board beside an arrow, diagonal green tension arcs, bright warm wood.\nTOP RIGHT: one steel display arrow centered above a dented copper practice plate, clear cyan shadows and rust daylight.\nBOTTOM LEFT: a wide triangular procession of many blue fletchings crossing down toward empty open targets, fresh spring green and sky pink.\nBOTTOM MIDDLE: a low thorny wooden obstacle built of planted diagonal stakes beside a mossy path in autumn sunlight, natural joints and bases.\nBOTTOM RIGHT: an obvious exposed earthen pit in a pine clearing with crumbled ledges and displaced straw nearby, turquoise shadows and pale sunlight."
+  },
+  {
+    "sheet": "sheet_05.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_net",
+        "name": "Ловчая сеть"
+      },
+      {
+        "id": "h_finish",
+        "name": "Добить подранка"
+      },
+      {
+        "id": "h_patience",
+        "name": "Затаить дыхание"
+      },
+      {
+        "id": "h_master_quiver",
+        "name": "Колчан мастера"
+      },
+      {
+        "id": "h_toxic",
+        "name": "Ядовитое облако"
+      },
+      {
+        "id": "h_deadeye",
+        "name": "Смертельный выстрел"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: an empty square training net stretched between two alder posts over pale clay, broad readable knots, yellow-green meadow.\nTOP MIDDLE: a straw buck target with one remnant of a torn red ribbon, one upright feather in the sunlight and no real creature.\nTOP RIGHT: a motionless cork float in an absolutely still pool, one pale ripple disappearing, mint and lilac dawn.\nBOTTOM LEFT: a finely made masterwork old leather quiver with brass edging, four different fletchings displayed in mint-blue daylight.\nBOTTOM MIDDLE: a low green-gray colored cloud curling over an empty stone clearing, dark evergreen trunks against daylit pale yellow.\nBOTTOM RIGHT: one slender silver feather in front of an unmarked distant straw bullseye, condensed ruby sunset, no animals or humans."
+  },
+  {
+    "sheet": "sheet_06.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_knife",
+        "name": "Охотничий нож"
+      },
+      {
+        "id": "h_lure",
+        "name": "Приманка"
+      },
+      {
+        "id": "h_scope",
+        "name": "Дальний прицел"
+      },
+      {
+        "id": "h_snipe",
+        "name": "Снайперский выстрел"
+      },
+      {
+        "id": "h_mark_burst",
+        "name": "Финальный выстрел"
+      },
+      {
+        "id": "h_mark_web",
+        "name": "Паутина меток"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: an old hunting utility knife displayed in its separate snug leather sheath on white birch bark, warm mustard sunlight and teal shade.\nTOP MIDDLE: a bundle of red berries and oats dangling from one correctly tied pale rope above a grassy path, daylit fern-green ground.\nTOP RIGHT: a period brass spotting tube on a working wooden tripod pointing over a broad high valley, gold grass and sky-blue noon.\nBOTTOM LEFT: a polished glass lens reflecting a far bright straw target, frame set into brown leather, sharp mauve shadow.\nBOTTOM MIDDLE: two earlier pale mark rings around one vivid final painted red center on a large target, rust clay and an orange afternoon sun.\nBOTTOM RIGHT: four red festival target markers connected by fine violet threads between trunks, cool blue noon and auburn leaf litter."
+  },
+  {
+    "sheet": "sheet_07.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_hunt",
+        "name": "Охотничий азарт"
+      },
+      {
+        "id": "h_echo_shot",
+        "name": "Эхо-стрела"
+      },
+      {
+        "id": "h_rapid",
+        "name": "Быстрый выстрел"
+      },
+      {
+        "id": "h_quiver_echo",
+        "name": "Эхо колчана"
+      },
+      {
+        "id": "h_arrow_well",
+        "name": "Дно колчана"
+      },
+      {
+        "id": "h_chain_1",
+        "name": "Первое эхо"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: wild red and yellow pennants flutter over a view of a bright distant field, contrasting vivid cyan sky.\nTOP MIDDLE: a single white-fletched arrow reflected in still water while pale repeating rings diverge outward, early violet dawn.\nTOP RIGHT: two colorful feather streaks close together cross behind an isolated pale target, white midday sunlight in verdant courtyard.\nBOTTOM LEFT: an open split-bottom quiver above two hard mirror echoes of its shape projected onto moss, apricot afternoon and teal.\nBOTTOM MIDDLE: the very bottom of a worn quiver seen from below at bench height, three pale arrows newly protrude, hazel gold and plum.\nBOTTOM RIGHT: one pale gold arc emitting from a single small brass bell hung above a straw target in bright meadow."
+  },
+  {
+    "sheet": "sheet_08.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_chain_2",
+        "name": "Второе эхо"
+      },
+      {
+        "id": "h_chain_3",
+        "name": "Третье эхо"
+      },
+      {
+        "id": "h_chain_finish",
+        "name": "Последнее эхо"
+      },
+      {
+        "id": "h_chain_draw",
+        "name": "Раскрыть колчан"
+      },
+      {
+        "id": "h_chain_song",
+        "name": "Песнь цепи"
+      },
+      {
+        "id": "h_chain_guard",
+        "name": "Тень за спиной"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: two orderly luminous arcs fitting around a tiny brass chime above an empty open field, muted grass green and cyan day.\nTOP MIDDLE: three luminous arcs above a row of wooden targets, from amber at left to lavender at right, distinct stable readable bands.\nTOP RIGHT: a final broken pale echo ring fading into a dark stone bank, sharp coral dusk reflections, one remaining arrow still.\nBOTTOM LEFT: a soft burgundy quiver opened flat with its lid visibly hinged, laid over a sunlit blue blanket and light grass.\nBOTTOM MIDDLE: a little hanging row of bells on an old braided rope resting at different heights, one amber glow and turquoise daylight.\nBOTTOM RIGHT: a green cloak casting a protective silhouette over a low silver buckler, violet shadow and pale yellow light, no wearer."
+  },
+  {
+    "sheet": "sheet_09.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_chain_mark",
+        "name": "Метка эха"
+      },
+      {
+        "id": "h_beat",
+        "name": "Загон"
+      },
+      {
+        "id": "h_stalk",
+        "name": "Преследование"
+      },
+      {
+        "id": "h_mark_hunt",
+        "name": "Гон по метке"
+      },
+      {
+        "id": "h_hunt_final",
+        "name": "Завершение гона"
+      },
+      {
+        "id": "h_second_wind",
+        "name": "Второе дыхание"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: a bright red mark on a straw disc with two pale afterimage marks behind it, chartreuse and lavender shadows.\nTOP MIDDLE: a breadth of cloth pennants strung on two sides of a woodland footpath leading toward a single empty clearing, orange and cerulean.\nTOP RIGHT: a sequence of careful bootprints half hidden beneath fern fronds, warm hazel midday and rich dark jade.\nBOTTOM LEFT: red circles on three upright stone posts leading across a high sunlit ridge, pale blue shadow and red leaves.\nBOTTOM MIDDLE: a single red strip tied to the final post along a high field course beside clear water, golden late-afternoon light.\nBOTTOM RIGHT: a single pale breathlike ribbon over blue snowy hills, one green feather lifting up with it, clear light."
+  },
+  {
+    "sheet": "sheet_10.png",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "h_bloodlust",
+        "name": "Кровавый азарт"
+      },
+      {
+        "id": "h_blood_rite",
+        "name": "Кровавый навет"
+      },
+      {
+        "id": "h_blood_volley",
+        "name": "Кровавый залп"
+      },
+      {
+        "id": "h_dark_reload",
+        "name": "Перезарядка тьмы"
+      },
+      {
+        "id": "h_smoke_screen",
+        "name": "Дымовая завеса"
+      },
+      {
+        "id": "h_snare_net",
+        "name": "Облава"
+      }
+    ],
+    "prompt": "Make ONE 1536x1024 contact sheet: EXACTLY six individual equal square 512x512 fantasy card illustrations, strict three columns by two rows, thin black separators at exact thirds and half, no margin. Crisp true-pixel-art silhouettes, visible square clusters and about 128x128 logical pixels per panel upscaled nearest-neighbor, no blurry smoothing, a few deliberate values per hue, restricted but varied palettes; use specified lighting and distinct colors in each scene. Preserve classic adventure-game woodland illustration style. Hunters' medieval tools have physically believable proportions/joins. Clarity at card size: one focal composition toward center and upper half. Full-bleed independent scenes, no people, heroes, hands, injured beings, text, UI, letters, numbers, or captions. Show only objects or unoccupied practice locations. Row-major order:\nTOP LEFT: a small scarlet ampoule sealed with a brass cap and a dotted circle of red berries on ivory linen, warm afternoon.\nTOP MIDDLE: a dark red wax medallion with an abstract twig pressed into it at the center of a still-life altar, purple and saffron.\nTOP RIGHT: three burgundy-fletched arrows evenly spaced against orange fall sky above empty straw targets, readable side-on composition.\nBOTTOM LEFT: a midnight-blue quiver with a loose charcoal arrow placed next to a midnight cloth flap, warm mint lantern focus.\nBOTTOM MIDDLE: a pale smoky swirl expanding from a clay pot under daylight, silvery cloud and deep cerulean shadows, no person.\nBOTTOM RIGHT: a large fully stretched rope net between three poles around a corner of a bright clearing, small rust pennants mark its corners."
+  }
+]

@@ -82,25 +82,61 @@ def _tokens(s):
         elif "[" in word:                                 # тег
             style = "g"
             core = word.replace("[", "").replace("]", "")
+        elif word.startswith("^"):                        # феи: ^+2 / ^-1 / ^все
+            style = "f"
+            core = word[1:]
         out.append((core, style))
     return out
 
 
-def rich(surf, s, rect, size, color, dim=False, left=False, boxes=None):
+_FAE_ICONS = {}
+
+
+def _fae_icon(size, neg=False, all_=False):
+    """Значок фей: светящийся зелёный огонёк с крыльями; знак показывает прибавку/трату."""
+    key = (size, neg, all_)
+    got = _FAE_ICONS.get(key)
+    if got is not None:
+        return got
+    s = pygame.Surface((size, size), pygame.SRCALPHA)
+    c = (128, 232, 150) if not neg else (238, 148, 92)
+    dark = (18, 44, 28) if not neg else (64, 28, 14)
+    r = max(2, size // 3)
+    cx, cy = size // 2, size // 2
+    pygame.draw.polygon(s, dark, [(cx - r // 2, cy), (1, max(1, cy - r)), (max(1, cx - r), cy - r // 2)])
+    pygame.draw.polygon(s, dark, [(cx + r // 2, cy), (size - 2, max(1, cy - r)), (min(size - 1, cx + r), cy - r // 2)])
+    pygame.draw.circle(s, dark, (cx, cy), r + 2)
+    pygame.draw.circle(s, c, (cx, cy), r)
+    pygame.draw.circle(s, (235, 255, 225), (cx - r // 3, cy - r // 3), max(1, r // 3))
+    _FAE_ICONS[key] = s
+    return s
+
+
+def rich(surf, s, rect, size, color, dim=False, left=False, boxes=None, clip=False):
     """Текст по центру rect с переносом: числа крупнее и белым, ключевые слова золотом. Возвращает высоту.
-    boxes — сюда кладутся места выделенных слов (rect, слово, стиль) — для наведения в режиме чтения."""
+    boxes — сюда кладутся места выделенных слов (rect, слово, стиль) — для наведения в режиме чтения.
+    clip — если текст не влез, оборвать его многоточием, а не рисовать за пределами rect."""
     if G.is_canvas(surf):                                 # холст — в родном разрешении
         c = surf
-        return rich(c.native, s, c.rect(rect), max(6, round(size * c.S)), color, dim, left) / c.S
+        return rich(c.native, s, c.rect(rect), max(6, round(size * c.S)), color, dim, left,
+                    boxes=boxes, clip=clip) / c.S
     fonts = {"t": font(size), "k": font(size, True), "n": font(size + 4, True), "l": font(size, True),
              "g": font(size, True), "d": font(size + 4, True)}
     cols = {"t": color, "k": GOLD, "n": NUM, "l": LIT, "g": TAG, "d": DMG}
     if dim:
         cols = {k: T.mix(v, (40, 34, 28), 0.3) for k, v in cols.items()}       # тусклее, но читается
-    lines, cur, w = [], [], 0
     space = fonts["t"].size(" ")[0]
+
+    def metric(word, st):
+        if st == "f":
+            ic = max(10, round(size * 0.92))
+            num = fonts["k"].render(word, True, (170, 235, 180))
+            return ic + 3 + num.get_width()
+        return fonts[st].size(word)[0]
+
+    lines, cur, w = [], [], 0
     for word, st in _tokens(s):
-        ww = fonts[st].size(word)[0]
+        ww = metric(word, st)
         if cur and w + space + ww > rect.w:
             lines.append((cur, w))
             cur, w = [], 0
@@ -109,10 +145,32 @@ def rich(surf, s, rect, size, color, dim=False, left=False, boxes=None):
     if cur:
         lines.append((cur, w))
     lh = fonts["n"].get_height() - 2
+    if clip and lines:
+        max_lines = max(1, rect.h // lh)
+        if len(lines) > max_lines:
+            lines = lines[:max_lines]
+            words, lw = lines[-1]
+            ell_w = fonts["t"].size("…")[0]
+            while words and lw + space + ell_w > rect.w:
+                _, _, ww = words.pop()
+                lw -= ww + space
+            words.append(("…", "t", ell_w))
+            lines[-1] = (words, lw + space + ell_w)
     y = rect.y if left else rect.y + max(0, (rect.h - lh * len(lines)) // 2)
     for words, lw in lines:
         x = rect.x if left else rect.centerx - lw / 2
         for word, st, ww in words:
+            if st == "f":
+                neg = word.startswith("-")
+                ic = _fae_icon(max(10, round(size * 0.92)), neg=neg, all_=word.lstrip("+-") == "все")
+                yy = y + (lh - ic.get_height()) // 2 + 1
+                surf.blit(ic, (round(x), yy))
+                img = fonts["k"].render(word, True, (238, 148, 92) if neg else (170, 235, 180))
+                surf.blit(img, (round(x) + ic.get_width() + 3, y + (lh - img.get_height()) // 2 + 1))
+                if boxes is not None:
+                    boxes.append((pygame.Rect(round(x), yy, ww, ic.get_height()), "Феи", "k"))
+                x += ww + space
+                continue
             img = fonts[st].render(word, True, cols[st])
             sh = fonts[st].render(word, True, (0, 0, 0))
             yy = y + (lh - img.get_height()) // 2 + (1 if st == "n" else 0)
@@ -330,7 +388,7 @@ def _face_old(card, main_ok=True, alt_ok=True, hot=False, heat=None, lit=()):
         size = 19
         while size > 12 and rich(_MEASURE, txt, tb, size, (0, 0, 0)) > tb.h + 6:
             size -= 1
-        rich(s, txt, tb, size, (236, 226, 208), dim=not main_ok)
+        rich(s, txt, tb, size, (236, 226, 208), dim=not main_ok, clip=True)
     # путь к прозрению
     g = card.growth_next()
     py = OH - ALT_H - 16

@@ -94,6 +94,10 @@ class Battle:
             if u.team == PLAYER and u.summon:
                 self.c.units.remove(u)
         self.hero = next(u for u in self.c.units if u.team == PLAYER and not u.obj)
+        art = (run.hero or {}).get("art_sprite")
+        if art:
+            self.hero.proto = dict(self.hero.proto)
+            self.hero.proto["path"] = art
         self._setup(self.hero, {"name": run.hero_name, "hp": run.max_hp}, hp=run.hp)
         self.hp_k, self.dmg_k = run.scale() if hasattr(run, "scale") else (1.0, 1.0)
         units = [u for u in self.c.units if u.team == ENEMY and not u.obj]
@@ -154,6 +158,7 @@ class Battle:
         self.ballista_power_targets = {}                     # uid Силы → выбранная установка
         self.powered = set()                                  # (uid Силы, ход, событие) — у Сил «раз за ход»
         self.garden = FaeGarden(self) if self.mech == "fae" else None   # Эльф: феи, растения, звери, прививки
+        self.attach_reveal = None                                     # «прививка сработала»: карта для показа экрану
         self.idols = Idols(self) if self.mech == "idols" else None    # Жрец: статуи богов падают на поле
         self.walk_max = PRIEST_WALK if self.idols else 0
         self.walk_left = 0
@@ -319,6 +324,23 @@ class Battle:
             if self.garden is not None:
                 self.garden.on_spend(spent, tgt, before=before)
         return spent
+
+    def fae_empower_spec(self, card, u):
+        """Усиленная версия включается на пороге; только она сжигает фей."""
+        if self.garden is None:
+            return 0, {}
+        fae = self.hero.ds.get("fae", 0)
+        threshold = M.fae_threshold(u)
+        if threshold is None or fae < threshold:
+            return 0, {}
+        burn = M.fae_burn_value(u, card.d.get("type"))
+        if burn == 0:
+            return 0, {}
+        spent = fae if burn == "all" else min(fae, int(burn))
+        return spent, dict(u.get("fae_bonus") or {})
+
+    def fae_bonus(self, ctx, kind):
+        return ctx.get("fae_spent", 0) * (ctx.get("fae_bonus") or {}).get(kind, 0)
 
     # ---------- поле ----------
 
@@ -1130,6 +1152,8 @@ class Battle:
             self.garden.force_lead()
         yield from self.hand_relics.turn_start()
         self.sync_levels()
+        if self.garden is not None:
+            yield from self.garden.flush_assemblies()
 
     def draw(self, n):
         for _ in range(n):
@@ -1308,6 +1332,43 @@ class Battle:
                 self.receive_card(c)
                 self.fx("created", unit=self.hero, uid=c.uid)
                 self.queue.append(("create", c))
+
+    def spread_positions(self, size, count):
+        """Случайные позиции вставки, разнесённые по полосам стопки."""
+        if count <= 0:
+            return []
+        if count == 1:
+            return [self.rng.randint(0, size)]
+        out = []
+        for i in range(count):
+            lo = round(i * (size + 1) / count)
+            hi = round((i + 1) * (size + 1) / count) - 1
+            out.append(self.rng.randint(lo, max(lo, hi)))
+        return out
+
+    def scatter_parts(self, cards):
+        """Разложить части оружия по добору и сбросу; вернуть [(карта, "draw"/"discard")]."""
+        cards = list(cards)
+        if not cards:
+            return []
+        self.rng.shuffle(cards)
+        n = len(cards)
+        if n == 1:
+            groups = [("draw" if self.rng.random() < 0.5 else "discard", cards)]
+        else:
+            to_draw = n // 2
+            if n % 2:
+                to_draw += self.rng.choice((0, 1))
+            to_draw = max(1, min(n - 1, to_draw))
+            groups = [("draw", cards[:to_draw]), ("discard", cards[to_draw:])]
+        out = []
+        for dest, group in groups:
+            pile = self.draw_pile if dest == "draw" else self.discard
+            slots = sorted(self.spread_positions(len(pile), len(group)), reverse=True)
+            for pos, card in zip(slots, group):
+                pile.insert(pos, card)
+                out.append((card, dest))
+        return out
 
     def copy_hand_card(self, source):
         clone = M.Card(source.cid, {source.cid: source.base}, uses=source.uses, picks=source.picks)
@@ -2030,6 +2091,7 @@ class Battle:
         self.lead_discounts.clear()
         self.hand_relics.played.add(card.uid)
         h = self.hero
+        fae_spent, fae_rates = self.fae_empower_spec(card, u) if mode == "main" else (0, {})
         origin = h.cell
         walked_before = self.walked
         previous_tags = self.turn_tags[-1] if self.turn_tags else ()
@@ -2052,7 +2114,8 @@ class Battle:
         tgt = target if hasattr(target, "cell") and target is not h and t != "self" else None
         ctx = {"ranged": u.get("ranged", False), "center": target if isinstance(target, tuple) else None,
                "push_bonus": 0, "tag": u.get("tag"), "card": card if mode == "main" else None,
-               "x": x_paid, "fae_before": h.ds.get("fae", 0), "had_lead": had_lead}
+               "x": x_paid, "fae_before": h.ds.get("fae", 0), "had_lead": had_lead,
+               "fae_spent": fae_spent, "fae_bonus": fae_rates}
         if t == "hand_attach" and hand_targets:
             ctx["attach_host"] = hand_targets[0]
         if t in ("ballista_place", "ballista_load", "ballista_fire"):
@@ -2119,7 +2182,10 @@ class Battle:
                 self.vfx(h, u["vfx"], card.name, target=effect_target, center=ctx["center"],
                          radius=self.effect_radius(u) if t == "area" else 0, tag=u.get("tag"))
                 yield IMPACT
-            if u.get("pierce") and effect_target is not None:  # линия: пробивает всех на пути
+            pierce = u.get("pierce")
+            if pierce and u.get("line_fae") and self.hero.ds.get("fae", 0) < u["line_fae"]:
+                pierce = False                                   # «Лунная стрела» пробивает только на пороге
+            if pierce and effect_target is not None:             # линия: пробивает всех на пути
                 for f in self.line_enemies(effect_target, u.get("range", 6)):
                     yield from self.apply(h, [o for o in ops if o["op"] not in ONCE], f, ctx)
                     yield from self.cond_extras(ctx, f, area=True)
@@ -2173,13 +2239,14 @@ class Battle:
             yield from self.card_event("played", card, tgt)
         if not free and not auto:
             yield from self.linked_play(card)
-        exhausted_after_two = False
-        if mode == "main" and "exhaust_2" in rules:
+        exhaust_limit = M.exhaust_limit(rules) if mode == "main" else None
+        exhausted = False
+        if exhaust_limit and exhaust_limit > 1:
             self.exhaust_plays[card.uid] = self.exhaust_plays.get(card.uid, 0) + 1
-            exhausted_after_two = self.exhaust_plays[card.uid] >= 2
+            exhausted = self.exhaust_plays[card.uid] >= exhaust_limit
         if t == "ballista_place":
             self.discard.append(card)
-        elif back and not exhausted_after_two:                # Возврат: снова в руке
+        elif back and not exhausted:                          # Возврат: снова в руке
             self.receive_card(card)
             self.say(f"Возврат: {card.name} снова в руке", (170, 255, 170))
         elif mode == "main" and u.get("power"):               # Сила: действует до конца боя
@@ -2189,7 +2256,7 @@ class Battle:
             self.items.turn_types.append("power")
             self.say(f"Сила: {card.name} — до конца боя", (210, 170, 255))
             self.fx("power", unit=h, uid=card.uid, name=card.name)
-        elif card.d.get("token") or exhausted_after_two or (mode == "main" and "exhaust" in rules):
+        elif card.d.get("token") or exhausted or exhaust_limit == 1:
             yield from self.exhaust_card(card)
         elif t != "copy_hand" and (command_installation is None or command_installation.alive):
             returned = not redirected and (yield from board.bullet_returns(card, tgt))
@@ -2203,7 +2270,13 @@ class Battle:
                                        heat=paid if resource == "heat" else 0,
                                        origin=origin, previous_tags=previous_tags)
             yield from self.react()
+        if mode == "main" and fae_spent and not self.result:
+            if fae_rates.get("self_block"):
+                self.gain_shield(h, fae_spent * fae_rates["self_block"])
+            self.spend_fae(fae_spent, tgt)
         self.sync_levels()
+        if self.garden is not None:
+            yield from self.garden.flush_assemblies()
         if mode == "main" and "finale" in rules and not auto:
             yield from board.finale(card)
             if not self.result:
@@ -2455,6 +2528,7 @@ class Battle:
                             continue                          # резонанс только повторяет карту
                         if (c.get("plus") or c.get("mult")) and self.play_condition(c["when"], tgt, ctx):
                             n = (n + c.get("plus", 0)) * c.get("mult", 1)
+                    n += self.fae_bonus(ctx, "damage")
                     n += self.items.card_bonus(ctx.get("card"), "damage")   # предметы: карты тега сильнее
                     if self.variant == "ash" and ctx.get("card") is not None and "area" in ctx["card"].tag_ids:
                         n += 2                                              # Пепел: области сильнее
@@ -2566,6 +2640,7 @@ class Battle:
                     src.ds["momentum"] = 0
                 if src is h:
                     n += ctx.get("temper", 0)
+                    n += self.fae_bonus(ctx, "block")
                     n += self.items.card_bonus(ctx.get("card"), "block")
                 self.gain_shield(src, n)
             elif k == "stance" and src is h and not ctx.get("stance_applied"):
@@ -2603,7 +2678,7 @@ class Battle:
                     p = q
                 yield from self.walk(src, path)
             elif k == "root" and tgt is not None:
-                tgt.ds["root"] = max(tgt.ds["root"], n)
+                tgt.ds["root"] = max(tgt.ds["root"], n + self.fae_bonus(ctx, "stack"))
                 self.say(f"{tgt.name}: корни — не двигается", (180, 230, 140))
             elif k == "add_card":
                 pool = op.get("pool")
@@ -2663,19 +2738,21 @@ class Battle:
             elif k == "momentum":
                 src.ds["momentum"] = min(self.hero_def.get("momentum_max", 5), src.ds["momentum"] + n)
             elif k == "fae" and src is h:
-                self.gain_fae(n)
+                self.gain_fae(n + self.fae_bonus(ctx, "fae"))
             elif k == "spend_fae" and src is h:
                 self.spend_fae(n, tgt)
             elif k == "plant" and self.garden is not None:
                 center = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
-                yield from self.garden.plant(op, center)
+                yield from self.garden.plant(op, center, extra_growth=self.fae_bonus(ctx, "growth"))
             elif k == "beast" and self.garden is not None:
-                self.garden.summon_beast(op["beast"])
+                self.garden.summon_beast(op["beast"], bonus=self.fae_bonus(ctx, "beast"))
             elif k == "attach" and self.garden is not None:
-                self.garden.attach(ctx.get("card"), ctx.get("attach_host"), op["attach"])
+                self.garden.attach(ctx.get("card"), ctx.get("attach_host"), op["attach"],
+                                   bonus=self.fae_bonus(ctx, "growth"))
             elif k == "fae_ring" and self.garden is not None:
                 center = ctx.get("center") or (tgt.cell if tgt is not None else src.cell)
-                self.garden.add_ring(center, op.get("turns", 3) + src.ds.get("fae", 0) // 4)
+                self.garden.add_ring(center, op.get("turns", 3) + src.ds.get("fae", 0) // 4
+                                     + self.fae_bonus(ctx, "duration"))
             elif k == "blueprint" and self.garden is not None and ctx.get("card") is not None:
                 self.garden.make_parts(ctx["card"].cid)
             elif k == "execute_below" and tgt is not None and tgt.alive:
@@ -2685,7 +2762,7 @@ class Battle:
             elif k == "damage_nearest" and src is h:
                 target = self.garden.nearest_foe(h.cell) if self.garden is not None else None
                 if target is not None:
-                    self.hurt(target, self.attack_value(h, n), h, "spell")
+                    self.hurt(target, self.attack_value(h, n) + self.fae_bonus(ctx, "damage"), h, "spell")
             elif k in ("aoe_target", "aoe_center"):
                 center = (ctx.get("center") if k == "aoe_center" else None) or \
                          (tgt.cell if tgt is not None else ctx.get("center") or h.cell)
@@ -2744,7 +2821,7 @@ class Battle:
                 self.wet(tgt)
             elif k in ("weak", "vulnerable") and tgt is not None:
                 self.fx("status", unit=tgt, el=k)
-                tgt.ds[k] += n
+                tgt.ds[k] += n + self.fae_bonus(ctx, "stack")
             elif k == "stun" and tgt is not None:
                 tgt.ds["stun"] = True
                 self.say(f"{tgt.name} оглушён — пропустит намерение", (255, 230, 140))
@@ -2754,7 +2831,7 @@ class Battle:
                 src.ds["hunt"] = min(5, src.ds.get("hunt", 0) + n)
                 self.say(f"Преследование +{n}", (255, 220, 120))
             elif k == "draw":
-                self.draw(n)
+                self.draw(n + self.fae_bonus(ctx, "draw"))
             elif k == "discard_choose":
                 self.pending_discard += max(0, n)
                 self.say(f"Выберите {self.pending_discard} карт(ы) для сброса", (220, 210, 180))
@@ -2767,6 +2844,7 @@ class Battle:
             elif k == "energy":
                 self.energy += n
             elif k == "heal":
+                n += self.fae_bonus(ctx, "heal")
                 src.hp = min(src.max_hp, src.hp + n)
                 self.c.emit("heal", unit=src, amount=n)
             elif k in ("temper_card", "temper_spirit"):

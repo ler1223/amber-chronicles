@@ -1,0 +1,53 @@
+[
+  {
+    "sheet": "sheet_01.png",
+    "columns": 2,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "sc_defense_relay",
+        "name": "Щит и молот",
+        "scene": "Два идола у ворот держат щит и молот. Край щита светится бирюзовым, навершие молота — янтарным."
+      },
+      {
+        "id": "sc_move_relay",
+        "name": "Перекличка ветров",
+        "scene": "Светлый порыв от дорожного идола пересекает мост. Вторая статуя подхватывает его, и струя становится лиловой."
+      },
+      {
+        "id": "sc_curse_relay",
+        "name": "Сглаз и удар",
+        "scene": "Лиловый знак в форме глаза раскрывается над плитой. Следом по ней проходит красный удар, и камень трескается."
+      },
+      {
+        "id": "sc_gift_relay",
+        "name": "Подношение",
+        "scene": "Один идол выставил на ступень чашу с янтарным даром. От второго идола тянется дуга, укрывающая чашу."
+      }
+    ],
+    "prompt": "Create ONE 1024×1024 square illustration atlas with a rigid, exact 2-column × 2-row layout. Four 512×512 squares isolated by a thin nearly black cross precisely at x=512 and y=512. Fantasy pixel illustrations for one priest's card set. The attached atlas is reference for rendering and idol design only. Match its clear pixel clusters, textured old gray stone, carved robes, weathered parchment and luminous magic. Each new scene must have a clean recognizable primary silhouette; keep narrative props and joins inside the central 65% vertically and 85% horizontally, since the card crop trims top and bottom. Ground all statues and physical objects with contact shadows. Use one continuous affect line only where requested, coherent perspective, discreet magic. Varied light and palettes. No lettering, UI, words, or watermark. Exact panel order.\nTop left: two weathered standing stone idols on separate low bases in a sunny limestone courtyard. The first grips one broad shield of visibly solid turquoise stone in front of its torso. The second grips one short vertical carved hammer with a distinct horizontal squared amber-lit head, one visibly continuous handle held just below the head. Low eye level, props separated against pale masonry, quiet sage and copper.\nTop right: broad side-on view of a small arch bridge across a misty gorge, two simple stone wayfinding idols on separate ends of the bridge. One ivory wind ribbon crosses the bridge left to right in a continuous S-curve, and becomes dark violet as it curls past the second idol. Pale turquoise morning and a clean blue backdrop. No extra ribbons.\nBottom left: in a mossy shrine alcove a tilted stone slab rests securely on a low plinth. A small violet eye-shaped hex shines directly above the slab, a single short diagonal vermilion impact streak ends in a fresh crack on the slab under it. A pair of small less contrasted idol niches flanks the alcove. Dark cobalt shade, crimson flash, no figure or weapons.\nBottom right: simple close three-quarter view of one stone offering basin on a broad temple step, containing one clearly recognizable glowing amber fruit. Two different small weathered stone idols stand behind it at different depths; a single thin jade protective arc from the second curves over the bowl. Full rim and base of the bowl in view. Late spring sun, jade shade, cream and honey color."
+  },
+  {
+    "sheet": "sheet_02.png",
+    "columns": 2,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "sc_summon_relay",
+        "name": "Свита",
+        "scene": "У двух больших идолов из световых кругов выходят маленькие каменные спутники."
+      },
+      {
+        "id": "sc_defense_double",
+        "name": "Двойной оберег",
+        "scene": "Перед одной статуей два световых щита встали один за другим."
+      },
+      {
+        "id": "sc_gift_double",
+        "name": "Щедрый дар",
+        "scene": "На распущенном свитке стоят две отдельные чаши. В каждой горит золотой бутон."
+      }
+    ],
+    "prompt": "Create ONE 1024×1024 square illustration atlas with a rigid, exact 2-column × 2-row layout. Four 512×512 squares isolated by a thin nearly black cross precisely at x=512 and y=512. Fantasy pixel illustrations for one priest's card set. The attached atlas is reference for rendering and idol design only. Match its clear pixel clusters, textured old gray stone, carved robes, weathered parchment and luminous magic. Each new scene must have a clean recognizable primary silhouette; keep narrative props and joins inside the central 65% vertically and 85% horizontally, since the card crop trims top and bottom. Ground all statues and physical objects with contact shadows. Use one continuous affect line only where requested, coherent perspective, discreet magic. Varied light and palettes. No lettering, UI, words, or watermark. Exact panel order.\nTop left: wide vista of a broad temple stair landing with two tall carved guardian statues on separate planted bases behind two much smaller squat stone attendants, each stepping out of its own thin gold floor circle. Each attendant carries one small hanging bell. Only four figures total; they form two unmistakable pairs with clear shadows and scale. Early golden sunlight over old pale green stone.\nTop right: side-on oblique view of one seated stone idol protected by exactly two distinct concentric upright shield-shaped light barriers in front of it, separated by a dark blue gap so both silhouettes can be counted. Near rounded shield jade-green, far rounded shield pale gold. Set within a blue-frost stone shrine, calm wintry daylight.\nBottom left: slightly overhead on a single broad slate altar, one horizontal pearl-cream parchment scroll spread flat with both ends visibly rolled. Exactly two independent little stone offering bowls sit side by side on the parchment, each holding one distinct glowing amber flower bud. Apricot sunlight from the side, mauve stone and green moss, clear white space between the cups.\nBottom right: a completely flat blank charcoal square reserved as empty space, without artwork or labels."
+  }
+]

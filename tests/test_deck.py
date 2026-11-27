@@ -373,6 +373,34 @@ def test_game_flow_map_battle_shop_camp_boss():
     assert isinstance(g.scene, HeroSelect)                                     # новый забег — снова выбор героя
 
 
+def test_escape_pause_is_available_outside_battle_and_never_in_battle():
+    from deck.game import DescentGame
+    from deck.ui import BattleScreen, HeroSelect, MapScreen
+
+    g = DescentGame(seed=2, gd=ED)
+    g.start_run("merc")
+    assert isinstance(g.scene, MapScreen)
+    g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
+    assert g.pause is not None
+    assert [key for _, key in g.pause.options] == ["resume", "abandon", "quit"]
+    g.pause.choose("resume")
+    assert g.pause is None
+
+    g.enter_node(g.run.floor.available()[0])
+    assert isinstance(g.scene, BattleScreen)
+    g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
+    assert g.pause is None                                   # из боя выйти нельзя
+
+    g.scene = MapScreen(g)
+    g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
+    g.pause.choose("abandon")
+    assert isinstance(g.scene, HeroSelect) and g.run is None and g.pause is None
+
+    g.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
+    g.pause.choose("quit")
+    assert g.quit_requested
+
+
 def test_card_faces_differ_and_have_art():
     from deck import cardface as CF
     from tests.test_expedition_ui import SCREEN  # noqa: F401  (окно для convert_alpha)
@@ -1392,13 +1420,13 @@ def test_model_quality_toggle_between_battles():
         g.start_run("merc")
         assert isinstance(g.scene, MapScreen)
         g.scene.handle(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m, mod=0, unicode="m"))
-        assert model_res() == 64
+        assert model_res() == 128
         g.enter_node(g.run.floor.available()[0])
         hero = g.scene.b.hero
         img = g.scene.view.sprite_of(hero)
         from ui.sprites import sprite_path
         path, k = sprite_path(hero.proto.get("path") or hero.proto_id)
-        assert k == 2 and img.get_height() >= 64                  # подробный спрайт, тот же размер на экране
+        assert k in (2, 4) and img.get_height() >= 64             # подробный спрайт, тот же размер на экране
     finally:
         settings.SETTINGS["sprite_res"] = old
 

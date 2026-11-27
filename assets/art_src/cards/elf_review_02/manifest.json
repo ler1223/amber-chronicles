@@ -1,0 +1,167 @@
+[
+  {
+    "sheet": "sheet_1.png",
+    "title": "Чертежи и звёзды",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "e_dawn_blade",
+        "name": "Клинок Зари"
+      },
+      {
+        "id": "e_storm_spear",
+        "name": "Копьё Грозы"
+      },
+      {
+        "id": "e_star_rain",
+        "name": "Звёздный дождь"
+      },
+      {
+        "id": "e_forest_pact",
+        "name": "Лесной завет"
+      },
+      {
+        "id": "e_star_well",
+        "name": "Звёздный колодец"
+      },
+      {
+        "id": "e_ariadne_thread",
+        "name": "Нить Ариадны"
+      }
+    ],
+    "prompt": "One 1536 by 1024 image containing exactly six independent equal square pixel-art landscape or still-life panels in a hard 3 columns by 2 rows grid. Thin straight black separators. Dark enchanted woodland: visible square pixel clusters, limited 24-32 colors, muted moss, dark inky navy and bone-white moonlight, one strong light per scene, low-resolution adventure-game look. Broad legible shapes. No people, text, lettering, UI, metal cutting tools, or combat. TOP LEFT: an amber translucent crystal and three small sunrise-colored carved wooden pieces aligned on a quiet crafter's bench, sunlight through narrow window. TOP MIDDLE: one dark ash branch, braided jute loop and smooth indigo gemstone arranged as a still life under a stormy blue window; lightning only outdoors in background. TOP RIGHT: silver shooting stars reflected over a pond with rings. BOTTOM LEFT: a tiny green light floats over one ivy loop where a curved root meets a split stone. BOTTOM MIDDLE: mysterious old round well with one real wooden pulley, correctly hung rope, and silver star reflections in its water. BOTTOM RIGHT: a bright gold thread unwinds around three corners of a miniature mossy stone maze. Six clearly separated tiles."
+  },
+  {
+    "sheet": "sheet_2.png",
+    "title": "Связь и ориентиры",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "e_twin_stars",
+        "name": "Парные звёзды"
+      },
+      {
+        "id": "e_moon_bridge",
+        "name": "Лунный мост"
+      },
+      {
+        "id": "e_constellation",
+        "name": "Созвездие"
+      },
+      {
+        "id": "e_link_break",
+        "name": "Разрыв связи"
+      },
+      {
+        "id": "e_guiding_star",
+        "name": "Путеводная звезда"
+      },
+      {
+        "id": "e_grove_compass",
+        "name": "Компас рощи"
+      }
+    ],
+    "prompt": "One output image 1536x1024, exact 3 by 2 contact sheet of SIX distinct square illustrations. Strict 3 columns and 2 rows, black thin straight gutters on exact grid boundaries, no outer whitespace. Each is independent edge-to-edge card art, focus in upper middle, readable at thumbnail. TRUE crisp square pixels as on a low 128x128 native grid enlarged with nearest neighbor. Limited 24–32-color palette, only a few shades per hue, no smooth gradients, no anti-aliasing. Dark fantasy woodland/swamp in a classic adventure game, eye-level strong silhouettes, clean focal shape, one strong light source. Main families ink navy, muted moss green and bone-silver, amber and lilac only as small highlights. Empty of heroes, adventurers, people, or hands. Only named objects and natural creatures. Any hardware must be mechanically believable. No UI, lettering, text, labels or watermarks. Order is row-major:\nTOP LEFT: two pale stars connected by one faint filament above a mossy arch, balanced twin light shapes.\nTOP MIDDLE: a small curved bridge of stacked fitted moonlit stones spanning a dark stream, intact pier at either bank.\nTOP RIGHT: several silver stars over a reflecting pool arranged as a quiet angular star figure, widely spaced.\nBOTTOM LEFT: a broken taut dark metal chain with two links kicked apart and a tiny sharp mint spark.\nBOTTOM MIDDLE: one bright silver star over a distant fork of a marsh path, one branch catches the starlight.\nBOTTOM RIGHT: a grounded brass hand compass resting on bark, open simple lid, sharp central needle, dial without lettering."
+  },
+  {
+    "sheet": "sheet_3.png",
+    "title": "Роса, следы и туман",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "e_morning_star",
+        "name": "Утренняя звезда"
+      },
+      {
+        "id": "e_dew",
+        "name": "Роса"
+      },
+      {
+        "id": "e_fallen_leaf",
+        "name": "Опавший лист"
+      },
+      {
+        "id": "e_star_ash",
+        "name": "Пепел звезды"
+      },
+      {
+        "id": "e_crusher_root",
+        "name": "Корень-дробитель"
+      },
+      {
+        "id": "e_mirage",
+        "name": "Мираж"
+      }
+    ],
+    "prompt": "One output image 1536x1024, exact 3 by 2 contact sheet of SIX distinct square illustrations. Strict 3 columns and 2 rows, black thin straight gutters on exact grid boundaries, no outer whitespace. Each is independent edge-to-edge card art, focus in upper middle, readable at thumbnail. TRUE crisp square pixels as on a low 128x128 native grid enlarged with nearest neighbor. Limited 24–32-color palette, only a few shades per hue, no smooth gradients, no anti-aliasing. Dark fantasy woodland/swamp in a classic adventure game, eye-level strong silhouettes, clean focal shape, one strong light source. Main families ink navy, muted moss green and bone-silver, amber and lilac only as small highlights. Empty of heroes, adventurers, people, or hands. Only named objects and natural creatures. Any hardware must be mechanically believable. No UI, lettering, text, labels or watermarks. Order is row-major:\nTOP LEFT: one cream star low over the mist just before sunrise, amber rim and distant treetops.\nTOP MIDDLE: an enlarged round droplet cupped on one green leaf, reflected miniature moon highlights.\nTOP RIGHT: a single broad ochre maple leaf sweeping sideways through a dark glade, distinct jagged silhouette.\nBOTTOM LEFT: a pile of muted gray ash with one tiny pale fallen star ember at center on black stone.\nBOTTOM MIDDLE: a very thick wooden root splits the edge of a battered steel shield against a stone, visible pressure and believable breaking point.\nBOTTOM RIGHT: a stone arch and its offset deceptive reflection in a dark shallow pool, second ghost outline fading upward."
+  },
+  {
+    "sheet": "sheet_4.png",
+    "title": "Прорастание",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "e_sleep_mist",
+        "name": "Сонный туман"
+      },
+      {
+        "id": "e_last_star",
+        "name": "Последняя звезда"
+      },
+      {
+        "id": "e_grove_gift",
+        "name": "Дар рощи"
+      },
+      {
+        "id": "e_twoleaf",
+        "name": "Двулист"
+      },
+      {
+        "id": "e_sleeping_bud",
+        "name": "Спящая почка"
+      },
+      {
+        "id": "e_symbiosis",
+        "name": "Симбиоз"
+      }
+    ],
+    "prompt": "One output image 1536x1024, exact 3 by 2 contact sheet of SIX distinct square illustrations. Strict 3 columns and 2 rows, black thin straight gutters on exact grid boundaries, no outer whitespace. Each is independent edge-to-edge card art, focus in upper middle, readable at thumbnail. TRUE crisp square pixels as on a low 128x128 native grid enlarged with nearest neighbor. Limited 24–32-color palette, only a few shades per hue, no smooth gradients, no anti-aliasing. Dark fantasy woodland/swamp in a classic adventure game, eye-level strong silhouettes, clean focal shape, one strong light source. Main families ink navy, muted moss green and bone-silver, amber and lilac only as small highlights. Empty of heroes, adventurers, people, or hands. Only named objects and natural creatures. Any hardware must be mechanically believable. No UI, lettering, text, labels or watermarks. Order is row-major:\nTOP LEFT: a bank of muted lilac fog curls low down a dark rooted hollow, mossy rocks partly swallowed.\nTOP MIDDLE: one massive pale star descending low over an empty glade, radiating a few stark silver ribbons.\nTOP RIGHT: young fern unfurls around a pale seed in an open patch of ground, small moss ring is a natural shelter.\nBOTTOM LEFT: two fresh symmetrical jade leaves unfolding from one droplet-tipped sprout, wide silhouette against dark loam.\nBOTTOM MIDDLE: one large closed bulb nestled under one covering branch and moss, single amber spot through the seam.\nBOTTOM RIGHT: two different small plants share one branching root structure in a soil cutaway, one roots deep, one shallow."
+  },
+  {
+    "sheet": "sheet_5.png",
+    "title": "Прививки и части серпа",
+    "columns": 3,
+    "rows": 2,
+    "cards": [
+      {
+        "id": "e_ivy_graft",
+        "name": "Плющ-привой"
+      },
+      {
+        "id": "e_thorn_graft",
+        "name": "Терновая прививка"
+      },
+      {
+        "id": "e_moon_moss",
+        "name": "Лунный мох"
+      },
+      {
+        "id": "e_parasite_flower",
+        "name": "Цветок-паразит"
+      },
+      {
+        "id": "e_part_scythe_arc",
+        "name": "Дуга серпа"
+      },
+      {
+        "id": "e_part_scythe_blade",
+        "name": "Лезвие серпа"
+      }
+    ],
+    "prompt": "One output image 1536x1024, exact 3 by 2 contact sheet of SIX distinct square illustrations. Strict 3 columns and 2 rows, black thin straight gutters on exact grid boundaries, no outer whitespace. Each is independent edge-to-edge card art, focus in upper middle, readable at thumbnail. TRUE crisp square pixels as on a low 128x128 native grid enlarged with nearest neighbor. Limited 24–32-color palette, only a few shades per hue, no smooth gradients, no anti-aliasing. Dark fantasy woodland/swamp in a classic adventure game, eye-level strong silhouettes, clean focal shape, one strong light source. Main families ink navy, muted moss green and bone-silver, amber and lilac only as small highlights. Empty of heroes, adventurers, people, or hands. Only named objects and natural creatures. Any hardware must be mechanically believable. No UI, lettering, text, labels or watermarks. Order is row-major:\nTOP LEFT: a real plant graft with a clean diagonal join secured by cloth tape; ivy climbs the healthy rootstock.\nTOP MIDDLE: a thorny dark branch inserted into a cut slot of a sturdier stem and tied to hold; close readable scar and thorns.\nTOP RIGHT: a thin band of pale silver moss growing along a branch; different from bright green Glowing Moss, compact cool ivory patch.\nBOTTOM LEFT: a dark red parasitic flower attached tightly to a woody branch, root tips hugging living bark.\nBOTTOM MIDDLE: a single carved slightly curved timber scythe haft on dark workbench, intact iron end socket and drilled transverse fastening hole; no blade.\nBOTTOM RIGHT: a separate forged steel crescent sickle blade with believable sharp edge, small mounting tang and rivet hole, resting on charcoal stone."
+  }
+]

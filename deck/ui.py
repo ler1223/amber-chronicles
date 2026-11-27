@@ -21,6 +21,7 @@ from ui.field_life import FieldLife
 from ui.vfx_textures import make_textures
 
 from . import cardface as CF
+from . import elf_ui as ELF
 from . import gfx as G
 from . import model as M
 from . import skin as SK
@@ -29,10 +30,20 @@ from .hints import Hints, Plain
 from .idols import MEANING_ICON, SPEC, IdolCast
 from .terrain import Ground
 from .relic_choice import RelicChoice
-from .hand import HandView
+from .hand import HandView, Sprite as HandSprite
 
 
 CW, CH = CF.DW, CF.DH
+
+
+def wide_layout(surf):
+    """Логическая ширина сцены под окно: на 21:9 используем поля, а не оставляем их чёрными."""
+    if not G.is_canvas(surf):
+        return T.SCREEN_W, T.SCREEN_H
+    nw, nh = surf.native.get_size()
+    w = max(T.SCREEN_W, round(T.SCREEN_H * nw / max(1, nh)))
+    surf.set_layout(w, T.SCREEN_H)
+    return w, T.SCREEN_H
 HOLD_T = 0.35                    # удержание карты без движения — подробный вид
 TYPE_COL = {"attack": (190, 80, 60), "skill": (70, 120, 190), "power": (150, 90, 200)}
 INTENT_COL = {"melee": (255, 110, 90), "zone": (255, 80, 60), "shot": (255, 170, 80), "block": (130, 170, 255),
@@ -81,6 +92,26 @@ def title_text(surf, s, pos, size, color):
         surf.blit(CF.title_font(size).render(s, True, color), pos)
 
 
+def full_card_text(card, lit=()):
+    """Полное описание карты без обрезки: основное, свойства и простое применение."""
+    from . import model as M
+    d = card.d
+    preview = card.preview or {}
+    main = M.phrase(d["main"], d.get("exhaust"), lit, preview=preview.get("main"))
+    extra = M.card_extras(d, lit)
+    alt = ""
+    if d["alt"].get("target") != "none":
+        alt = "*Простое*: " + M.phrase(d["alt"], preview=preview.get("alt"))
+    exhaust = M.exhaust_limit(M.card_rules(d))
+    rule = f"*Изгнание {exhaust}*." if exhaust and exhaust > 1 else ""
+    parts = []
+    for p in (main, extra, rule, alt):
+        p = p.strip()
+        if p and p != "—":
+            parts.append(p if p.endswith((".", "!", "?", "…", ":")) else p + ".")
+    return " ".join(parts)
+
+
 class Inspector:
     """Подробный вид карты в духе CZN: крупная карта (наклон за мышью) и справа — стопка тёмных плашек ключевых
     слов, простого применения, роста и дара. Два режима: удержание (ЛКМ без движения — пока держишь) и чтение
@@ -100,6 +131,7 @@ class Inspector:
         self.made_rects = []                  # [(rect, карта)] — карты, которые эта создаёт (слева)
         self.stack = []                       # путь просмотра: прежние карты (назад — ПКМ / Backspace)
         self.back_rect = None
+        self.W = T.SCREEN_W
 
     PV = 210                                  # ширина карточки «Создаёт» слева
 
@@ -155,6 +187,9 @@ class Inspector:
                "token": "Служебная"}.get(c.category, c.category)
         out.insert(0, ("Редкость", f"{c.rarity_name} · {cat}",
                        M.CARD_RARITY_COLOR.get(c.rarity, M.CARD_RARITY_COLOR[1])))
+        from . import cardart
+        if cardart.available() and cardart.text_clipped(c, *self.state):
+            out.insert(1, ("Полное описание", full_card_text(c, self.state[4]), (236, 228, 212)))
         if c.spirit_rank_name:
             out.append((f"Слияние · ранг {c.spirit_rank_name}", M.TAG_INFO["Слияние"], CF.GOLD))
         retained = M.retain_phrase(d)
@@ -185,12 +220,12 @@ class Inspector:
 
     def columns(self):
         """Плашки по колонкам: [[(название, текст, цвет)], ...] — сколько влезает по высоте."""
-        cols, cur, y = [], [], 0
+        cols, cur, y = [], [], 28
         for p in self.panels():
             h = self.panel_h(p[1]) + 8
-            if cur and y + h > T.SCREEN_H - 60:
+            if cur and y + h > T.SCREEN_H - 28:
                 cols.append(cur)
-                cur, y = [], 0
+                cur, y = [], 28
             cur.append(p)
             y += h
         if cur:
@@ -200,8 +235,8 @@ class Inspector:
     def layout(self, ncols=1, left=0):
         w = self.CW
         h = round(w * CF.FH / CF.FW)
-        cx = self.anchor_x if self.anchor_x is not None else T.SCREEN_W // 2 - self.PW // 2 * ncols + left // 2
-        cx = max(w // 2 + 16 + left, min(T.SCREEN_W - w // 2 - (self.PW + 10) * ncols - 22, cx))
+        cx = self.anchor_x if self.anchor_x is not None else self.W // 2 - self.PW // 2 * ncols + left // 2
+        cx = max(w // 2 + 16 + left, min(self.W - w // 2 - (self.PW + 10) * ncols - 22, cx))
         r = pygame.Rect(0, 0, w, h)
         r.midtop = (cx, 28)
         return r
@@ -242,6 +277,7 @@ class Inspector:
 
     def draw(self, surf, mouse):
         from . import model as M
+        self.W = wide_layout(surf)[0] if G.is_canvas(surf) else T.SCREEN_W
         dim(surf, 150)
         cols = self.columns()
         made = self.made()
@@ -251,6 +287,7 @@ class Inspector:
         main_ok, alt_ok, hot, heat, lit = self.state
         sh = pygame.Rect(r.x + 10, r.y + 14, r.w, r.h)                  # тень под картой
         pygame.draw.rect(surf, (0, 0, 0), sh, border_radius=18)
+        pygame.draw.rect(surf, (10, 8, 6), r, border_radius=14)        # непрозрачная подложка: фон не просвечивает
         CF.blit_card(surf, r, self.card, main_ok, alt_ok, False, heat=heat, lit=lit, tilt=tilt)
         hover = self.word_at(mouse) if self.pinned else None
         info = M.lookup(hover[1], hover[2]) if hover else None
@@ -267,7 +304,7 @@ class Inspector:
             hr = hover[0]
             pygame.draw.line(surf, (255, 240, 180), (hr.x, hr.bottom), (hr.right, hr.bottom), 2)
             if info:
-                tx = min(mouse[0] + 18, T.SCREEN_W - self.PW - 8)
+                tx = min(mouse[0] + 18, self.W - self.PW - 8)
                 ty = min(mouse[1] + 20, T.SCREEN_H - 120)
                 self._panel(surf, tx, ty, info[0], info[1], (255, 240, 180), hot=True)
         self.draw_made(surf, made, r, mouse)
@@ -291,7 +328,7 @@ class Inspector:
                 "отпустите — закрыть · Shift — закрепить и читать слова")
         if self.card.levels:
             hint = "колесо или клик по кружку — уровень (цена в жаре) · " + hint
-        T.text(surf, hint, (r.centerx, r.bottom + 14), 13, (210, 200, 180), center=True, shadow=True)
+        T.text(surf, hint, (16, T.SCREEN_H - 26), 13, (210, 200, 180), shadow=True)
 
     def draw_made(self, surf, made, r, mouse):
         """Слева от карты — карты, которые она создаёт: подпись «Создаёт», клик — открыть."""
@@ -349,7 +386,7 @@ def reading_event(screen, ev, card_under):
 def card_detail(surf, card, heat=None, mouse=None):
     """Режим чтения карты (как по Shift) — для экранов вне боя и тестов."""
     Inspector(card, state=(True, True, False, heat, frozenset()), pinned=True).draw(
-        surf, mouse or (T.SCREEN_W // 2, T.SCREEN_H // 2))
+        surf, mouse or (wide_layout(surf)[0] // 2, T.SCREEN_H // 2))
 
 
 def _changes(a, b):
@@ -375,9 +412,10 @@ def _changes(a, b):
 
 
 def model_res():
-    """Качество моделек «Спуска»: 32 или 64 (настройка sprite_res, общая с экспедицией; 16 там — как 32)."""
+    """Качество моделек «Спуска»: 32, 64 или 128 (настройка sprite_res; 16 там — как 32)."""
     from ui import settings
-    return 64 if settings.SETTINGS.get("sprite_res", 32) >= 64 else 32
+    bits = settings.SETTINGS.get("sprite_res", 32)
+    return 128 if bits >= 128 else 64 if bits >= 64 else 32
 
 
 def sk_wrap(sk, text, size, width):
@@ -578,9 +616,12 @@ class BattleScreen:
     def __init__(self, game, battle):
         self.game = game
         self.b = battle
+        self.W, self.H = T.SCREEN_W, T.SCREEN_H
+        self._fit_w = 0
         self.combat = battle.c
         self.view = BattleView(game.gd)
         self.view.simple = True
+        self.view.hero_scale = 1.0
         self.view.num_boost, self.view.num_dy = 6, -34    # цифры урона крупнее и всплывают от фигурки, не под табличкой
         self.view.reset(self.combat)
         self.fit_board()
@@ -592,6 +633,7 @@ class BattleScreen:
         self.view.life = self.life
         self.view.crisp = True                           # подсказки и кольца у ног — чётким слоем (deck/hints.py)
         self.hints = Hints()
+        self.garden_rows = []
         self.ground = Ground()                           # земля: HD-пиксель с рельефом (deck/terrain.py)
         self.ground.prepare(self.combat, self.view.painter)
         self.view.height_at = self.ground.height_at      # декор, трава, вороны — на буграх
@@ -631,6 +673,7 @@ class BattleScreen:
         self.hand_area = pygame.Rect(150, T.SCREEN_H - CH - 26, T.SCREEN_W - 150 - 230, CH + 26)
         self.deck_pile_rect = None
         self.discard_pile_rect = None
+        self._card_scale = 1.0
         self.hv = HandView((CW, CH), (60, T.SCREEN_H - 30), (T.SCREEN_W - 240, T.SCREEN_H - 40))
         self.hv.face = self.card_face
         self.hv.face_tilt = lambda c, st, tilt, zoom=1.0: CF.face(c, *st, tilt=tilt, width=self.face_w(zoom))
@@ -639,6 +682,10 @@ class BattleScreen:
         self.hv.back = CF.back(battle.run.hero_id) if hasattr(battle.run, "hero_id") else None
         self.zone_t = 0.0
         self.toast = None
+        self.merge = None                  # текущая анимация сборки оружия
+        self.merge_queue = []               # подготовленные следующие сборки
+        self.merge_deferred = []            # ввод, отложенный до конца сборки
+        self.attach_show = None            # (карта-прививка, имя хоста, сколько секунд показывать)
         self.intro_t = 0.0                 # заставка до готовой земли
         self._intro_frames = 0
         self.shown_t = None                # когда бой проявился
@@ -675,16 +722,35 @@ class BattleScreen:
         pr.props = props
 
     def fit_board(self):
-        """Доска — над рукой и в обход панели героя справа: карты в покое не закрывают поле."""
-        P.fit(16, 92, T.SCREEN_W - 16, T.SCREEN_H - CH - 18, avoid=[(T.SCREEN_W - 262, 14, 248, 250)])
+        """Доска — между боковыми панелями и над рукой: карты в покое не закрывают поле."""
+        P.fit(158, 92, self.W - 278, self.H - getattr(getattr(self, "hv", None), "ch", CH) - 18,
+              avoid=[(self.W - 262, 14, 248, 250)])
         self.view._ground = None
         self.view._cpu_tex = None
+
+    def relayout(self, w, h):
+        """Широкий экран: поле — в центре, панели — в боковых полях, рука — во всю ширину."""
+        if w == self.W and h == self.H and self._fit_w == w:
+            return
+        self.W, self.H = w, h
+        self.view.fx_bounds = (0, 0, w, h)
+        self.end_rect = pygame.Rect(w - 200, h - 70, 180, 50)
+        scale = 1.12 if w >= 1500 else 1.0
+        if scale != self._card_scale:
+            self._card_scale = scale
+            self.hv.cw, self.hv.ch = round(CW * scale), round(CH * scale)
+            self.hv.cache.clear()
+        self.hand_area = pygame.Rect(220, h - self.hv.ch - 26, w - 220 - 260, self.hv.ch + 26)
+        self.hv.draw_pos = (60, h - 30)
+        self.hv.discard_pos = (w - 240, h - 40)
+        self.fit_board()
+        self._fit_w = w
 
     # ---------- такт ----------
 
     @property
     def busy(self):
-        return self.job is not None or self.b.pending_discard > 0
+        return self.job is not None or self.b.pending_discard > 0 or self.merge is not None
 
     def run_job(self, gen):
         self.job = gen
@@ -751,6 +817,9 @@ class BattleScreen:
             self.zone_t = 0.6
             self._zone_cells = self.b.zone_fx[0]
             self.b.zone_fx = None
+        if self.job is None and self.merge is None and self.b.garden is not None \
+                and self.b.garden.pending_assemblies:
+            self.run_job(self.b.garden.flush_assemblies())
         self.zone_t = max(0.0, self.zone_t - dt)
         self.pump()
         self.ambient(dt)
@@ -783,10 +852,19 @@ class BattleScreen:
         hv.sink = bool(aiming) and self.mouse[1] < self.hand_area.y + 40 and hv.hover is None
         hv.layout(self.b.hand, self.hand_area, hand_mouse)
         hv.update(dt, hand_mouse)
+        self.update_merge(dt)
         if self.toast:
             self.toast = (self.toast[0], self.toast[1] - dt)
             if self.toast[1] <= 0:
                 self.toast = None
+        if getattr(self.b, "attach_reveal", None) is not None:
+            card, host = self.b.attach_reveal
+            self.b.attach_reveal = None
+            self.attach_show = (card, host, 1.6)
+        if self.attach_show:
+            card, host, left = self.attach_show
+            left -= dt
+            self.attach_show = (card, host, left) if left > 0 else None
         if self.b.result and self.job is None:
             self.game.battle_over(self.b)
 
@@ -822,6 +900,114 @@ class BattleScreen:
         sc.shake = max(sc.shake, amount)
         if stop:
             sc.hitstop = max(sc.hitstop, stop)
+
+    def pile_pos(self, dest):
+        rect = self.deck_pile_rect if dest == "draw" else self.discard_pile_rect
+        if rect is not None:
+            return rect.center
+        return self.hv.draw_pos if dest == "draw" else self.hv.discard_pos
+
+    def parts_fly(self, e):
+        """Рубашки частей летят от героя к колоде и сбросу; ввод не блокируют."""
+        u = e.get("unit") or self.b.hero
+        x, y = self.view.unit_pos(u)
+        parts = e.get("parts") or []
+        dests = e.get("dests") or []
+        for i, (card, dest) in enumerate(zip(parts, dests)):
+            sp = HandSprite(card, (x + (i - 1) * 14, y - 26))
+            sp.back_only = True
+            sp.age = 1.0
+            sp.s = 0.55
+            sp.order = 200 + i
+            sp.fly = (self.pile_pos(dest), 0.38 + i * 0.04, 0.38 + i * 0.04, True)
+            self.hv.flying.append(sp)
+
+    def prepare_merge(self, parts, weapon, unit, dur):
+        point = (self.hand_area.centerx, self.hand_area.centery - 18)
+        sprites = []
+        n = max(1, len(parts))
+        for i, card in enumerate(parts):
+            sp = self.hv.sprites.pop(card.uid, None)
+            if sp is None:
+                sp = next((x for x in self.hv.flying if x.card.uid == card.uid), None)
+                if sp is not None:
+                    self.hv.flying.remove(sp)
+            if sp is None:
+                sp = HandSprite(card, (point[0], point[1] + 34))
+            sp.back_only = False
+            sp.fly = None
+            sp.alpha = 255
+            sp.s = max(0.55, min(1.0, sp.s))
+            sp.ts = 0.9
+            sp.order = 300 + i
+            ang = -math.pi / 2 + 2 * math.pi * i / n
+            sp.merge_off = (round(math.cos(ang) * 34), round(math.sin(ang) * 34))
+            sprites.append(sp)
+        return {"t": 0.0, "dur": max(0.35, dur), "point": point, "parts": sprites,
+                "weapon": weapon, "weapon_sp": None, "revealed": False}
+
+    def begin_merge(self, item):
+        self.merge = item
+        for sp in item["parts"]:
+            tx, ty = item["point"]
+            ox, oy = getattr(sp, "merge_off", (0, 0))
+            sp.fly = ((tx + ox, ty + oy), item["dur"], item["dur"], False)
+            self.hv.flying.append(sp)
+
+    def queue_merge(self, e):
+        item = self.prepare_merge(e.get("parts") or [], e.get("weapon"), e.get("unit"), e.get("dur", 0.75))
+        if self.merge is None:
+            self.begin_merge(item)
+        else:
+            self.merge_queue.append(item)
+
+    def finish_merge(self):
+        item = self.merge
+        for sp in item["parts"]:
+            if sp in self.hv.flying:
+                self.hv.flying.remove(sp)
+        wsp = item["weapon_sp"] or self.hv.sprites.get(item["weapon"].uid)
+        if wsp is not None:
+            wsp.merge_hold = False
+            wsp.alpha = 255
+            wsp.back_only = False
+            wsp.age = 1.0
+        self.merge = None
+        if self.merge_queue:
+            self.begin_merge(self.merge_queue.pop(0))
+        else:
+            deferred, self.merge_deferred = self.merge_deferred, []
+            for ev in deferred:
+                self.handle(ev)
+
+    def update_merge(self, dt):
+        if self.merge is None:
+            return
+        m = self.merge
+        m["t"] += dt
+        if m["weapon_sp"] is None:
+            wsp = self.hv.sprites.get(m["weapon"].uid)
+            if wsp is not None:
+                m["weapon_sp"] = wsp
+                wsp.merge_hold = True
+                wsp.x, wsp.y = m["point"]
+                wsp.tx, wsp.ty = m["point"]
+                wsp.alpha = 0
+                wsp.s = 0.55
+                wsp.ts = 0.55
+        if not m["revealed"] and m["t"] >= m["dur"] * 0.72:
+            m["revealed"] = True
+            self.view.fx.append(Fx("ring", 0.45, x=m["point"][0], y=m["point"][1],
+                                   r0=10, r1=86, color=(255, 220, 140)))
+            if m["weapon_sp"] is not None:
+                m["weapon_sp"].merge_hold = False
+                m["weapon_sp"].back_only = False
+                m["weapon_sp"].age = 1.0
+                m["weapon_sp"].alpha = 255
+                m["weapon_sp"].s = 1.0
+                m["weapon_sp"].ts = 1.0
+        if m["t"] >= m["dur"]:
+            self.finish_merge()
 
     def deck_fx(self, e):
         v = self.view
@@ -923,6 +1109,10 @@ class BattleScreen:
         elif k == "exhaust":                                # Изгнание — карта рассыпается дымом
             x, y = v.unit_pos(u)
             vx.emit("smoke_puffs", x, y - 20, count=6)
+        elif k == "parts_fly":
+            self.parts_fly(e)
+        elif k == "merge_weapon":
+            self.queue_merge(e)
         elif k == "created":                                # Создать карту — искорки над героем
             x, y = v.unit_pos(u)
             vx.emit("sparkle_trail", x, y - 24, count=8)
@@ -1152,6 +1342,10 @@ class BattleScreen:
         if not self.ready():
             if hasattr(ev, "pos"):
                 self.mouse = ev.pos
+            return
+        if self.merge is not None:                       # сборка: ввод замирает, действие не отменяем
+            if ev.type in (pygame.MOUSEBUTTONUP, pygame.KEYDOWN):
+                self.merge_deferred.append(ev)
             return
         if self.relic_choice is not None:
             self.handle_relic_choice(ev)
@@ -1558,6 +1752,10 @@ class BattleScreen:
         if b.garden is not None:                          # фейные кольца эльфа — мягкая зелёная зона
             for ring in b.garden.rings:
                 h.zone(list(ring["cells"]), (130, 225, 150), int(22 + 18 * pulse), 140, 1.2, glow=False)
+            if not self.ui_hidden:
+                plant = next((u for rect, u in self.garden_rows if u.alive and rect.collidepoint(self.mouse)), None)
+                if plant is not None:
+                    h.cell(plant.cell, ELF.MINT, fill=65, width=2.3, glow=True)
         for p, _n in b.traps.items():                    # капканы Охотницы: кольцо с зубьями
             cc = c(p)
             h.ring(cc, 0.26, (235, 205, 140), 240, 2.0, glow=False, fill=90, squash=0.9)
@@ -1688,6 +1886,7 @@ class BattleScreen:
             c.preview_cost = self.b.effective_cost(c)
 
     def draw(self, surf):
+        self.relayout(*wide_layout(surf))
         self.refresh_damage_previews()
         v = self.view
         if v._cpu_tex is None:
@@ -1754,7 +1953,7 @@ class BattleScreen:
         if not self.ui_hidden:
             self.draw_tip(surf)
         if self.toast and not self.ui_hidden:
-            T.text(surf, self.toast[0], (T.SCREEN_W // 2 - 140, T.SCREEN_H - 230), 18, (255, 200, 120), True,
+            T.text(surf, self.toast[0], (self.W // 2 - 140, self.H - 230), 18, (255, 200, 120), True,
                    center=True, shadow=True)
         if self.inspect is not None:                      # осмотр карты (удержание) или чтение (Shift)
             self.inspect.draw(surf, self.inspect.mouse or self.mouse)
@@ -1813,7 +2012,7 @@ class BattleScreen:
     def draw_relic_choice(self, surf):
         choice = self.relic_choice
         visible = choice.options[self.relic_choice_offset:self.relic_choice_offset + 6]
-        panel = pygame.Rect(T.SCREEN_W - 486, 128, 440, 138 + 44 * len(visible))
+        panel = pygame.Rect(self.W - 486, 128, 440, 138 + 44 * len(visible))
         T.frame(surf, panel, 248, accent=T.AMBER)
         for i, line in enumerate(T.wrap(choice.prompt, 17, panel.w - 30)):
             T.text(surf, line, (panel.x + 16, panel.y + 14 + 20 * i), 17, T.AMBER, True)
@@ -1870,13 +2069,13 @@ class BattleScreen:
         tag = ("босс главы" if last else "страж лестницы") if b.fight.get("boss") else             "элита" if b.fight.get("elite") else "бой"
         k = min(1.0, self.intro_t / 0.4)
         col = tuple(int(c * k) for c in sk.p["title"])
-        sk.text(surf, b.fight["name"], (T.SCREEN_W // 2, T.SCREEN_H // 2 - 18), 40, col, center=True, title=True)
-        sk.text(surf, f"Этаж {self.game.run.depth} · {tag}", (T.SCREEN_W // 2, T.SCREEN_H // 2 + 26), 17,
+        sk.text(surf, b.fight["name"], (self.W // 2, self.H // 2 - 18), 40, col, center=True, title=True)
+        sk.text(surf, f"Этаж {self.game.run.depth} · {tag}", (self.W // 2, self.H // 2 + 26), 17,
                 tuple(int(c * k) for c in sk.p["dim"]), center=True)
         for i in range(3):                                 # три огонька — идёт
             a = 0.5 + 0.5 * math.sin(self.intro_t * 5 - i * 0.9)
             pygame.draw.circle(surf, tuple(int(c * a * k) for c in sk.p["accent"]),
-                               (T.SCREEN_W // 2 - 16 + i * 16, T.SCREEN_H // 2 + 62), 3)
+                               (self.W // 2 - 16 + i * 16, self.H // 2 + 62), 3)
 
     def forecast(self):
         """Прогноз урона выбранной карты по врагу под курсором: {индекс юнита: (урон, добьёт)}."""
@@ -1984,6 +2183,10 @@ class BattleScreen:
         if getattr(u, "statue", None):                  # статуя Жреца: медальон намерения, без полоски
             return
         if u.obj:
+            if self.b.garden is not None and getattr(u, "plant_id", None) and not self.ui_hidden:
+                hot = self.hover_cell == u.cell or any(p is u and r.collidepoint(self.mouse)
+                                                       for r, p in self.garden_rows)
+                ELF.draw_plant(surf, sk, self.b.garden, u, fx, top, hot)
             if u.hp >= u.max_hp and u.team == 0:
                 return
             r = pygame.Rect(0, 0, 40, 6)
@@ -2062,11 +2265,11 @@ class BattleScreen:
 
     @property
     def help_rect(self):
-        return pygame.Rect(T.SCREEN_W - 302, 20, 30, 30)
+        return pygame.Rect(self.W - 302, 20, 30, 30)
 
     @property
     def eye_rect(self):
-        return pygame.Rect(T.SCREEN_W - 340, 20, 30, 30)
+        return pygame.Rect(self.W - 340, 20, 30, 30)
 
     def draw_eye(self, surf):
         """Значок-глаз рядом с «?»: скрыть интерфейс боя (Tab). Скрыт — глаз закрыт."""
@@ -2099,7 +2302,7 @@ class BattleScreen:
 
     @property
     def log_rect(self):
-        return pygame.Rect(T.SCREEN_W - 262 + 12, 14 + 132, 224, 20)
+        return pygame.Rect(self.W - 262 + 12, 14 + 132, 224, 20)
 
     def state_badges(self, u):
         """[(значок, цвет, число, слово)] — состояния фигурки."""
@@ -2123,14 +2326,20 @@ class BattleScreen:
         b = self.b
         sk = self.skin
         h = b.hero
-        r = pygame.Rect(T.SCREEN_W - 262, 14, 248, 156 + (118 if self.log_open else 0))
+        r = pygame.Rect(self.W - 262, 14, 248, 156 + (118 if self.log_open else 0))
         sk.panel(surf, r, 236, accent=True)
         pc = (r.x + 40, r.y + 42)
         port = sk.art("portrait")
         native, S, pt = SK.ctx(surf)
-        if port is not None:
+        if b.mech == "fae":
+            size = round(60 * S)
+            img = ELF.portrait((size, size))
+        else:
+            img = None
+        if img is None and port is not None:
             img = SK._remember(("portrait", sk.id, round(60 * S)),
                                lambda: pygame.transform.smoothscale(port, (round(60 * S), round(60 * S))))
+        if img is not None:
             x, y = pt(pc)
             native.blit(img, (round(x - img.get_width() / 2), round(y - img.get_height() / 2)))
         else:
@@ -2216,7 +2425,7 @@ class BattleScreen:
 
     def face_w(self, zoom=1.0):
         """Ширина лица карты в пикселях экрана: в покое или под мышью (крупно) — текст пишется в этом размере."""
-        return round(CW * self._S * zoom)
+        return round(CW * self._card_scale * self._S * zoom)
 
     def card_face(self, card, st, zoom=1.0):
         return CF.face(card, *st, width=self.face_w(zoom))
@@ -2277,7 +2486,44 @@ class BattleScreen:
             return f"Кликните клетку — пройти (шагов: {b.walk_left}) · тяните свиток на статую"
         if not any(b.can_play(c, "main") or b.can_play(c, "alt") for c in b.hand):
             return "Ходов больше нет — Space: конец хода"
+        if self.hv.hover and self.inspect is None and not self.drag:
+            return "Shift — подробнее"
         return None
+
+    def draw_attachment_tabs(self, surf):
+        """Прививка в руке: за картой-хозяином виден только ярлык с её названием."""
+        garden = getattr(self.b, "garden", None)
+        if garden is None:
+            return
+        for card in self.b.hand:
+            att = garden.attachments.get(card.uid)
+            sp = self.hv.sprites.get(card.uid)
+            if att is None or sp is None:
+                continue
+            r = self.hv.rect_of(sp)
+            name = att["card"].name
+            w = max(110, int(r.w * 0.74))
+            x = max(6, min(r.centerx - w // 2, self.W - w - 6))
+            tab = pygame.Rect(x, r.top - 24, w, 26)
+            pygame.draw.rect(surf, (10, 7, 5), tab.move(2, 3), border_radius=7)
+            pygame.draw.rect(surf, (34, 28, 18), tab, border_radius=7)
+            pygame.draw.rect(surf, self.skin.p["accent"], tab.inflate(-4, -4), 1, border_radius=5)
+            T.text(surf, name, (tab.centerx, tab.centery - 1), 12, self.skin.p["title"], True, center=True)
+
+    def draw_attachment_reveal(self, surf):
+        """Короткий показ прививки в момент, когда сработала карта-хозяин."""
+        if not self.attach_show:
+            return
+        card, host, left = self.attach_show
+        w = 150
+        h = round(w * CF.FH / CF.FW)
+        r = pygame.Rect(self.W // 2 - w // 2, 118, w, h)
+        T.frame(surf, r.inflate(18, 28), 245, accent=self.skin.p["accent"])
+        CF.blit_card(surf, r, card, hot=True)
+        T.text(surf, f"Прививка на «{host}»", (r.centerx, r.y - 20), 14, self.skin.p["title"],
+               True, center=True, shadow=True)
+        T.text(surf, "сработала", (r.centerx, r.bottom + 10), 12, self.skin.p["dim"], center=True,
+               shadow=True)
 
     def draw_hand(self, surf):
         b = self.b
@@ -2299,18 +2545,20 @@ class BattleScreen:
             return
         top = self.draw_mechanic(surf, 14, ey - 168)
         self.draw_turn(surf, 14, (top if top is not None else ey - 118) - 36)
-        self.deck_pile_rect = self.pile(surf, (60, T.SCREEN_H - 34), len(b.draw_pile), "колода")
-        self.discard_pile_rect = self.pile(surf, (T.SCREEN_W - 240, T.SCREEN_H - 40), len(b.discard),
+        self.deck_pile_rect = self.pile(surf, (60, self.H - 34), len(b.draw_pile), "колода")
+        self.discard_pile_rect = self.pile(surf, (self.W - 240, self.H - 40), len(b.discard),
                                            "сброс", side=-1)
         tip = self.hint_text()
         if tip:
             w = sk.size(tip, 15)[0] + 90
             r = pygame.Rect(0, 0, w, 32)
-            r.center = (T.SCREEN_W // 2 - 20, 30)               # сверху по центру: рука и поднятая карта не закрывают
+            r.center = (self.W // 2 - 20, 30)                   # сверху по центру: рука и поднятая карта не закрывают
             r.right = min(r.right, self.help_rect.x - 10)
             sk.ribbon(surf, r, "")
             sk.text(surf, tip, r.center, 15, sk.p["text"], center=True)
+        self.draw_attachment_tabs(surf)
         self.hv.draw(surf, self.state_of)
+        self.draw_attachment_reveal(surf)
         if self.sel and self.sel[0].d[self.sel[1]]["target"] in M.HAND_TARGETS:
             target = self.target_at(self.mouse)
             native = surf.native if G.is_canvas(surf) else surf
@@ -2341,7 +2589,7 @@ class BattleScreen:
                 pygame.draw.rect(surf, T.SELECT, self.hv.rect_of(sp).inflate(7, 7), 3, border_radius=8)
         text = f"Сбросьте карты: {len(self.discard_pick)}/{need} · клик по карте — выбрать"
         w = T.font(15, True).size(text)[0] + 38
-        r = pygame.Rect((T.SCREEN_W - w) // 2, 82, w, 36)
+        r = pygame.Rect((self.W - w) // 2, 82, w, 36)
         T.frame(surf, r, 245, accent=T.SELECT)
         T.text(surf, text, r.center, 15, T.TEXT, True, center=True)
 
@@ -2359,7 +2607,7 @@ class BattleScreen:
         w = round((208 + 8 * min(1.0, t / 0.16)) * (0.96 + 0.04 * k))
         h = round(w * CF.FH / CF.FW)
         cr = pygame.Rect(0, 0, w, h)
-        cr.center = (T.SCREEN_W // 2, T.SCREEN_H // 2 - 52)
+        cr.center = (self.W // 2, self.H // 2 - 52)
         pr = pygame.Rect(cr.x - 18, cr.y - 34, cr.w + 36, cr.h + 70)
         T.frame(surf, pr, 238, accent=(130, 255, 165), fill=(18, 14, 11))
         T.text(surf, "ЦЕПОЧКА", (cr.centerx, pr.y + 8), 20, (130, 255, 170), True,
@@ -2402,19 +2650,9 @@ class BattleScreen:
         sk = self.skin
         ds = b.hero.ds
         lines = []
-        if b.mech == "fae":
-            fae = ds.get("fae", 0)
-            r = pygame.Rect(x, y, 190, 62)
-            sk.panel(surf, r, 228)
-            sk.text(surf, "Феи", (r.x + 14, r.y + 5), 15, sk.p["title"], title=True)
-            sk.text(surf, f"{fae}/10", (r.right - 14, r.y + 5), 15, sk.p["text"], right=True, title=True)
-            sk.pips(surf, r.x + 14, r.y + 30, 10, fae, w=(r.w - 28 - 4 * 9) / 10, h=9, gap=4)
-            if b.garden is not None:
-                plants = sum(1 for u in b.garden.plants if u.alive)
-                beasts = sum(1 for u in b.garden.beasts.values() if u.alive)
-                sk.text(surf, f"растения {plants} · звери {beasts} · прививки {len(b.garden.attachments)}",
-                        (r.x + 14, r.y + 44), 11, sk.p["dim"])
-            return r.y
+        if b.garden is not None:
+            top, self.garden_rows = ELF.draw_garden(surf, sk, b.garden, x, y, self.mouse, self.hover_cell)
+            return top
         if b.mech == "momentum":
             mx = b.hero_def.get("momentum_max", 5)
             r = pygame.Rect(x, y, 160, 50)
@@ -2481,7 +2719,7 @@ class BattleScreen:
                 out.append((ln, col, head))
         w = max(sk.size(s, 15 if hd else 13, hd)[0] for s, _, hd in out) + 30
         h = sum(22 if hd else 17 for _, _, hd in out) + 18
-        x = min(anchor[0] + 18, T.SCREEN_W - w - 8)
+        x = min(anchor[0] + 18, self.W - w - 8)
         y = max(8, anchor[1] - h - 10)
         box = pygame.Rect(x, y, w, h)
         sk.panel(surf, box, 246, cut=8)
@@ -2591,9 +2829,10 @@ class BattleScreen:
                 ("Журнал", "L — развернуть в панели героя"),
                 ("Предметы", "I или клик по значкам под названием боя — сумка"),
                 ("Скрыть интерфейс", "Tab или глаз рядом с «?» — останутся карты, энергия, намерения, HP и состояния"),
+                ("Esc", "закрыть чтение или снять выбор; выйти из боя нельзя"),
                 ("Справка", "H, F1 или «?» — закрыть: любой клик, Esc")]
         r = pygame.Rect(0, 0, 720, 70 + len(rows) * 34)
-        r.center = (T.SCREEN_W // 2, T.SCREEN_H // 2 - 40)
+        r.center = (self.W // 2, self.H // 2 - 40)
         sk.panel(surf, r, 250, accent=True)
         sk.text(surf, "Управление", (r.centerx, r.y + 26), 24, sk.p["title"], center=True, title=True)
         y = r.y + 58
@@ -2659,6 +2898,12 @@ class ChoiceScreen:
     def handle(self, ev):
         if reading_event(self, ev, self.card_under):
             return
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+            if self.skip:
+                self.skip()
+            else:
+                self.game.open_pause()
+            return
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEWHEEL:                    # колесо над картой Пиромантки — её уровень
@@ -2676,6 +2921,7 @@ class ChoiceScreen:
                 self.skip()
 
     def draw(self, surf):
+        sw = wide_layout(surf)[0]
         if self.back is not None:
             if G.is_canvas(surf):                           # кадр боя уже в родном разрешении
                 surf.native.blit(self.back, (0, 0))
@@ -2684,15 +2930,16 @@ class ChoiceScreen:
             dim(surf, 190)
         else:
             backdrop(surf, 200)
-        cx = T.SCREEN_W // 2
+        cx = sw // 2
         T.text(surf, self.title, (cx, 110), 32, T.AMBER, True, center=True, shadow=True)
         if self.sub:
             T.text(surf, self.sub, (cx, 150), 16, T.TEXT_DIM, center=True)
         n = len(self.options)
         big = any(card is not None for _, card, _ in self.options)
         tall = any("\n" in (label or "") for label, _, _ in self.options)
-        w = int(CW * 1.35) if big else 340 if tall or self.relics else 300
-        h = int(CH * 1.35) if big else 230 if self.relics else 110 if tall else 90
+        k = 1.35 if sw < 1500 else 1.55
+        w = int(CW * k) if big else 340 if tall or self.relics else 300
+        h = int(CH * k) if big else 230 if self.relics else 110 if tall else 90
         gap = 40
         x0 = cx - (n * w + (n - 1) * gap) // 2
         self.rects = []
@@ -2760,6 +3007,9 @@ class GodBranchScreen:
         self.t += dt
 
     def handle(self, ev):
+        if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+            self.game.open_pause()
+            return
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
         elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
@@ -2791,7 +3041,7 @@ class GodBranchScreen:
         sk = SK.use("priest")
         g = self.god
         col = tuple(g.get("color", (220, 200, 160)))
-        cx = T.SCREEN_W // 2
+        cx = wide_layout(surf)[0] // 2
         # знак бога: сияние его цвета, медальон, вымпел
         pulse = 0.5 + 0.5 * math.sin(self.t * 2.2)
         glow = pygame.Surface((240, 240), pygame.SRCALPHA)
@@ -2862,19 +3112,83 @@ class EndScreen:
     def handle(self, ev):
         if ev.type == pygame.MOUSEMOTION:
             self.mouse = ev.pos
+        elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+            self.game.open_pause()
         elif (ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and self.btn.collidepoint(ev.pos)) or \
                 (ev.type == pygame.KEYDOWN and ev.key in (pygame.K_RETURN, pygame.K_r)):
             self.game.new_run()
 
     def draw(self, surf):
+        sw = wide_layout(surf)[0]
         surf.fill(T.BG)
-        cx = T.SCREEN_W // 2
+        cx = sw // 2
+        self.btn.center = (cx, 448)
         name = getattr(getattr(self.game, "run", None), "hero_name", "Герой")
         T.text(surf, "Глава пройдена!" if self.won else f"{name} пал(а)", (cx, 220), 40,
                (150, 230, 140) if self.won else (255, 120, 100), True, center=True, shadow=True)
         for i, line in enumerate(self.text):
             T.text(surf, line, (cx, 290 + i * 26), 17, T.TEXT_DIM, center=True)
         button(surf, self.btn, "Новый забег  (Enter)", self.mouse, primary=True)
+
+
+class PauseMenu:
+    """Пауза поверх текущего экрана: продолжить, выйти из забега, выйти из игры."""
+
+    def __init__(self, game, options):
+        self.game = game
+        self.options = options                  # [(подпись, действие)]
+        self.mouse = (0, 0)
+        self.rects = []
+
+    def update(self, dt):
+        pass
+
+    def choose(self, key):
+        if key == "resume":
+            self.game.pause = None
+        elif key == "abandon":
+            self.game.pause = None
+            self.game.abandon_run()
+        elif key == "menu":
+            self.game.pause = None
+            self.game.new_run()
+        elif key == "quit":
+            self.game.quit_requested = True
+
+    def handle(self, ev):
+        if ev.type == pygame.MOUSEMOTION:
+            self.mouse = ev.pos
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            for r, key in self.rects:
+                if r.collidepoint(ev.pos):
+                    self.choose(key)
+                    return
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_ESCAPE:
+                self.choose("resume")
+            elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self.choose("resume")
+            elif pygame.K_1 <= ev.key <= pygame.K_9:
+                i = ev.key - pygame.K_1
+                if i < len(self.options):
+                    self.choose(self.options[i][1])
+
+    def draw(self, surf):
+        sw, sh = wide_layout(surf)
+        dim(surf, 175)
+        w = 420
+        h = 104 + len(self.options) * 58
+        box = pygame.Rect(sw // 2 - w // 2, sh // 2 - h // 2, w, h)
+        T.frame(surf, box, 248, accent=T.AMBER)
+        T.text(surf, "Пауза", (box.centerx, box.y + 20), 30, T.AMBER, True, center=True)
+        T.text(surf, "Esc — продолжить", (box.centerx, box.y + 56), 13, T.TEXT_DIM, center=True)
+        self.rects = []
+        y = box.y + 82
+        for label, key in self.options:
+            r = pygame.Rect(box.x + 28, y, box.w - 56, 46)
+            button(surf, r, label, self.mouse, primary=key == "resume")
+            self.rects.append((r, key))
+            y += 58
 
 
 # ---------- карта этажа ----------
@@ -2924,14 +3238,15 @@ def backdrop(surf, dim=190):
     surf.blit(_shade((T.SCREEN_W, T.SCREEN_H), dim), (0, 0))
 
 
-def run_header(surf, run, title, sub=None):
+def run_header(surf, run, title, sub=None, width=None):
+    width = width or T.SCREEN_W
     T.text(surf, title, (24, 14), 28, T.TEXT, True)
     if sub:
         T.text(surf, sub, (26, 52), 15, T.TEXT_DIM)
     g = f"Золото: {run.gold}"
-    T.text(surf, g, (T.SCREEN_W - 26 - T.font(22, True).size(g)[0], 16), 22, GOLD, True)
+    T.text(surf, g, (width - 26 - T.font(22, True).size(g)[0], 16), 22, GOLD, True)
     hp = f"HP {run.hp}/{run.max_hp}"
-    T.text(surf, hp, (T.SCREEN_W - 26 - T.font(18, True).size(hp)[0], 46), 18, (230, 120, 110), True)
+    T.text(surf, hp, (width - 26 - T.font(18, True).size(hp)[0], 46), 18, (230, 120, 110), True)
 
 
 class MapScreen:
@@ -2949,12 +3264,24 @@ class MapScreen:
         self.sound_rect = pygame.Rect(24, 76, 214, 28)
         self.atlas_rect = pygame.Rect(248, 76, 166, 28)
         self.toast = None
-        fl = game.run.floor
+        self.W = 0
+        self.rad = {}
+        self.relayout(T.SCREEN_W)
+
+    def relayout(self, w):
+        if w == self.W:
+            return
+        self.W = w
+        self.deck_rect = pygame.Rect(w - 260, T.SCREEN_H - 66, 236, 44)
+        self.bag_rect = pygame.Rect(w - 520 - 12 - 220, T.SCREEN_H - 66, 220, 44)
+        self.res_rect = pygame.Rect(w - 520, T.SCREEN_H - 66, 248, 44)
+        self.board = pygame.Rect(40, 110, w - 80, 450)
+        fl = self.game.run.floor
         layers = max(n["layer"] for n in fl.nodes.values()) + 1
-        x0, x1, y0, y1 = 110, T.SCREEN_W - 110, 160, 500
-        for n in fl.nodes.values():
-            self.pos[n["id"]] = (x0 + (x1 - x0) * n["layer"] / max(1, layers - 1),
-                                 y0 + (y1 - y0) * (n["idx"] + 0.5) / n["count"])
+        x0, x1, y0, y1 = 110, w - 110, self.board.y + 50, self.board.bottom - 10
+        self.pos = {n["id"]: (x0 + (x1 - x0) * n["layer"] / max(1, layers - 1),
+                              y0 + (y1 - y0) * (n["idx"] + 0.5) / n["count"])
+                    for n in fl.nodes.values()}
 
     def update(self, dt):
         self.clock += dt
@@ -2965,7 +3292,7 @@ class MapScreen:
 
     def node_at(self, pos):
         for nid, p in self.pos.items():
-            if math.dist(p, pos) <= 28:
+            if math.dist(p, pos) <= max(28, self.rad.get(nid, 28) + 3):
                 return nid
         return None
 
@@ -2995,7 +3322,9 @@ class MapScreen:
             if nid and nid in self.game.run.floor.available():
                 self.game.enter_node(nid)
         elif ev.type == pygame.KEYDOWN:
-            if ev.key == pygame.K_d:
+            if ev.key == pygame.K_ESCAPE:
+                self.game.open_pause()
+            elif ev.key == pygame.K_d:
                 self.game.show_deck()
             elif ev.key == pygame.K_a:
                 self.game.open_atlas()
@@ -3009,21 +3338,27 @@ class MapScreen:
 
     def draw(self, surf):
         from ui import map_art as MA
+        self.relayout(wide_layout(surf)[0])
+        w = self.W
         run = self.game.run
         fl = run.floor
         backdrop(surf)
         hk, dk = run.scale()
         run_header(surf, run, f"Болото · этаж {fl.depth} из 3 — {run.floor_name}" if run.floor_name else
                    f"Подземелье · этаж {fl.depth}",
-                   f"Выберите путь: клик или 1–3 · враги этажа: HP ×{hk:.2f}, урон ×{dk:.2f} · D — колода")
-        self.bag.bar(surf, run, (T.SCREEN_W - 40, 74), self.mouse, right=True)
+                   f"Выберите путь: клик или 1–3 · враги этажа: HP ×{hk:.2f}, урон ×{dk:.2f} · D — колода",
+                   width=w)
+        self.bag.bar(surf, run, (w - 40, 74), self.mouse, right=True)
         button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
         button(surf, self.atlas_rect, "Атлас · A", self.mouse)
-        board = pygame.Rect(40, 110, T.SCREEN_W - 80, 450)
+        board = self.board
         T.frame(surf, board, 150, accent=T.AMBER_DIM)
         avail = set(fl.available())
         visited = set(fl.path)
-        rad = {nid: (30 if n["type"] == "boss" else 25 if n["type"] == "elite" else 22) for nid, n in fl.nodes.items()}
+        rs = 1.0 if w < 1500 else 1.18
+        rad = {nid: int((30 if n["type"] == "boss" else 25 if n["type"] == "elite" else 22) * rs)
+               for nid, n in fl.nodes.items()}
+        self.rad = rad
         for n in fl.nodes.values():
             for nxt in n["next"]:
                 if n["id"] in visited and nxt in visited:
@@ -3066,13 +3401,13 @@ class MapScreen:
         if hover and not self.bag.open:
             self.tip(surf, fl.nodes[hover])
         if self.toast:
-            T.text(surf, self.toast[0], (T.SCREEN_W // 2, 640), 22, (255, 220, 140), True, center=True, shadow=True)
+            T.text(surf, self.toast[0], (w // 2, 640), 22, (255, 220, 140), True, center=True, shadow=True)
         self.bag.draw(surf, run)
 
     def toggle_res(self):
         """Качество моделек между боями: 32×32 (пиксели) ↔ 64×64 (вдвое подробнее) — со следующего боя."""
         from ui import settings
-        settings.SETTINGS["sprite_res"] = 64 if model_res() == 32 else 32
+        settings.SETTINGS["sprite_res"] = 128 if model_res() == 32 else 32
         if getattr(self.game, "save_settings", True):
             settings.save()
         r = model_res()
@@ -3114,7 +3449,7 @@ class MapScreen:
             lines.append(("Улучшить простое применение карты: 1 из 3", T.TEXT_DIM))
         w = max(T.font(14).size(s)[0] for s, _ in lines) + 20
         x, y = self.pos[n["id"]]
-        box = pygame.Rect(min(x + 32, T.SCREEN_W - w - 10), max(10, y - 20), w, len(lines) * 19 + 12)
+        box = pygame.Rect(min(x + 32, self.W - w - 10), max(10, y - 20), w, len(lines) * 19 + 12)
         T.frame(surf, box, 245)
         for i, (s, col) in enumerate(lines):
             T.text(surf, s, (box.x + 10, box.y + 6 + i * 19), 14, col, i == 0)
@@ -3134,16 +3469,17 @@ class DeckScreen:
         self.mouse = (0, 0)
         self.rects = []
         self.scroll = 0
+        self.W = T.SCREEN_W
         self.back_rect = pygame.Rect(T.SCREEN_W // 2 - 110, T.SCREEN_H - 60, 220, 46)
 
     def update(self, dt):
         pass
 
     def layout(self):
-        k = 1.12
+        k = 1.12 if self.W < 1500 else 1.3
         w, h = int(CW * k), int(CH * k)
-        per = max(1, (T.SCREEN_W - 60) // (w + 14))
-        x0 = (T.SCREEN_W - per * (w + 14) + 14) // 2
+        per = max(1, (self.W - 60) // (w + 14))
+        x0 = (self.W - per * (w + 14) + 14) // 2
         rows = -(-len(self.cards) // per)
         top = 96
         view_h = T.SCREEN_H - 76 - top
@@ -3179,9 +3515,11 @@ class DeckScreen:
             self.back()
 
     def draw(self, surf):
+        self.W = wide_layout(surf)[0]
+        self.back_rect.center = (self.W // 2, T.SCREEN_H - 37)
         backdrop(surf, 215)
         self.rects = self.layout()
-        clip = pygame.Rect(0, 90, T.SCREEN_W, T.SCREEN_H - 160)
+        clip = pygame.Rect(0, 90, self.W, T.SCREEN_H - 160)
         surf.set_clip(clip)
         hover = None
         for r, c in self.rects:
@@ -3190,7 +3528,7 @@ class DeckScreen:
             CF.blit_card(surf, r, c)
             T.text(surf, c.rarity_name, (r.centerx, r.bottom + 2), 10,
                    M.CARD_RARITY_COLOR.get(c.rarity, T.TEXT_DIM), center=True)
-            if r.collidepoint(self.mouse) and clip.collidepoint(self.mouse):
+            if getattr(self, "reading", None) is None and r.collidepoint(self.mouse) and clip.collidepoint(self.mouse):
                 hover = (r, c)
         surf.set_clip(None)
         self.hover_big = None
@@ -3198,17 +3536,17 @@ class DeckScreen:
             r, c = hover
             big = pygame.Rect(0, 0, 300, round(300 * CF.FH / CF.FW))
             big.center = r.center
-            big.clamp_ip(pygame.Rect(8, 8, T.SCREEN_W - 16, T.SCREEN_H - 16))
+            big.clamp_ip(pygame.Rect(8, 8, self.W - 16, T.SCREEN_H - 16))
             self.hover_big = (big, c)
             sh = pygame.Surface(big.size, pygame.SRCALPHA)
             pygame.draw.rect(sh, (0, 0, 0, 140), sh.get_rect(), border_radius=22)
             surf.blit(sh, big.move(8, 10))
             CF.blit_card(surf, big, c, hot=self.on_pick is not None)
-        T.text(surf, self.title, (T.SCREEN_W // 2, 30), 28, T.AMBER, True, center=True)
+        T.text(surf, self.title, (self.W // 2, 30), 28, T.AMBER, True, center=True)
         if self.sub:
-            T.text(surf, self.sub, (T.SCREEN_W // 2, 62), 15, T.TEXT_DIM, center=True)
+            T.text(surf, self.sub, (self.W // 2, 62), 15, T.TEXT_DIM, center=True)
         T.text(surf, "Shift над картой — читать подробно" + (" · колесо — прокрутка" if self.max_scroll else ""),
-               (T.SCREEN_W - 330, T.SCREEN_H - 40), 13, T.TEXT_DIM)
+               (self.W - 330, T.SCREEN_H - 40), 13, T.TEXT_DIM)
         button(surf, self.back_rect, "Назад (Esc)", self.mouse)
         if getattr(self, "reading", None) is not None:
             self.reading.draw(surf, self.reading.mouse or self.mouse)
@@ -3321,12 +3659,20 @@ class ShopScreen:
             self.game.to_map()
 
     def draw(self, surf):
+        sw = wide_layout(surf)[0]
+        cx = sw // 2
         run = self.game.run
         backdrop(surf, 200)
-        run_header(surf, run, "Торговец", "Карты в колоду, избавиться от лишней, подлечиться")
+        run_header(surf, run, "Торговец", "Карты в колоду, избавиться от лишней, подлечиться", width=sw)
         n = len(self.stock)
-        w, h = int(CW * 1.25), int(CH * 1.25)
-        x0 = T.SCREEN_W // 2 - (n * w + (n - 1) * 40) // 2
+        k = 1.25 if sw < 1500 else 1.4
+        w, h = int(CW * k), int(CH * k)
+        self.remove_rect = pygame.Rect(cx - 480, 520, 300, 56)
+        self.potion_rect = pygame.Rect(cx - 150, 520, 300, 56)
+        for i, it in enumerate(self.items):
+            it[2] = pygame.Rect(cx + 180, 520 + 62 * i, 300, 52)
+        self.leave_rect = pygame.Rect(cx - 110, T.SCREEN_H - 80, 220, 50)
+        x0 = cx - (n * w + (n - 1) * 40) // 2
         self.rects = []
         for i, (card, price) in enumerate(self.stock):
             r = pygame.Rect(x0 + i * (w + 40), 120, w, h)
@@ -3359,13 +3705,13 @@ class ShopScreen:
             from .items import about
             lines = T.wrap(f"{rl['name']} ({RARITY_NAME.get(rl.get('rarity'), '')}): {about(rl, run)}", 14, 520)
             for k, ln in enumerate(lines):
-                T.text(surf, ln, (T.SCREEN_W // 2 - 160, 600 + 18 * k), 14, T.TEXT, center=True, shadow=True)
-        self.bag.bar(surf, run, (T.SCREEN_W - 40, 84), self.mouse, right=True)
+                T.text(surf, ln, (cx - 160, 600 + 18 * k), 14, T.TEXT, center=True, shadow=True)
+        self.bag.bar(surf, run, (sw - 40, 84), self.mouse, right=True)
         button(surf, self.leave_rect, "Уйти (Esc)", self.mouse, primary=True)
         self.bag.draw(surf, run)
         if self.toast:
-            T.text(surf, self.toast[0], (T.SCREEN_W // 2, 600), 18, (255, 160, 120), True, center=True, shadow=True)
-        T.text(surf, "Shift над картой — читать подробно", (T.SCREEN_W // 2, T.SCREEN_H - 104), 13, T.TEXT_DIM, center=True)
+            T.text(surf, self.toast[0], (cx, 600), 18, (255, 160, 120), True, center=True, shadow=True)
+        T.text(surf, "Shift над картой — читать подробно", (cx, T.SCREEN_H - 104), 13, T.TEXT_DIM, center=True)
         if getattr(self, "reading", None) is not None:
             self.reading.draw(surf, self.reading.mouse or self.mouse)
 
@@ -3544,7 +3890,7 @@ class StarterDeckScreen:
         # ---------- справа сверху: герой и пассивка ----------
         tr = pygame.Rect(self.right_x, 76, self.right_w, 178)
         T.frame(surf, tr, 232, accent=(200, 180, 110), fill=(24, 20, 16))
-        img = self.game.hero_img(self.h["sprite"], 1.15)
+        img = self.game.hero_img(self.h.get("art_sprite", self.h["sprite"]), 1.15)
         surf.blit(img, (tr.x + 16, tr.y + 18))
         T.text(surf, self.h["name"], (tr.x + 130, tr.y + 12), 24, T.AMBER, True)
         if passive:
@@ -3638,7 +3984,9 @@ class HeroSelect:
                         self.variant[what[1]] = what[2]
                     return
         elif ev.type == pygame.KEYDOWN:
-            if ev.key in (pygame.K_RETURN, pygame.K_SPACE):
+            if ev.key == pygame.K_ESCAPE:
+                self.game.open_pause()
+            elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
                 self.start()
             elif ev.key == pygame.K_c and self.saved:
                 self.game.continue_run()
@@ -3649,28 +3997,38 @@ class HeroSelect:
         self.game.open_starter(self.pick, self.variant.get(self.pick))
 
     def draw(self, surf):
+        sw, sh = wide_layout(surf)
+        self.go.center = (sw // 2, sh - 46)
+        self.cont.right = sw - 30
+        self.sound_rect.right = sw - 30
         backdrop(surf, 185)
-        T.text(surf, "Кто спустится в подземелье?", (T.SCREEN_W // 2, 34), 30, T.AMBER, True, center=True,
+        T.text(surf, "Кто спустится в подземелье?", (sw // 2, 34), 30, T.AMBER, True, center=True,
                shadow=True)
         button(surf, self.sound_rect, f"Звук: {audio.volume_text()} · F10", self.mouse)
         button(surf, self.atlas_rect, "Атлас · F2", self.mouse)
         self.hits = []
         n = len(self.order)
         gap = 18 if n < 4 else 12
-        w = min(392, (T.SCREEN_W - 32 - (n - 1) * gap) // n)          # четверо и больше — уже
-        x0 = (T.SCREEN_W - n * w - (n - 1) * gap) // 2
+        w = min(392, (sw - 32 - (n - 1) * gap) // n)          # четверо и больше — уже
+        x0 = (sw - n * w - (n - 1) * gap) // 2
         for i, hid in enumerate(self.order):
             h = self.heroes[hid]
             r = pygame.Rect(x0 + i * (w + gap), 76, w, 618)
             sel = hid == self.pick
-            T.frame(surf, r, 240, accent=T.SELECT if sel else T.PANEL_EDGE)
+            sk = SK.use(hid) if hid == "elf" else None
+            highlight = ELF.MINT if sk else T.SELECT
+            if sk:
+                sk.panel(surf, r, 240, accent=sel)
+            else:
+                T.frame(surf, r, 240, accent=T.SELECT if sel else T.PANEL_EDGE)
             if sel:                                            # выбранный — яркая рамка
-                pygame.draw.rect(surf, T.SELECT, r.inflate(4, 4), 3, border_radius=9)
+                pygame.draw.rect(surf, highlight, r.inflate(4, 4), 3, border_radius=9)
             self.hits.append((r, ("hero", hid)))
-            img = self.game.hero_img(h["sprite"], 1.6)
+            img = ELF.portrait((134, 134)) if sk else None
+            img = img if img is not None else self.game.hero_img(h.get("art_sprite", h["sprite"]), 1.6)
             bob = int(3 * math.sin(self.clock * 2.4 + i)) if sel else 0
             surf.blit(img, (r.centerx - img.get_width() // 2, r.y + 150 - img.get_height() + bob))
-            T.text(surf, h["name"], (r.centerx, r.y + 172), 26, T.TEXT, True, center=True)
+            T.text(surf, h["name"], (r.centerx, r.y + 172), 26, sk.p["title"] if sk else T.TEXT, True, center=True)
             T.text(surf, f"HP {h['hp']} · " + ("жар вместо энергии" if h.get("mechanic") == "heat"
                                               else "свитки без цены" if h.get("mechanic") == "idols"
                                               else f"энергия {h.get('energy', 3)}"),

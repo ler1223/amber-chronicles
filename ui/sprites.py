@@ -2,8 +2,8 @@
 
 Формат PNG — см. assets/sprites/README.md: смотрит вправо, ноги внизу по центру, прозрачный фон.
 Масштаб целочисленный (пиксели остаются чёткими): обычный юнит ~64 px в высоту, босс ~96 px.
-Детализация (настройка sprite_res): 32 — обычные спрайты ×2; 64 — assets/sprites/x2 без увеличения (нарезка
-tools/import_sheet.py --res 2), нет файла — обычный; 16 — обычный, уменьшенный вдвое и увеличенный ×4.
+Детализация (настройка sprite_res): 32 — обычные спрайты ×2; 128 — герои из assets/sprites/x4, остальные —
+из x2; нет файла — уровень ниже; 16 — обычный, уменьшенный вдвое и увеличенный ×4.
 """
 import os
 
@@ -21,6 +21,10 @@ def res():
 
 def sprite_path(name, folder=ASSET_DIR):
     """Файл спрайта под детализацию: высокая — из x2, если есть. Второе значение — во сколько раз он крупнее."""
+    if res() >= 128:
+        hi4 = os.path.join(folder, "x4", f"{name}.png")
+        if os.path.exists(hi4):
+            return hi4, 4
     if res() >= 64:
         hi = os.path.join(folder, "x2", f"{name}.png")
         if os.path.exists(hi):
@@ -73,8 +77,13 @@ class SpriteBank:
         if res() <= 16:
             img = lowres(img)
         target = TARGET_H["boss" if boss else "normal"]
-        k = max(1, round(target / img.get_height()))
-        img = pygame.transform.scale(img, (img.get_width() * k, img.get_height() * k))
+        if img.get_height() > target:                 # x4-герой: много пикселей, но тот же рост на экране
+            img = pygame.transform.smoothscale(
+                img.convert_alpha() if pygame.display.get_surface() else img,
+                (max(1, round(img.get_width() * target / img.get_height())), target))
+        else:
+            k = max(1, round(target / img.get_height()))
+            img = pygame.transform.scale(img, (img.get_width() * k, img.get_height() * k))
         self.base[key] = img
         return img
 
