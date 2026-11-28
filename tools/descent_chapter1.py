@@ -164,16 +164,16 @@ ENEMIES = {
 FLOORS = [
     {"name": "Камышовые топи", "pools": {
         "battle": [
-            {"name": "Камыши", "maps": ["reeds", "st_reedbed"], "enemies": ["slime", "bog_archer", "mosquito_swarm"]},
-            {"name": "Комариная топь", "maps": ["ex_mosquito_bog"], "enemies": ["mosquito_swarm", "mosquito_swarm", "slime"]},
-            {"name": "Огненное гнездо", "maps": ["nest", "st_ford"], "enemies": ["beetle", "beetle", "bog_archer", "slime_small"]},
-            {"name": "Ядовитая топь", "maps": ["ex_toxic_marsh", "bog"], "enemies": ["toxic_slime", "beetle", "beetle"]},
-            {"name": "Браконьеры", "maps": ["ex_village_mob", "st_reedbed"], "enemies": ["poacher", "poacher", "slime_small", "mosquito_swarm"]},
-            {"name": "Огни над топью", "maps": ["ex_wisp_marsh", "st_causeway"], "enemies": ["will_wisp", "will_wisp", "toxic_slime", "slime_small"]},
+            {"name": "Камыши", "maps": ["reeds", "st_reedbed"], "enemies": ["slime", "bog_archer"]},
+            {"name": "Комариная топь", "maps": ["ex_mosquito_bog"], "enemies": ["mosquito_swarm", "slime"]},
+            {"name": "Огненное гнездо", "maps": ["nest", "st_ford"], "enemies": ["beetle", "slime_small"]},
+            {"name": "Ядовитая топь", "maps": ["ex_toxic_marsh", "bog"], "enemies": ["toxic_slime", "beetle"]},
+            {"name": "Браконьеры", "maps": ["ex_village_mob", "st_reedbed"], "enemies": ["poacher", "poacher"]},
+            {"name": "Огни над топью", "maps": ["ex_wisp_marsh", "st_causeway"], "enemies": ["will_wisp", "toxic_slime"]},
         ],
         "elite": [
-            {"name": "Логово ужаса", "maps": ["ex_horror_den"], "enemies": ["bog_horror", "beetle", "beetle"]},
-            {"name": "Отряд Ржавых", "maps": ["ex_rivals", "ex_hunters"], "enemies": ["rust_captain", "rust_merc", "rust_merc"]},
+            {"name": "Логово ужаса", "maps": ["ex_horror_den"], "enemies": ["bog_horror", "beetle"]},
+            {"name": "Отряд Ржавых", "maps": ["ex_rivals", "ex_hunters"], "enemies": ["rust_captain", "rust_merc"]},
         ],
         "boss": [{"name": "Трон короля слизней", "maps": ["ex_slime_throne", "slime_court"], "enemies": ["slime_king", "slime_small"]}],
     }},

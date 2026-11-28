@@ -14,6 +14,7 @@ import pygame
 from sim.combat import ENEMY
 from sim.grid import cheb
 from ui import audio, settings
+from ui.stop_scene import Scenery, chest_image, has_layers, shop_offers_left
 from ui import projection as P
 from ui import theme as T
 from ui.battle_view import FR, BattleView, Fx
@@ -573,7 +574,7 @@ class Bag:
         sk.text(surf, "Предметы срабатывают сами, когда выполнено их условие. Закрыть — I, Esc или клик",
                 (r.centerx, r.y + 56), 13, sk.p["dim"], center=True, outline=False)
         if not items:
-            sk.text(surf, "Пока пусто: предметы дают сундуки, элита, страж лестницы и торговец.",
+            sk.text(surf, "Пока пусто: предметы дают алтарь, элита, страж лестницы и торговец.",
                     (r.centerx, r.y + 110), 15, sk.p["text"], center=True, outline=False)
             return
         for i, it in enumerate(items[:visible * cols]):
@@ -605,10 +606,10 @@ def relic_bar(surf, run, pos, mouse):
     Bag().bar(surf, run, pos, mouse)
 
 
-def button(surf, r, label, mouse, on=True, primary=False):
+def button(surf, r, label, mouse, on=True, primary=False, accent=None):
     hot = on and r.collidepoint(mouse)
-    T.frame(surf, r, 245, accent=T.SELECT if hot else (T.AMBER if primary else T.PANEL_EDGE),
-            fill=(60, 44, 26) if hot else (40, 30, 22))
+    edge = T.SELECT if hot else (accent or (T.AMBER if primary else T.PANEL_EDGE))
+    T.frame(surf, r, 245, accent=edge, fill=(60, 44, 26) if hot else (40, 30, 22))
     T.text(surf, label, r.center, 17, T.TEXT if on else T.TEXT_DIM, True, center=True)
     return hot
 
@@ -2902,7 +2903,7 @@ class BattleScreen:
 class ChoiceScreen:
     """Выбор между боями: награда (карта из 3), прозрение (1 из 2 веток), костёр."""
 
-    def __init__(self, game, title, sub, options, on_pick, skip=None, back=None, *, relics=False):
+    def __init__(self, game, title, sub, options, on_pick, skip=None, back=None, *, relics=False, bg=None):
         self.game = game
         self.title, self.sub = title, sub
         self.options = options               # [(подпись, карта или None, значение)]
@@ -2913,9 +2914,12 @@ class ChoiceScreen:
         self.rects = []
         self.skip_rect = None
         self.relics = relics
+        self.bg = bg
+        self.scenery = Scenery() if bg and has_layers(bg) else None
 
     def update(self, dt):
-        pass
+        if self.scenery:
+            self.scenery.update(dt)
 
     def card_under(self):
         return next((c for (r, _), (_, c, _) in zip(self.rects, self.options) if c is not None
@@ -2945,9 +2949,14 @@ class ChoiceScreen:
                     return
             if self.skip_rect and self.skip_rect.collidepoint(ev.pos):
                 self.skip()
+            elif self.scenery:
+                self.scenery.touch(ev.pos)
 
     def draw(self, surf):
         sw = wide_layout(surf)[0]
+        if self.bg:
+            self.draw_camp(surf, sw)
+            return
         if self.back is not None:
             if G.is_canvas(surf):                           # кадр боя уже в родном разрешении
                 surf.native.blit(self.back, (0, 0))
@@ -2968,9 +2977,10 @@ class ChoiceScreen:
         h = int(CH * k) if big else 230 if self.relics else 110 if tall else 90
         gap = 40
         x0 = cx - (n * w + (n - 1) * gap) // 2
+        y = 220
         self.rects = []
         for i, (label, card, val) in enumerate(self.options):
-            r = pygame.Rect(x0 + i * (w + gap), 220, w, h)
+            r = pygame.Rect(x0 + i * (w + gap), y, w, h)
             hot = r.collidepoint(self.mouse)
             if card is not None:
                 draw_card(surf, r, card, hot=hot)
@@ -3003,7 +3013,8 @@ class ChoiceScreen:
                 button(surf, r, label, self.mouse, primary=True)
             self.rects.append((r, val))
         if self.skip:
-            self.skip_rect = pygame.Rect(cx - 110, 220 + h + 70, 220, 46)
+            skip_y = y + h + 70
+            self.skip_rect = pygame.Rect(cx - 110, skip_y, 220, 46)
             button(surf, self.skip_rect, "Пропустить", self.mouse)
         if big:
             lv = any(card is not None and card.levels for _, card, _ in self.options)
@@ -3012,6 +3023,26 @@ class ChoiceScreen:
                    (cx, T.SCREEN_H - 24), 13, T.TEXT_DIM, center=True)
         if getattr(self, "reading", None) is not None:
             self.reading.draw(surf, self.reading.mouse or self.mouse)
+
+    def draw_camp(self, surf, width):
+        run = self.game.run
+        style = map_style.for_run(run)
+        if self.scenery:
+            self.scenery.draw(surf, self.bg, self.mouse)
+        else:
+            backdrop(surf, 30, self.bg, full=True)
+        _stop_title(surf, style, self.title, f"Здоровье · {run.hp}/{run.max_hp}" +
+                    (f"  ·  {self.sub}" if self.sub else ""))
+        w = min(width - 64, 650)
+        panel = pygame.Rect((width - w) // 2, T.SCREEN_H - 112, w, 88)
+        T.frame(surf, panel, 237, accent=style.trim, fill=style.bottom)
+        self.rects = []
+        button_w = min(294, (panel.w - 36 - (len(self.options) - 1) * 14) // len(self.options))
+        left = panel.centerx - (len(self.options) * (button_w + 14) - 14) // 2
+        for i, (label, _, value) in enumerate(self.options):
+            rect = pygame.Rect(left + i * (button_w + 14), panel.y + 20, button_w, 48)
+            button(surf, rect, label, self.mouse, primary=value == "rest", accent=style.trim)
+            self.rects.append((rect, value))
 
 
 class GodBranchScreen:
@@ -3318,16 +3349,38 @@ def _shade(size, dim):
     return s
 
 
-def backdrop(surf, dim=190):
+def chapter_art(run, kind):
+    """Фон главы для «Спуска»: болото/кузни, пока есть свои сцены."""
+    at = run.chapter_at() if run is not None else None
+    if not at:
+        return None
+    from ui import illustrations as IL
+
+    chapter = at[1].get("id") or ("swamp" if at[0] == 0 else None)
+    iid = f"{kind}_{chapter}"
+    return iid if chapter and (has_layers(iid) or IL.has_hd(iid) or IL.has(iid)) else None
+
+
+def _stop_title(surf, style, title, subtitle):
+    w = min(T.SCREEN_W - 40, max(244, T.font(15).size(subtitle)[0] + 38))
+    panel = pygame.Rect(20, 20, w, 76)
+    T.frame(surf, panel, 227, accent=style.trim, fill=style.bottom)
+    T.text(surf, title, (panel.x + 16, panel.y + 8), 26, style.paper, True)
+    T.text(surf, subtitle, (panel.x + 16, panel.y + 47), 15, T.TEXT)
+
+
+def backdrop(surf, dim=190, iid="act_0", full=False):
     """Фон: иллюстрация болота (как у карты похода), притушенная."""
     try:
         from ui import illustrations as IL
         if G.is_canvas(surf):                               # фон — сразу в размер окна
             nw, nh = surf.native.get_size()
-            img = IL.get("act_0", "act", (nw, nw * 2 // 3), hd=True)
+            size = (nw, nh) if full else (nw, nw * 2 // 3)
+            img = IL.get(iid, "act", size, hd=True)
             surf.native.blit(img, (0, (nh - img.get_height()) // 2))
         else:
-            img = IL.get("act_0", "act", (T.SCREEN_W, T.SCREEN_W * 2 // 3), hd=True)
+            size = (T.SCREEN_W, T.SCREEN_H) if full else (T.SCREEN_W, T.SCREEN_W * 2 // 3)
+            img = IL.get(iid, "act", size, hd=True)
             surf.blit(img, (0, (T.SCREEN_H - img.get_height()) // 2))
     except Exception:                                  # нет картинки — просто тёмный фон
         surf.fill(T.BG)
@@ -3668,12 +3721,110 @@ class DeckScreen:
             self.reading.draw(surf, self.reading.mouse or self.mouse)
 
 
+class ChestScreen(ChoiceScreen):
+    """Open a map chest, then take one of its cards."""
+
+    def __init__(self, game, offer):
+        run = game.run
+        bg = chapter_art(run, "camp") or "camp_swamp"
+        first = 3 if bg.endswith("_forge") else 0
+        self.variant = first + run.rng.randrange(3)
+        self.open_time = None
+        self.chest_rect = None
+        super().__init__(game, "Сундук", "", [("", card, card) for card in offer], self.take,
+                         skip=game.to_map, bg=bg)
+
+    def take(self, card):
+        if self.game.run.take(card):
+            self.game.to_map(f"Из сундука · {card.name}")
+
+    def update(self, dt):
+        super().update(dt)
+        if self.open_time is not None:
+            self.open_time = min(1.0, self.open_time + dt)
+
+    def handle(self, ev):
+        if self.open_time is not None and self.open_time >= .78:
+            super().handle(ev)
+        elif ev.type == pygame.MOUSEMOTION:
+            self.mouse = ev.pos
+        elif self.open_time is None and (
+            ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1
+            and self.chest_rect and self.chest_rect.collidepoint(ev.pos)
+            or ev.type == pygame.KEYDOWN and ev.key in (pygame.K_RETURN, pygame.K_SPACE)
+        ):
+            self.open_time = 0.0
+        elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+            self.game.open_pause()
+
+    def draw(self, surf):
+        width, height = wide_layout(surf)
+        if self.scenery:
+            self.scenery.draw(surf, self.bg, self.mouse, bare=True)
+            dx, dy = self.scenery.ground_offset
+        else:
+            backdrop(surf, 40, self.bg, full=True)
+            dx, dy = 0, 0
+        style = map_style.for_run(self.game.run)
+        time = self.open_time
+        ready = time is not None and time >= .78
+        hint = "Щёлкните по сундуку, чтобы открыть" if time is None else (
+            "Выберите одну карту" if self.options else "Сундук пуст")
+        _stop_title(surf, style, self.title, hint)
+        cx, floor = round(width / 2 + dx), round(height - 114 + dy)
+        chest_w = min(502, width // 2)
+        closed = chest_image(self.variant, "closed", chest_w)
+        opened = chest_image(self.variant, "open", chest_w)
+        sprite = closed if time is None or time < .12 else opened
+        chest = sprite.get_rect(midbottom=(cx, floor))
+        self.chest_rect = closed.get_bounding_rect().move(chest.topleft)
+        shadow = pygame.Surface((chest_w, 32), pygame.SRCALPHA)
+        pygame.draw.ellipse(shadow, (7, 9, 11, 116), shadow.get_rect())
+        surf.blit(shadow, shadow.get_rect(center=(cx, floor - 4)))
+        hinge = round(opened.get_height() * .51)
+        if sprite is opened and time < .38:
+            portion = (time - .12) / .26
+            lid = opened.subsurface((0, 0, opened.get_width(), hinge))
+            lid = pygame.transform.smoothscale(lid, (lid.get_width(), max(1, round(hinge * portion))))
+            surf.blit(lid, (chest.x, chest.y + hinge - lid.get_height()))
+            surf.blit(opened, (chest.x, chest.y + hinge), (0, hinge, chest.w, chest.h - hinge))
+        else:
+            surf.blit(sprite, chest)
+
+        self.rects = []
+        self.skip_rect = None
+        if time is not None and time >= .37:
+            t = min(1.0, (time - .37) / .41)
+            ease = 1 - (1 - t) ** 3
+            cw, ch = 192, 280
+            for i, (_, card, value) in enumerate(self.options):
+                slot = i - (len(self.options) - 1) / 2
+                rect = pygame.Rect(0, 0, round(38 + (cw - 38) * ease), round(56 + (ch - 56) * ease))
+                rect.center = (round(cx + slot * (33 + 182 * ease)),
+                               round((chest.y + hinge) * (1 - ease) + (280 + 13 * abs(slot) + dy) * ease))
+                CF.blit_card(surf, rect, card, hot=ready and rect.collidepoint(self.mouse),
+                             alpha=round(85 + 170 * ease))
+                if ready:
+                    self.rects.append((rect, value))
+            if not ready and t < .4:
+                edge = hinge + round(chest.h * .12)
+                surf.blit(opened, (chest.x, chest.y + edge), (0, edge, chest.w, chest.h - edge))
+        if ready:
+            self.skip_rect = pygame.Rect(width // 2 - 103, height - 78, 206, 44)
+            button(surf, self.skip_rect, "Пропустить (Esc)" if self.options else "Уйти (Esc)",
+                   self.mouse, accent=style.trim)
+        if getattr(self, "reading", None) is not None:
+            self.reading.draw(surf, self.reading.mouse or self.mouse)
+
+
 class ShopScreen:
     """Торговец: 3 карты, удаление карты (цена растёт), лечебное зелье."""
 
     def __init__(self, game):
         self.game = game
         run = game.run
+        self.art = chapter_art(run, "shop")
+        self.scenery = Scenery() if self.art and has_layers(self.art) else None
         self.cfg = run.data["enemies"]["shop"]
         self.stock = run.shop_stock()
         self.sold = set()
@@ -3692,6 +3843,8 @@ class ShopScreen:
         self.toast = None
 
     def update(self, dt):
+        if self.scenery:
+            self.scenery.update(dt)
         if self.toast:
             self.toast = (self.toast[0], self.toast[1] - dt)
             if self.toast[1] <= 0:
@@ -3771,6 +3924,8 @@ class ShopScreen:
                 self.drink()
             elif self.leave_rect.collidepoint(ev.pos):
                 self.game.to_map()
+            elif self.scenery:
+                self.scenery.touch(ev.pos)
         elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
             self.game.to_map()
 
@@ -3778,56 +3933,85 @@ class ShopScreen:
         sw = wide_layout(surf)[0]
         cx = sw // 2
         run = self.game.run
-        backdrop(surf, 200)
-        run_header(surf, run, "Торговец", "Карты в колоду, избавиться от лишней, подлечиться", width=sw)
+        style = map_style.for_run(run)
+        if self.scenery:
+            self.scenery.draw(surf, self.art, self.mouse)
+        elif self.art:
+            backdrop(surf, 45, self.art, full=True)
+        else:
+            backdrop(surf, 200)
+        _stop_title(surf, style, "Торговец", f"Золото · {run.gold}     Здоровье · {run.hp}/{run.max_hp}")
+        motion = self.scenery.ground_offset if self.scenery else (0, 0)
+        move_x, move_y = round(motion[0]), round(motion[1])
+        side = min(300, sw // 6 + 20)
+        inset = max(25, (sw - 1680) // 2)
+        services_x = sw - inset - side + move_x
+        y0 = 301 + move_y
+        T.text(surf, "Предметы", (services_x + side // 2, y0 - 28), 20, style.paper, True,
+               center=True, shadow=True)
+        T.text(surf, "Услуги", (services_x + side // 2, 537 + move_y), 20, style.paper, True,
+               center=True, shadow=True)
         n = len(self.stock)
-        k = 1.25 if sw < 1500 else 1.4
-        w, h = int(CW * k), int(CH * k)
-        self.remove_rect = pygame.Rect(cx - 480, 520, 300, 56)
-        self.potion_rect = pygame.Rect(cx - 150, 520, 300, 56)
+        gap = max(16, min(50, (sw - 1160) // 5))
+        cards_left = shop_offers_left(sw) + move_x
+        area = services_x - cards_left - 26
+        offers_center = cards_left + area // 2
+        cw = min(232, (area - gap * max(0, n - 1)) // max(1, n))
+        ch = round(cw * 1.46)
+        distance = cw + gap
+        self.remove_rect = pygame.Rect(services_x, 558 + move_y, side, 55)
+        self.potion_rect = pygame.Rect(services_x, 627 + move_y, side, 55)
         for i, it in enumerate(self.items):
-            it[2] = pygame.Rect(cx + 180, 520 + 62 * i, 300, 52)
-        self.leave_rect = pygame.Rect(cx - 110, T.SCREEN_H - 80, 220, 50)
-        x0 = cx - (n * w + (n - 1) * 40) // 2
+            it[2] = pygame.Rect(services_x, y0 + 113 * i, side, 103)
+        self.leave_rect = pygame.Rect(services_x, T.SCREEN_H - 72 + move_y, side, 46)
         self.rects = []
         for i, (card, price) in enumerate(self.stock):
-            r = pygame.Rect(x0 + i * (w + 40), 120, w, h)
+            place = i - (n - 1) / 2
+            top = min(462, T.SCREEN_H - ch - 56) - round(abs(place) * 33) + move_y
+            r = pygame.Rect(round(offers_center + place * distance - cw / 2), top, cw, ch)
             sold = i in self.sold
             hot = r.collidepoint(self.mouse) and not sold
-            CF.blit_card(surf, r, card, hot=hot, alpha=70 if sold else 255)
-            T.text(surf, "продано" if sold else f"{price} золота", (r.centerx, r.bottom + 16), 17,
-                   T.TEXT_DIM if sold else (GOLD if run.gold >= price else (200, 110, 100)), True, center=True)
+            tilt = ((self.mouse[0] - r.centerx) / r.w * 2, (self.mouse[1] - r.centery) / r.h * 2) if hot else (0, 0)
+            CF.blit_card(surf, r, card, hot=hot, alpha=100 if sold else 255, tilt=tilt)
+            price_box = pygame.Rect(r.centerx - 60, r.bottom + 5, 120, 25)
+            T.frame(surf, price_box, 230, accent=style.trim, fill=style.bottom, corners=False)
+            T.text(surf, "продано" if sold else f"{price} золота", price_box.center, 15,
+                   T.TEXT_DIM if sold else (style.accent if run.gold >= price else (200, 110, 100)),
+                   True, center=True)
             self.rects.append((r, i))
         button(surf, self.remove_rect, f"Удалить карту — {run.remove_price}", self.mouse,
-               on=run.gold >= run.remove_price)
+               on=run.gold >= run.remove_price, accent=style.accent)
         pp = self.cfg["potion_price"]
         button(surf, self.potion_rect, f"Зелье +{self.cfg['potion_heal']} HP — {pp}" if self.potion else "Зелье продано",
-               self.mouse, on=self.potion and run.gold >= pp and run.hp < run.max_hp)
+               self.mouse, on=self.potion and run.gold >= pp and run.hp < run.max_hp, accent=style.accent)
         for rl, price, rr in self.items:
             if rl is None:
                 button(surf, rr, "Продано", self.mouse, on=False)
                 continue
             affordable = run.gold >= price
-            button(surf, rr, "", self.mouse, on=affordable)
-            draw_item_icon(surf, rl, (rr.x + 25, rr.centery), 34)
-            lines = T.wrap(f"{rl['name']} — {price}", 15, rr.w - 62, True)
+            hovered = rr.collidepoint(self.mouse)
+            T.frame(surf, rr, 243 if hovered else 221, accent=style.accent if hovered else style.trim,
+                    fill=style.bottom)
+            draw_item_icon(surf, rl, (rr.x + 44, rr.centery), 64)
+            lines = T.wrap(rl["name"], 17, rr.w - 94, True)
             for i, line in enumerate(lines):
-                T.text(surf, line, (rr.centerx + 20, rr.centery + 17 * i - 8 * (len(lines) - 1)),
-                       15, T.TEXT if affordable else T.TEXT_DIM, True, center=True)
+                T.text(surf, line, (rr.x + 84, rr.y + 16 + 20 * i), 17,
+                       T.TEXT if affordable else T.TEXT_DIM, True)
+            T.text(surf, f"{price} золота", (rr.x + 84, rr.bottom - 30), 15, style.accent, True)
         hot = next((it for it in self.items if it[0] is not None and it[2].collidepoint(self.mouse)), None)
         if hot is not None:
-            from .items import RARITY_NAME
+            from .items import RARITY_NAME, about
             rl, _, rr = hot
-            from .items import about
-            lines = T.wrap(f"{rl['name']} ({RARITY_NAME.get(rl.get('rarity'), '')}): {about(rl, run)}", 14, 520)
+            lines = T.wrap(f"{rl['name']} ({RARITY_NAME.get(rl.get('rarity'), '')}): {about(rl, run)}", 14, 372)
+            tip = pygame.Rect(rr.right - 400, y0 - 42 - 18 * len(lines), 400, 21 + 18 * len(lines))
+            T.frame(surf, tip, 242, accent=style.trim, fill=style.bottom)
             for k, ln in enumerate(lines):
-                T.text(surf, ln, (cx - 160, 600 + 18 * k), 14, T.TEXT, center=True, shadow=True)
+                T.text(surf, ln, (tip.x + 14, tip.y + 10 + 18 * k), 14, T.TEXT)
         self.bag.bar(surf, run, (sw - 40, 84), self.mouse, right=True)
-        button(surf, self.leave_rect, "Уйти (Esc)", self.mouse, primary=True)
+        button(surf, self.leave_rect, "Уйти (Esc)", self.mouse, primary=True, accent=style.accent)
         self.bag.draw(surf, run)
         if self.toast:
-            T.text(surf, self.toast[0], (cx, 600), 18, (255, 160, 120), True, center=True, shadow=True)
-        T.text(surf, "Shift над картой — читать подробно", (cx, T.SCREEN_H - 104), 13, T.TEXT_DIM, center=True)
+            T.text(surf, self.toast[0], (cx, 337), 18, (255, 190, 135), True, center=True, shadow=True)
         if getattr(self, "reading", None) is not None:
             self.reading.draw(surf, self.reading.mouse or self.mouse)
 

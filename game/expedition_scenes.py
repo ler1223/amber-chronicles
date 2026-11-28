@@ -18,6 +18,7 @@ from ui import icons as IC
 from ui import widgets as W
 from ui.battle_view import fit
 from ui.sprites import SpriteBank
+from ui.stop_scene import Scenery, has_layers, shop_offers_left
 
 GOLD = (240, 200, 80)
 GLORY = (255, 190, 110)
@@ -75,12 +76,12 @@ def tint_of(data, cls):
     return T.hero_tint(data.classes[cls]["color"])
 
 
-def scene_party(surf, run, ground=0.94, x0=30, mouse=None, k=None, step=None):
+def scene_party(surf, run, ground=0.94, x0=30, mouse=None, k=None, step=None, ground_y=None):
     """Отряд на полноэкранной иллюстрации (по умолчанию в её масштабе: пиксель спрайта = пиксель сцены 192×128),
     с табличками: имя, полоса HP, рана. Возвращает [(прямоугольник фигурки, индекс героя)]."""
     img_h = T.SCREEN_W * 2 // 3
     k = k or T.SCREEN_W / 192 / 2
-    g = (T.SCREEN_H - img_h) // 2 + int(img_h * ground)
+    g = (T.SCREEN_H - img_h) // 2 + int(img_h * ground) if ground_y is None else ground_y
     step = step or int(56 * k)
     rects = party_in_scene(surf, run.data, run.heroes, g, x0, step, k=k, dark=0.85)
     for (r, i) in rects:
@@ -329,6 +330,7 @@ class XScene:
         self.hits = []          # (rect, action, tip)
         self.toast = None
         self.clock = 0.0
+        self.stop_scenery = None
         self.scroll_pos = {}    # прокрутка списков: {ключ: первый видимый элемент}
         self.scroll_regs = {}   # списки, нарисованные в этом кадре: {ключ: (область, дорожка, всего, видно, вид)}
         self.scroll_drag = None
@@ -468,6 +470,8 @@ class XScene:
 
     def update(self, dt):
         self.clock += dt
+        if self.stop_scenery:
+            self.stop_scenery.update(dt)
         self.frame_n = getattr(self, "frame_n", 0) + 1
         if self.toast:
             self.toast = (self.toast[0], self.toast[1] - dt) if self.toast[1] > dt else None
@@ -494,6 +498,8 @@ class XScene:
                         return
                     self.act(action, ev.button)
                     return
+            if ev.button == 1 and self.stop_scenery:
+                self.stop_scenery.touch(ev.pos)
         elif ev.type == pygame.KEYDOWN:
             self.key(ev.key)
 
@@ -536,14 +542,41 @@ class XScene:
             T.text(surf, self.toast[0], (T.SCREEN_W // 2, y or T.SCREEN_H - 36), 17, (255, 190, 130), True,
                    center=True, shadow=True)
 
-    def backdrop(self, surf, iid, mood="act", dim=170):
+    def backdrop(self, surf, iid, mood="act", dim=170, size=None):
         """Иллюстрация на весь экран, притушенная, чтобы поверх читался интерфейс."""
         from ui import illustrations as IL
-        img = IL.get(iid, mood, (T.SCREEN_W, T.SCREEN_W * 2 // 3), hd=True)
+        size = size or (T.SCREEN_W, T.SCREEN_W * 2 // 3)
+        img = IL.get(iid, mood, size, hd=True)
         surf.blit(img, (0, (T.SCREEN_H - img.get_height()) // 2))
         shade = pygame.Surface((T.SCREEN_W, T.SCREEN_H), pygame.SRCALPHA)
         shade.fill((6, 8, 10, dim))
         surf.blit(shade, (0, 0))
+
+    def chapter_backdrop(self, surf, kind, dim=170):
+        """Фон лагеря/торговца для текущей главы; без своего арта — общий."""
+        from ui import illustrations as IL
+        iid = f"{kind}_{self.run.chapter}"
+        if has_layers(iid):
+            if self.stop_scenery is None:
+                self.stop_scenery = Scenery()
+            self.stop_scenery.draw(surf, iid, self.mouse)
+        elif IL.has_hd(iid) or IL.has(iid):
+            self.stop_scenery = None
+            self.backdrop(surf, iid, "act", dim=dim, size=(T.SCREEN_W, T.SCREEN_H))
+        else:
+            self.stop_scenery = None
+            self.backdrop(surf, kind, "act", dim=dim)
+
+    def stop_header(self, surf, title, subtitle):
+        width = max(220, T.font(15).size(subtitle)[0] + 30)
+        panel = pygame.Rect(16, 12, width, 68)
+        trim = (175, 106, 60) if self.run.chapter == "forge" else (103, 133, 97)
+        T.frame(surf, panel, 230, accent=trim)
+        T.text(surf, title, (panel.x + 14, panel.y + 5), 25, T.TEXT, True)
+        T.text(surf, subtitle, (panel.x + 14, panel.y + 40), 15, T.TEXT)
+        gold = pygame.Rect(T.SCREEN_W - 166, panel.y, 150, 40)
+        T.frame(surf, gold, 230, accent=trim)
+        T.text(surf, f"Золото · {self.run.gold}", gold.center, 16, GOLD, True, center=True)
 
     def header(self, surf, title, sub=None):
         T.text(surf, title, (24, 14), 28, T.TEXT, True)
@@ -2810,6 +2843,8 @@ class PickScene(XScene):
 # ---------- лагерь ----------
 
 class CampScene(XScene):
+    stage = False
+
     def act(self, action, button=1):
         run = self.run
         if action == "rest":
@@ -2842,14 +2877,12 @@ class CampScene(XScene):
         run = self.run
         self.hits = []
         surf.fill((14, 18, 14))
-        self.backdrop(surf, "camp", "act", dim=70)
-        band = pygame.Surface((T.SCREEN_W, 80), pygame.SRCALPHA)
-        band.fill((8, 8, 10, 170))
-        surf.blit(band, (0, 0))
-        for r, i in scene_party(surf, run, mouse=self.mouse):
+        self.chapter_backdrop(surf, "camp", dim=70)
+        motion = self.stop_scenery.ground_offset if self.stop_scenery else pygame.Vector2()
+        for r, i in scene_party(surf, run, x0=26 + round(motion.x), mouse=self.mouse, k=2.4,
+                                ground_y=round(surf.get_height() * .93 + motion.y)):
             self.hit(r, ("hero", i), [run.heroes[i].name, "Клик — лист героя (в лагере — сброс навыков)"])
-        self.header(surf, "Лагерь", "Костёр и пара часов покоя. Выберите одно. В листе героя здесь можно "
-                                    "сбросить очки навыков.")
+        self.stop_header(surf, "Лагерь", "Выберите одно действие. Навыки можно сбросить в листе героя.")
         wounded = [h.name for h in run.heroes if h.wounded]
         rest_lines = [(f"Отряд лечится на {run.cfg['camp_heal'] * 100:.0f}%", T.TEXT),
                       ("Раны заживают" + (": " + ", ".join(wounded) if wounded else ""), BLESS)]
@@ -2866,9 +2899,12 @@ class CampScene(XScene):
             opts.append(("neural", "Тренировка сети", [("20 быстрых боёв без графики", (150, 200, 255)),
                                                      ("сети героев и врагов учатся", T.TEXT),
                                                      ("лагерь при этом тратится", T.TEXT_DIM)], (150, 200, 255)))
-        x0 = T.SCREEN_W - len(opts) * 290 - 40
+        card_w, gap = 250, 10
+        total = len(opts) * card_w + max(0, len(opts) - 1) * gap
+        x0 = T.SCREEN_W - total - 26
+        y = T.SCREEN_H - 190
         for i, (key, title, lines, accent) in enumerate(opts):
-            r = pygame.Rect(x0 + i * 290, 110, 270, 170)
+            r = pygame.Rect(x0 + i * (card_w + gap), y, card_w, 170)
             W.card(surf, r, f"{i + 1}. {title}", lines, self.mouse, accent)
             self.hit(r, key)
         self.draw_tip(surf)
@@ -3071,6 +3107,8 @@ class AnvilScene(XScene):
 # ---------- торговец ----------
 
 class ShopScene(XScene):
+    stage = False
+
     def act(self, action, button=1):
         run = self.run
         kind = action[0] if isinstance(action, tuple) else action
@@ -3107,60 +3145,75 @@ class ShopScene(XScene):
         run, xd = self.run, self.xd
         self.hits = []
         surf.fill((20, 18, 12))
-        self.backdrop(surf, "shop", "act", dim=80)
-        band = pygame.Surface((T.SCREEN_W, 80), pygame.SRCALPHA)
-        band.fill((8, 8, 10, 170))
-        surf.blit(band, (0, 0))
-        self.header(surf, "Торговец", "Болотный торговец: лодка, фонарь и сундук с добром. ПКМ по вещи в сумке "
-                                      "справа — продать.")
+        self.chapter_backdrop(surf, "shop", dim=80)
+        self.stop_header(surf, "Торговец", "ПКМ по вещи в сумке — продать.")
+        motion = self.stop_scenery.ground_offset if self.stop_scenery else pygame.Vector2()
+        for r, i in scene_party(surf, run, x0=26 + round(motion.x), mouse=self.mouse, k=1.7,
+                                ground_y=round(surf.get_height() * .96 + motion.y)):
+            self.hit(r, ("hero", i), [run.heroes[i].name, "Клик — лист героя: надеть купленное"])
+
+        trim = (175, 106, 60) if run.chapter == "forge" else (103, 133, 97)
         stock = run.nodes[run.node].get("stock", [])
+        sw = surf.get_width()
+        gap = 16
+        bag_w = min(305, sw // 5)
+        offers_left = shop_offers_left(sw)
+        area = sw - offers_left - bag_w - 50
+        n = len(stock)
+        cw = min(282, (area - gap * max(0, n - 1)) // max(1, n))
+        x0 = offers_left + (area - n * cw - max(0, n - 1) * gap) // 2 + round(motion.x)
         for i, o in enumerate(stock):
-            r = pygame.Rect(26 + i * 232, 90, 220, 262)
+            arc = abs(2 * i - (n - 1)) / max(1, n - 1)
+            r = pygame.Rect(x0 + i * (cw + gap), round(450 - 41 * arc + motion.y), cw, 244)
             if o is None:
-                pygame.draw.rect(surf, (30, 30, 30), r, border_radius=10)
+                T.frame(surf, r, 196, accent=trim, fill=(17, 15, 13))
                 T.text(surf, "продано", r.center, 16, T.TEXT_DIM, center=True)
                 continue
             it = o["item"]
             rar = xd["items"]["rarities"][it["rarity"]]["name"]
             lines = [(f"{xd['items']['slots'][it['slot']]} · {rar}", T.TEXT_DIM)]
-            lines += [(s, T.TEXT) for s in X.item_lines(xd, it)]
-            W.card(surf, r, X.item_name(it), lines, self.mouse, rarity_color(xd, it), run.gold >= o["price"],
+            lines += [(fit(s, 15, cw - 28), T.TEXT) for s in X.item_lines(xd, it)[:2]]
+            W.card(surf, r, fit(X.item_name(it), 18, cw - 54), lines, self.mouse, rarity_color(xd, it), run.gold >= o["price"],
                    badge=f"{o['price']}")
-            ic = item_icon(it, 48)
+            ic = item_icon(it, 88)
             if ic:
-                surf.blit(ic, (r.x + 12, r.bottom - 58))
-            self.hit(r, ("buy", i))
-        sx = 26 + 4 * 232 + 10
-        box = pygame.Rect(sx, 90, T.SCREEN_W - sx - 24, 262)
-        pygame.draw.rect(surf, T.PANEL, box, border_radius=10)
+                surf.blit(ic, ic.get_rect(midbottom=(r.centerx, r.bottom - 16)))
+            self.hit(r, ("buy", i), self.item_tip(it) + [(f"Купить за {o['price']}", GOLD)])
+
+        box = pygame.Rect(sw - bag_w - 24 + round(motion.x), 390 + round(motion.y), bag_w, 264)
+        T.frame(surf, box, 232, accent=trim, fill=(17, 15, 13))
         T.text(surf, "Сумка — ПКМ продать", (box.x + 10, box.y + 8), 15, T.TEXT, True)
-        y = box.y + 32
-        with self.grid(surf, "shop_bag", pygame.Rect(box.x + 8, y, box.w - 16, box.bottom - 6 - y), len(run.bag),
-                       box.w - 16, 26, gap=3) as cells:
+        with self.grid(surf, "shop_bag", pygame.Rect(box.x + 8, box.y + 30, box.w - 16, box.h - 38),
+                       len(run.bag), box.w - 16, 26, gap=3) as cells:
             for i, r in cells:
                 item = run.bag[i]
                 pygame.draw.rect(surf, (46, 35, 26), r, border_radius=5)
                 T.text(surf, X.item_name(item), (r.x + 8, r.y + 5), 13, rarity_color(xd, item), True)
                 self.hit(r, ("sell", item["uid"]), self.item_tip(item) + [(f"ПКМ — продать за "
                                                                             f"{X.item_price(xd, item) // 3}", GOLD)])
-        self.button(surf, pygame.Rect(26, 366, 300, 46), f"Лекарь: +{run.cfg['shop']['heal_pct'] * 100:.0f}% HP — "
-                    f"{run.heal_price()}", "heal", run.gold >= run.heal_price(), (90, 220, 120))
-        self.button(surf, pygame.Rect(26, 420, 300, 46),
-                    f"Обновить товар — {run.shop_reroll_cost()}", "reroll",
-                    run.gold >= run.shop_reroll_cost(), GOLD)
-        self.button(surf, pygame.Rect(346, 366, 330, 46), f"Снять проклятие — {run.curse_price()}", "uncurse",
-                    bool(run.curses) and run.gold >= run.curse_price(), CURSE)
+
+        buttons = [
+            (f"Лекарь +{run.cfg['shop']['heal_pct'] * 100:.0f}% — {run.heal_price()}", "heal",
+             run.gold >= run.heal_price(), (90, 220, 120)),
+            (f"Снять проклятие — {run.curse_price()}", "uncurse",
+             bool(run.curses) and run.gold >= run.curse_price(), CURSE),
+            (f"Обновить товар — {run.shop_reroll_cost()}", "reroll",
+             run.gold >= run.shop_reroll_cost(), GOLD),
+        ]
         if run.torch_on():
             tc = run.torch_cfg()
             price, amount = int(tc.get("shop_price", 25)), int(tc.get("shop_amount", 2))
-            self.button(surf, pygame.Rect(696, 366, 310, 46),
-                        f"Факелы +{amount} — {price}  ({run.torches}/{run.torch_max})", "torch",
-                        run.torches < run.torch_max and run.gold >= price, (255, 190, 80))
-        self.button(surf, pygame.Rect(T.SCREEN_W - 250, 366, 226, 46), "Уйти (Esc)", "leave")
-        for r, k in scene_party(surf, run, mouse=self.mouse):
-            self.hit(r, ("hero", k), [run.heroes[k].name, "Клик — лист героя: надеть купленное"])
+            buttons.append((f"Факелы +{amount} — {price}  ({run.torches}/{run.torch_max})", "torch",
+                            run.torches < run.torch_max and run.gold >= price, (255, 190, 80)))
+        buttons.append(("Уйти (Esc)", "leave", True, (90, 180, 255)))
+        bw = min(280, (sw - 56 - (len(buttons) - 1) * 12) // len(buttons))
+        bx = (sw - len(buttons) * bw - (len(buttons) - 1) * 12) // 2 + round(motion.x * .67)
+        for i, (label, action, enabled, accent) in enumerate(buttons):
+            self.button(surf, pygame.Rect(bx + i * (bw + 12), 729 + round(motion.y * .68), bw, 45),
+                        label, action, enabled, accent)
+
         self.draw_tip(surf)
-        self.draw_toast(surf, 474)
+        self.draw_toast(surf, 353)
 
     def handle(self, ev):
         if self.scroll_event(ev):

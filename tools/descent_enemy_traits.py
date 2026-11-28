@@ -173,7 +173,9 @@ def main():
                     elif kind == "battle":
                         add = ADD[min(ci, 1)][k % len(ADD[min(ci, 1)])]
                         k += 1
-                        p["enemies"] = list(base) + [add]
+                        # На втором этаже обычные группы уже крупнее. Дополнительный враг
+                        # появляется с третьего, чтобы рост давления не был скачком.
+                        p["enemies"] = list(base) if ci == 0 and fi == 1 else list(base) + [add]
                     elif kind == "elite":
                         add = ELITE_ADD[min(ci, 1)][k % len(ELITE_ADD[min(ci, 1)])]
                         k += 1

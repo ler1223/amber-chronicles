@@ -210,18 +210,24 @@ def test_floor_map_generation_and_scaling():
             assert all(any(m["id"] in n["next"] for n in layers[i]) for m in layers[i + 1])
         assert all(n.get("fight") for n in nodes.values() if n["type"] in ("battle", "elite", "boss"))
     fl = run.floor
-    assert fl.depth == 1 and run.scale() == (1.0, 1.0)
+    assert fl.depth == 1 and all(k < 1 for k in run.scale())
     first = fl.available()
     n = fl.enter(first[0])
     assert fl.available() == n["next"]
     b = Battle(ED, run, n["fight"], seed=1)                                    # расстановка сама: 4–8 клеток
     assert all(4 <= cheb(f.cell, b.hero.cell) <= 8 for f in b.foes())
     hp1 = b.foes()[0].max_hp
-    run.next_floor()
-    run.next_floor()
-    assert run.depth == 3 and run.scale()[0] >= 1.3
+    for _ in range(2):
+        previous = run.scale()
+        run.next_floor()
+        assert all(new > old for old, new in zip(previous, run.scale()))
+    assert run.depth == 3
     b3 = Battle(ED, run, n["fight"], seed=1)
     assert b3.foes()[0].max_hp > hp1                                           # глубже — враги крепче
+    while not run.last_floor:
+        previous = run.scale()
+        run.next_floor()
+        assert all(new > old for old, new in zip(previous, run.scale()))
 
 
 def test_hand_view_springs_drag_and_play():
@@ -814,8 +820,41 @@ def test_tags_and_conditions_seal_bonus_echo_keep_twin():
     assert hp - foe.hp == 12
 
 
-def test_chest_offers_items_and_bag_opens(monkeypatch):
-    """Сундук (вместо алтаря): предмет 1 из 3 — общий или своего класса; сумка открывается на карте по I."""
+def test_chest_opens_before_cards_can_be_taken():
+    import pygame
+    from deck.game import DescentGame
+    from deck.ui import ChestScreen, MapScreen
+    from tests.test_expedition_ui import SCREEN
+
+    game = DescentGame(seed=3)
+    game.start_run("merc")
+    node = game.run.floor.nodes["n2_0"]
+    node["type"] = "chest"
+    game.enter_node(node["id"])
+    scene = game.scene
+    assert isinstance(scene, ChestScreen)
+    initial = len(game.run.deck)
+
+    def click(pos):
+        game.handle(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=pos, button=1))
+
+    game.draw(SCREEN)
+    click((60, 200))
+    assert scene.open_time is None and not scene.rects
+    click(scene.chest_rect.center)
+    game.update(.25)
+    game.draw(SCREEN)
+    assert scene.open_time is not None and not scene.rects
+    game.update(.6)
+    game.draw(SCREEN)
+    rect, card = scene.rects[0]
+    click(rect.center)
+    assert isinstance(game.scene, MapScreen)
+    assert len(game.run.deck) == initial + 1 and game.run.deck[-1] is card
+
+
+def test_relic_offer_and_bag_opens(monkeypatch):
+    """Предмет 1 из 3 — общий или своего класса. Сумка открывается на карте по I."""
     import pygame
     from deck.game import DescentGame
     from deck import ui

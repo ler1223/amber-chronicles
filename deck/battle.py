@@ -784,7 +784,7 @@ class Battle:
         if u is self.hero and self.idols is not None:
             if kind == "shot" and u.ds.get("windward"):                # Стрибог: встречный ветер
                 v = max(1, v // 2)
-            if u.ds.get("weave") and src is not None and src.team == ENEMY:   # Мокошь: удар уходит связанному
+            if u.ds.get("weave") and getattr(src, "team", None) == ENEMY:   # Мокошь: удар уходит связанному
                 bound = [f for f in self.foes() if f.ds.get("bound")]
                 if bound:
                     u.ds["weave"] = 0
@@ -822,7 +822,7 @@ class Battle:
         mate = getattr(u, "bound_to", None)
         if u.ds.get("bound") and kind != "bound" and mate is not None and mate.alive and v >= 2:   # нить: половина
             self.hurt(mate, v // 2, src, "bound")
-        if u is self.hero and src is not None and src.team == ENEMY and kind in ("melee", "shot", "zone"):
+        if u is self.hero and kind in ("melee", "shot", "zone") and src is not None and src.team == ENEMY:
             self.queue.append(("hit", src))
             if self.garden is not None and u.hp > 0:
                 self.garden.snake_retaliate(src)
@@ -2076,6 +2076,13 @@ class Battle:
         elif target not in self.targets(card, mode, auto=auto):
             return
         u = card.d[mode]
+        t = u["target"]
+        move_path = None
+        # Выбранная клетка учитывает руку до оплаты: сама карта может давать «Связь».
+        if t == "cell_step":
+            move_path = self.paths(self.hero, self.move_value(u, "step"))[target]
+        elif t == "cell_dash":
+            move_path = self.dash_paths(self.move_value(u, "dash"))[target]
         board = self.board_relics
         board.begin_play(card, mode)
         self.hand.remove(card)
@@ -2113,7 +2120,6 @@ class Battle:
         walked_before = self.walked
         previous_tags = self.turn_tags[-1] if self.turn_tags else ()
         armed_block = self.items.take_card_bonus(card, "block") if mode == "main" else 0
-        t = u["target"]
         command_installation = getattr(card, "ballista_owner", None)
         if t == "reach":                                      # подойти к врагу — на выбранную клетку или ближе всего
             reach = self.paths(h, u.get("reach", 1))
@@ -2122,10 +2128,8 @@ class Battle:
             else:
                 best = min((p for p in reach if cheb(p, target.cell) <= 1), key=lambda p: len(reach[p]))
             yield from self.walk(h, reach[best])
-        elif t == "cell_step":
-            yield from self.walk(h, self.paths(h, self.move_value(u, "step"))[target])
-        elif t == "cell_dash":
-            yield from self.walk(h, self.dash_paths(self.move_value(u, "dash"))[target])
+        elif move_path is not None:
+            yield from self.walk(h, move_path)
         elif t == "area" and mode == "main":
             target = yield from self.hand_relics.area_center(target, u)
         tgt = target if hasattr(target, "cell") and target is not h and t != "self" else None

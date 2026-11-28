@@ -57,6 +57,10 @@ def has(iid):
     return os.path.exists(os.path.join(DIR, f"{iid}.png"))
 
 
+def has_hd(iid):
+    return os.path.exists(os.path.join(DIR, "hd", f"{iid}.png"))
+
+
 def _mix(a, b, t):
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
 

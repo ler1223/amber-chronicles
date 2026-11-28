@@ -1644,7 +1644,14 @@ class Run:
     def scale(self):
         """Сила врагов на этой глубине: (×HP, ×урон)."""
         fl = self.floor_cfg
-        d = self.depth - 1
+        d = max(0, self.depth - 1)
+        curve = fl.get("difficulty_by_depth", ())
+        if d < len(curve):
+            return tuple(curve[d])
+        if curve:
+            hp, dmg = curve[-1]
+            extra = d - len(curve) + 1
+            return hp + fl["hp_per_depth"] * extra, dmg + fl["dmg_per_depth"] * extra
         return 1 + fl["hp_per_depth"] * d, 1 + fl["dmg_per_depth"] * d
 
     def gold_for(self, kind):

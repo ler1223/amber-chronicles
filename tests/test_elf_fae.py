@@ -631,6 +631,7 @@ def test_fae_is_spent_only_when_the_enhanced_threshold_is_reached():
     h = b.hero
     b.energy = 9
     foe = b.foes()[0]
+    foe.hp = foe.max_hp = 100
     put(b, foe, (h.cell[0] + 1, h.cell[1]))
     h.ds["fae"] = 5
     hp = foe.hp
@@ -678,6 +679,19 @@ def test_linked_partner_stays_in_hand_and_boosts_damage():
     finish(b.play(first, "main", foe))
     assert partner in b.hand
     assert hp - foe.hp == 9
+
+
+def test_linked_movement_keeps_the_path_after_its_card_leaves_the_hand():
+    b, _ = hero_battle("elf")
+    bridge = card(b, "e_moon_bridge")
+    b.hand[:] = [bridge]
+    b.energy = 3
+    one_step = b.paths(b.hero, 1)
+    goal = next(p for p in b.targets(bridge, "main") if p not in one_step)
+
+    finish(b.play(bridge, "main", goal))
+
+    assert b.hero.cell == goal and bridge not in b.hand
 
 
 def test_fae_crown_and_forest_pact_gain_fae_and_shield_at_turn_start():

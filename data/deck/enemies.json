@@ -2479,7 +2479,7 @@
   }
  },
  "floor": {
-  "_doc": "Карта этажа (deck/floor.py): rows рядов узлов, в последнем — страж лестницы; бои собираются из pools, карты поля — из нынешних боёв болота. Сила врагов растёт с глубиной: HP ×(1 + hp_per_depth·(глубина−1)), урон ×(1 + dmg_per_depth·(глубина−1)).",
+  "_doc": "Карта этажа (deck/floor.py): rows рядов узлов, в последнем — страж лестницы. difficulty_by_depth задаёт пары [множитель HP, множитель прямого урона] по этажам; дальше действуют hp_per_depth и dmg_per_depth.",
   "rows": 7,
   "width": [
    2,
@@ -2495,6 +2495,14 @@
   },
   "hp_per_depth": 0.15,
   "dmg_per_depth": 0.1,
+  "difficulty_by_depth": [
+   [0.52, 0.60],
+   [0.64, 0.72],
+   [0.73, 0.80],
+   [0.97, 0.93],
+   [1.17, 1.10],
+   [1.38, 1.30]
+  ],
   "gold": {
    "battle": [
     12,
@@ -2521,8 +2529,7 @@
      ],
      "enemies": [
       "slime",
-      "bog_archer",
-      "mosquito_swarm"
+      "bog_archer"
      ]
     },
     {
@@ -2531,7 +2538,6 @@
       "ex_mosquito_bog"
      ],
      "enemies": [
-      "mosquito_swarm",
       "mosquito_swarm",
       "slime"
      ]
@@ -2544,8 +2550,6 @@
      ],
      "enemies": [
       "beetle",
-      "beetle",
-      "bog_archer",
       "slime_small"
      ]
     },
@@ -2557,7 +2561,6 @@
      ],
      "enemies": [
       "toxic_slime",
-      "beetle",
       "beetle"
      ]
     },
@@ -2569,9 +2572,7 @@
      ],
      "enemies": [
       "poacher",
-      "poacher",
-      "slime_small",
-      "mosquito_swarm"
+      "poacher"
      ]
     },
     {
@@ -2582,9 +2583,7 @@
      ],
      "enemies": [
       "will_wisp",
-      "will_wisp",
-      "toxic_slime",
-      "slime_small"
+      "toxic_slime"
      ]
     }
    ],
@@ -2596,7 +2595,6 @@
      ],
      "enemies": [
       "bog_horror",
-      "beetle",
       "beetle"
      ]
     },
@@ -2608,7 +2606,6 @@
      ],
      "enemies": [
       "rust_captain",
-      "rust_merc",
       "rust_merc"
      ]
     }
@@ -2748,8 +2745,7 @@
        ],
        "enemies": [
         "slime",
-        "bog_archer",
-        "mosquito_swarm"
+        "bog_archer"
        ]
       },
       {
@@ -2758,7 +2754,6 @@
         "ex_mosquito_bog"
        ],
        "enemies": [
-        "mosquito_swarm",
         "mosquito_swarm",
         "slime"
        ]
@@ -2771,8 +2766,6 @@
        ],
        "enemies": [
         "beetle",
-        "beetle",
-        "bog_archer",
         "slime_small"
        ]
       },
@@ -2784,7 +2777,6 @@
        ],
        "enemies": [
         "toxic_slime",
-        "beetle",
         "beetle"
        ]
       },
@@ -2796,9 +2788,7 @@
        ],
        "enemies": [
         "poacher",
-        "poacher",
-        "slime_small",
-        "mosquito_swarm"
+        "poacher"
        ]
       },
       {
@@ -2809,9 +2799,7 @@
        ],
        "enemies": [
         "will_wisp",
-        "will_wisp",
-        "toxic_slime",
-        "slime_small"
+        "toxic_slime"
        ]
       }
      ],
@@ -2823,7 +2811,6 @@
        ],
        "enemies": [
         "bog_horror",
-        "beetle",
         "beetle"
        ]
       },
@@ -2835,7 +2822,6 @@
        ],
        "enemies": [
         "rust_captain",
-        "rust_merc",
         "rust_merc"
        ]
       }
@@ -3107,13 +3093,11 @@
         ],
         "enemies": [
          "slime",
-         "bog_archer",
-         "mosquito_swarm"
+         "bog_archer"
         ],
         "base_enemies": [
          "slime",
-         "bog_archer",
-         "mosquito_swarm"
+         "bog_archer"
         ]
        },
        {
@@ -3123,11 +3107,9 @@
         ],
         "enemies": [
          "mosquito_swarm",
-         "mosquito_swarm",
          "slime"
         ],
         "base_enemies": [
-         "mosquito_swarm",
          "mosquito_swarm",
          "slime"
         ]
@@ -3140,14 +3122,10 @@
         ],
         "enemies": [
          "beetle",
-         "beetle",
-         "bog_archer",
          "slime_small"
         ],
         "base_enemies": [
          "beetle",
-         "beetle",
-         "bog_archer",
          "slime_small"
         ]
        },
@@ -3159,12 +3137,10 @@
         ],
         "enemies": [
          "toxic_slime",
-         "beetle",
          "beetle"
         ],
         "base_enemies": [
          "toxic_slime",
-         "beetle",
          "beetle"
         ]
        },
@@ -3176,15 +3152,11 @@
         ],
         "enemies": [
          "poacher",
-         "poacher",
-         "slime_small",
-         "mosquito_swarm"
+         "poacher"
         ],
         "base_enemies": [
          "poacher",
-         "poacher",
-         "slime_small",
-         "mosquito_swarm"
+         "poacher"
         ]
        },
        {
@@ -3195,15 +3167,11 @@
         ],
         "enemies": [
          "will_wisp",
-         "will_wisp",
-         "toxic_slime",
-         "slime_small"
+         "toxic_slime"
         ],
         "base_enemies": [
          "will_wisp",
-         "will_wisp",
-         "toxic_slime",
-         "slime_small"
+         "toxic_slime"
         ]
        }
       ],
@@ -3215,12 +3183,10 @@
         ],
         "enemies": [
          "bog_horror",
-         "beetle",
          "beetle"
         ],
         "base_enemies": [
          "bog_horror",
-         "beetle",
          "beetle"
         ]
        },
@@ -3232,12 +3198,10 @@
         ],
         "enemies": [
          "rust_captain",
-         "rust_merc",
          "rust_merc"
         ],
         "base_enemies": [
          "rust_captain",
-         "rust_merc",
          "rust_merc"
         ]
        }
@@ -3275,8 +3239,7 @@
          "toad_spearman",
          "toad_spearman",
          "frog_shaman",
-         "toad_guard",
-         "sticky_slime"
+         "toad_guard"
         ],
         "base_enemies": [
          "toad_spearman",
@@ -3300,8 +3263,7 @@
          "spore_shroom",
          "spore_shroom",
          "bog_hag",
-         "elder_leech",
-         "reed_militia"
+         "elder_leech"
         ],
         "base_enemies": [
          "spore_shroom",
@@ -3319,8 +3281,7 @@
          "elder_leech",
          "elder_leech",
          "frog_shaman",
-         "leechling",
-         "shell_crab"
+         "leechling"
         ],
         "base_enemies": [
          "elder_leech",
@@ -3343,8 +3304,7 @@
         "enemies": [
          "bog_croc",
          "mosquito_swarm",
-         "mosquito_swarm",
-         "bog_eel"
+         "mosquito_swarm"
         ],
         "base_enemies": [
          "bog_croc",
@@ -3362,8 +3322,7 @@
          "toad_spearman",
          "frog_shaman",
          "toxic_slime",
-         "toad_guard",
-         "ghoul"
+         "toad_guard"
         ],
         "base_enemies": [
          "toad_spearman",
@@ -3388,8 +3347,7 @@
          "bog_hag",
          "elder_leech",
          "slime",
-         "leechling",
-         "acid_drop"
+         "leechling"
         ],
         "base_enemies": [
          "bog_hag",

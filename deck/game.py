@@ -11,7 +11,8 @@ from . import model as M
 from .battle import Battle
 from .relic_run import CREST, RELICS as RUN_RELICS, tagged_candidates, tagged_card
 from .sound import SoundPanel
-from .ui import BattleScreen, ChoiceScreen, DeckScreen, EndScreen, HeroSelect, MapScreen, PauseMenu, ShopScreen
+from .ui import (BattleScreen, ChestScreen, ChoiceScreen, DeckScreen, EndScreen, HeroSelect, MapScreen, PauseMenu,
+                 ShopScreen, chapter_art)
 
 CAMP_HEAL = 0.3
 
@@ -159,22 +160,19 @@ class DescentGame:
             self.start_battle(n["fight"])
         elif n["type"] == "camp":
             audio.set_context("camp")
-            heal = int(self.run.max_hp * CAMP_HEAL)
-            from .items import mod
-            rest = [] if mod(self.run, "no_camp_heal") else [(f"Отдохнуть: +{heal} HP", None, "rest")]
-            self.scene = ChoiceScreen(self, "Костёр", f"HP {self.run.hp}/{self.run.max_hp}. " +
-                                      ("Отдохнуть или избавиться от слабой карты?" if rest else
-                                       "Котелок бодрости не даёт уснуть — можно только избавиться от карты."),
-                                      rest + [("Удалить карту", None, "remove")], self._camp)
+            self.enter_again_camp()
         elif n["type"] == "shop":
             audio.set_context("shop")
             self.scene = ShopScreen(self)
         elif n["type"] == "workshop":                     # мастерская: улучшить простое применение карты
             audio.set_context("camp")
             self.offer_workshop()
-        elif n["type"] in ("chest", "altar"):            # сундук: предмет на выбор (1 из 3)
+        elif n["type"] == "chest":
             audio.set_context("camp")
-            self.offer_relics(3, "Сундук", lambda toast=None: self.to_map(toast), source="chest")
+            self.scene = ChestScreen(self, self.run.reward_offer(3))
+        elif n["type"] == "altar":
+            audio.set_context("camp")
+            self.offer_relics(3, "Алтарь", self.to_map, source="chest")
 
     def offer_workshop(self):
         """Мастерская: выбрать карту, затем 1 из 3 улучшений её простого применения (одно на карту)."""
@@ -239,10 +237,13 @@ class DescentGame:
                                 (f" Цена: {run.remove_price} золота" if paid else ""))
 
     def enter_again_camp(self):
+        from .items import mod
+
         heal = int(self.run.max_hp * CAMP_HEAL)
-        self.scene = ChoiceScreen(self, "Костёр", "Отдохнуть или избавиться от слабой карты?",
-                                  [(f"Отдохнуть: +{heal} HP", None, "rest"), ("Удалить карту", None, "remove")],
-                                  self._camp)
+        rest = [] if mod(self.run, "no_camp_heal") else [(f"Отдохнуть · +{heal} HP", None, "rest")]
+        self.scene = ChoiceScreen(self, "Костёр", "" if rest else "Котелок бодрости не даёт уснуть",
+                                  rest + [("Удалить карту", None, "remove")], self._camp,
+                                  bg=chapter_art(self.run, "camp") or "camp")
 
     def show_deck(self):
         back = self.scene
